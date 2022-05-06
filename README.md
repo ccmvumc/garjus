@@ -1,2 +1,2 @@
-# garus
+# garjus
 garjus processes data
