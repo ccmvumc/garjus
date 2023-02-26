@@ -1,6 +1,7 @@
 # garjus
 
-garjus is a helper for imaging projects stored in REDCap and XNAT.
+garjus is a helper for imaging projects stored in REDCap and XNAT. It provides
+a single point of access and logs activity.
 
 The main Garjus class provides these data access methods that 
 all return a Pandas DataFrame:

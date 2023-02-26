@@ -46,10 +46,8 @@ from .automations import update as update_automations
 
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
-    'automations': [],
     'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS', 'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY'],
-    'issues': ['PROJECT', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'SUBJECT', 'SESSION', 'CATEGORY', 'STATUS'],
-    'progress': [],
+    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD',  'CATEGORY', 'STATUS'],
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
 }
 
@@ -552,7 +550,6 @@ class Garjus:
 
         pass
 
-
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
         records = self._rc.export_records(records=[project], forms=['main'])
@@ -563,7 +560,33 @@ class Garjus:
         rec = records[0]
         return rec.get(f'project_{setting}', rec.get(f'main_{setting}', None))
 
-    def automation_choices(self):
+    def etl_automations(self, project):
+        """Get ETL automation records."""
+        etl_autos = []
+        auto_names = self.etl_automation_choices()
+        rec = self._rc.export_records(records=[project], forms=['main'])[0]
+
+        # Determine what scan autos we want to run
+        for a in auto_names:
+            if rec.get(f'main_etlautos___{a}',  '') == '1':
+                etl_autos.append(a)
+
+        return etl_autos
+
+    def etl_automation_choices(self):
+        """Get the names of the automations, checkboxes in REDCap."""
+        names = None
+
+        for x in self._rc.metadata:
+            # dcm2niix, dcm2niix | xnat_auto_archive, xnat_auto_archive
+            if x['field_name'] == 'main_etlautos':
+                names = x['select_choices_or_calculations']
+                names = [x for x in names.split('|')]
+                names = [n.split(',')[0].strip() for n in names]
+
+        return names
+
+    def scan_automation_choices(self):
         """Get the names of the automations, checkboxes in REDCap."""
         names = None
 
@@ -579,7 +602,7 @@ class Garjus:
     def scan_automations(self, project):
         """Get scanning automation records."""
         scan_autos = []
-        auto_names = self.automation_choices()
+        auto_names = self.scan_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
         # Determine what scan autos we want to run
@@ -604,6 +627,20 @@ class Garjus:
     def _default_stattypes(self):
         """Returns list of default stats types"""
         return _default_proctypes()
+
+    def primary(self, project):
+        """Connect to the primary redcap for this project."""
+        project_id = self.project_setting(project, 'primary')
+        if not project_id:
+            logging.info(f'no primary project id found for project:{project}')
+            return None
+
+        return utils_redcap.get_redcap(project_id)
+
+
+    # TODO: def import_stats(self):
+    # rather than source_stats from the outside, we call import_stats to tell
+    # garjus to go look in xnat (or wherever) to get new stats
 
 
 if __name__ == "__main__":
