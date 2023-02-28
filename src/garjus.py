@@ -31,6 +31,7 @@ To add a new secondary REDCap project for double entry comparison:
 from typing import Optional
 import logging
 import json
+from datetime import datetime
 
 import requests
 import pandas as pd
@@ -119,6 +120,48 @@ class Garjus:
             data.append(d)
 
         return pd.DataFrame(data, columns=self.column_names('activity'))
+
+
+    def add_activity(
+        self,
+        category,
+        description,
+        project=None,
+        subject=None,
+        event=None,
+        session=None,
+        field=None,
+        actdatetime=None):
+        """Add an activity record."""
+
+        if not actdatetime:
+            actdatetime =  datetime.now()
+
+        # Format for REDCap
+        activity_datetime = actdatetime.strftime("%Y-%m-%d %H:%M:%S")
+
+        record = {
+            self._dfield(): project,
+            'activity_description': description,
+            'activity_datetime': activity_datetime,
+            'activity_event': event,
+            'activity_field': field,
+            'activity_result': 'COMPLETE',
+            'activity_subject': subject,
+            'activity_session': session,
+            'activity_type': category,
+            'redcap_repeat_instrument': 'activity',
+            'redcap_repeat_instance': 'new',
+            'activity_complete': '2',
+        }
+
+        # Add new record
+        try:
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logging.info('successfully created new record')
+        except (ValueError, RedcapError, AssertionError) as err:
+            logging.error(f'error uploading:{err}')
 
     def assessors(self, projects=None, proctypes=None):
         """Query XNAT for all assessors of and return list of dicts."""
@@ -281,12 +324,6 @@ class Garjus:
 
         return types
 
-    def processing(self, projects=None):
-        """Get list of processing protocols."""
-        proc = []
-
-        return proc
-
     def _load_scan_data(self, projects=None, scantypes=None, modalities=None):
         """Get scan info from XNAT as list of dicts."""
         scans = []
@@ -392,11 +429,11 @@ class Garjus:
         rec = [x for x in rec if str(x['progress_complete']) == '2']
         return rec
 
-    def processing(self):
+    def processing_protocols(self, project):
         """Return processing protocols."""
-        processing = []
+        protocols = []
 
-        return processing
+        return protocols
 
     def update(self, projects=None):
         """Update projects."""
@@ -605,6 +642,19 @@ class Garjus:
         auto_names = self.scan_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
+# check these settings before allowing automations for xnat
+# check that projects exist on XNAT
+#        if not xnat.select.project(src_project_name).exists():
+#            logger.error(f'source project not on XNAT:{src_project_name}')
+#            # TODO: create an issue?
+#            return
+#
+#        # check that projects exist on XNAT
+#        if not xnat.select.project(dst_project_name).exists():
+#            logger.error(f'destination project not on XNAT:{dst_project_name}')
+#            # TODO: create an issue?
+#            return
+
         # Determine what scan autos we want to run
         for a in auto_names:
             if rec.get(f'main_scanautos___{a}',  '') == '1':
@@ -612,9 +662,42 @@ class Garjus:
 
         return scan_autos
 
-    def add_issue(self, project):
+    def scanning_protocols(self, project):
+        return self._rc.export_records(records=[project], forms=['scanning'])
+
+    def add_issue(
+        self,
+        description,
+        project=None,
+        event=None,
+        session=None,
+        field=None,
+        category=None):
         """Add a new issue."""
-        pass
+
+        # Format for REDCap
+        issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        record = {
+            self._dfield(): project,
+            'issue_description': description,
+            'issue_date': issue_datetime,
+            'issue_subject': subject,
+            'issue_session': session,
+            'issue_event': event,
+            'issue_field': field,
+            'issue_type': category,
+            'redcap_repeat_instrument': 'issues',
+            'redcap_repeat_instance': 'new',
+        }
+
+        # Add new record
+        try:
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logging.info('successfully created new record')
+        except (ValueError, RedcapError, AssertionError) as err:
+            logging.error(f'error uploading:{err}')
 
     def _default_proctypes(self):
         """Returns list of default processing types"""
@@ -637,6 +720,8 @@ class Garjus:
 
         return utils_redcap.get_redcap(project_id)
 
+    def xnat(self):
+        return self._xnat
 
     # TODO: def import_stats(self):
     # rather than source_stats from the outside, we call import_stats to tell
