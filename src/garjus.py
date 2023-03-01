@@ -52,6 +52,20 @@ COLUMNS = {
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
 }
 
+# TODO: load this information from processor yamls
+PROCLIB = {
+'FS7_v1': {
+    'procurl': 'https://github.com/bud42/FS7',
+    'short_descrip': 'FreeSurfer 7 recon-all',
+    'stats_descrip': 'Volumes in cubic millimeters, thickness in millimeters',
+    },
+'FS7HPCAMG_v1': {
+    'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
+    'short_descrip': 'FreeSurfer 7 hippocampus & amygdala',
+    'stats_descrip': 'Voilumes in cubic millimeters',
+    }
+}
+
 
 class Garjus:
     """
@@ -124,14 +138,16 @@ class Garjus:
 
     def add_activity(
         self,
+        project,
         category,
-        description,
-        project=None,
+        description=None,
         subject=None,
         event=None,
         session=None,
+        scan=None,
         field=None,
-        actdatetime=None):
+        actdatetime=None,
+        result=None):
         """Add an activity record."""
 
         if not actdatetime:
@@ -142,7 +158,7 @@ class Garjus:
 
         record = {
             self._dfield(): project,
-            'activity_description': description,
+            'activity_description': f'{description}:{result}',
             'activity_datetime': activity_datetime,
             'activity_event': event,
             'activity_field': field,
@@ -177,23 +193,31 @@ class Garjus:
         """Return list of colum names for this data type."""
         return self._columns.get(datatype)
 
-    def issues(self, project):
+    def issues(self, project=None):
         """Return the current existing issues data as list of dicts."""
         data = []
 
         # Get the data from redcap
         _fields = [self._dfield()]
-        rec = self._rc.export_records(
-            records=[project],
-            forms=['issues'],
-            fields=_fields,
-        )
-        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
+        if project:
+            # Only the specified project
+            rec = self._rc.export_records(
+                records=[project],
+                forms=['issues'],
+                fields=_fields,
+            )
+        else:
+            # All issues
+             rec = self._rc.export_records(
+                forms=['issues'],
+                fields=_fields,
+            )
 
         # Only unresolved issues
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
         rec = [x for x in rec if str(x['issues_complete']) != '2']
 
-        # Reformat/rename each record
+        # Reformat each record
         for r in rec:
             d = {'PROJECT': r[self._dfield()], 'STATUS': 'FAIL'}
             for k, v in self.issues_rename.items():
@@ -214,6 +238,10 @@ class Garjus:
 
         # Return as dataframe
         return pd.DataFrame(data, columns=self.column_names('scans'))
+
+    def sites(self, project):
+        """List of site records."""
+        return self._rc.export_records(records=[project], forms=['sites'])
 
     def _load_project_names(self):
         _records = self._rc.export_records(fields=[self._rc.def_field])
@@ -247,9 +275,8 @@ class Garjus:
 
         # Make a dataframe of columns we need
         df = pd.DataFrame(rec, columns=['stats_assr', 'stats_name', 'stats_value'])
-        # df = df[['stats_assr', 'stats_name', 'stats_value']]
 
-        print(df[df.duplicated(['stats_assr', 'stats_name'], keep=False)])
+        #print(df[df.duplicated(['stats_assr', 'stats_name'], keep=False)])
         # TODO: df = df.drop_duplicates()
 
         # Pivot to row per assessor, col per stats_name, values as stats_value
@@ -432,8 +459,12 @@ class Garjus:
     def processing_protocols(self, project):
         """Return processing protocols."""
         protocols = []
-
+    
         return protocols
+
+    def processing_library(self, project):
+        """Return processing library."""
+        return PROCLIB
 
     def update(self, projects=None):
         """Update projects."""
@@ -713,12 +744,19 @@ class Garjus:
 
     def primary(self, project):
         """Connect to the primary redcap for this project."""
+        primary_redcap = None
         project_id = self.project_setting(project, 'primary')
         if not project_id:
             logging.info(f'no primary project id found for project:{project}')
             return None
 
-        return utils_redcap.get_redcap(project_id)
+        try:
+            primary_redcap = utils_redcap.get_redcap(project_id)
+        except Exception as err:
+            logging.info(f'failed to load primary redcap:{project}:{err}')
+            primary_redcap = None
+
+        return primary_redcap
 
     def xnat(self):
         return self._xnat

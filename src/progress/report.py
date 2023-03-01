@@ -16,7 +16,6 @@ import plotly.express as px
 from fpdf import FPDF
 from PIL import Image
 
-
 # These are used to set colors of graphs
 RGB_DKBLUE = 'rgb(59,89,152)'
 RGB_BLUE = 'rgb(66,133,244)'
@@ -87,10 +86,6 @@ ACOLS = [
     'DATE',
     'PROCTYPE',
 ]
-
-PROCS = {
-    'FS7_v1': ('https://github.com/bud42/FS7', 'FreeSurfer 7 recon-all'),
-}
 
 
 class MYPDF(FPDF):
@@ -402,12 +397,18 @@ def _add_other_page(pdf, sessions):
     return pdf
 
 
-def _add_stats_page(pdf, stats, proctype):
+def _add_stats_page(pdf, stats, proctype, short_descrip=None, stats_descrip=None):
     # 4 across, 3 down
 
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
     pdf.cell(txt=proctype)
+
+    pdf.set_font('helvetica', size=9)
+    if short_descrip:
+        pdf.cell(txt=short_descrip)
+    if stats_descrip:
+        pdf.cell(txt=stats_descrip)
     # TODO: show pipeline name and description, look up with proctype
 
     # this returns a PIL Image object
@@ -659,7 +660,7 @@ def plot_stats(df, proctype):
     box_width = 250
     min_box_count = 4
 
-    logging.info('plot_stats:{}'.format(proctype))
+    logging.debug('plot_stats:{}'.format(proctype))
 
     # Check for empty data
     if len(df) == 0:
@@ -781,7 +782,7 @@ def make_pdf(info, filename):
     # Session type pages - counts per scans, counts per assessor
     logging.debug('adding qa pages')
     for curtype in info['sessions'].SESSTYPE.unique():
-        logging.info('add_qa_page:{}'.format(curtype))
+        logging.debug('add_qa_page:{}'.format(curtype))
 
         # Get the scan and assr data
         scandf = info['scanqa'].copy()
@@ -807,10 +808,12 @@ def make_pdf(info, filename):
             # Limit the data to this proctype
             stat_data = stats[stats.PROCTYPE == s]
             if stat_data.empty:
-                logging.info(f'no stats for proctype:{s}')
+                logging.debug(f'no stats for proctype:{s}')
             else:
-                logging.info(f'add stats page:{s}')
-                _add_stats_page(pdf, stat_data, s)
+                logging.debug(f'add stats page:{s}')
+                short_descrip = info['proclib'].get(s, {}).get('short_descrip', None)
+                stats_descrip = info['proclib'].get(s, {}).get('stats_descrip', None)
+                _add_stats_page(pdf, stat_data, s, short_descrip, stats_descrip)
 
     # Phantom pages
     if 'phantoms' in info:
@@ -942,6 +945,8 @@ def make_project_report(
     zipname
 ):
     """"Make the project report PDF and zip files"""
+    # TODO: garjus.proctypes_info()
+    proclib = garjus.processing_library(project)
     activity = garjus.activity(project)
     issues = garjus.issues(project)
 
@@ -965,6 +970,7 @@ def make_project_report(
 
     # Make the info dictionary for PDF
     info = {}
+    info['proclib'] = proclib
     info['project'] = project
     info['stattypes'] = stattypes
     info['scantypes'] = scantypes
@@ -1020,10 +1026,12 @@ def _last_month():
     return (datetime.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
 
 
-def _recent_jobs(df, startdate=None):
+def _recent_jobs(assessors, startdate=None):
     """Get recent jobs, assessors on XNAT with job date since startdate."""
     if startdate is None:
         startdate = _last_month()
+
+    df = assessors.copy()
 
     # Filter by jobstartdate date, include anything with job running
     df = df[(df['JOBDATE'] >= startdate) | (df['PROCSTATUS'] == 'JOB_RUNNING')]
@@ -1043,9 +1051,11 @@ def _recent_jobs(df, startdate=None):
     return df
 
 
-def _recent_qa(df, startdate=None):
+def _recent_qa(assessors, startdate=None):
     if startdate is None:
         startdate = _last_month()
+
+    df = assessors.copy()
 
     # Filter by qc date
     df = df[df['QCDATE'] >= startdate]
