@@ -25,22 +25,22 @@ def update_project(garjus, project, proctypes):
     logging.debug(f'stats updating project:{project},proctypes={proctypes}')
     # Get list of all assessors
     dfa = garjus.assessors([project], proctypes)
-    logging.info(f'total assessors:{len(dfa)}')
+    logging.debug(f'total assessors:{len(dfa)}')
 
     # Get list of assessors already in stats
     existing = garjus.stats_assessors(project, proctypes)
 
     # Filter to remove already uploaded
     dfa = dfa[~dfa['ASSR'].isin(existing)]
-    logging.info(f'assessors after filtering out already uploaded:{len(dfa)}')
+    logging.debug(f'assessors after filtering out already uploaded:{len(dfa)}')
 
     # Filter to only COMPLETE
     dfa = dfa[dfa['PROCSTATUS'] == 'COMPLETE']
-    logging.info(f'assessors after filtering only COMPLETE:{len(dfa)}')
+    logging.debug(f'assessors after filtering only COMPLETE:{len(dfa)}')
 
     # Filter to not Failed
     dfa = dfa[dfa['QCSTATUS'] != 'Failed']
-    logging.info(f'assessors after filtering out QC Failed:{len(dfa)}')
+    logging.debug(f'assessors after filtering out QC Failed:{len(dfa)}')
 
     # Iterate xnat assessors
     for r in dfa.sort_values('ASSR').to_dict('records'):
