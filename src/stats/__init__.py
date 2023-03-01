@@ -17,13 +17,17 @@ def update(garjus, projects):
         proctypes = garjus.proctypes(p)
         if not proctypes:
             proctypes = garjus.default_proctypes()
+
+        logging.info(f'stats updating project:{p},proctypes={proctypes}')
         update_project(garjus, p, proctypes)
 
 
 def update_project(garjus, project, proctypes):
-    """Update project proctypes."""
-    logging.debug(f'stats updating project:{project},proctypes={proctypes}')
+    """Update stats for project proctypes."""
+
     # Get list of all assessors
+    logging.debug(f'loading assessors updating project:{project},proctypes={proctypes}')
+
     dfa = garjus.assessors([project], proctypes)
     logging.debug(f'total assessors:{len(dfa)}')
 

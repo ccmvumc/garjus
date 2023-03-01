@@ -12,23 +12,13 @@ import importlib
 def update(garjus, projects, autos_include=None, autos_exclude=None):
     """Update project progress."""
     for p in projects:
+        logging.info(f'updating automations:{p}')
         update_project(garjus, p, autos_include, autos_exclude)
 
 
 def update_project(garjus, project, autos_include=None, autos_exclude=None):
     """Update automations for project."""
     results = []
-    proj_scanmap = garjus.project_setting(project, 'scanmap')
-    sess_replace = garjus.project_setting(project, 'relabelreplace')
-
-    # Load the project primary redcap
-    project_redcap = garjus.primary(project)
-    if not project_redcap:
-        logging.info('not found')
-        return
-
-    if proj_scanmap:
-        proj_scanmap = parse_scanmap(proj_scanmap)
 
     # Get filtered list for this project
     scan_autos = garjus.scan_automations(project)
@@ -41,20 +31,7 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         # Apply exclude filter
         scan_autos = [x for x in scan_autos if x not in autos_exclude]
 
-    #if 'xnat_auto_archive' in scan_autos:
-    #    logging.info(f'{project}:xnat_auto_archive:TBD')
-
-    # Run project-wide relabels
-    #if 'xnat_relabel_scans' in scan_autos:
-    #    logging.info(f'{project}:xnat_relabel_scans:TBD')
-
-    #if 'xnat_relabel_sessions' in scan_autos:
-    #    logging.info(f'{project}:xnat_relabel_sessions:TBD')
-
-    #for a in scan_autos:
-    #    logging.info(f'{project}:running automation:{a}')
-
-    run_scan_automations(scan_autos, garjus, project)
+    _run_scan_automations(scan_autos, garjus, project)
 
     etl_autos = garjus.etl_automations(project)
 
@@ -68,14 +45,13 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
 
     for a in etl_autos:
         logging.info(f'{project}:running automation:{a}')
-        run_etl_automation(a, garjus, project)
+        _run_etl_automation(a, garjus, project)
 
     return results
 
 
-def parse_scanmap(scanmap):
-    """Parses scan map stored as string into map"""
-
+def _parse_scanmap(scanmap):
+    """Parse scan map stored as string into map."""
     # Parse multiline string of delimited key value pairs into dictionary
     scanmap = dict(x.strip().split(':') for x in scanmap.split('\n'))
 
@@ -85,8 +61,8 @@ def parse_scanmap(scanmap):
     return scanmap
 
 
-def run_etl_automation(automation, garjus, project):
-    # Load the project primary redcap
+def _run_etl_automation(automation, garjus, project):
+    """Load the project primary redcap."""
     project_redcap = garjus.primary(project)
     if not project_redcap:
         logging.info('not found')
@@ -94,7 +70,7 @@ def run_etl_automation(automation, garjus, project):
 
     # load the automation
     try:
-       m = importlib.import_module(f'src.automations.{automation}')
+        m = importlib.import_module(f'src.automations.{automation}')
     except ModuleNotFoundError as err:
         logging.error(f'error loading module:{automation}:{err}')
         return
@@ -104,7 +80,7 @@ def run_etl_automation(automation, garjus, project):
         results = m.process_project(project_redcap)
     except Exception as err:
         logging.error(f'{project}:{automation}:failed to run:{err}')
-        #garjus.add_issue()
+        # garjus.add_issue()
         return
 
     # Upload results to garjus
@@ -114,20 +90,38 @@ def run_etl_automation(automation, garjus, project):
         garjus.add_activity(**r)
 
 
-def run_scan_automations(automations, garjus, project):
+def _run_scan_automations(automations, garjus, project):
     results = []
+    proj_scanmap = garjus.project_setting(project, 'scanmap')
+    sess_replace = garjus.project_setting(project, 'relabelreplace')
+    scan_data = garjus.scanning_protocols(project)
+    site_data = garjus.sites(project)
+    protocols = garjus.scanning_protocols(project)
+
+    # Build the session relabling
+    sess_relabel = _session_relabels(scan_data, site_data)
+
+    # Parse scan map
+    if proj_scanmap:
+        proj_scanmap = _parse_scanmap(proj_scanmap)
 
     # Load the project primary redcap
     project_redcap = garjus.primary(project)
     if not project_redcap:
-        logging.info('not found')
+        logging.info('primary redcap not found, cannot run automations')
+        return
+
+    # load the automations
+    try:
+        xnat_auto_archive = importlib.import_module(f'src.automations.xnat_auto_archive')
+        xnat_relabel_sessions = importlib.import_module(f'src.automations.xnat_relabel_sessions')
+        xnat_relabel_scans = importlib.import_module(f'src.automations.xnat_relabel_scans')
+    except ModuleNotFoundError as err:
+        logging.error(f'error loading scan automations:{err}')
         return
 
     # Get xnat connection
     xnat = garjus.xnat()
-
-    # Each scanning protocol
-    protocols = garjus.scanning_protocols(project)
 
     # Apply autos to each scanning protocol
     for p in protocols:
@@ -143,31 +137,33 @@ def run_scan_automations(automations, garjus, project):
 
         # Make the scan table that links what's entered at the scanner with
         # what we want to label the scans
-        scan_table = make_scan_table(
+        scan_table = _make_scan_table(
             project_redcap,
             events,
             date_field,
             sess_field,
             sess_suffix)
 
-        # load the automation
-        try:
-           m = importlib.import_module(f'src.automations.xnat_auto_archive')
-        except ModuleNotFoundError as err:
-            logging.error(f'error loading module:xnat_auto_archive:{err}')
-            return
+        # Run
+        if 'xnat_auto_archive' in automations:
+            results += xnat_auto_archive.process_project(
+                xnat, scan_table, src_project, project)
 
-        # Run it
-        results += m.process_project(xnat, scan_table, src_project, project)
-        # results += xnat_session_relabel()
-        # results += xnat_scan_relabel()
+    # Apply relabeling
+    if 'xnat_relabel_sessions' in automations:
+        results += xnat_relabel_sessions.process_project(
+            xnat, project, sess_relabel, sess_replace)
+    if 'xnat_relabel_scans' in automations:
+        results += xnat_relabel_scans.process_project(
+            xnat, project, proj_scanmap)
 
     # Upload results to garjus
     for r in results:
+        r['project'] = project
         garjus.add_activity(**r)
 
 
-def make_scan_table(
+def _make_scan_table(
     project,
     events,
     date_field,
@@ -175,6 +171,7 @@ def make_scan_table(
     scan_suffix):
     """Make the scan table, linking source to destination subject/session."""
     data = []
+    id2subj = {}
 
     # Shortcut
     def_field = project.def_field
@@ -209,3 +206,25 @@ def make_scan_table(
         data.append(d)
 
     return data
+
+
+def _session_relabels(scan_data, site_data):
+    """Build session relabels."""
+    relabels = []
+
+    # Build the session relabeling from scan_autos and sites
+    for rec in scan_data:
+        relabels.append((
+            'session_label',
+            '*' + rec['scanning_xnatsuffix'],
+            'session_type',
+            rec['scanning_xnattype']))
+
+    for rec in site_data:
+        relabels.append((
+            'session_label',
+            rec['site_sessmatch'],
+            'site',
+            rec['site_shortname']))
+
+    return relabels
