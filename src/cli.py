@@ -25,11 +25,20 @@ def copy_session():
 
 
 @cli.command('issues')
+@click.option('--project', '-p', 'project')
 @click.pass_context
-def issues(ctx):
+def issues(ctx, project):
     click.echo('garjus! issues')
     g = Garjus()
-    pprint.pprint(g.issues())
+    pprint.pprint(g.issues(project))
+
+
+@cli.command('activity')
+@click.option('--project', '-p', 'project')
+def activity(project):
+    click.echo('garjus! activity')
+    g = Garjus()
+    pprint.pprint(g.activity(project))
 
 
 @cli.command('update')
