@@ -43,6 +43,7 @@ from . import utils_xnat
 from .progress import update as update_progress
 from .stats import update as update_stats
 from .automations import update as update_automations
+from .issues import update as update_issues
 
 
 COLUMNS = {
@@ -222,7 +223,7 @@ class Garjus:
             d = {'PROJECT': r[self._dfield()], 'STATUS': 'FAIL'}
             for k, v in self.issues_rename.items():
                 d[v] = r.get(k, '')
-
+        
             data.append(d)
 
         # Finally, build a dataframe
@@ -238,6 +239,12 @@ class Garjus:
 
         # Return as dataframe
         return pd.DataFrame(data, columns=self.column_names('scans'))
+
+    def session_labels(self, project):
+        uri = f'/REST/experiments?columns=label,modality&project={project}'
+        result = self._get_result(uri)
+        label_list = [x['label'] for x in result]
+        return label_list
 
     def sites(self, project):
         """List of site records."""
@@ -398,6 +405,7 @@ class Garjus:
 
         return assessors
 
+
     def _get_result(self, uri):
         """Get result of xnat query."""
         logging.debug(uri)
@@ -476,11 +484,11 @@ class Garjus:
         logging.info('updating automations')
         update_automations(self, projects)
 
-        # print('updating issues')
-        # update_issues(self, projects)
+        logging.info('updating issues')
+        update_issues(self, projects)
 
-        # Only run on intersect of specified projects and projects with stats
-        # if the list is empty, nothing will run
+        # Only run on intersect of specified projects and projects with stats,
+        # such that if the list is empty, nothing will run
         logging.info('updating stats')
         update_stats(self, [x for x in projects if x in self.stats_projects()])
 
@@ -696,6 +704,31 @@ class Garjus:
     def scanning_protocols(self, project):
         return self._rc.export_records(records=[project], forms=['scanning'])
 
+    def add_issues(self, issues):
+        records = []
+        issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        for i in issues:
+            records.append({
+            self._dfield(): i['project'],
+            'issue_description': i['description'],
+            'issue_date': issue_datetime,
+            'issue_subject': i.get('subject', None),
+            'issue_session': i.get('session', None),
+            'issue_event': i.get('event', None),
+            'issue_field': i.get('field', None),
+            'issue_type': i.get('category', None),
+            'redcap_repeat_instrument': 'issues',
+            'redcap_repeat_instance': 'new',
+            })
+
+        try:
+            response = self._rc.import_records(records)
+            assert 'count' in response
+            logging.debug('issues successfully uploaded')
+        except AssertionError as err:
+            logger.error(f'issues upload failed:{err}')
+
     def add_issue(
         self,
         description,
@@ -760,6 +793,46 @@ class Garjus:
 
     def xnat(self):
         return self._xnat
+
+    def copy_session(self,
+        src_proj,
+        src_subj,
+        src_sess,
+        dst_proj,
+        dst_subj,
+        dst_sess):
+        """Copy scanning/imaging session from source to destination"""
+        src_obj = self._xnat.select_session(src_project, src_subj, src_sess)
+        dst_obj = self._xnat.select_session(dst_project, dst_subj, dst_sess)
+        utils_xnat.copy_session(src_obj, dst_obj)
+
+    def source_project_exists(self, project):
+        return self._xnat.select.project(project).exists()
+
+    def project_exists(self, project):
+        return (project in self.projects()) and \
+        self._xnat.select.project(project).exists()
+
+    def close_issues(self, issues):
+        records = []
+        issue_closedate = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        for i in issues:
+            records.append({
+            self._dfield(): i['project'],
+            'issue_closedate': issue_closedate,
+            'redcap_repeat_instrument': 'issues',
+            'redcap_repeat_instance': i['ID'],
+            'issues_complete': 2,
+            })
+
+        try:
+            response = project.import_records(records)
+            assert 'count' in response
+            logging.info('issues successfully completed')
+        except AssertionError as err:
+            logging.error(f'failed to set issues to complete:{err}')
+
 
     # TODO: def import_stats(self):
     # rather than source_stats from the outside, we call import_stats to tell

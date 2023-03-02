@@ -1,7 +1,5 @@
 import logging
 
-from ..utils_xnat import copy_session, session_label_list
-
 # Copy session from project named for PI to primary project.
 # Session ID generated from event 2 session mapping in project settings
 # This method allows the PI project on XNAT to be set to auto-archive and
@@ -9,15 +7,15 @@ from ..utils_xnat import copy_session, session_label_list
 
 
 def process_project(
-    xnat,
+    garjus,
     scan_table,
     src_project,
-    dst_project,
-):
+    dst_project):
     """Copy from src to dst as needed."""
     results = []
-    dst_sess_list = session_label_list(xnat, dst_project)
-    src_sess_list = session_label_list(xnat, src_project)
+
+    src_labels = garjus.session_labels(src_project)
+    dst_labels = garjus.session_labels(dst_project)
 
     # Process each record
     for r in scan_table:
@@ -30,22 +28,28 @@ def process_project(
         src_sess = src_sess.strip()
 
         # Check if session already exists in destination project
-        if dst_sess in dst_sess_list:
+        if dst_sess in dst_labels:
             # Note that we don't check the other values in redcap
             logging.debug(f'session exists on XNAT:{dst_sess}')
             continue
 
         # Check that session does exist in source project
-        if src_sess not in src_sess_list:
+        if src_sess not in src_labels:
             logging.info(f'session not on XNAT:{src_sess}:{dst_subj}')
             continue
 
-        # TODO: check that xnat date matches redcap date
         # TODO: check last_modified and wait until it's been 1 hour
+
         logging.info(f'copying:{src_subj}/{src_sess}:{dst_subj}/{dst_sess}')
-        src_obj = xnat.select_session(src_project, src_subj, src_sess)
-        dst_obj = xnat.select_session(dst_project, dst_subj, dst_sess)
-        copy_session(src_obj, dst_obj)
+       
+        garjus.copy_session(
+            src_proj,
+            src_subj,
+            src_sess,
+            dst_proj,
+            dst_subj,
+            dst_sess)
+
         results.append({
             'result': 'COMPLETE',
             'description': f'{src_sess}',

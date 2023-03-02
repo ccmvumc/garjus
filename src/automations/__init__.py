@@ -147,7 +147,7 @@ def _run_scan_automations(automations, garjus, project):
         # Run
         if 'xnat_auto_archive' in automations:
             results += xnat_auto_archive.process_project(
-                xnat, scan_table, src_project, project)
+                garjus, scan_table, src_project, project)
 
     # Apply relabeling
     if 'xnat_relabel_sessions' in automations:
