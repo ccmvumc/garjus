@@ -14,11 +14,8 @@ from .report import make_project_report
 
 
 def update(garjus, projects=None):
-    if projects is None:
-        projects = garjus.projects()
-
     """Update project progress."""
-    for p in garjus.projects():
+    for p in (projects or garjus.projects()):
         if p in projects:
             logging.info(f'updating progress:{p}')
             update_project(garjus, p)
