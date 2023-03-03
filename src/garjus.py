@@ -28,10 +28,13 @@ To add a new secondary REDCap project for double entry comparison:
 -Copy PID, key to ~/.redcap.txt, name PROJECT secondary
 -paste ID into ccmutils under Main > Project Secondary
 """
+import pathlib
 from typing import Optional
 import logging
 import json
 from datetime import datetime
+import glob
+import os
 
 import requests
 import pandas as pd
@@ -40,30 +43,32 @@ from pyxnat import Interface
 
 from . import utils_redcap
 from . import utils_xnat
+from . import utils_dcm2nii
 from .progress import update as update_progress
 from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
+from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 
 
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
     'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS', 'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY'],
-    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD',  'CATEGORY', 'STATUS'],
+    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
 }
 
 # TODO: load this information from processor yamls
 PROCLIB = {
-'FS7_v1': {
-    'procurl': 'https://github.com/bud42/FS7',
-    'short_descrip': 'FreeSurfer 7 recon-all',
-    'stats_descrip': 'Volumes in cubic millimeters, thickness in millimeters',
+    'FS7_v1': {
+        'procurl': 'https://github.com/bud42/FS7',
+        'short_descrip': 'FreeSurfer 7 recon-all',
+        'stats_descrip': 'Volumes in cubic millimeters, thickness in millimeters',
     },
-'FS7HPCAMG_v1': {
-    'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
-    'short_descrip': 'FreeSurfer 7 hippocampus & amygdala',
-    'stats_descrip': 'Voilumes in cubic millimeters',
+    'FS7HPCAMG_v1': {
+        'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
+        'short_descrip': 'FreeSurfer 7 hippocampus & amygdala',
+        'stats_descrip': 'Voilumes in cubic millimeters',
     }
 }
 
@@ -136,7 +141,6 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('activity'))
 
-
     def add_activity(
         self,
         project,
@@ -148,11 +152,11 @@ class Garjus:
         scan=None,
         field=None,
         actdatetime=None,
-        result=None):
+        result=None,
+    ):
         """Add an activity record."""
-
         if not actdatetime:
-            actdatetime =  datetime.now()
+            actdatetime = datetime.now()
 
         # Format for REDCap
         activity_datetime = actdatetime.strftime("%Y-%m-%d %H:%M:%S")
@@ -209,10 +213,7 @@ class Garjus:
             )
         else:
             # All issues
-             rec = self._rc.export_records(
-                forms=['issues'],
-                fields=_fields,
-            )
+            rec = self._rc.export_records(forms=['issues'], fields=_fields)
 
         # Only unresolved issues
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
@@ -223,11 +224,31 @@ class Garjus:
             d = {'PROJECT': r[self._dfield()], 'STATUS': 'FAIL'}
             for k, v in self.issues_rename.items():
                 d[v] = r.get(k, '')
-        
+
             data.append(d)
 
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
+
+    def import_dicom(self, src, dst):
+        """Import dicom source to destination."""
+        logging.info(f'uploading from:{src}')
+
+        (proj, subj, sess) = dst.split('/')
+        logging.info(f'uploading to:{proj},{subj},{sess}')
+
+        if src.endswith('.zip'):
+            import_dicom_zip(self, src, proj, subj, sess)
+        elif src.startswith('http'):
+            # e.g. gstudy link
+            import_dicom_url(self, src, proj, subj, sess)
+        elif os.path.isdir(src):
+            import_dicom_dir(self, src, proj, subj, sess)
+        else:
+            self.import_dicom_xnat(src, proj, subj, sess)
+
+        logging.info('Please Note! only DICOM that successfullly converts\
+            to NIFTI is uploaded as DICOMZIP')
 
     def scans(self, projects=None, scantypes=None, modalities='MR'):
         """Query XNAT for all scans and return a dictionary of scan info."""
@@ -241,6 +262,7 @@ class Garjus:
         return pd.DataFrame(data, columns=self.column_names('scans'))
 
     def session_labels(self, project):
+        """Return list of session labels in the archive for project."""
         uri = f'/REST/experiments?columns=label,modality&project={project}'
         result = self._get_result(uri)
         label_list = [x['label'] for x in result]
@@ -269,6 +291,7 @@ class Garjus:
         return self._project2stats[project]
 
     def stats(self, project, proctypes=None):
+        """Return all stats for project, filtered by proctypes."""
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
@@ -281,9 +304,11 @@ class Garjus:
         rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
 
         # Make a dataframe of columns we need
-        df = pd.DataFrame(rec, columns=['stats_assr', 'stats_name', 'stats_value'])
+        df = pd.DataFrame(
+            rec,
+            columns=['stats_assr', 'stats_name', 'stats_value'])
 
-        #print(df[df.duplicated(['stats_assr', 'stats_name'], keep=False)])
+        # print(df[df.duplicated(['stats_assr', 'stats_name'], keep=False)])
         # TODO: df = df.drop_duplicates()
 
         # Pivot to row per assessor, col per stats_name, values as stats_value
@@ -405,7 +430,6 @@ class Garjus:
 
         return assessors
 
-
     def _get_result(self, uri):
         """Get result of xnat query."""
         logging.debug(uri)
@@ -467,34 +491,41 @@ class Garjus:
     def processing_protocols(self, project):
         """Return processing protocols."""
         protocols = []
-    
+
         return protocols
 
     def processing_library(self, project):
         """Return processing library."""
         return PROCLIB
 
-    def update(self, projects=None):
+    def update(self, projects=None, choices=None):
         """Update projects."""
         if not projects:
             projects = self._projects
 
+        if not choices:
+            choices = ['issues', 'automations', 'stats', 'progress']
+
         logging.info(f'updating projects:{projects}')
 
-        logging.info('updating automations')
-        update_automations(self, projects)
+        if 'automations' in choices:
+            logging.info('updating automations')
+            update_automations(self, projects)
 
-        logging.info('updating issues')
-        update_issues(self, projects)
+        if 'issues' in choices:
+            logging.info('updating issues')
+            update_issues(self, projects)
 
-        # Only run on intersect of specified projects and projects with stats,
-        # such that if the list is empty, nothing will run
-        logging.info('updating stats')
-        update_stats(self, [x for x in projects if x in self.stats_projects()])
+        if 'stats' in choices:
+            # Only run on intersect of specified projects and projects with stats,
+            # such that if the list is empty, nothing will run
+            logging.info('updating stats')
+            update_stats(self, [x for x in projects if x in self.stats_projects()])
 
-        # check that each project has report for current month with PDF and zip
-        logging.info('updating progress')
-        update_progress(self, projects)
+        if 'progess' in choices:
+            # check that each project has report for current month with PDF and zip
+            logging.info('updating progress')
+            update_progress(self, projects)
 
         # TODO: print('updating jobs') # can't do this until queue is in REDCap,
         # for now we'll continue to use run_build.py
@@ -507,7 +538,6 @@ class Garjus:
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""
-
         # Format for REDCap
         progress_datetime = prog_date.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -526,7 +556,7 @@ class Garjus:
             logging.info('successfully created new record')
 
             # Determine the new record id
-            logging.info('locating new record')
+            logging.debug('locating new record')
             _ids = utils_redcap.match_repeat(
                 self._rc,
                 project,
@@ -536,7 +566,7 @@ class Garjus:
             repeat_id = _ids[-1]
 
             # Upload output files
-            logging.info(f'uploading files to:{repeat_id}')
+            logging.debug(f'uploading files to:{repeat_id}')
             utils_redcap.upload_file(
                 self._rc,
                 project,
@@ -594,7 +624,7 @@ class Garjus:
         statsrc = self._stats_redcap(project)
         try:
             logging.debug('importing records')
-            #print(rec)
+            # print(rec)
             response = statsrc.import_records(rec)
             assert 'count' in response
             logging.debug('successfully uploaded')
@@ -607,22 +637,21 @@ class Garjus:
             time.sleep(60)
 
     def delete_stats(self, project, subject, session, assessor):
-        # Get all the repeat instances for this assessor
-
+        """Get all the repeat instances for this assessor."""
         # Make the payload
-        #payload = {
-        #'action': 'delete',
-        #'returnFormat': 'json',
-        #'content': 'record',
-        #'format': 'json',
-        #'instrument': 'stats',
-        #'token': str(rc.token),
-        #'records[0]': str(record_id),
-        #'repeat_instance': str(repeat_id),
-        #}
+        # payload = {
+        # 'action': 'delete',
+        # 'returnFormat': 'json',
+        # 'content': 'record',
+        # 'format': 'json',
+        # 'instrument': 'stats',
+        # 'token': str(rc.token),
+        # 'records[0]': str(record_id),
+        # 'repeat_instance': str(repeat_id),
+        # }
 
         # Call delete
-        #result = rc._call_api(payload, 'del_record')
+        # result = rc._call_api(payload, 'del_record')
 
         pass
 
@@ -642,9 +671,9 @@ class Garjus:
         auto_names = self.etl_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
-        # Determine what scan autos we want to run
+        # Determine which automations we want to run
         for a in auto_names:
-            if rec.get(f'main_etlautos___{a}',  '') == '1':
+            if rec.get(f'main_etlautos___{a}', '') == '1':
                 etl_autos.append(a)
 
         return etl_autos
@@ -690,39 +719,42 @@ class Garjus:
 #
 #        # check that projects exist on XNAT
 #        if not xnat.select.project(dst_project_name).exists():
-#            logger.error(f'destination project not on XNAT:{dst_project_name}')
+#            logger.error(f'destination project found:{dst_project_name}')
 #            # TODO: create an issue?
 #            return
 
         # Determine what scan autos we want to run
         for a in auto_names:
-            if rec.get(f'main_scanautos___{a}',  '') == '1':
+            if rec.get(f'main_scanautos___{a}', '') == '1':
                 scan_autos.append(a)
 
         return scan_autos
 
     def scanning_protocols(self, project):
+        """Return list of scanning protocol records."""
         return self._rc.export_records(records=[project], forms=['scanning'])
 
     def add_issues(self, issues):
+        """Add list of issues."""
         records = []
         issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         for i in issues:
             records.append({
-            self._dfield(): i['project'],
-            'issue_description': i['description'],
-            'issue_date': issue_datetime,
-            'issue_subject': i.get('subject', None),
-            'issue_session': i.get('session', None),
-            'issue_event': i.get('event', None),
-            'issue_field': i.get('field', None),
-            'issue_type': i.get('category', None),
-            'redcap_repeat_instrument': 'issues',
-            'redcap_repeat_instance': 'new',
+                self._dfield(): i['project'],
+                'issue_description': i['description'],
+                'issue_date': issue_datetime,
+                'issue_subject': i.get('subject', None),
+                'issue_session': i.get('session', None),
+                'issue_event': i.get('event', None),
+                'issue_field': i.get('field', None),
+                'issue_type': i.get('category', None),
+                'redcap_repeat_instrument': 'issues',
+                'redcap_repeat_instance': 'new',
             })
 
         try:
+            logging.debug(records)
             response = self._rc.import_records(records)
             assert 'count' in response
             logging.debug('issues successfully uploaded')
@@ -736,9 +768,9 @@ class Garjus:
         event=None,
         session=None,
         field=None,
-        category=None):
+        category=None
+    ):
         """Add a new issue."""
-
         # Format for REDCap
         issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -764,15 +796,15 @@ class Garjus:
             logging.error(f'error uploading:{err}')
 
     def _default_proctypes(self):
-        """Returns list of default processing types"""
+        """Returns list of default processing types."""
         return ['FS7_v1', 'FEOBVQA_v1', 'LST_v1']
 
     def _default_scantypes(self):
-        """Returns list of default scan types"""
+        """Returns list of default scan types."""
         return ['T1', 'CTAC', 'FLAIR']
 
     def _default_stattypes(self):
-        """Returns list of default stats types"""
+        """Returns list of default stats types."""
         return _default_proctypes()
 
     def primary(self, project):
@@ -820,19 +852,212 @@ class Garjus:
         for i in issues:
             records.append({
             self._dfield(): i['project'],
+            'redcap_repeat_instance': i['id'],
             'issue_closedate': issue_closedate,
             'redcap_repeat_instrument': 'issues',
-            'redcap_repeat_instance': i['ID'],
             'issues_complete': 2,
             })
 
         try:
-            response = project.import_records(records)
+            response = self._rc.import_records(records)
             assert 'count' in response
             logging.info('issues successfully completed')
         except AssertionError as err:
             logging.error(f'failed to set issues to complete:{err}')
 
+    def rename_dicom(self, in_dir, out_dir):
+        utils_dcm2nii.rename_dicom(in_dir, out_dir)
+
+    def _load_json_info(self, jsonfile):
+        with open(jsonfile) as f:
+            data = json.load(f)
+
+        return {
+            'modality': data.get('Modality', None),
+            'date': data.get('AcquisitionDateTime', None)[:10],
+            'tracer': data.get('Radiopharmaceutical', None),
+        }
+
+    def _upload_scan(self, dicomdir, scan_object):
+        nifti_list = []
+        bval_path = ''
+        bvec_path = ''
+        json_path = ''
+
+        # check that it hasn't been converted yet
+        nifti_count = len(glob.glob(os.path.join(dicomdir, '*.nii.gz')))
+        if nifti_count > 0:
+            logging.info(f'nifti exists:{dicomdir}')
+            return None
+
+        # convert
+        niftis = utils_dcm2nii.dicom2nifti(dicomdir)
+        if not niftis:
+            logging.info(f'nothing converted:{dicomdir}')
+            return None
+
+        # if session needs to be created, get the attributes from the scan json
+        jsonfile = glob.glob(os.path.join(dicomdir, '*.json'))[0]
+
+        # load json data from file
+        scan_info = self._load_json_info(jsonfile)
+        scan_modality = scan_info['modality']
+        scan_date = scan_info['date']
+        scan_tracer = scan_info['tracer']
+
+        if scan_modality == 'MR':
+            sess_datatype = 'xnat:mrSessionData'
+            scan_datatype = 'xnat:mrScanData'
+        elif scan_modality == 'PT':
+            sess_datatype = 'xnat:petSessionData'
+            scan_datatype = 'xnat:petScanData'
+        elif scan_modality == 'CT':
+            sess_datatype = 'xnat:petSessionData'
+            scan_datatype = 'xnat:ctScanData'
+        else:
+            logging.info(f'unsupported modality:{scan_modality}')
+            return
+
+        if not scan_object.parent().exists():
+            # create session with date, modality
+            logging.info(f'creating xnat session:type={sess_datatype}')
+            scan_object.parent().create(experiments=sess_datatype)
+            logging.info(f'set date={scan_date}')
+            scan_object.parent().attrs.set('date', scan_date)
+
+        scan_type = os.path.basename(niftis[0])
+        scan_type = scan_type.split('_', 1)[1]
+        scan_type = scan_type.rsplit('.nii', 1)[0]
+        scan_attrs = {
+            'series_description': scan_type,
+            'type': scan_type,
+            'quality': 'usable'}
+
+        if scan_modality == 'PT' and scan_tracer:
+            # Set the PET tracer name at session level
+            logging.info(f'set tracer:{scan_tracer}')
+            scan_object.parent().attrs.set('tracer_name', scan_tracer)
+
+        if not scan_object.exists():
+            logging.info(f'creating xnat scan:datatype={scan_datatype}')
+
+            # make the scan
+            scan_object.create(scans=scan_datatype)
+            scan_object.attrs.mset(scan_attrs)
+
+        elif scan_object.resource('DICOMZIP').exists():
+            logging.info('skipping, DICOMZIP already exists')
+            return
+
+        # upload the converted files, NIFTI/JSON/BVAL/BVEC
+        for fpath in glob.glob(os.path.join(dicomdir, '*')):
+            if not os.path.isfile(fpath):
+                continue
+
+            if fpath.endswith('ADC.nii.gz'):
+                logging.info(f'ignoring ADC NIFTI:{fpath}')
+                continue
+
+            if fpath.lower().endswith('.bval'):
+                bval_path = utils_dcm2nii.sanitize_filename(fpath)
+            elif fpath.lower().endswith('.bvec'):
+                bvec_path = utils_dcm2nii.sanitize_filename(fpath)
+            elif fpath.lower().endswith('.nii.gz'):
+                nifti_list.append(utils_dcm2nii.sanitize_filename(fpath))
+            elif fpath.lower().endswith('.json'):
+                json_path = utils_dcm2nii.sanitize_filename(fpath)
+            else:
+                pass
+
+        # more than one NIFTI
+        if len(nifti_list) > 1:
+            logging.info('dcm2nii:multiple NIFTI')
+
+        # Upload the dicom zip
+        utils_xnat.upload_dirzip(dicomdir, scan_object.resource('DICOMZIP'))
+
+        # Upload the NIFTIs
+        utils_xnat.upload_files(nifti_list, scan_object.resource('NIFTI'))
+
+        if os.path.isfile(bval_path) and os.path.isfile(bvec_path):
+            logging.info('uploading BVAL/BVEC')
+            utils_xnat.upload_file(bval_path, scan_object.resource('BVAL'))
+            utils_xnat.upload_file(bvec_path, scan_object.resource('BVEC'))
+
+        if os.path.isfile(json_path):
+            logging.info(f'uploading JSON:{json_path}')
+            utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
+
+    def upload_session(self, session_dir, project, subject, session):
+        # session dir - should only contain a subfolder for each series with
+        # as created by rename_dicom()
+
+        session_exists = False
+
+        # Check that project exists
+        if not self._xnat.select_project(project).exists():
+            logging.info('project does not exist, refusing to create')
+            return
+
+        # Check that subject exists, create as needed
+        subject_object = self._xnat.select_subject(project, subject)
+        if not subject_object.exists():
+            logging.info(f'subject does not exist, creating:{subject}')
+            subject_object.create()
+        else:
+            logging.info(f'subject exists:{subject}')
+
+        session_object = subject_object.experiment(session)
+        if not session_object.exists():
+            logging.info(f'session does not exist, will be created later')
+            # wait until get have attributes from json file: date, modality
+        else:
+            logging.info(f'session exists:{session}')
+            session_exists = True
+
+        # Handle each scan
+        for p in sorted(pathlib.Path(session_dir).iterdir()):
+            scan = p.name
+            scan_object = session_object.scan(scan)
+
+            if session_exists and scan_object.exists():
+                logging.info(f'scan exists, skipping:{scan}')
+                continue
+
+            logging.info(f'uploading scan:{scan}')
+            self._upload_scan(p, scan_object)
+            logging.info(f'finished uploading scan:{scan}')
+
+    def import_dicom_xnat(self, src, proj, subj, sess):
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+
+            # Download all inputs
+            if src.count('/') == 3:
+                # Download specified scan
+                src_proj, src_subj, src_sess, src_scan = src.split('/')
+                logging.info(f'download DICOM:{src_proj}:{src_sess}:{src_scan}')
+                scan = self._xnat.select_scan(src_proj, src_subj, src_sess, src_scan)
+                scan.resource('DICOM').get(temp_dir, extract=True)
+            else:
+                # Download all session scans DICOM
+                src_proj, src_subj, src_sess = src.split('/')
+
+                # connect to the src session
+                session_object = self._xnat.select_session(src_proj, src_subj, src_sess)
+
+                # download each dicom zip
+                for scan in session_object.scans():
+                    src_scan = scan.label()
+                    if not scan.resource('DICOM').exists():
+                        continue
+
+                    logging.info(f'download DICOM:{src_proj}:{src_sess}:{src_scan}')
+                    scan.resource('DICOM').get(temp_dir, extract=True)
+
+        # Upload them
+        logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
+        import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # TODO: def import_stats(self):
     # rather than source_stats from the outside, we call import_stats to tell

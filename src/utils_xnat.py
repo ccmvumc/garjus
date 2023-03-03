@@ -1,9 +1,12 @@
 import os
 import sys
 import tempfile
-import dax
 import json
+import pathlib
+import logging
+from zipfile import ZipFile, ZIP_DEFLATED
 
+import dax
 
 SCAN_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
@@ -474,5 +477,37 @@ def copy_xnat_session(src, dst):
 def refresh_dicom_catalog(xnat, proj, subj, sess, scan):
     _uri = '/data/services/refresh/catalog?resource='
     _uri += f'/archive/projects/{proj}/subjects/{subj}/experiments/{sess}/scans/{scan}/resources/DICOM'
-    print('refreshing dicom catalog')
+    logging.info('refreshing dicom catalog')
     xnat.post(_uri)
+
+
+def upload_files(inputfiles, resource):
+    logging.debug(f'uploading:{inputfiles}')
+    return dax.XnatUtils.upload_files_to_obj(inputfiles, resource, remove=True)
+
+
+def upload_file(inputfile, resource):
+    logging.debug(f'uploading:{inputfile}')
+    return dax.XnatUtils.upload_file_to_obj(inputfile, resource, remove=True)
+
+
+def upload_dirzip(inputdir, resource):
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        fzip = os.path.join(
+            tempdir,
+            '{}.zip'.format(pathlib.Path(inputdir).name))
+
+        logging.info(f'create zip:{inputdir}')
+        _create_zip(inputdir, fzip)
+
+        logging.info(f'upload:{fzip}')
+        dax.XnatUtils.upload_file_to_obj(fzip, resource)
+
+
+def _create_zip(input_dir, output_zip):
+    dir_path = pathlib.Path(input_dir)
+    with ZipFile(output_zip, mode="w", compression=ZIP_DEFLATED, compresslevel=9) as archive:
+
+        for file_path in dir_path.rglob("*.dcm"):
+            archive.write(file_path, arcname=file_path.relative_to(dir_path))
