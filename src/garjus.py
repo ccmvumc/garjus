@@ -247,8 +247,14 @@ class Garjus:
         else:
             self.import_dicom_xnat(src, proj, subj, sess)
 
-        logging.info('Please Note! only DICOM that successfullly converts\
-            to NIFTI is uploaded as DICOMZIP')
+        logging.info(f'adding activity:{src}')
+        self.add_activity(
+            proj,
+            'import_dicom',
+            description=src,
+            subject=subj,
+            session=sess,
+            result='COMPLETE')
 
     def scans(self, projects=None, scantypes=None, modalities='MR'):
         """Query XNAT for all scans and return a dictionary of scan info."""
