@@ -95,8 +95,10 @@ class Garjus:
 
         if xnat_interface:
             self._xnat = xnat_interface
+            self._disconnect_xnat = False
         else:
             self._xnat = self._default_xnat()
+            self._disconnect_xnat = True
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
@@ -109,6 +111,11 @@ class Garjus:
         self._projects = self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
+
+    def __del__(self):
+        if self._disconnect_xnat:
+            logging.info('disconnecting xnat')
+            self._xnat.disconnect()
 
     @staticmethod
     def _default_xnat():

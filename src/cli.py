@@ -49,8 +49,7 @@ def update(project):
         project = project.split(',')
 
     g = Garjus()
-    result = g.update(projects=project, choices=['issues'])
-    click.echo(result)
+    g.update(projects=project, choices=['issues'])
 
 
 @cli.command('progress')
@@ -61,8 +60,7 @@ def progress(project):
         project = project.split(',')
 
     g = Garjus()
-    result = g.progress(projects=project)
-    click.echo(result)
+    g.progress(projects=project)
 
 
 @cli.command('importdicom')
@@ -71,8 +69,7 @@ def progress(project):
 def import_dicom(src, dst):
     click.echo('garjus! import')
     g = Garjus()
-    result = g.import_dicom(src, dst)
-    click.echo(result)
+    g.import_dicom(src, dst)
 
 
 @cli.command('dashboard')
