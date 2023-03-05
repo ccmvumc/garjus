@@ -42,14 +42,16 @@ def activity(project):
 
 
 @cli.command('update')
-@click.option('--project', '-p', 'project')
-def update(project):
+@click.argument(
+    'choice', 
+    type=click.Choice(['stats' ,'issues', 'progress', 'automations']),
+    required=False,
+    nargs=-1)
+@click.option('--project', '-p', 'project', multiple=True)
+def update(choice, project):
     click.echo('garjus! update')
-    if project:
-        project = project.split(',')
-
     g = Garjus()
-    g.update(projects=project, choices=['issues'])
+    g.update(projects=project, choices=choice)
 
 
 @cli.command('progress')
