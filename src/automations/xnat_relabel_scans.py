@@ -42,9 +42,11 @@ def relabel_scans(xnat, project, relabels):
                 print('nope')
                 continue
 
-            scan_obj.attrs.set('xnat:imagescandata/type',  relabels[scan_type])
+            # Set the new type
+            new_type = relabels[scan_type]
+            scan_obj.attrs.set('xnat:imagescandata/type', new_type)
             results.append({
-                    'description': 'xnat_relabel_scans',
+                    'description': f'xnat_relabel_scans:{new_type}',
                     'result': 'COMPLETE',
                     'category': 'xnat_relabel_scans',
                     'subject': subj,

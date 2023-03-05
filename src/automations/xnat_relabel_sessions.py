@@ -1,6 +1,8 @@
 import fnmatch
 import re
 import json
+import logging
+
 
 SESS_URI = '/REST/experiments?xsiType=xnat:imagesessiondata&columns=\
 ID,\
@@ -18,6 +20,7 @@ modality'
 # If the key in [0] matches the value in [1],
 # then change the value for key in [2] to the value in [3]
 # if[0]==[1]: [2] = [3]
+
 
 def process_project(xnat, project, relabels, replace):
     """Apply relabels to project sessions."""
@@ -71,7 +74,7 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
         return None
 
     # Connect to the session on xnat and apply new values
-    print('{}:{}:setting:{}'.format(cur_proj, cur_sess, mset))
+    logging.info(f'{cur_proj}:{cur_sess}:setting:{mset}')
     sess_obj = xnat.select_session(cur_proj, cur_subj, cur_sess)
     sess_obj.attrs.mset(mset)
 

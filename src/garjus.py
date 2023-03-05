@@ -157,8 +157,8 @@ class Garjus:
 
     def add_activity(
         self,
-        project,
-        category,
+        project=None,
+        category=None,
         description=None,
         subject=None,
         event=None,
@@ -184,6 +184,7 @@ class Garjus:
             'activity_result': 'COMPLETE',
             'activity_subject': subject,
             'activity_session': session,
+            'activity_scan': scan,
             'activity_type': category,
             'redcap_repeat_instrument': 'activity',
             'redcap_repeat_instance': 'new',
@@ -305,8 +306,8 @@ class Garjus:
 
         logging.info(f'adding activity:{src}')
         self.add_activity(
-            proj,
-            'import_dicom',
+            project=proj,
+            category='import_dicom',
             description=src,
             subject=subj,
             session=sess,
@@ -587,8 +588,8 @@ class Garjus:
             # Only run on intersect of specified projects and projects with
             # stats, such that if the list is empty, nothing will run
             logging.info('updating stats')
-            stats_project = [x for x in projects if x in self.stats_projects()]
-            update_stats(self, stats_projects)
+            _projects = [x for x in projects if x in self.stats_projects()]
+            update_stats(self, _projects)
 
         if 'progess' in choices:
             # confirm each project has report for current month with PDF & zip
@@ -672,7 +673,7 @@ class Garjus:
 
     def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
-        if len(stats_data.keys()) > self.max_stats:
+        if len(data.keys()) > self.max_stats:
             logging.debug('found more than 50 stats:too many, specify subset')
             return
 
@@ -888,7 +889,7 @@ class Garjus:
         primary_redcap = None
         project_id = self.project_setting(project, 'primary')
         if not project_id:
-            logging.info(f'no primary project id found for project:{project}')
+            logging.debug(f'no primary project id found for project:{project}')
             return None
 
         try:

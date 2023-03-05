@@ -125,7 +125,7 @@ def _add_issues(garjus, records, project=None):
   
     # First check existing issues,
     # import new issues and update existing,
-    # complete(or delete???) any no longer found
+    # complete any no longer found
 
     # Check for errors
     for r in records:
@@ -158,8 +158,6 @@ def _add_issues(garjus, records, project=None):
     if fixed_issues:
         logging.info(f'setting {len(fixed_issues)} resolved issues to complete')
         garjus.close_issues(fixed_issues)
-        # Delete old resolved issues
-        logging.info(f'TBD:delete_old_issues')
     else:
         logging.info('no resolved issues to complete')
 
