@@ -55,7 +55,7 @@ def _audit_record(record, src_labels, dst_labels):
         result.update({'category': 'MISSING_SESSION', 'description': msg})
     elif dst_sess not in dst_labels:
         # Add issue that auto archive needs to run
-        msg = f'{src_project_name}:{src_sess}:auto archive not working'
+        msg = f'{src_sess}:auto archive not working'
         logging.info(msg)
         result.update({'category': 'NEEDS_AUTO', 'description': msg})
 

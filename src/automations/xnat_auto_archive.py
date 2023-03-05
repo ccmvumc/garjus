@@ -1,3 +1,4 @@
+"""Archive scans in XNAT."""
 import logging
 
 # Copy session from project named for PI to primary project.
@@ -9,13 +10,15 @@ import logging
 def process_project(
     garjus,
     scan_table,
-    src_project,
-    dst_project):
+    source_project,
+    destination_project
+):
     """Copy from src to dst as needed."""
     results = []
-
-    src_labels = garjus.session_labels(src_project)
-    dst_labels = garjus.session_labels(dst_project)
+    src_proj = source_project
+    dst_proj = destination_project
+    src_labels = garjus.session_labels(src_proj)
+    dst_labels = garjus.session_labels(dst_proj)
 
     # Process each record
     for r in scan_table:
@@ -40,8 +43,15 @@ def process_project(
 
         # TODO: check last_modified and wait until it's been 1 hour
 
-        logging.info(f'copying:{src_subj}/{src_sess}:{dst_subj}/{dst_sess}')
-       
+        logging.info('copying:{0}/{1}{2}:{3}/{4}/{5}'.format(
+            src_proj,
+            src_subj,
+            src_sess,
+            dst_proj,
+            dst_subj,
+            dst_sess,
+            ))
+
         garjus.copy_session(
             src_proj,
             src_subj,

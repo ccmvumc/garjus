@@ -22,6 +22,7 @@ ISSUES_RENAME = {
     'issue_description': 'DESCRIPTION',
     'issue_event': 'EVENT',
     'issue_field': 'FIELD',
+    'issue_scan': 'SCAN',
     'issue_session': 'SESSION',
     'issue_subject': 'SUBJECT',
     'issue_type': 'CATEGORY',
