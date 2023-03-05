@@ -52,10 +52,15 @@ from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 
 
 COLUMNS = {
-    'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
-    'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS', 'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY'],
-    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
-    'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
+    'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
+                 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
+    'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE',
+                  'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
+                  'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY'],
+    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
+               'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
+    'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
+              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY']
 }
 
 # TODO: load this information from processor yamls
@@ -63,7 +68,8 @@ PROCLIB = {
     'FS7_v1': {
         'procurl': 'https://github.com/bud42/FS7',
         'short_descrip': 'FreeSurfer 7 recon-all',
-        'stats_descrip': 'Volumes in cubic millimeters, thickness in millimeters',
+        'stats_descrip':
+            'Units for volumes is cubic millimeters, thickness is millimeters',
     },
     'FS7HPCAMG_v1': {
         'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
@@ -86,12 +92,12 @@ class Garjus:
         xnat_interface (pyxnat.Interface): The PyXNAT interface.
     """
 
-    def __init__(self, redcap_project: Project=None, xnat_interface: Interface=None):
+    def __init__(
+        self,
+        redcap_project: Project=None,
+        xnat_interface: Interface=None):
         """Initialize garjus."""
-        if redcap_project:
-            self._rc = redcap_project
-        else:
-            self._rc = self._default_redcap()
+        self._rc = (redcap_project or self._default_redcap())
 
         if xnat_interface:
             self._xnat = xnat_interface
@@ -113,8 +119,9 @@ class Garjus:
         self._columns = self._default_column_names()
 
     def __del__(self):
+        """Close connectinons we opened."""
         if self._disconnect_xnat:
-            logging.info('disconnecting xnat')
+            logging.debug('disconnecting xnat')
             self._xnat.disconnect()
 
     @staticmethod
@@ -236,6 +243,48 @@ class Garjus:
 
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
+
+    def delete_old_issues(self, projects=None, days=7):
+        old_issues = []
+
+        # Get the data from redcap
+        _fields = [self._dfield()]
+        if projects:
+            # Only the specified project
+            rec = self._rc.export_records(
+                records=projects,
+                forms=['issues'],
+                fields=_fields,
+            )
+        else:
+            # All issues
+            rec = self._rc.export_records(forms=['issues'], fields=_fields)
+
+        # Only resolved issues
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
+        rec = [x for x in rec if str(x['issues_complete']) == '2']
+
+        # Find old issues
+        for r in rec:
+            # Find how many days old the record is
+            issue_date = r['issue_closedate']
+            try:
+                issue_date = datetime.strptime(issue_date, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                issue_date = datetime.strptime(issue_date, '%Y-%m-%d')
+
+            # Determine how many days old
+            days_old = (datetime.now() - issue_date).days
+
+            # Append to list if more than requested days
+            if days_old >= days:
+                _main = r[self._dfield()],
+                _id = r['redcap_repeat_instance']
+                logging.debug(f'{_main}:{_id}:{days_old} days old')
+                old_issues.append(r)
+
+        # Apply delete to list of old issues
+        self.delete_issues(old_issues)
 
     def import_dicom(self, src, dst):
         """Import dicom source to destination."""
@@ -411,7 +460,9 @@ class Garjus:
         for r in result:
             k = (r['project'], r['session_label'], r['xnat:imagescandata/id'])
             if k in scans.keys():
-                scans[k]['RESOURCES'] += ',' + r['xnat:imagescandata/file/label']
+                # Append to list of resources
+                _resource = r['xnat:imagescandata/file/label']
+                scans[k]['RESOURCES'] += ',' + _resource
             else:
                 scans[k] = self._scan_info(r)
 
@@ -473,11 +524,12 @@ class Garjus:
         # info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])
 
         # Get the full path
-        info['full_path'] = '/projects/{}/subjects/{}/experiments/{}/assessors/{}'.format(
+        _p = '/projects/{0}/subjects/{1}/experiments/{2}/assessors/{3}'.format(
             info['PROJECT'],
             info['SUBJECT'],
             info['SESSION'],
             info['ASSR'])
+        info['full_path'] = _p
 
         # set_modality
         info['MODALITY'] = self.xsi2mod.get(info['XSITYPE'], 'UNK')
@@ -519,7 +571,7 @@ class Garjus:
         if not choices:
             choices = ['issues', 'automations', 'stats', 'progress']
 
-        logging.info(f'updating projects:{projects}')
+        logging.info(f'updating projects:{projects}:{choices}')
 
         if 'automations' in choices:
             logging.info('updating automations')
@@ -528,20 +580,23 @@ class Garjus:
         if 'issues' in choices:
             logging.info('updating issues')
             update_issues(self, projects)
+            logging.info('deleting old issues')
+            self.delete_old_issues(projects)
 
         if 'stats' in choices:
-            # Only run on intersect of specified projects and projects with stats,
-            # such that if the list is empty, nothing will run
+            # Only run on intersect of specified projects and projects with
+            # stats, such that if the list is empty, nothing will run
             logging.info('updating stats')
-            update_stats(self, [x for x in projects if x in self.stats_projects()])
+            stats_project = [x for x in projects if x in self.stats_projects()]
+            update_stats(self, stats_projects)
 
         if 'progess' in choices:
-            # check that each project has report for current month with PDF and zip
+            # confirm each project has report for current month with PDF & zip
             logging.info('updating progress')
             update_progress(self, projects)
 
-        # TODO: print('updating jobs') # can't do this until queue is in REDCap,
-        # for now we'll continue to use run_build.py
+        # TODO: print('updating jobs') # can't do this until queue is in
+        # REDCap, for now we'll continue to use run_build.py
 
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
@@ -615,14 +670,14 @@ class Garjus:
 
         return f'{stats_dir}/STATS'
 
-    def set_stats(self, project, subject, session, assessor, stats_data):
+    def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
         if len(stats_data.keys()) > self.max_stats:
             logging.debug('found more than 50 stats:too many, specify subset')
             return
 
         # Create list of stat records
-        rec = [{'stats_name': k, 'stats_value': v} for k, v in stats_data.items()]
+        rec = [{'stats_name': k, 'stats_value': v} for k, v in data.items()]
 
         # Build out the records
         for r in rec:
@@ -743,6 +798,10 @@ class Garjus:
 
         return scan_autos
 
+    def edat_protocols(self, project):
+        """Return list of edat protocol records."""
+        return self._rc.export_records(records=[project], forms=['edat'])
+
     def scanning_protocols(self, project):
         """Return list of scanning protocol records."""
         return self._rc.export_records(records=[project], forms=['scanning'])
@@ -759,6 +818,7 @@ class Garjus:
                 'issue_date': issue_datetime,
                 'issue_subject': i.get('subject', None),
                 'issue_session': i.get('session', None),
+                'issue_scan': i.get('scan', None),
                 'issue_event': i.get('event', None),
                 'issue_field': i.get('field', None),
                 'issue_type': i.get('category', None),
@@ -772,13 +832,15 @@ class Garjus:
             assert 'count' in response
             logging.debug('issues successfully uploaded')
         except AssertionError as err:
-            logger.error(f'issues upload failed:{err}')
+            logging.error(f'issues upload failed:{err}')
 
     def add_issue(
         self,
         description,
         project=None,
         event=None,
+        subject=None,
+        scan=None,
         session=None,
         field=None,
         category=None
@@ -793,6 +855,7 @@ class Garjus:
             'issue_date': issue_datetime,
             'issue_subject': subject,
             'issue_session': session,
+            'issue_scan': scan,
             'issue_event': event,
             'issue_field': field,
             'issue_type': category,
@@ -809,15 +872,15 @@ class Garjus:
             logging.error(f'error uploading:{err}')
 
     def _default_proctypes(self):
-        """Returns list of default processing types."""
+        """Get list of default processing types."""
         return ['FS7_v1', 'FEOBVQA_v1', 'LST_v1']
 
     def _default_scantypes(self):
-        """Returns list of default scan types."""
+        """Get list of default scan types."""
         return ['T1', 'CTAC', 'FLAIR']
 
     def _default_stattypes(self):
-        """Returns list of default stats types."""
+        """Return list of default stats types."""
         return _default_proctypes()
 
     def primary(self, project):
@@ -836,39 +899,58 @@ class Garjus:
 
         return primary_redcap
 
+    def alternate(self, project_id):
+        """Connect to the alternate redcap with this ID."""
+        alt_redcap = None
+
+        try:
+            alt_redcap = utils_redcap.get_redcap(project_id)
+        except Exception as err:
+            logging.info(f'failed to load alternate redcap:{project_id}:{err}')
+            alt_redcap = None
+
+        return alt_redcap
+
     def xnat(self):
+        """Get the xnat for this garjus."""
         return self._xnat
 
-    def copy_session(self,
+    def copy_session(
+        self,
         src_proj,
         src_subj,
         src_sess,
         dst_proj,
         dst_subj,
-        dst_sess):
-        """Copy scanning/imaging session from source to destination"""
-        src_obj = self._xnat.select_session(src_project, src_subj, src_sess)
-        dst_obj = self._xnat.select_session(dst_project, dst_subj, dst_sess)
+        dst_sess
+    ):
+        """Copy scanning/imaging session from source to destination."""
+        src_obj = self._xnat.select_session(src_proj, src_subj, src_sess)
+        dst_obj = self._xnat.select_session(dst_proj, dst_subj, dst_sess)
         utils_xnat.copy_session(src_obj, dst_obj)
 
     def source_project_exists(self, project):
+        """True if this project exist in the source projects."""
         return self._xnat.select.project(project).exists()
 
     def project_exists(self, project):
-        return (project in self.projects()) and \
-        self._xnat.select.project(project).exists()
+        """True if this this project exists."""
+        redcap_exists = (project in self.projects())
+        xnat_exists = self._xnat.select.project(project).exists()
+        return redcap_exists and xnat_exists
 
     def close_issues(self, issues):
+        """Close specified issues, set to complete in REDCap."""
         records = []
         issue_closedate = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         for i in issues:
             records.append({
-            self._dfield(): i['project'],
-            'redcap_repeat_instance': i['id'],
-            'issue_closedate': issue_closedate,
-            'redcap_repeat_instrument': 'issues',
-            'issues_complete': 2,
+                self._dfield(): i['project'],
+                'redcap_repeat_instance': i['id'],
+                'issue_closedate': issue_closedate,
+                'redcap_repeat_instrument': 'issues',
+                'issues_complete': 2,
             })
 
         try:
@@ -878,7 +960,30 @@ class Garjus:
         except AssertionError as err:
             logging.error(f'failed to set issues to complete:{err}')
 
+    def delete_issues(self, issues):
+        """Delete specified issues, delete in REDCap."""
+        try:
+            for i in issues:
+                _main = i[self._dfield()],
+                _id = i['redcap_repeat_instance']
+                logging.info(f'deleting:issue:{_main}:{_id}')
+                # https://redcap.vanderbilt.edu/api/help/?content=del_records
+                _payload = {
+                    'action': 'delete',
+                    'returnFormat': 'json',
+                    'records[0]': _main,
+                    'instrument': 'issues',
+                    'repeat_instance': _id,
+                    'content': 'record',
+                    'token': self._rc.token,
+                    'format': 'json'}
+
+                self._rc._call_api(_payload, 'del_record')
+        except Exception as err:
+            logging.error(f'failed to delete records:{err}')
+
     def rename_dicom(self, in_dir, out_dir):
+        """Sort DICOM folder into scans."""
         utils_dcm2nii.rename_dicom(in_dir, out_dir)
 
     def _load_json_info(self, jsonfile):
