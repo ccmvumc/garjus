@@ -7,6 +7,9 @@ Automation names corresond to folder name.
 """
 import logging
 import importlib
+import tempfile
+
+from ..utils_redcap import download_file, field2events
 
 
 def update(garjus, projects, autos_include=None, autos_exclude=None):
@@ -18,7 +21,6 @@ def update(garjus, projects, autos_include=None, autos_exclude=None):
 
 def update_project(garjus, project, autos_include=None, autos_exclude=None):
     """Update automations for project."""
-    results = []
 
     # Get filtered list for this project
     scan_autos = garjus.scan_automations(project)
@@ -47,8 +49,6 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         logging.info(f'{project}:running automation:{a}')
         _run_etl_automation(a, garjus, project)
 
-    return results
-
 
 def _parse_scanmap(scanmap):
     """Parse scan map stored as string into map."""
@@ -63,31 +63,115 @@ def _parse_scanmap(scanmap):
 
 def _run_etl_automation(automation, garjus, project):
     """Load the project primary redcap."""
+    results = []
+
     project_redcap = garjus.primary(project)
     if not project_redcap:
         logging.info('not found')
         return
 
-    # load the automation
-    try:
-        m = importlib.import_module(f'src.automations.{automation}')
-    except ModuleNotFoundError as err:
-        logging.error(f'error loading module:{automation}:{err}')
-        return
+    if automation == 'etl_nihexaminer':
+        results = _run_etl_nihexaminer(project_redcap)
+    else:
+        # load the automation
+        try:
+            m = importlib.import_module(f'src.automations.{automation}')
+        except ModuleNotFoundError as err:
+            logging.error(f'error loading module:{automation}:{err}')
+            return
 
-    # Run it
-    try:
-        results = m.process_project(project_redcap)
-    except Exception as err:
-        logging.error(f'{project}:{automation}:failed to run:{err}')
-        # garjus.add_issue()
-        return
+        # Run it
+        try:
+            results = m.process_project(project_redcap)
+        except Exception as err:
+            logging.error(f'{project}:{automation}:failed to run:{err}')
+            return
 
     # Upload results to garjus
     for r in results:
         r.update({'project': project, 'category': automation})
         r.update({'description': r.get('description', automation)})
         garjus.add_activity(**r)
+
+
+def _run_etl_nihexaminer(project):
+    """Process examiner files from REDCap and upload results"""
+    data = {}
+    results = []
+    events = []
+    fields = []
+    records = []
+    flanker_field = 'flanker_file'
+    nback_field = 'nback_upload'
+    shift_field = 'set_shifting_file'
+    cpt_field = 'cpt_upload'
+    done_field = 'flanker_score'
+
+    # load the automation
+    try:
+        examiner = importlib.import_module(f'src.automations.etl_nihexaminer')
+    except ModuleNotFoundError as err:
+        logging.error(f'error loading module:examiner:{err}')
+        return
+
+    # Get the fields
+    fields = [project.def_field, done_field, cpt_field]
+
+    # Determine events
+    events = field2events(project, cpt_field)
+
+    # Get records for those events and fields
+    records = project.export_records(fields=fields, events=events)
+
+    for r in records:
+        data = {}
+        record_id = r[project.def_field]
+        event_id = r['redcap_event_name']
+
+
+
+        if record_id != '1':
+            continue
+
+
+
+        if r[done_field]:
+            logging.debug(f'already ETL:{record_id}:{event_id}')
+            continue
+
+        if not r[cpt_field]:
+            logging.debug(f'no data file:{record_id}:{event_id}')
+            continue
+
+        logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
+        with tempfile.TemporaryDirectory() as tmpdir:
+            flanker_file = f'{tmpdir}/flanker.csv'
+            cpt_file = f'{tmpdir}/cpt.csv'
+            nback_file =f'{tmpdir}/nback.csv'
+            shift_file =f'{tmpdir}/shift.csv'
+
+            # Download files from redcap
+            logging.debug(f'download files:{record_id}:{event_id}:{flanker_file}')
+            download_file(project, record_id, event_id, flanker_field, flanker_file)
+            logging.debug(f'download NBack:{record_id}:{event_id}:{nback_field}')
+            download_file(project, record_id, event_id, nback_field, nback_file)
+            logging.debug(f'download Shift:{record_id}:{event_id}:{shift_field}')
+            download_file(project, record_id, event_id, shift_field, shift_file)
+            logging.debug(f'download CPT:{record_id}:{event_id}:{cpt_field}')
+            download_file(project, record_id, event_id, cpt_field, cpt_file)
+
+            # Extract data from file
+            try:
+                data = examiner.process(flanker_file, cpt_file, nback_file, shift_file)
+            except Exception as err:
+                logging.error(f'downloading files:{record_id}:{event_id}')
+                continue
+
+        # Load data back to redcap
+        _load(project, record_id, event_id, data)
+        results.append({'subject': record_id, 'event': event_id})
+
+    return results
 
 
 def _run_scan_automations(automations, garjus, project):
@@ -228,3 +312,15 @@ def _session_relabels(scan_data, site_data):
             rec['site_shortname']))
 
     return relabels
+
+
+def _load(project, record_id, event_id, data):
+    data[project.def_field] = record_id
+    data['redcap_event_name'] = event_id
+
+    try:
+        response = project.import_records([data])
+        assert 'count' in response
+        logging.info(f'uploaded:{record_id}:{event_id}')
+    except AssertionError as e:
+        logging.error('error uploading', record_id, e)

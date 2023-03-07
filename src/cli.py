@@ -52,6 +52,7 @@ def update(choice, project):
     click.echo('garjus! update')
     g = Garjus()
     g.update(projects=project, choices=choice)
+    click.echo('ALL DONE!')
 
 
 @cli.command('progress')
