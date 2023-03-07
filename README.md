@@ -1,11 +1,11 @@
 # garjus
 
-garjus is a helper for imaging projects stored in REDCap and XNAT. It provides
-a single point of access and logs activity.
+Garjus processes imaging data stored in REDCap and XNAT. All related settings are stored in REDCap. Each automation that runs is logged in REDCap. Any issues encountered are recorded in REDCap. Progress snapshots are stored in REDCap. Current views are in the dashboard.
+
 
 The main Garjus class provides these data access methods that 
 all return a Pandas DataFrame:
-
+```
 activity()
 
 assessors()
@@ -21,18 +21,23 @@ progress()
 scans()
 
 stats(project)
+```
 
 
 
 To get the columns in each dataframe:
-
-column_names(type), e.g. column_names('issues') or column_names('scans')
-
+```
+column_names(type)
+e.g. 
+column_names('issues')
+or
+column_names('scans')
+```
 
 
 
 These Garjus methods returns names in a list:
-
+```
 stattypes(project)
 
 scantypes(project)
@@ -43,12 +48,11 @@ stats_assessors(project)
 
 stats_projects()
 
-
+```
 
 garjus progress report - exports assessors, scans, stats for a project,
 creates a summary PDF and zip of file of csv files per processing type. Can
 be access from REDCap or dashboard.
-
 
 
 garjus double entry comparison - compares primary REDCap to secondary REDCap
@@ -59,13 +63,11 @@ and uploads results to REDCap.
 garjus dashboard - launches a dax dashboard and opens it in a new tab browser
 
 
-
 garjus image03 - manages NDA image03 batches in a shared folder such as OneDrive
 
 
 
-
-ToBeCompleted:garjus can run automations including:
+garjus can run automations including:
 
 xnat_auto_archive - archives scans in XNAT
 
@@ -95,11 +97,12 @@ lifedata_box2redcap
 
 
 
-ToBeCompleted:issues
+issues - Any issues or errors encountered by garjus are recorded in REDCap.
+Issues are automatically resolved when the error or issues is no longer found.
+Resolved issues are deleted one week after resolution.
 
 
 
-ToBeCompleted:activity
-
+activity - Each complete automation is recorded in activity.
 
 
