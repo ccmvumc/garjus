@@ -194,7 +194,8 @@ def toolbox_extract_cogscores(filename):
 
 
 def process_project(project):
-    events = field2events(project, 'toolbox_regdata')
+    results = []
+    events = field2events(project, reg_field)
 
     records = project.export_records(
         fields=[project.def_field, done_field, reg_field, score_field],
@@ -213,7 +214,10 @@ def process_project(project):
             continue
 
         logging.info(f'running ETL:{record_id}:{event_id}')
+        results.append({'subject': record_id, 'event': event_id})
         run(project, record_id, event_id)
+
+    return results
 
 
 if __name__ == "__main__":
