@@ -391,7 +391,7 @@ def _make_scan_table(
         d = {}
         d['src_session'] = r[sess_field]
         d['src_subject'] = d['src_session']
-        d['dst_subject'] = id2subj.get(r[def_field], '')
+        d['dst_subject'] = id2subj.get(r[def_field], r[def_field])
         d['dst_session'] = d['dst_subject'] + scan_suffix
         data.append(d)
 
