@@ -30,6 +30,11 @@ def process_project(
         # Remove leading and trailing whitespace that keeps showing up
         src_sess = src_sess.strip()
 
+        if destination_project == 'D3':
+            # Hard code this to avoid duplicates
+            dst_subj = dst_subj.replace('v', 'V')
+            dst_sess = dst_sess.replace('v', 'V')
+
         # Check if session already exists in destination project
         if dst_sess in dst_labels:
             # Note that we don't check the other values in redcap
@@ -43,7 +48,7 @@ def process_project(
 
         # TODO: check last_modified and wait until it's been 1 hour
 
-        logging.info('copying:{0}/{1}{2}:{3}/{4}/{5}'.format(
+        logging.info('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
             src_proj,
             src_subj,
             src_sess,
