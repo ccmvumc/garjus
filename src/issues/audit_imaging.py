@@ -24,6 +24,13 @@ def _audit_record(record, src_labels, dst_labels):
     event = record['event']
     result = {}
 
+    if dst_subj.startswith('v'):
+        dst_subj = dst_subj.replace('v', 'V')
+
+    if dst_sess.startswith('v'):
+        # Hard code this to avoid duplicates
+        dst_sess = dst_sess.replace('v', 'V')
+
     # Remove PI prefix if present
     if '_' in src_sess:
         logging.debug(f'{src_sess}:removing PI prefix')

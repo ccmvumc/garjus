@@ -112,9 +112,9 @@ def _run_etl_nihexaminer(project):
         logging.error(f'error loading module:examiner:{err}')
         return
 
-    if project.export_project_info()['project_title'] == 'Depressed Mind 2':
+    if 'flanker_summfile' in project.field_names:
         # Alternate file field names
-        flank_field = 'flanker_summfile'
+        flank_field = ''
         nback_field = 'nback_summfile'
         shift_field = 'set_shifting_summfile'
         cpt_field = 'cpt_summfile'
@@ -150,7 +150,7 @@ def _run_etl_nihexaminer(project):
         'brs_9',
     ]
 
-    if 'D3' in project.export_project_info()['project_title']:
+    if 'correct_s' in project.field_names:
         fields = fields.extend([
             'correct_s', 'rule_vio_s, repetition_s',
             'correct_t', 'rule_vio_t, repetition_t',
@@ -159,7 +159,6 @@ def _run_etl_nihexaminer(project):
             'correct_m', 'rule_vio_m, repetition_m',
             'correct_cloth', 'rule_vio_cloth, repetition_cloth',
         ])
-    print(fields)
 
     # Determine events
     events = field2events(project, cpt_field)
