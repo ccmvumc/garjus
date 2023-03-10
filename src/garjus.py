@@ -591,7 +591,7 @@ class Garjus:
             _projects = [x for x in projects if x in self.stats_projects()]
             update_stats(self, _projects)
 
-        if 'progess' in choices:
+        if 'progress' in choices:
             # confirm each project has report for current month with PDF & zip
             logging.info('updating progress')
             update_progress(self, projects)
