@@ -169,7 +169,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
     _kwargs = {'w': 1.2, 'h': 0.7, 'border': 1, 'align': 'C', 'fill': True}
-    pdf.cell(w=0.7, border=0, fill=False)
+    #pdf.cell(w=0.7, border=0, fill=False)
 
     # Column header for each session type
     for cur_type in type_list:
@@ -182,7 +182,8 @@ def _draw_counts(pdf, sessions, rangetype=None):
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
     _kwargs = {'w': 1.2, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_site = {'w': 1.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_site = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_tot = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
 
     # Row for each site
     for cur_site in site_list:
@@ -198,18 +199,18 @@ def _draw_counts(pdf, sessions, rangetype=None):
 
         # Total for site
         cur_count = str(len(dfs))
-        pdf.cell(**_kwargs, txt=cur_count)
+        pdf.cell(**_kwargs_tot, txt=cur_count)
         pdf.ln()
 
     # TOTALS row
     pdf.cell(w=1.0)
-    pdf.cell(w=0.7, h=0.5)
+    #pdf.cell(w=0.7, h=0.5)
     for cur_type in type_list:
         pdf.set_font('helvetica', size=18)
         cur_count = str(len(df[df.SESSTYPE == cur_type]))
         pdf.cell(**_kwargs, txt=cur_count)
 
-    pdf.cell(**_kwargs, txt=str(len(df)))
+    pdf.cell(**_kwargs_tot, txt=str(len(df)))
 
     pdf.ln()
 
@@ -393,9 +394,11 @@ def _add_graph_page(pdf, info):
     graph.add_node(pydot.Node('EDAT', color='violet'))
 
     graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
+    graph.add_edge(pydot.Edge('T1', 'fmri_msit_v2'))
     graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
+    graph.add_edge(pydot.Edge('T1', 'BrainAgeGap_v2'))
     graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
-    graph.add_edge(pydot.Edge('FS7_v1', 'FS7-HPCAMG_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'FS7HPCAMG_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
     graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
@@ -404,10 +407,21 @@ def _add_graph_page(pdf, info):
     graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))
     graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
     graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
-    graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2'))
-    graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1'))
+    graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2', style='dashed'))
+    graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1', style='dashed'))
     graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
+    graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
+    graph.add_edge(pydot.Edge('T1', 'LST_v1'))
 
+    # stats
+    graph.add_node(pydot.Node('stats.zip', color='lightgreen'))
+    graph.add_edge(pydot.Edge('fmri_bct_v1', 'stats.zip'))
+    graph.add_edge(pydot.Edge('fmri_msit_v2', 'stats.zip'))
+    graph.add_edge(pydot.Edge('BrainAgeGap_v2', 'stats.zip'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'stats.zip'))
+    graph.add_edge(pydot.Edge('FS7HPCAMG_v1', 'stats.zip'))
+    graph.add_edge(pydot.Edge('LST_v1', 'stats.zip'))
+    graph.add_edge(pydot.Edge('SAMSEG_v1', 'stats.zip'))
 
     # Make the graph, draw to pdf
     image = Image.open(io.BytesIO(graph.create_png()))
@@ -569,9 +583,9 @@ def _add_proclib_page(pdf, info):
             _text += 'URL: ' + v['procurl'] + '\n'
 
         pdf.multi_cell(0, 0.3, _text, border=0, align="L")
-        pdf.ln(0.15)
+        pdf.ln(0.1)
         pdf.line(x1=1.0, y1=pdf.get_y(), x2=7.0, y2=pdf.get_y())
-        pdf.ln(0.15)
+        pdf.ln(0.2)
 
     return pdf
 
