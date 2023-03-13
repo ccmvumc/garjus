@@ -287,19 +287,7 @@ def _run_scan_automations(automations, garjus, project):
     scan_data = garjus.scanning_protocols(project)
     site_data = garjus.sites(project)
     protocols = garjus.scanning_protocols(project)
-
-    # Build the session relabling
-    sess_relabel = _session_relabels(scan_data, site_data)
-
-    # Parse scan map
-    if proj_scanmap:
-        proj_scanmap = _parse_scanmap(proj_scanmap)
-
-    # Load the project primary redcap
     project_redcap = garjus.primary(project)
-    if not project_redcap:
-        logging.info('primary redcap not found, cannot run automations')
-        return
 
     # load the automations
     try:
@@ -310,42 +298,48 @@ def _run_scan_automations(automations, garjus, project):
         logging.error(f'error loading scan automations:{err}')
         return
 
-    # Get xnat connection
-    xnat = garjus.xnat()
+    if 'xnat_auto_archive' in automations and project_redcap:
+        logging.info('primary redcap not found, cannot run automations')
 
-    # Apply autos to each scanning protocol
-    for p in protocols:
-        date_field = p['scanning_datefield']
-        sess_field = p['scanning_srcsessfield']
-        sess_suffix = p['scanning_xnatsuffix']
-        src_project = p['scanning_srcproject']
+        # Apply autos to each scanning protocol
+        for p in protocols:
+            date_field = p['scanning_datefield']
+            sess_field = p['scanning_srcsessfield']
+            sess_suffix = p['scanning_xnatsuffix']
+            src_project = p['scanning_srcproject']
 
-        # Get events list
-        events = None
-        if p.get('scanning_events', False):
-            events = [x.strip() for x in p['scanning_events'].split(',')]
+            # Get events list
+            events = None
+            if p.get('scanning_events', False):
+                events = [x.strip() for x in p['scanning_events'].split(',')]
 
-        # Make the scan table that links what's entered at the scanner with
-        # what we want to label the scans
-        scan_table = _make_scan_table(
-            project_redcap,
-            events,
-            date_field,
-            sess_field,
-            sess_suffix)
+            # Make the scan table that links what's entered at the scanner with
+            # what we want to label the scans
+            scan_table = _make_scan_table(
+                project_redcap,
+                events,
+                date_field,
+                sess_field,
+                sess_suffix)
 
-        # Run
-        if 'xnat_auto_archive' in automations:
+            # Run
             results += xnat_auto_archive.process_project(
                 garjus, scan_table, src_project, project)
 
     # Apply relabeling
     if 'xnat_relabel_sessions' in automations:
+        # Build the session relabling
+        sess_relabel = _session_relabels(scan_data, site_data)
+        # Run it
         results += xnat_relabel_sessions.process_project(
-            xnat, project, sess_relabel, sess_replace)
-    if 'xnat_relabel_scans' in automations:
+            garjus.xnat(), project, sess_relabel, sess_replace)
+
+    if 'xnat_relabel_scans' in automations and proj_scanmap:
+        # Parse scan map
+        proj_scanmap = _parse_scanmap(proj_scanmap)
+        # Run it
         results += xnat_relabel_scans.process_project(
-            xnat, project, proj_scanmap)
+            garjus.xnat(), project, proj_scanmap)
 
     # Upload results to garjus
     for r in results:

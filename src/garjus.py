@@ -65,17 +65,66 @@ COLUMNS = {
 
 # TODO: load this information from processor yamls
 PROCLIB = {
+    'AMYVIDQA_v1': {
+        'short_descrip': 'Calculates regional SUVR.',
+        'inputs_descrip': 'T1 processed with FS7_v1, PET NIFTI',
+        'outputs_descrip': 'regional SUVR values',
+        },
+    'BFC_v2': {
+        },
+    'BrainAgeGap_v2': {
+        'short_descrip': 'Calculates age of brain.',
+        'inputs_descrip': 'T1 parcellatd with BrainColor atlas',
+        'outputs_descrip': 'predicted age',
+        },
+    'fmri_bct_v1': {
+        'short_descrip': 'fMRI Resting State Brain Connectivity Toolbox measures.',
+        'inputs_descrip': 'fmri_roi_v2',
+        'outputs_descrip': 'Measures from BCT including: global eff,...',
+        },
+    'fmri_msit_v2': {
+        'short_descrip': 'fMRI MSIT task pre-processing and 1st-Level analysis.',
+        'inputs_descrip': 'T1 NIFTI, fMRI_MSIT NIFTIs, E-prime EDAT',
+        'outputs_descrip': 'Regional measure of conditions Congruent and Incongruent for regions',
+        },
+    'fmri_rest_v2': {
+        'short_descrip': 'fMRI Resting state pre-processing.',
+        'inputs_descrip': 'T1 and  EDAT',
+        'outputs_descrip': 'Regional measure of conditions Congruent and Incongruent for regions',
+    },
+    'fmri_roi_v2': {
+        'short_descrip': 'fMRI Resting state pre-processing.',
+        'inputs_descrip': 'fmri_rest_v2',
+        'outputs_descrip': 'Regional measures of functional connectivity',
+        },
+    'FS7_sclimbic_v0': {
+        },
+    'FEOBVQA_v1': {
+        },
     'FS7_v1': {
         'procurl': 'https://github.com/bud42/FS7',
-        'short_descrip': 'FreeSurfer 7 recon-all',
-        'stats_descrip':
-            'Units for volumes is cubic millimeters, thickness is millimeters',
-    },
+        'short_descrip': 'FreeSurfer 7 recon-all.',
+        'stats_descrip': 'Units for volumes is cubic millimeters, thickness is millimeters.',
+        'inputs_descrip': 'T1 NIFTI',
+        'outputs_descrip': 'volumes, cortical thickness',
+        },
     'FS7HPCAMG_v1': {
         'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
-        'short_descrip': 'FreeSurfer 7 hippocampus & amygdala',
-        'stats_descrip': 'Voilumes in cubic millimeters',
-    }
+        'short_descrip': 'FreeSurfer 7 hippocampus & amygdala.',
+        'stats_descrip': 'Volumes in cubic millimeters.',
+        'inputs_descrip': 'FS7_v1',
+        'outputs_descrip': 'volumes of hippocampus and amygdala regions',
+        },
+    'LST_v1': {
+        'short_descrip': 'Segments and quantifies White Matter Lesion Volume.',
+        'inputs_descrip': 'T1 NIFTI, FLAIR NIFTI',
+        'outputs_descrip': 'white matter lesion volume in milliliters',
+        },
+    'SAMSEG_v1': {
+        'short_descrip': 'Runs SAMSEG from FreeSurfer 7.2 to get White Matter Lesion Volume.',
+        'inputs_descrip': 'FS7_v1, FLAIR NIFTI',
+        'outputs_descrip': 'white matter lesion volume in milliliters',
+        },
 }
 
 
@@ -315,7 +364,6 @@ class Garjus:
 
     def scans(self, projects=None, scantypes=None, modalities='MR'):
         """Query XNAT for all scans and return a dictionary of scan info."""
-        # Code to query XNAT for scans
         if not projects:
             projects = self.projects()
 
@@ -323,6 +371,20 @@ class Garjus:
 
         # Return as dataframe
         return pd.DataFrame(data, columns=self.column_names('scans'))
+
+
+    def phantoms(self, project):
+        """Query XNAT for all scans and return a dictionary of scan info."""
+        phan_project = self.project_setting(project, 'phanproject')
+
+        if phan_project:
+            data = self._load_scan_data([phan_project], scantypes=None)
+        else:
+            data = []
+
+        # Return as dataframe
+        return pd.DataFrame(data, columns=self.column_names('scans'))
+
 
     def session_labels(self, project):
         """Return list of session labels in the archive for project."""

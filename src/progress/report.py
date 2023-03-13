@@ -8,6 +8,7 @@ import itertools
 from datetime import datetime, date, timedelta
 import tempfile
 
+import pydot
 import pandas as pd
 import plotly
 import plotly.graph_objs as go
@@ -124,7 +125,7 @@ def blank_letter():
     p.set_top_margin(0.5)
     p.set_left_margin(0.5)
     p.set_right_margin(0.5)
-    p.set_auto_page_break(auto=False, margin=0.5)
+    #p.set_auto_page_break(auto=False, margin=0.5)
 
     return p
 
@@ -370,6 +371,50 @@ def _add_page1(pdf, sessions):
     return pdf
 
 
+def _add_graph_page(pdf, info):
+    pdf.add_page()
+
+    print(info['scantypes'])
+    print(info['proctypes'])
+
+    # Build the graph
+    graph = pydot.Dot(graph_type='digraph')
+    graph.set_node_defaults(
+        color='lightblue',
+        style='filled',
+        shape='box',
+        fontname='Courier',
+        fontsize='12')
+
+    scantypes = ['T1', 'FLAIR', 'fMRI_REST', 'fMRI_MSIT', 'FieldMaps', 'DTI']
+    for scan in scantypes:
+        graph.add_node(pydot.Node(scan, color='orange'))
+
+    graph.add_node(pydot.Node('EDAT', color='violet'))
+
+    graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
+    graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'FS7-HPCAMG_v1'))
+    graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
+    graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
+    graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
+    graph.add_edge(pydot.Edge('fMRI_REST', 'fmri_rest_v2'))
+    graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v2'))
+    graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))
+    graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
+    graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
+    graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2'))
+    graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1'))
+    graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
+
+
+    # Make the graph, draw to pdf
+    image = Image.open(io.BytesIO(graph.create_png()))
+    pdf.image(image, x=0.5, y=0.75, w=7.5)
+    return pdf
+
+
 def _add_other_page(pdf, sessions):
     # Get non-MRI sessions
     other_sessions = sessions[sessions.MODALITY != 'MR'].copy()
@@ -405,11 +450,15 @@ def _add_stats_page(pdf, stats, proctype, short_descrip=None, stats_descrip=None
     pdf.cell(txt=proctype)
 
     pdf.set_font('helvetica', size=9)
+
+    _text = ''
     if short_descrip:
-        pdf.cell(txt=short_descrip)
+        _text += short_descrip + '\n'
     if stats_descrip:
-        pdf.cell(txt=stats_descrip)
-    # TODO: show pipeline name and description, look up with proctype
+        _text += stats_descrip
+
+    pdf.multi_cell(5, 3, _text, border=0, align="L",ln=3)
+    pdf.ln()
 
     # this returns a PIL Image object
     image = plot_stats(stats, proctype)
@@ -484,10 +533,53 @@ def _add_timeline_page(pdf, info):
 
     return pdf
 
+def _add_proclib_page(pdf, info):
+    #df = info['proclib'].copy()
+
+    pdf.add_page()
+    pdf.ln(0.05)
+
+    # Display each proctype
+    for k, v in info['proclib'].items():
+        if k not in info['proctypes']:
+            print(f'skipping proctype {k}')
+            continue
+
+        print(k, v)
+        pdf.set_font('helvetica', size=18)
+        pdf.cell(txt=k, ln=1)
+
+        _text = ''
+
+        pdf.set_font('helvetica', size=16)
+        if 'short_descrip' in v:
+            _text += v['short_descrip'] + '\n'
+
+        pdf.set_font('helvetica', size=10)
+        if 'inputs_descrip' in v:
+            _text += 'INPUTS: ' + v['inputs_descrip'] + '\n'
+
+        if 'outputs_descrip' in v:
+            _text += 'OUTPUTS: ' + v['outputs_descrip'] + '\n'
+
+        if 'stats_descrip' in v:
+            _text += v['stats_descrip'] + '\n'
+
+        if 'procurl' in v:
+            _text += 'URL: ' + v['procurl'] + '\n'
+
+        pdf.multi_cell(0, 0.3, _text, border=0, align="L")
+        pdf.ln(0.15)
+        pdf.line(x1=1.0, y1=pdf.get_y(), x2=7.0, y2=pdf.get_y())
+        pdf.ln(0.15)
+
+    return pdf
 
 def _add_phantom_page(pdf, info):
     # Get the data for all
     df = info['phantoms'].copy()
+
+    print(df)
 
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
@@ -766,7 +858,6 @@ def make_pdf(info, filename):
     pdf.set_filename(filename)
     pdf.set_project(info['project'])
 
-
     # Add first page showing MRIs
     logging.debug('adding first page')
     _add_page1(pdf, info['sessions'])
@@ -818,10 +909,19 @@ def make_pdf(info, filename):
     # Phantom pages
     if 'phantoms' in info:
         logging.debug('adding phantom page')
+        print('add Phantom page')
         _add_phantom_page(pdf, info)
+    else:
+        print('no Phantom page')
 
     # QA/Jobs/Issues counts
     _add_activity_page(pdf, info)
+
+    # Processing Details
+    _add_proclib_page(pdf, info)
+
+    # Directed Graph of processing
+    _add_graph_page(pdf, info)
 
     # Save to file
     logging.debug('saving PDF to file:{}'.format(pdf.filename))
@@ -958,6 +1058,8 @@ def make_project_report(
     # Loads scans/assessors with type filters applied
     scans = garjus.scans(projects=[project], scantypes=scantypes)
     assessors = garjus.assessors(projects=[project], proctypes=proctypes)
+    phantoms = garjus.phantoms(project)
+    phantoms = phantoms[SESSCOLS].drop_duplicates().sort_values('SESSION')
 
     # Extract sessions from scans/assessors
     sessions = pd.concat([scans[SESSCOLS], assessors[SESSCOLS]])
@@ -983,8 +1085,7 @@ def make_project_report(
     info['stats'] = stats
     info['scanqa'] = _scanqa(scans, scantypes)
     info['assrqa'] = _assrqa(assessors, proctypes)
-    # if phantom_project:
-    #    info['phantoms'] = data.load_phantom_info(phantom_project)
+    info['phantoms'] = phantoms
 
     # Save the PDF report to file
     make_pdf(info, pdfname)
