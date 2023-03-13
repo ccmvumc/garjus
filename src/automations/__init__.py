@@ -299,8 +299,6 @@ def _run_scan_automations(automations, garjus, project):
         return
 
     if 'xnat_auto_archive' in automations and project_redcap:
-        logging.info('primary redcap not found, cannot run automations')
-
         # Apply autos to each scanning protocol
         for p in protocols:
             date_field = p['scanning_datefield']
