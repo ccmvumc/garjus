@@ -5,13 +5,79 @@ import importlib
 
 def update(garjus, projects=None):
     """Update issues."""
+
+    # First find unmatched across projects.
+    # these are sessions that are in source project
+    # but not found in destination projects
+    unmatched = _unmatched(garjus)
+
+    # Update each project
     for p in (projects or garjus.projects()):
         if p in projects:
             logging.info(f'updating issues:{p}')
-            update_project(garjus, p)
+            update_project(garjus, p, unmatched[p])
 
 
-def update_project(garjus, project):
+def _unmatched(garjus):
+    src2dst = {}
+    src2ignore = {}
+    results = []
+    unmatched = {}
+
+    # Build the list of dst projects (and ignore list) for each source project
+    for dst_project in garjus.projects():
+        unmatched[dst_project] = []
+
+        for p in garjus.scanning_protocols(dst_project):
+            src_project = p['scanning_srcproject']
+
+            if not src_project:
+                logging.debug(f'no scanning_srcproject')
+                continue
+
+            # Get sessions to ignore
+            ignore_sessions = p['scanning_ignore'].split(',')
+            ignore_sessions = [x.strip() for x in ignore_sessions]
+
+            # Append dst project to list
+            if src_project not in src2dst:
+                # Make a new list
+                src2dst[src_project] = [dst_project]
+                src2ignore[src_project] = ignore_sessions
+
+            elif dst_project not in src2dst[src_project]:
+                # Add to existing lists
+                src2dst[src_project].append(dst_project)
+                src2ignore[src_project].extend(ignore_sessions)
+
+    # Find unmatched in each source project
+    for src_project, dst_projects in src2dst.items():
+        logging.info(f'finding unmatched sessions:{src_project}')
+        src_labels = garjus.session_labels(src_project)
+        src_ignore = src2ignore[src_project]
+
+        # Build the list of src IDs for sessions in the destination projects
+        srcid_list = []
+        for dst_project in dst_projects:
+            # These are the original session labels before being renamed
+            srcid_list += garjus.session_source_labels(dst_project)
+
+        # Apply ignore list
+        src_labels = [x for x in src_labels if x not in src_ignore]
+
+        # Get unmatched, not in list of sources in destination
+        src_unmatched = [x for x in src_labels if x not in srcid_list]
+
+        # Create an issue for each dst project, we don't know which is the dst
+        for sess in src_unmatched:
+            logging.info(f'unmatched session:{sess}')
+            for dst_project in dst_projects:
+                unmatched[dst_project].append(sess)
+
+    return unmatched
+
+
+def update_project(garjus, project, unmatched):
     """Update project issues."""
     results = []
 
@@ -61,7 +127,7 @@ def update_project(garjus, project):
         if not garjus.source_project_exists(src_project):
             msg = f'source project does not exist in XNAT:{src_project}'
             logging.error(msg)
-            garjus.add_issue(msg, category='ERROR', project=project)
+            garjus.add_issue(msg, project, category='ERROR')
             continue
 
         # Check for alternate redcap
@@ -80,7 +146,15 @@ def update_project(garjus, project):
 
         results += _audit_scanning(scan_table, src_labels, dst_labels)
 
-    _add_issues(garjus, results, project=project)
+    # Issues for unmatched
+    for sess in unmatched:
+        results.append({
+            'project': project,
+            'category': 'UNMATCHED_SESSION',
+            'session': sess,
+            'description': sess})
+
+    _add_issues(garjus, results, project)
 
 
 def _matching_issues(issue1, issue2):
@@ -118,7 +192,7 @@ def _audit_scanning(scan_table, src_project, project):
     return audit_imaging.audit(scan_table, src_project, project)
 
 
-def _add_issues(garjus, records, project=None):
+def _add_issues(garjus, records, project):
     new_issues = []
     old_issues = []
     has_errors = False
@@ -134,9 +208,8 @@ def _add_issues(garjus, records, project=None):
             break
 
     # Set project
-    if project:
-        for r in records:
-            r['project'] = project
+    for r in records:
+        r['project'] = project
 
     # Compare to current issues
     cur_issues = garjus.issues(project)

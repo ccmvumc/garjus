@@ -393,6 +393,18 @@ class Garjus:
         label_list = [x['label'] for x in result]
         return label_list
 
+    def session_source_labels(self, project):
+        """Return list of source session IDs for project."""
+        tag = 'dcmPatientId'
+        uri = '/REST/projects/{0}/experiments?columns=label,xnat:imagesessiondata/{1}'
+        uri = uri.format(project, tag)
+        #print(uri)
+        result = self._get_result(uri)
+        #print(result)
+        srcid_list = [x[tag].split('_', 1)[1] for x in result if '_' in x[tag]]
+        #print(srcid_list)
+        return srcid_list
+
     def sites(self, project):
         """List of site records."""
         return self._rc.export_records(records=[project], forms=['sites'])
@@ -900,7 +912,7 @@ class Garjus:
     def add_issue(
         self,
         description,
-        project=None,
+        project,
         event=None,
         subject=None,
         scan=None,
