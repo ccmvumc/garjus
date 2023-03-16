@@ -363,6 +363,21 @@ class Garjus:
             session=sess,
             result='COMPLETE')
 
+    def copy_sess(self, src, dst):
+        """Copy dicom source to destination."""
+        logging.info(f'copy from:{src}')
+        logging.info(f'copy to:{dst}')
+        (s_proj, s_subj, s_sess) = src.split('/')
+        (d_proj, d_subj, d_sess) = dst.split('/')
+        self.copy_session(s_proj, s_subj, s_sess, d_proj, d_subj, d_sess)
+        self.add_activity(
+            project=d_proj,
+            category='copy_sess',
+            description=src,
+            subject=d_subj,
+            session=d_sess,
+            result='COMPLETE')
+
     def scans(self, projects=None, scantypes=None, modalities='MR'):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
@@ -1251,6 +1266,7 @@ class Garjus:
 
             # Upload them
             logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
+            
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # TODO: def import_stats(self):

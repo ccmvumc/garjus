@@ -19,9 +19,11 @@ def cli(debug):
 
 
 @cli.command('copysess')
-def copy_session():
+@click.argument('src', required=True)
+@click.argument('dst', required=True)
+def copy_session(src, dst):
     click.echo('garjus! copy session')
-    pprint.pprint('TBD')
+    Garjus().copy_sess(src, dst)
 
 
 @cli.command('issues')
