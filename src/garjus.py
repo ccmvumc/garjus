@@ -35,6 +35,7 @@ import json
 from datetime import datetime
 import glob
 import os
+import tempfile
 
 import requests
 import pandas as pd
@@ -1248,9 +1249,9 @@ class Garjus:
                     logging.info(f'download DICOM:{src_proj}:{src_sess}:{src_scan}')
                     scan.resource('DICOM').get(temp_dir, extract=True)
 
-        # Upload them
-        logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
-        import_dicom_dir(self, temp_dir, proj, subj, sess)
+            # Upload them
+            logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
+            import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # TODO: def import_stats(self):
     # rather than source_stats from the outside, we call import_stats to tell

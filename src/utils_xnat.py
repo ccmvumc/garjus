@@ -408,6 +408,10 @@ def copy_session(src, dst):
         copy_scan(src_scan, dst_scan)
 
 
+def _file_count(res):
+    return int(str(res).split('(')[1].split(' files')[0])
+
+
 def copy_scan(src_scan, dst_scan):
     scan_type = src_scan.datatype()
     if scan_type == '':
@@ -422,9 +426,35 @@ def copy_scan(src_scan, dst_scan):
 
         print('INFO:Processing resource:%s...' % (res_label))
 
-        dst_res = dst_scan.resource(res_label)
+        file_count = _file_count(src_res)
+        if res_label == 'DICOM' and file_count > 1000:
+            print(f'too many files, upload as DICOMZIP:{file_count}')
+            dst_res = dst_scan.resource('DICOMZIP')
+            copy_res_dicomzip(src_res, dst_res)
+        else:
+            dst_res = dst_scan.resource(res_label)
+            copy_res(src_res, dst_res)
 
-        copy_res(src_res, dst_res)
+
+def copy_res_dicomzip(src_res, dst_res):
+    '''
+    Copy a DICOM resource from XNAT source to XNAT destination DICOMZIP/NIFTI
+    '''
+    try:
+        # Download zip of resource
+        print('INFO:Downloading resource as zip')
+        cache_z = src_res.get(tempfile.mkdtemp(), extract=False)
+
+        # Upload zip of resource
+        print('INFO:Uploading resource as zip, no extract')
+        dst_res.put_zip(cache_z, extract=False)
+
+        # Delete local zip
+        os.remove(cache_z)
+
+    except IndexError:
+        print(f'ERROR:failed to copy')
+        raise
 
 
 def copy_res(src_res, dst_res):
