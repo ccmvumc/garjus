@@ -989,7 +989,7 @@ class Garjus:
 
     def _load_json_info(self, jsonfile):
         with open(jsonfile) as f:
-            data = json.load(f)
+            data = json.load(f, strict=False)
 
         return {
             'modality': data.get('Modality', None),
