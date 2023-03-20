@@ -25,7 +25,7 @@ def relabel_scans(xnat, project, relabels):
 
     # get a list of scans from the project
     scan_uri = '{}&project={}'.format(SCAN_URI, project)
-    json_data = json.loads(xnat._exec(scan_uri, 'GET'))
+    json_data = json.loads(xnat._exec(scan_uri, 'GET'),  strict=False)
     scan_list = json_data['ResultSet']['Result']
 
     # iterate scan and relabel if needed

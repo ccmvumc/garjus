@@ -93,7 +93,7 @@ def relabel_sessions(xnat, project, relabels, overwrite=False, replace=[]):
 
     # get a list of sessions from the project
     sess_uri = '{}&project={}'.format(SESS_URI, project)
-    json_data = json.loads(xnat._exec(sess_uri, 'GET'))
+    json_data = json.loads(xnat._exec(sess_uri, 'GET'),  strict=False)
     sessions = json_data['ResultSet']['Result']
 
     # iterate and relabel as needed

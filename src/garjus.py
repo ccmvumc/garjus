@@ -487,7 +487,7 @@ class Garjus:
     def _get_result(self, uri):
         """Get result of xnat query."""
         logging.debug(uri)
-        json_data = json.loads(self._xnat._exec(uri, 'GET'))
+        json_data = json.loads(self._xnat._exec(uri, 'GET'), strict=False)
         result = json_data['ResultSet']['Result']
         return result
 
