@@ -68,6 +68,13 @@ def progress(project):
     g.progress(projects=project)
 
 
+@cli.command('report')
+@click.option('--project', '-p', 'project', required=True)
+def report(project):
+    click.echo('garjus! report')
+    Garjus().report(project)
+
+
 @cli.command('importdicom')
 @click.argument('src', required=True)
 @click.argument('dst', required=True)

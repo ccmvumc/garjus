@@ -1,32 +1,8 @@
 """main garjus class.
 
-All interactions with REDCap and XNAT should go through the main Garjus class.
-Anything outside this class must refer to scans, assessors, issues, autos, etc.
+Interactions with XNAT and Garjus REDCap should be via the main Garjus class.
+Anything outside this class should refer to scans, assessors, issues, etc.
 
-To create a new main REDCap project:
--upload from zip
--click user rights, enable API export/import, save changes
--refresh, click API, clcik Generate API Token, click Copy
--go to ~/.redcap.txt
--paste key, copy & paste PID from gui, name main
-
-To create a new stats REDCap project:
--copy an existing project in gui under Other Functionality, click Copy Project
--change the project name, check or uncheck
--click Copy Project (should take you to new project)
--click user rights, enable API export/import, save changes
--refresh, click API, clcik Generate API Token, click Copy
--go to ~/.redcap.txt
--paste key, copy & paste ID, name main
--paste ID into ccmutils under Main > Project Stats
-
-To add a new primary REDCap project:
--Copy PID, key to ~/.redcap.txt, name PROJECT primary
--paste ID into ccmutils under Main > Project P
-
-To add a new secondary REDCap project for double entry comparison:
--Copy PID, key to ~/.redcap.txt, name PROJECT secondary
--paste ID into ccmutils under Main > Project Secondary
 """
 import pathlib
 from typing import Optional
@@ -37,7 +13,6 @@ import glob
 import os
 import tempfile
 
-import requests
 import pandas as pd
 from redcap import Project, RedcapError
 from pyxnat import Interface
@@ -45,88 +20,12 @@ from pyxnat import Interface
 from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
-from .progress import update as update_progress
+from .progress import update as update_progress, make_project_report
 from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-
-
-COLUMNS = {
-    'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
-                 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
-    'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE',
-                  'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
-                  'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY'],
-    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
-               'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
-    'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
-              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY']
-}
-
-# TODO: load this information from processor yamls
-PROCLIB = {
-    'AMYVIDQA_v1': {
-        'short_descrip': 'Calculates regional SUVR.',
-        'inputs_descrip': 'T1 processed with FS7_v1, PET NIFTI',
-        'outputs_descrip': 'regional SUVR values',
-        },
-    'BFC_v2': {
-        },
-    'BrainAgeGap_v2': {
-        'short_descrip': 'Calculates age of brain.',
-        'inputs_descrip': 'T1 parcellatd with BrainColor atlas',
-        'outputs_descrip': 'predicted age',
-        },
-    'fmri_bct_v1': {
-        'short_descrip': 'fMRI Resting State Brain Connectivity Toolbox measures.',
-        'inputs_descrip': 'fmri_roi_v2',
-        'outputs_descrip': 'Measures from BCT including: global eff,...',
-        },
-    'fmri_msit_v2': {
-        'short_descrip': 'fMRI MSIT task pre-processing and 1st-Level analysis.',
-        'inputs_descrip': 'T1 NIFTI, fMRI_MSIT NIFTIs, E-prime EDAT',
-        'outputs_descrip': 'Regional measure of conditions Congruent and Incongruent for regions',
-        },
-    'fmri_rest_v2': {
-        'short_descrip': 'fMRI Resting state pre-processing.',
-        'inputs_descrip': 'T1 and  EDAT',
-        'outputs_descrip': 'Regional measure of conditions Congruent and Incongruent for regions',
-    },
-    'fmri_roi_v2': {
-        'short_descrip': 'fMRI Resting state pre-processing.',
-        'inputs_descrip': 'fmri_rest_v2',
-        'outputs_descrip': 'Regional measures of functional connectivity',
-        },
-    'FS7_sclimbic_v0': {
-        },
-    'FEOBVQA_v1': {
-        },
-    'FS7_v1': {
-        'procurl': 'https://github.com/bud42/FS7',
-        'short_descrip': 'FreeSurfer 7 recon-all.',
-        'stats_descrip': 'Units for volumes is cubic millimeters, thickness is millimeters.',
-        'inputs_descrip': 'T1 NIFTI',
-        'outputs_descrip': 'volumes, cortical thickness',
-        },
-    'FS7HPCAMG_v1': {
-        'procurl': 'https://github.com/bud42/FS7HPCAMG_v1',
-        'short_descrip': 'FreeSurfer 7 hippocampus & amygdala.',
-        'stats_descrip': 'Volumes in cubic millimeters.',
-        'inputs_descrip': 'FS7_v1',
-        'outputs_descrip': 'volumes of hippocampus and amygdala regions',
-        },
-    'LST_v1': {
-        'short_descrip': 'Segments and quantifies White Matter Lesion Volume.',
-        'inputs_descrip': 'T1 NIFTI, FLAIR NIFTI',
-        'outputs_descrip': 'white matter lesion volume in milliliters',
-        },
-    'SAMSEG_v1': {
-        'short_descrip': 'Runs SAMSEG from FreeSurfer 7.2 to get White Matter Lesion Volume.',
-        'inputs_descrip': 'FS7_v1, FLAIR NIFTI',
-        'outputs_descrip': 'white matter lesion volume in milliliters',
-        },
-}
+from .dictionary import COLUMNS, PROCLIB, STATLIB
 
 
 class Garjus:
@@ -147,11 +46,11 @@ class Garjus:
         redcap_project: Project=None,
         xnat_interface: Interface=None):
         """Initialize garjus."""
+        self._disconnect_xnat = False
         self._rc = (redcap_project or self._default_redcap())
 
         if xnat_interface:
             self._xnat = xnat_interface
-            self._disconnect_xnat = False
         else:
             self._xnat = self._default_xnat()
             self._disconnect_xnat = True
@@ -686,8 +585,19 @@ class Garjus:
             logging.info('updating progress')
             update_progress(self, projects)
 
-        # TODO: print('updating jobs') # can't do this until queue is in
-        # REDCap, for now we'll continue to use run_build.py
+        if 'jobs' in choices:
+            print('updating jobs not yet implemented, use run_build.py')
+
+    def report(self, project):
+        """Create a PDF report."""
+        pdf_file = f'{project}_report.pdf'
+
+        if os.path.exists(pdf_file):
+            logging.info(f'{pdf_file} exists, delete or rename.')
+            return
+
+        make_project_report(self, project, pdf_file)
+
 
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
@@ -1244,29 +1154,28 @@ class Garjus:
             # Download all inputs
             if src.count('/') == 3:
                 # Download specified scan
-                src_proj, src_subj, src_sess, src_scan = src.split('/')
-                logging.info(f'download DICOM:{src_proj}:{src_sess}:{src_scan}')
-                scan = self._xnat.select_scan(src_proj, src_subj, src_sess, src_scan)
+                s_proj, s_subj, s_sess, s_scan = src.split('/')
+                logging.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
+                scan = self._xnat.select_scan(s_proj, s_subj, s_sess, s_scan)
                 scan.resource('DICOM').get(temp_dir, extract=True)
             else:
                 # Download all session scans DICOM
-                src_proj, src_subj, src_sess = src.split('/')
+                s_proj, s_subj, s_sess = src.split('/')
 
                 # connect to the src session
-                session_object = self._xnat.select_session(src_proj, src_subj, src_sess)
+                sess_object = self._xnat.select_session(s_proj, s_subj, s_sess)
 
                 # download each dicom zip
-                for scan in session_object.scans():
-                    src_scan = scan.label()
+                for scan in sess_object.scans():
+                    s_scan = scan.label()
                     if not scan.resource('DICOM').exists():
                         continue
 
-                    logging.info(f'download DICOM:{src_proj}:{src_sess}:{src_scan}')
+                    logging.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
                     scan.resource('DICOM').get(temp_dir, extract=True)
 
             # Upload them
             logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
-            
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # TODO: def import_stats(self):
