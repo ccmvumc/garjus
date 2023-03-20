@@ -7,6 +7,7 @@ import shutil
 import itertools
 from datetime import datetime, date, timedelta
 import tempfile
+import math
 
 import pydot
 import pandas as pd
@@ -21,9 +22,9 @@ from PIL import Image
 RGB_DKBLUE = 'rgb(59,89,152)'
 RGB_BLUE = 'rgb(66,133,244)'
 RGB_GREEN = 'rgb(15,157,88)'
-RGB_YELLOW = 'rgb(244,160,0)'
+RGB_YELL = 'rgb(244,160,0)'
 RGB_RED = 'rgb(219,68,55)'
-RGB_PURPLE = 'rgb(160,106,255)'
+RGB_PURP = 'rgb(160,106,255)'
 RGB_GREY = 'rgb(200,200,200)'
 RGB_PINK = 'rgb(255,182,193)'
 RGB_LIME = 'rgb(17, 180, 101)'
@@ -32,7 +33,7 @@ RGB_LIME = 'rgb(17, 180, 101)'
 QASTATUS2COLOR = {
     'PASS': RGB_GREEN,
     'NQA': RGB_LIME,
-    'NPUT': RGB_YELLOW,
+    'NPUT': RGB_YELL,
     'FAIL': RGB_RED,
     'NONE': RGB_GREY,
     'JOBF': RGB_PINK,
@@ -40,17 +41,17 @@ QASTATUS2COLOR = {
 
 STATUS2RGB = dict(zip(
     ['WAITING', 'PENDING', 'RUNNING', 'COMPLETE', 'FAILED', 'UNKNOWN', 'JOBF'],
-    [RGB_GREY, RGB_YELLOW, RGB_GREEN, RGB_BLUE, RGB_RED, RGB_PURPLE, RGB_PINK]))
+    [RGB_GREY, RGB_YELL, RGB_GREEN, RGB_BLUE, RGB_RED, RGB_PURP, RGB_PINK]))
 
 # These are used to make progress reports
 ASTATUS2COLOR = {
     'PASS': RGB_GREEN,
-    'NPUT': RGB_YELLOW,
+    'NPUT': RGB_YELL,
     'FAIL': RGB_RED,
     'NQA': RGB_LIME,
     'NONE': RGB_GREY,
     'COMPLETE': RGB_BLUE,
-    'UNKNOWN': RGB_PURPLE}
+    'UNKNOWN': RGB_PURP}
 
 SESSCOLS = ['SESSION', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'MODALITY']
 
@@ -87,6 +88,9 @@ ACOLS = [
     'DATE',
     'PROCTYPE',
 ]
+
+# h=pdf.eph, w=pdf.epw/2
+# full page height, half page width
 
 
 class MYPDF(FPDF):
@@ -125,7 +129,6 @@ def blank_letter():
     p.set_top_margin(0.5)
     p.set_left_margin(0.5)
     p.set_right_margin(0.5)
-    #p.set_auto_page_break(auto=False, margin=0.5)
 
     return p
 
@@ -169,7 +172,6 @@ def _draw_counts(pdf, sessions, rangetype=None):
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
     _kwargs = {'w': 1.2, 'h': 0.7, 'border': 1, 'align': 'C', 'fill': True}
-    #pdf.cell(w=0.7, border=0, fill=False)
 
     # Column header for each session type
     for cur_type in type_list:
@@ -182,15 +184,15 @@ def _draw_counts(pdf, sessions, rangetype=None):
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
     _kwargs = {'w': 1.2, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_site = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_tot = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_s = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_t = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
 
     # Row for each site
     for cur_site in site_list:
         dfs = df[df.SITE == cur_site]
         _txt = cur_site
 
-        pdf.cell(**_kwargs_site, txt=_txt)
+        pdf.cell(**_kwargs_s, txt=_txt)
 
         # Count each type for this site
         for cur_type in type_list:
@@ -199,18 +201,17 @@ def _draw_counts(pdf, sessions, rangetype=None):
 
         # Total for site
         cur_count = str(len(dfs))
-        pdf.cell(**_kwargs_tot, txt=cur_count)
+        pdf.cell(**_kwargs_t, txt=cur_count)
         pdf.ln()
 
     # TOTALS row
     pdf.cell(w=1.0)
-    #pdf.cell(w=0.7, h=0.5)
     for cur_type in type_list:
         pdf.set_font('helvetica', size=18)
         cur_count = str(len(df[df.SESSTYPE == cur_type]))
         pdf.cell(**_kwargs, txt=cur_count)
 
-    pdf.cell(**_kwargs_tot, txt=str(len(df)))
+    pdf.cell(**_kwargs_t, txt=str(len(df)))
 
     pdf.ln()
 
@@ -373,13 +374,18 @@ def _add_page1(pdf, sessions):
 
 
 def _add_graph_page(pdf, info):
-    pdf.add_page()
+    scantypes = info['scantypes']
+    proctypes = info['proctypes']
 
-    print(info['scantypes'])
-    print(info['proctypes'])
+    pdf.add_page()
+    pdf.set_font('helvetica', size=18)
+    pdf.cell(w=7.5, align='C', txt='Processing Graph', ln=1)
+    pdf.set_font('helvetica', size=9)
+    _txt = 'Scans are orange, Processing with stats are green, Processing without stats are blue'
+    pdf.cell(h=0.7, w=7.5, txt=_txt, align='C')
 
     # Build the graph
-    graph = pydot.Dot(graph_type='digraph')
+    graph = pydot.Dot(graph_type='digraph', ratio=1.0)
     graph.set_node_defaults(
         color='lightblue',
         style='filled',
@@ -387,45 +393,70 @@ def _add_graph_page(pdf, info):
         fontname='Courier',
         fontsize='12')
 
-    scantypes = ['T1', 'FLAIR', 'fMRI_REST', 'fMRI_MSIT', 'FieldMaps', 'DTI']
     for scan in scantypes:
         graph.add_node(pydot.Node(scan, color='orange'))
 
     graph.add_node(pydot.Node('EDAT', color='violet'))
+    graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('FS7HPCAMG_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('LST_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('SAMSEG_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
 
-    graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
-    graph.add_edge(pydot.Edge('T1', 'fmri_msit_v2'))
+    if 'fmri_msit_v2' in proctypes:
+        graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
+        graph.add_edge(pydot.Edge('T1', 'fmri_msit_v2'))
+        graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
+        graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
+        graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v2'))
+        graph.add_edge(pydot.Edge('fMRI_REST1', 'fmri_rest_v2'))
+        graph.add_edge(pydot.Edge('fMRI_REST2', 'fmri_rest_v2'))
+        graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2',
+                                  style='dashed'))
+        graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1',
+                                  style='dashed'))
+        graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))
+        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
+        graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
+        graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
+        graph.add_node(pydot.Node('fmri_bct_v1', color='lightgreen'))
+        graph.add_node(pydot.Node('fmri_msit_v2', color='lightgreen'))
+
+    if 'BFC_v2' in proctypes:
+        graph.add_edge(pydot.Edge('T1', 'BFC_v2'))
+        graph.add_node(pydot.Node('BFC_v2', color='lightgreen'))
+
+    if 'FEOBVQA_v1' in proctypes:
+        graph.add_edge(pydot.Edge('CTAC', 'FEOBVQA_v1'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'FEOBVQA_v1'))
+        graph.add_node(pydot.Node('FEOBVQA_v1', color='lightgreen'))
+
+
+    if 'FS7sclimbic_v0' in proctypes:
+        graph.add_edge(pydot.Edge('T1', 'FS7sclimbic_v0'))
+        graph.add_node(pydot.Node('FS7sclimbic_v0', color='lightgreen'))
+
+
+    if 'AMYVIDQA_v1' in proctypes:
+        graph.add_edge(pydot.Edge('CTAC', 'AMYVIDQA_v1'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v1'))
+        graph.add_node(pydot.Node('AMYVIDQA_v1', color='lightgreen'))
+
+    if 'BrainAgeGap_v2' in proctypes:
+        graph.add_node(pydot.Node('BrainAgeGap_v2', color='lightgreen'))
+        graph.add_edge(pydot.Edge('T1', 'BrainAgeGap_v2'))
+
+    graph.add_edge(pydot.Edge('T1', 'LST_v1'))
     graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
-    graph.add_edge(pydot.Edge('T1', 'BrainAgeGap_v2'))
     graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
     graph.add_edge(pydot.Edge('FS7_v1', 'FS7HPCAMG_v1'))
-    graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
-    graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
-    graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
-    graph.add_edge(pydot.Edge('fMRI_REST', 'fmri_rest_v2'))
-    graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v2'))
-    graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))
-    graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
-    graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
-    graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2', style='dashed'))
-    graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1', style='dashed'))
-    graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
-    graph.add_edge(pydot.Edge('T1', 'LST_v1'))
-
-    # stats
-    graph.add_node(pydot.Node('stats.zip', color='lightgreen'))
-    graph.add_edge(pydot.Edge('fmri_bct_v1', 'stats.zip'))
-    graph.add_edge(pydot.Edge('fmri_msit_v2', 'stats.zip'))
-    graph.add_edge(pydot.Edge('BrainAgeGap_v2', 'stats.zip'))
-    graph.add_edge(pydot.Edge('FS7_v1', 'stats.zip'))
-    graph.add_edge(pydot.Edge('FS7HPCAMG_v1', 'stats.zip'))
-    graph.add_edge(pydot.Edge('LST_v1', 'stats.zip'))
-    graph.add_edge(pydot.Edge('SAMSEG_v1', 'stats.zip'))
+    graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
 
     # Make the graph, draw to pdf
     image = Image.open(io.BytesIO(graph.create_png()))
-    pdf.image(image, x=0.5, y=0.75, w=7.5)
+    pdf.image(image, x=0.5, y=1.5, w=7.5)
+
     return pdf
 
 
@@ -456,39 +487,29 @@ def _add_other_page(pdf, sessions):
     return pdf
 
 
-def _add_stats_page(pdf, stats, proctype, short_descrip=None, stats_descrip=None):
-    # 4 across, 3 down
-
+def _add_stats_page(pdf, stats, proctype):
     pdf.add_page()
-    pdf.set_font('helvetica', size=18)
-    pdf.cell(txt=proctype)
-
-    pdf.set_font('helvetica', size=9)
-
-    _text = ''
-    if short_descrip:
-        _text += short_descrip + '\n'
-    if stats_descrip:
-        _text += stats_descrip
-
-    pdf.multi_cell(5, 3, _text, border=0, align="L",ln=3)
-    pdf.ln()
+    pdf.set_font('helvetica', size=14)
+    pdf.cell(txt=proctype, ln=1)
 
     # this returns a PIL Image object
     image = plot_stats(stats, proctype)
+    tot_width, tot_height = image.size
 
-    # Split the image into chunks that fit on a letter page
+    # Split horizontal image into chunks of width to fit on letter-sized page
     # crop((left, top, right, bottom))
-    _img1 = image.crop((0, 0, 1000, 500))
-    _img2 = image.crop((1000, 0, 2000, 500))
-    _img3 = image.crop((2000, 0, 2500, 500))
+    #pdf.set_fill_color(114, 172, 77)
 
-    pdf.set_fill_color(114, 172, 77)
+    chunk_h = 500
+    chunk_w = 1000
+    rows_per_page = 3  # 3 rows per page
+    page_count = math.ceil(tot_width / (rows_per_page * chunk_w))
 
-    # Draw the images on the pdf
-    pdf.image(_img1, x=0.5, y=0.75, h=3.3)
-    pdf.image(_img2, x=0.5, y=4, h=3.3)
-    pdf.image(_img3, x=0.5, y=7.25, h=3.3)
+    for p in range(page_count):
+        for c in range(rows_per_page):
+            chunk_x = (c * chunk_w ) + (p * chunk_w * rows_per_page)
+            _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
+            pdf.image(_img, x=0.75, h=3.1)
 
     return pdf
 
@@ -547,44 +568,28 @@ def _add_timeline_page(pdf, info):
 
     return pdf
 
-def _add_proclib_page(pdf, info):
-    #df = info['proclib'].copy()
 
+def _add_proclib_page(pdf, info):
     pdf.add_page()
-    pdf.ln(0.05)
+
+    # Get the proclib for enabled proctypes
+    proclib = info['proclib']
+    proclib = {k: v for k, v in proclib.items() if k in info['proctypes']}
 
     # Display each proctype
-    for k, v in info['proclib'].items():
-        if k not in info['proctypes']:
-            print(f'skipping proctype {k}')
-            continue
-
-        print(k, v)
-        pdf.set_font('helvetica', size=18)
+    for k, v in proclib.items():
+        # Show the proctype
+        pdf.set_font('helvetica', size=16)
         pdf.cell(txt=k, ln=1)
 
-        _text = ''
+        # Build the description
+        _text = v['short_descrip'] + '\n'
+        _text += 'Inputs: ' + v['inputs_descrip'] + '\n'
+        _text += v['procurl'] + '\n'
 
-        pdf.set_font('helvetica', size=16)
-        if 'short_descrip' in v:
-            _text += v['short_descrip'] + '\n'
-
-        pdf.set_font('helvetica', size=10)
-        if 'inputs_descrip' in v:
-            _text += 'INPUTS: ' + v['inputs_descrip'] + '\n'
-
-        if 'outputs_descrip' in v:
-            _text += 'OUTPUTS: ' + v['outputs_descrip'] + '\n'
-
-        if 'stats_descrip' in v:
-            _text += v['stats_descrip'] + '\n'
-
-        if 'procurl' in v:
-            _text += 'URL: ' + v['procurl'] + '\n'
-
-        pdf.multi_cell(0, 0.3, _text, border=0, align="L")
-        pdf.ln(0.1)
-        pdf.line(x1=1.0, y1=pdf.get_y(), x2=7.0, y2=pdf.get_y())
+        # Show the description
+        pdf.set_font('helvetica', size=12)
+        pdf.multi_cell(0, 0.3, _text, border=1, align="L")
         pdf.ln(0.2)
 
     return pdf
@@ -592,8 +597,6 @@ def _add_proclib_page(pdf, info):
 def _add_phantom_page(pdf, info):
     # Get the data for all
     df = info['phantoms'].copy()
-
-    print(df)
 
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
@@ -916,12 +919,10 @@ def make_pdf(info, filename):
                 logging.debug(f'no stats for proctype:{s}')
             else:
                 logging.debug(f'add stats page:{s}')
-                short_descrip = info['proclib'].get(s, {}).get('short_descrip', None)
-                stats_descrip = info['proclib'].get(s, {}).get('stats_descrip', None)
-                _add_stats_page(pdf, stat_data, s, short_descrip, stats_descrip)
+                _add_stats_page(pdf, stat_data, s)
 
     # Phantom pages
-    if 'phantoms' in info:
+    if len(info['phantoms']) > 0:
         logging.debug('adding phantom page')
         print('add Phantom page')
         _add_phantom_page(pdf, info)
@@ -949,16 +950,18 @@ def make_pdf(info, filename):
 
 def make_main_report():
     """Make main report."""
+
     # last week
+
     # show counts from last week
 
     # show issue counts
 
-    # previous week
+    # previous week activity
 
-    # previous month
+    # previous month timeline
 
-    # previous year
+    # previous year timeline
 
     # Note that all of these can be opened interactively in dashboard
 
@@ -1056,7 +1059,7 @@ def make_project_report(
     garjus,
     project,
     pdfname,
-    zipname
+    zipname=None
 ):
     """"Make the project report PDF and zip files"""
     # TODO: garjus.proctypes_info()
@@ -1105,7 +1108,8 @@ def make_project_report(
     make_pdf(info, pdfname)
 
     # Save the stats to zip file
-    stats2zip(stats, zipname)
+    if zipname:
+        stats2zip(stats, zipname)
 
 
 def stats2zip(stats, filename):
