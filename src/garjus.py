@@ -25,7 +25,7 @@ from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-from .dictionary import COLUMNS, PROCLIB, STATLIB
+from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
 
 
 class Garjus:
@@ -59,8 +59,9 @@ class Garjus:
         self.assr_uri = utils_xnat.ASSR_URI
         self.scan_rename = utils_xnat.SCAN_RENAME
         self.assr_rename = utils_xnat.ASSR_RENAME
-        self.activity_rename = utils_redcap.ACTIVITY_RENAME
-        self.issues_rename = utils_redcap.ISSUES_RENAME
+        self.activity_rename = ACTIVITY_RENAME
+        self.issues_rename = ISSUES_RENAME
+        self.processing_rename = PROCESSING_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 60
         self._projects = self._load_project_names()
@@ -313,11 +314,8 @@ class Garjus:
         tag = 'dcmPatientId'
         uri = '/REST/projects/{0}/experiments?columns=label,xnat:imagesessiondata/{1}'
         uri = uri.format(project, tag)
-        #print(uri)
         result = self._get_result(uri)
-        #print(result)
         srcid_list = [x[tag].split('_', 1)[1] for x in result if '_' in x[tag]]
-        #print(srcid_list)
         return srcid_list
 
     def sites(self, project):
@@ -385,6 +383,14 @@ class Garjus:
         """Get list of projects stat types."""
         return self.proctypes(project)
 
+    def _get_proctype(self, procfile):
+        # Get just the filename without the directory path
+        tmp = os.path.basename(procfile)
+
+        # Split on periods and grab the 4th value from right, 
+        # thus allowing periods in the main processor name
+        return tmp.rsplit('.')[-4]
+
     def scantypes(self, project):
         """Get list of scan types."""
         types = []
@@ -414,24 +420,17 @@ class Garjus:
         """Get list of project proc types."""
         types = []
 
-        # Get the processing types from scanning forms
-        rec = self._rc.export_records(
-            forms=['scanning'],
-            records=[project],
-            export_checkbox_labels=True,
-            raw_or_label='label')
+        # Start with defaults
+        types = self._default_proctypes()
 
-        for r in rec:
-            for k, v in r.items():
-                # Append types for this scanning record
-                if v and k.startswith('scanning_proctypes'):
-                    types.append(v)
-
-        # Make the lists unique
-        types = list(set((types)))
-
-        if not types:
-            types = self._default_proctypes()
+        # Append others
+        protocols = self.processing_protocols(project)
+        for i, row in protocols.iterrows():
+            ptype = row['TYPE']
+            print(ptype)
+            if ptype not in types:
+                logging.debug(f'appending proctype:{ptype}')
+                types.append(ptype)
 
         return types
 
@@ -545,9 +544,32 @@ class Garjus:
 
     def processing_protocols(self, project):
         """Return processing protocols."""
-        protocols = []
+        data = []
 
-        return protocols
+        rec = self._rc.export_records(
+            records=[project],
+            forms=['processing'],
+            fields=[self._dfield()])
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
+        for r in rec:
+            # Initialize record with project
+            d = {'PROJECT': r[self._dfield()]}
+
+            # Get renamed variables
+            for k, v in self.processing_rename.items():
+                d[v] = r.get(k, '')
+
+            # Set the processin type
+            if d['FILE'] == 'CUSTOM':
+                d['TYPE'] = self._get_proctype(d['CUSTOM'])
+            else:
+                d['TYPE'] = self._get_proctype(d['FILE'])
+
+            # Finally, add to our list
+            data.append(d)
+
+        return pd.DataFrame(data, columns=self.column_names('processing'))
 
     def processing_library(self, project):
         """Return processing library."""
@@ -596,6 +618,7 @@ class Garjus:
             logging.info(f'{pdf_file} exists, delete or rename.')
             return
 
+        logging.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
 
 
@@ -693,7 +716,6 @@ class Garjus:
         statsrc = self._stats_redcap(project)
         try:
             logging.debug('importing records')
-            # print(rec)
             response = statsrc.import_records(rec)
             assert 'count' in response
             logging.debug('successfully uploaded')
@@ -874,7 +896,10 @@ class Garjus:
 
     def _default_proctypes(self):
         """Get list of default processing types."""
-        return ['FS7_v1', 'FEOBVQA_v1', 'LST_v1']
+        return [
+            'dtiQA_synb0_v7', 'biscuit_fs_v2', 'FS7_v1', 'FEOBVQA_v1',
+            'LST_v1', 'AMYVIDQA_v1', 'BrainAgeGap_v2', 'FS7HPCAMG_v1',
+            'SAMSEG_v1', 'fmriqa_v4', 'slant_gpu_v1']
 
     def _default_scantypes(self):
         """Get list of default scan types."""
@@ -882,7 +907,7 @@ class Garjus:
 
     def _default_stattypes(self):
         """Return list of default stats types."""
-        return _default_proctypes()
+        return self._default_proctypes()
 
     def primary(self, project):
         """Connect to the primary redcap for this project."""

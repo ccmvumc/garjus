@@ -2,33 +2,6 @@ import redcap
 import os
 
 
-ACTIVITY_RENAME = {
-    'redcap_repeat_instance': 'ID',
-    'activity_description': 'DESCRIPTION',
-    'activity_datetime': 'DATETIME',
-    'activity_event': 'EVENT',
-    'activity_field': 'FIELD',
-    'activity_result': 'RESULT',
-    'activity_scan': 'SCAN',
-    'activity_subject': 'SUBJECT',
-    'activity_session': 'SESSION',
-    'activity_type': 'CATEGORY',
-}
-
-
-ISSUES_RENAME = {
-    'redcap_repeat_instance': 'ID',
-    'issue_date': 'DATETIME',
-    'issue_description': 'DESCRIPTION',
-    'issue_event': 'EVENT',
-    'issue_field': 'FIELD',
-    'issue_scan': 'SCAN',
-    'issue_session': 'SESSION',
-    'issue_subject': 'SUBJECT',
-    'issue_type': 'CATEGORY',
-}
-
-
 def download_file(project, record_id, event_id, field_id, filename):
     try:
         (cont, hdr) = project.export_file(

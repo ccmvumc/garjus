@@ -65,7 +65,16 @@ def progress(project):
         project = project.split(',')
 
     g = Garjus()
-    g.progress(projects=project)
+    print(g.progress(projects=project))
+
+
+@cli.command('processing')
+@click.option('--project', '-p', 'project', required=True)
+def processing(project):
+    click.echo('garjus! processing')
+
+    g = Garjus()
+    pprint.pprint(g.processing_protocols(project))
 
 
 @cli.command('report')

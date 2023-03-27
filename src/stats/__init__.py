@@ -14,9 +14,11 @@ import os
 def update(garjus, projects):
     """Update project progress."""
     for p in projects:
-        proctypes = garjus.proctypes(p)
+        proctypes = garjus.stattypes(p)
+
         if not proctypes:
-            proctypes = garjus.default_proctypes()
+            logging.info(f'no proctypes for stats project:{p}')
+            continue
 
         logging.info(f'stats updating project:{p},proctypes={proctypes}')
         update_project(garjus, p, proctypes)

@@ -7,7 +7,8 @@ COLUMNS = {
     'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
                'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
-              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY']
+              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
+    'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS']
 }
 
 
@@ -110,4 +111,39 @@ STATLIB = {
         'hpcwhole_lh': 'Hippocampus Whole Left Hemisphere Volume in cubic millimeters',
         'hpcwhole_rh': 'Hippocampus Whole Right Hemisphere Volume in cubic millimeters',
     }
+}
+
+
+ACTIVITY_RENAME = {
+    'redcap_repeat_instance': 'ID',
+    'activity_description': 'DESCRIPTION',
+    'activity_datetime': 'DATETIME',
+    'activity_event': 'EVENT',
+    'activity_field': 'FIELD',
+    'activity_result': 'RESULT',
+    'activity_scan': 'SCAN',
+    'activity_subject': 'SUBJECT',
+    'activity_session': 'SESSION',
+    'activity_type': 'CATEGORY',
+}
+
+
+ISSUES_RENAME = {
+    'redcap_repeat_instance': 'ID',
+    'issue_date': 'DATETIME',
+    'issue_description': 'DESCRIPTION',
+    'issue_event': 'EVENT',
+    'issue_field': 'FIELD',
+    'issue_scan': 'SCAN',
+    'issue_session': 'SESSION',
+    'issue_subject': 'SUBJECT',
+    'issue_type': 'CATEGORY',
+}
+
+
+PROCESSING_RENAME = {
+    'processor_file': 'FILE',
+    'processor_custom': 'CUSTOM',
+    'processor_filter': 'FILTER',
+    'processor_args': 'ARGS',
 }
