@@ -23,6 +23,7 @@ setup(
         "dax",
         "click",
         "sphinx",
+        "pydot"
     ],
     entry_points={"console_scripts": ["garjus = src.cli:cli"]},
 )
