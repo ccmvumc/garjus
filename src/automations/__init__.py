@@ -305,6 +305,7 @@ def _run_scan_automations(automations, garjus, project):
             sess_field = p['scanning_srcsessfield']
             sess_suffix = p['scanning_xnatsuffix']
             src_project = p['scanning_srcproject']
+            alt_primary = p['scanning_altprimary']
 
             # Get events list
             events = None
@@ -313,8 +314,13 @@ def _run_scan_automations(automations, garjus, project):
 
             # Make the scan table that links what's entered at the scanner with
             # what we want to label the scans
+            if alt_primary:
+                scan_redcap = garjus.alternate(alt_primary)
+            else:
+                scan_redcap = project_redcap
+
             scan_table = _make_scan_table(
-                project_redcap,
+                scan_redcap,
                 events,
                 date_field,
                 sess_field,
@@ -330,6 +336,7 @@ def _run_scan_automations(automations, garjus, project):
         sess_relabel = _session_relabels(scan_data, site_data)
 
         # Run it
+        logging.debug(f'{project}:running session relabel')
         results += xnat_relabel_sessions.process_project(
             garjus.xnat(), project, sess_relabel, sess_replace)
 
@@ -338,6 +345,7 @@ def _run_scan_automations(automations, garjus, project):
         proj_scanmap = _parse_scanmap(proj_scanmap)
 
         # Run it
+        logging.debug(f'{project}:running scan relabel:{proj_scanmap}')
         results += xnat_relabel_scans.process_project(
             garjus.xnat(), project, proj_scanmap)
 
