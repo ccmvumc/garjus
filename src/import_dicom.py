@@ -7,6 +7,7 @@ import json
 import io
 import logging
 import requests
+from zipfile import ZipFile
 
 # TODO: use path in mri_importpath field to find a zip file of the scan then 
 # run import_dicom_zip(), where mri_importpath is a storage location that can 

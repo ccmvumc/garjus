@@ -381,7 +381,22 @@ class Garjus:
 
     def stattypes(self, project):
         """Get list of projects stat types."""
-        return self.proctypes(project)
+        types = []
+
+        # Start with defaults
+        types = self._default_stattypes()
+
+        # Append others
+        protocols = self.processing_protocols(project)
+        for i, row in protocols.iterrows():
+            ptype = row['TYPE']
+            if ptype not in types:
+                logging.debug(f'appending proctype:{ptype}')
+                types.append(ptype)
+
+        types = [x for x in types if x not in ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2']]
+
+        return types
 
     def _get_proctype(self, procfile):
         # Get just the filename without the directory path
@@ -427,7 +442,6 @@ class Garjus:
         protocols = self.processing_protocols(project)
         for i, row in protocols.iterrows():
             ptype = row['TYPE']
-            print(ptype)
             if ptype not in types:
                 logging.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
@@ -571,9 +585,13 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('processing'))
 
-    def processing_library(self, project):
+    def processing_library(self):
         """Return processing library."""
         return PROCLIB
+
+    def stats_library(self):
+        """Return stats library."""
+        return STATLIB
 
     def update(self, projects=None, choices=None):
         """Update projects."""
@@ -907,7 +925,10 @@ class Garjus:
 
     def _default_stattypes(self):
         """Return list of default stats types."""
-        return self._default_proctypes()
+        return [
+            'FS7_v1', 'LST_v1', 'AMYVIDQA_v1',
+            'BrainAgeGap_v2', 'FS7HPCAMG_v1',
+            'SAMSEG_v1'] # 'fmriqa_v4'
 
     def primary(self, project):
         """Connect to the primary redcap for this project."""

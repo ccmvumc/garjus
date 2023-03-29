@@ -328,6 +328,7 @@ def _run_scan_automations(automations, garjus, project):
     if 'xnat_relabel_sessions' in automations:
         # Build the session relabling
         sess_relabel = _session_relabels(scan_data, site_data)
+
         # Run it
         results += xnat_relabel_sessions.process_project(
             garjus.xnat(), project, sess_relabel, sess_replace)
@@ -335,6 +336,7 @@ def _run_scan_automations(automations, garjus, project):
     if 'xnat_relabel_scans' in automations and proj_scanmap:
         # Parse scan map
         proj_scanmap = _parse_scanmap(proj_scanmap)
+
         # Run it
         results += xnat_relabel_scans.process_project(
             garjus.xnat(), project, proj_scanmap)

@@ -74,7 +74,12 @@ def update_assessor(garjus, proj, subj, sess, assr):
     """Update assessor stats."""
     logging.info(f'uploading assessor stats:{assr}')
     with tempfile.TemporaryDirectory() as tmpdir:
-        _dir = garjus.get_source_stats(proj, subj, sess, assr, tmpdir)
+        try:
+            _dir = garjus.get_source_stats(proj, subj, sess, assr, tmpdir)
+        except Exception as err:
+            logging.warn(f'could not get stats:{assr}')
+            return
+
         _stats = transform_stats(_dir)
         garjus.set_stats(proj, subj, sess, assr, _stats)
 

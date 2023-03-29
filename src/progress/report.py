@@ -385,7 +385,7 @@ def _add_graph_page(pdf, info):
     pdf.cell(h=0.7, w=7.5, txt=_txt, align='C')
 
     # Build the graph
-    graph = pydot.Dot(graph_type='digraph', ratio=1.0)
+    graph = pydot.Dot(graph_type='digraph') #, ratio=1.0)
     graph.set_node_defaults(
         color='lightblue',
         style='filled',
@@ -394,7 +394,14 @@ def _add_graph_page(pdf, info):
         fontsize='12')
 
     for scan in scantypes:
-        graph.add_node(pydot.Node(scan, color='orange'))
+        if scan == 'CTAC': 
+            if 'FEOBVQA_v2' in proctypes:
+                graph.add_node(pydot.Node('FEOBV', color='lightorange'))
+
+            if 'AMYVIDQA_v1' in proctypes:
+                graph.add_node(pydot.Node('AMYVID', color='lightorange'))
+        else:
+            graph.add_node(pydot.Node(scan, color='orange'))
 
     graph.add_node(pydot.Node('EDAT', color='violet'))
     graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
@@ -426,11 +433,10 @@ def _add_graph_page(pdf, info):
         graph.add_edge(pydot.Edge('T1', 'BFC_v2'))
         graph.add_node(pydot.Node('BFC_v2', color='lightgreen'))
 
-    if 'FEOBVQA_v1' in proctypes:
-        graph.add_edge(pydot.Edge('CTAC', 'FEOBVQA_v1'))
-        graph.add_edge(pydot.Edge('FS7_v1', 'FEOBVQA_v1'))
-        graph.add_node(pydot.Node('FEOBVQA_v1', color='lightgreen'))
-
+    if 'FEOBVQA_v2' in proctypes:
+        graph.add_edge(pydot.Edge('CTAC (FEOBV)', 'FEOBVQA_v2'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'FEOBVQA_v2'))
+        graph.add_node(pydot.Node('FEOBVQA_v2', color='lightgreen'))
 
     if 'FS7sclimbic_v0' in proctypes:
         graph.add_edge(pydot.Edge('T1', 'FS7sclimbic_v0'))
@@ -438,7 +444,7 @@ def _add_graph_page(pdf, info):
 
 
     if 'AMYVIDQA_v1' in proctypes:
-        graph.add_edge(pydot.Edge('CTAC', 'AMYVIDQA_v1'))
+        graph.add_edge(pydot.Edge('CTAC (AMYVID)', 'AMYVIDQA_v1'))
         graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v1'))
         graph.add_node(pydot.Node('AMYVIDQA_v1', color='lightgreen'))
 
@@ -587,9 +593,15 @@ def _add_proclib_page(pdf, info):
         _text += 'Inputs: ' + v['inputs_descrip'] + '\n'
         _text += v['procurl'] + '\n'
 
+        # show stats
+        for s, t in info['statlib'].get(k, {}).items():
+            _text += f'{s}: {t}\n'
+
         # Show the description
         pdf.set_font('helvetica', size=12)
-        pdf.multi_cell(0, 0.3, _text, border=1, align="L")
+        pdf.multi_cell(0, 0.3, _text, border='LBTR', align="L", ln=0)
+
+        # Add some space between proc types
         pdf.ln(0.2)
 
     return pdf
@@ -888,8 +900,13 @@ def make_pdf(info, filename):
     _add_timeline_page(pdf, info)
 
     # Session type pages - counts per scans, counts per assessor
-    logging.debug('adding qa pages')
-    for curtype in info['sessions'].SESSTYPE.unique():
+    logging.debug('adding MR qa pages')
+
+    mr_sessions = info['sessions'].copy()
+    mr_sessions = mr_sessions[mr_sessions.MODALITY == 'MR']
+
+    for curtype in mr_sessions.SESSTYPE.unique():
+
         logging.debug('add_qa_page:{}'.format(curtype))
 
         # Get the scan and assr data
@@ -1063,7 +1080,8 @@ def make_project_report(
 ):
     """"Make the project report PDF and zip files"""
     # TODO: garjus.proctypes_info()
-    proclib = garjus.processing_library(project)
+    proclib = garjus.processing_library()
+    statlib = garjus.stats_library()
     activity = garjus.activity(project)
     issues = garjus.issues(project)
 
@@ -1090,6 +1108,7 @@ def make_project_report(
     # Make the info dictionary for PDF
     info = {}
     info['proclib'] = proclib
+    info['statlib'] = statlib
     info['project'] = project
     info['stattypes'] = stattypes
     info['scantypes'] = scantypes

@@ -24,7 +24,7 @@ modality'
 
 def process_project(xnat, project, relabels, replace):
     """Apply relabels to project sessions."""
-    results = relabel_sessions(xnat, project, relabels)
+    results = relabel_sessions(xnat, project, relabels, replace=replace, overwrite=True)
     return results
 
 
@@ -52,7 +52,7 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
             # no match
             continue
 
-        if (overwrite is False) and (session[k2] and (session[k2] not in replace)):
+        if (overwrite is False) or (session[k2] and (session[k2] not in replace)):
             # There's already a value there
             #print('already set:{}:{}'.format(k2, session[k2]))
             continue

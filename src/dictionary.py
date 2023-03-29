@@ -1,3 +1,35 @@
+ACTIVITY_RENAME = {
+    'redcap_repeat_instance': 'ID',
+    'activity_description': 'DESCRIPTION',
+    'activity_datetime': 'DATETIME',
+    'activity_event': 'EVENT',
+    'activity_field': 'FIELD',
+    'activity_result': 'RESULT',
+    'activity_scan': 'SCAN',
+    'activity_subject': 'SUBJECT',
+    'activity_session': 'SESSION',
+    'activity_type': 'CATEGORY',
+}
+
+ISSUES_RENAME = {
+    'redcap_repeat_instance': 'ID',
+    'issue_date': 'DATETIME',
+    'issue_description': 'DESCRIPTION',
+    'issue_event': 'EVENT',
+    'issue_field': 'FIELD',
+    'issue_scan': 'SCAN',
+    'issue_session': 'SESSION',
+    'issue_subject': 'SUBJECT',
+    'issue_type': 'CATEGORY',
+}
+
+PROCESSING_RENAME = {
+    'processor_file': 'FILE',
+    'processor_custom': 'CUSTOM',
+    'processor_filter': 'FILTER',
+    'processor_args': 'ARGS',
+}
+
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
                  'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
@@ -10,7 +42,6 @@ COLUMNS = {
               'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS']
 }
-
 
 # TODO: load this information from processor yamls
 PROCLIB = {
@@ -54,9 +85,9 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1)',
         'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/ScLimbic',
     },
-    'FEOBVQA_v1': {
+    'FEOBVQA_v2': {
         'short_descrip': 'Regional Amyloid SUVR using cerebellum as reference.',
-        'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), Amyloid PET',
+        'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), FEOBV PET',
         'procurl': 'https://github.com/ccmvumc/AMYVIDQA',
     },
     'FS7_v1': {
@@ -81,19 +112,18 @@ PROCLIB = {
     },
 }
 
-
 STATLIB = {
-    'FEOBVQA_v1': {
-        'antcing_suvr': 'Anterior Cingulate Standardized Uptake Value Ratio',
-        'antflobe_suvr': 'Anterior Frontal Lobe Standardized Uptake Value Ratio',
-        'cblmgm_suvr': 'Cerebellar Gray Matter Standardized Uptake Value Ratio',
-        'cblmwm_suvr': 'Cerebellar White Matter Standardized Uptake Value Ratio',
-        'compositegm_suvr': 'Composite Gray Matter Standardized Uptake Value Ratio',
-        'cblmgm_suvr': 'Cerebellar Gray Matter Standardized Uptake Value Ratio',
-        'cortwm_eroded_suvr': 'Eroded Cortical White Matter Standardized Uptake Value Ratio',
-        'latplobe_suvr': 'Lateral Parietal Lobe Standardized Uptake Value Ratio',
-        'lattlobe_suvr': 'Lateral Temporal Lobe Standardized Uptake Value Ratio',
-        'postcing_suvr': 'Posterior Cingulate Standardized Uptake Value Ratio',
+    'FEOBVQA_v2': {
+        'antcing_suvr': 'Anterior Cingulate SUVR normalized by Supra-ventricular White Matter',
+        'antflobe_suvr': 'Anterior Frontal Lobe SUVR normalized by Supra-ventricular White Matter',
+        'cblmgm_suvr': 'Cerebellar Gray Matter SUVR normalized by Supra-ventricular White Matter',
+        'cblmwm_suvr': 'Cerebellar White Matter SUVR normalized by Supra-ventricular White Matter',
+        'compositegm_suvr': 'Composite Gray Matter SUVR normalized by Supra-ventricular White Matter',
+        'cblmgm_suvr': 'Cerebellar Gray Matter SUVR normalized by Supra-ventricular White Matter',
+        'cortwm_eroded_suvr': 'Eroded Cortical White Matter SUVR normalized by Supra-ventricular White Matter',
+        'latplobe_suvr': 'Lateral Parietal Lobe SUVR normalized by Supra-ventricular White Matter',
+        'lattlobe_suvr': 'Lateral Temporal Lobe SUVR normalized by Supra-ventricular White Matter',
+        'postcing_suvr': 'Posterior Cingulate SUVR normalized by Supra-ventricular White Matter',
     },
     'SAMSEG_v1': {
         'samseg_lesions':  'whole brain White Matter Lesion Volume in cubic millimeters',
@@ -111,39 +141,4 @@ STATLIB = {
         'hpcwhole_lh': 'Hippocampus Whole Left Hemisphere Volume in cubic millimeters',
         'hpcwhole_rh': 'Hippocampus Whole Right Hemisphere Volume in cubic millimeters',
     }
-}
-
-
-ACTIVITY_RENAME = {
-    'redcap_repeat_instance': 'ID',
-    'activity_description': 'DESCRIPTION',
-    'activity_datetime': 'DATETIME',
-    'activity_event': 'EVENT',
-    'activity_field': 'FIELD',
-    'activity_result': 'RESULT',
-    'activity_scan': 'SCAN',
-    'activity_subject': 'SUBJECT',
-    'activity_session': 'SESSION',
-    'activity_type': 'CATEGORY',
-}
-
-
-ISSUES_RENAME = {
-    'redcap_repeat_instance': 'ID',
-    'issue_date': 'DATETIME',
-    'issue_description': 'DESCRIPTION',
-    'issue_event': 'EVENT',
-    'issue_field': 'FIELD',
-    'issue_scan': 'SCAN',
-    'issue_session': 'SESSION',
-    'issue_subject': 'SUBJECT',
-    'issue_type': 'CATEGORY',
-}
-
-
-PROCESSING_RENAME = {
-    'processor_file': 'FILE',
-    'processor_custom': 'CUSTOM',
-    'processor_filter': 'FILTER',
-    'processor_args': 'ARGS',
 }
