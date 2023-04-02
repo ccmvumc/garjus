@@ -46,7 +46,7 @@ def activity(project):
 @cli.command('update')
 @click.argument(
     'choice', 
-    type=click.Choice(['stats' ,'issues', 'progress', 'automations']),
+    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare']),
     required=False,
     nargs=-1)
 @click.option('--project', '-p', 'project', multiple=True)
@@ -82,6 +82,13 @@ def processing(project):
 def report(project):
     click.echo('garjus! report')
     Garjus().report(project)
+
+
+@cli.command('compare')
+@click.option('--project', '-p', 'project', required=True)
+def compare(project):
+    click.echo('garjus! compare')
+    Garjus().compare(project)
 
 
 @cli.command('importdicom')

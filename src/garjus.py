@@ -21,6 +21,7 @@ from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
 from .progress import update as update_progress, make_project_report
+from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
@@ -625,6 +626,11 @@ class Garjus:
             logging.info('updating progress')
             update_progress(self, projects)
 
+        if 'compare' in choices:
+            # confirm each project has report for current month
+            logging.info('updating compare')
+            update_compare(self, projects)
+
         if 'jobs' in choices:
             print('updating jobs not yet implemented, use run_build.py')
 
@@ -638,6 +644,23 @@ class Garjus:
 
         logging.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
+
+
+    def compare(self, project):
+        """Create a PDF report of Double Entry Comparison."""
+        pdf_file = f'{project}_double.pdf'
+        excel_file = f'{project}_double.xlsx'
+
+        if os.path.exists(pdf_file):
+            logging.info(f'{pdf_file} exists, delete or rename.')
+            return
+
+        if os.path.exists(excel_file):
+            logging.info(f'{excel_file} exists, delete or rename.')
+            return
+
+        logging.info(f'writing report to file:{pdf_file},{excel_file}.')
+        make_double_report(self, project, pdf_file, excel_file)
 
 
     def stats_projects(self):
@@ -688,6 +711,56 @@ class Garjus:
                 project,
                 'progress_zip',
                 prog_zip,
+                repeat_id=repeat_id)
+
+        except AssertionError as err:
+            logging.error(f'upload failed:{err}')
+        except (ValueError, RedcapError) as err:
+            logging.error(f'error uploading:{err}')
+
+    def add_compare(self, project, comp_name, comp_date, comp_pdf, comp_zip):
+        """Add a compare record with PDF and Excel at dated and named."""
+
+        # Format for REDCap
+        compare_datetime = prog_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Add new record
+        try:
+            record = {
+                'double_datetime': compare_datetime,
+                'main_name': project,
+                'redcap_repeat_instrument': 'double',
+                'redcap_repeat_instance': 'new',
+                'double_name': comp_name,
+                'double_complete': '2',
+            }
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logging.info('successfully created new record')
+
+            # Determine the new record id
+            logging.debug('locating new record')
+            _ids = utils_redcap.match_repeat(
+                self._rc,
+                project,
+                'double',
+                'double_datetime',
+                compare_datetime)
+            repeat_id = _ids[-1]
+
+            # Upload output files
+            logging.debug(f'uploading files to:{repeat_id}')
+            utils_redcap.upload_file(
+                self._rc,
+                project,
+                'double_resultspdf',
+                comp_pdf,
+                repeat_id=repeat_id)
+            utils_redcap.upload_file(
+                self._rc,
+                project,
+                'double_resultsfile',
+                comp_excel,
                 repeat_id=repeat_id)
 
         except AssertionError as err:
@@ -935,7 +1008,7 @@ class Garjus:
         primary_redcap = None
         project_id = self.project_setting(project, 'primary')
         if not project_id:
-            logging.debug(f'no primary project id found for project:{project}')
+            logging.debug(f'no primary project id found:{project}')
             return None
 
         try:
@@ -945,6 +1018,24 @@ class Garjus:
             primary_redcap = None
 
         return primary_redcap
+
+
+    def secondary(self, project):
+        """Connect to the secondary redcap for this project."""
+        secondary_redcap = None
+        project_id = self.project_setting(project, 'secondary')
+        if not project_id:
+            logging.debug(f'no secondary project id found:{project}')
+            return None
+
+        try:
+            secondary_redcap = utils_redcap.get_redcap(project_id)
+        except Exception as err:
+            logging.info(f'failed to load secondary redcap:{project}:{err}')
+            secondary_redcap = None
+
+        return secondary_redcap
+
 
     def alternate(self, project_id):
         """Connect to the alternate redcap with this ID."""
