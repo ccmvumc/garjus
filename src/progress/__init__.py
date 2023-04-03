@@ -23,7 +23,7 @@ def update(garjus, projects=None):
 
 def update_project(garjus, project):
     """Update project progress."""
-    progs = garjus.progress(projects=[project])
+    progs = garjus.progress_reports(projects=[project])
 
     # what time is it? use this for naming
     now = datetime.now()

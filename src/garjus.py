@@ -544,7 +544,7 @@ class Garjus:
         """Name of redcap filed that stores project name."""
         return self._rc.def_field
 
-    def progress(self, projects=None):
+    def progress_reports(self, projects=None):
         """List of progress records."""
         rec = self._rc.export_records(
             forms=['progress'],
@@ -555,6 +555,19 @@ class Garjus:
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'progress']
         rec = [x for x in rec if str(x['progress_complete']) == '2']
+        return rec
+
+    def double_reports(self, projects=None):
+        """List of progress records."""
+        rec = self._rc.export_records(
+            forms=['double'],
+            fields=[self._dfield()])
+
+        if projects:
+            rec = [x for x in rec if x[self._dfield()] in projects]
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'double']
+        rec = [x for x in rec if str(x['double_complete']) == '2']
         return rec
 
     def processing_protocols(self, project):
@@ -660,7 +673,10 @@ class Garjus:
             return
 
         logging.info(f'writing report to file:{pdf_file},{excel_file}.')
-        make_double_report(self, project, pdf_file, excel_file)
+        # Get the projects to compare
+        proj_primary = self.primary(project)
+        proj_secondary = self.secondary(project)
+        make_double_report(proj_primary, proj_secondary, pdf_file, excel_file)
 
 
     def stats_projects(self):
@@ -718,11 +734,11 @@ class Garjus:
         except (ValueError, RedcapError) as err:
             logging.error(f'error uploading:{err}')
 
-    def add_compare(self, project, comp_name, comp_date, comp_pdf, comp_zip):
+    def add_double(self, project, comp_name, comp_date, comp_pdf, comp_excel):
         """Add a compare record with PDF and Excel at dated and named."""
 
         # Format for REDCap
-        compare_datetime = prog_date.strftime("%Y-%m-%d %H:%M:%S")
+        compare_datetime = comp_date.strftime("%Y-%m-%d %H:%M:%S")
 
         # Add new record
         try:

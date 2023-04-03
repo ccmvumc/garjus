@@ -312,6 +312,7 @@ def compare_projects(p1, p2):
             records1[i]['sid'] =  id2subj1[rid1]
         except KeyError as err:
             logging.debug(f'blank subject ID for record:{rid1}:{err}')
+            records1[i]['sid'] =  rid1
 
     # Sort by subject
     records1 = sorted(records1, key=lambda x: x['sid']) 
@@ -343,7 +344,7 @@ def compare_projects(p1, p2):
 
 
 
-        #if sid != 'V1079':
+        #if sid != 'V1040':
         #    continue
 
 
@@ -356,7 +357,7 @@ def compare_projects(p1, p2):
             missing_subjects.append(sid)
             continue
      
-        logging.info(f'finding:{sid},{eid},{rid1},{rid2},{name1},{num1}')
+        #logging.info(f'finding:{sid},{eid},{rid1},{rid2},{name1},{num1}')
 
         # Get records from secondary redcap for this subject/event
         try:
@@ -379,8 +380,17 @@ def compare_projects(p1, p2):
                 num2 = str(e2.get('redcap_repeat_instance', ''))
 
                 if name1 != name2:
-                    logging.info(f'skipping:{eid}:{name1}:{num1}:{name2}:{num2}')
+                    #logging.info(f'skipping:{eid}:{name1}:{num1}:{name2}:{num2}')
                     continue
+
+                # First check specific identifiers
+                if r1.get('vasf_timepoint', False):
+                    if r1['vasf_timepoint'] == e2['vasf_timepoint']:
+                        logging.info(f'vasf_timepoint match:{sid}:{eid}:{name1}:{num1}:{name2}:{num2}')
+                        r2 = e2
+                        break
+                    else:
+                        continue
 
                 # Try to match a date
                 for cur_field in date_fields:
@@ -390,6 +400,9 @@ def compare_projects(p1, p2):
                         logging.info(f'date match:{sid}:{eid}:{name1}:{num1}:{cur_field}:{name2}:{num2}')
                         r2 = e2
                         break
+
+                if r2:
+                    break
 
             if r2 is None:
                 for e2 in records2:
@@ -401,7 +414,8 @@ def compare_projects(p1, p2):
                         r2 = e2
                         break
 
-                print('no match')
+            if r2 is None:
+                logging.info(f'NO MATCH:{sid}:{eid}:{name1}:{num1}')
 
         # Check for conflicts in best matching record 2
         if (name1 != name2) or (not name1 and (num1 != num2)):
