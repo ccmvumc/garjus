@@ -179,6 +179,12 @@ def _run_etl_nihexaminer(project):
             logging.debug(f'no data file:{record_id}:{event_id}')
             continue
 
+        # Check for blanks
+        for k in fields:
+            if r[k] == '':
+                logging.info(f'missing value, cannot process:{k}')
+                continue
+
         logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
 
         # Get values needed for scoring
@@ -239,12 +245,6 @@ def _run_etl_nihexaminer(project):
                 'cf2_rep': int(r['repetition_cloth']),
                 'cf2_rv': int(r['rule_vio_cloth'])
             })
-
-        # Check for blanks
-        for k, v in manual_values.items():
-            if v == '':
-                logging.info(f'missing value, cannot process:{k}')
-                continue
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
