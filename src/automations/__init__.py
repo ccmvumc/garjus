@@ -151,13 +151,13 @@ def _run_etl_nihexaminer(project):
     ]
 
     if 'correct_s' in project.field_names:
-        fields = fields.extend([
-            'correct_s', 'rule_vio_s, repetition_s',
-            'correct_t', 'rule_vio_t, repetition_t',
-            'correct_fruit', 'rule_vio_fruit, repetition_fruit',
-            'correct_r', 'rule_vio_r, repetition_r',
-            'correct_m', 'rule_vio_m, repetition_m',
-            'correct_cloth', 'rule_vio_cloth, repetition_cloth',
+        fields.extend([
+            'correct_s', 'rule_vio_s', 'repetition_s',
+            'correct_t', 'rule_vio_t', 'repetition_t',
+            'correct_fruit', 'rule_vio_fruit', 'repetition_fruit',
+            'correct_r', 'rule_vio_r', 'repetition_r',
+            'correct_m', 'rule_vio_m', 'repetition_m',
+            'correct_cloth', 'rule_vio_cloth', 'repetition_cloth',
         ])
 
     # Determine events
@@ -180,10 +180,15 @@ def _run_etl_nihexaminer(project):
             continue
 
         # Check for blanks
+        has_blank = False
         for k in fields:
             if r[k] == '':
-                logging.info(f'missing value, cannot process:{k}')
-                continue
+                has_blank = True
+                break
+
+        if has_blank:
+            logging.info(f'blank value:{record_id}:{event_id}')
+            continue
 
         logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
 
