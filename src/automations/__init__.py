@@ -240,6 +240,12 @@ def _run_etl_nihexaminer(project):
                 'cf2_rv': int(r['rule_vio_cloth'])
             })
 
+        # Check for blanks
+        for k, v in manual_values.items():
+            if v == '':
+                logging.info(f'missing value, cannot process:{k}')
+                continue
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
             flank_file = f'{tmpdir}/flanker.csv'
