@@ -394,12 +394,12 @@ def _add_graph_page(pdf, info):
         fontsize='12')
 
     for scan in scantypes:
-        if scan == 'CTAC': 
+        if scan == 'CTAC':
             if 'FEOBVQA_v2' in proctypes:
-                graph.add_node(pydot.Node('FEOBV', color='lightorange'))
+                graph.add_node(pydot.Node('FEOBV', color='chocolate'))
 
             if 'AMYVIDQA_v1' in proctypes:
-                graph.add_node(pydot.Node('AMYVID', color='lightorange'))
+                graph.add_node(pydot.Node('AMYVID', color='chocolate'))
         else:
             graph.add_node(pydot.Node(scan, color='orange'))
 
@@ -434,7 +434,7 @@ def _add_graph_page(pdf, info):
         graph.add_node(pydot.Node('BFC_v2', color='lightgreen'))
 
     if 'FEOBVQA_v2' in proctypes:
-        graph.add_edge(pydot.Edge('CTAC (FEOBV)', 'FEOBVQA_v2'))
+        graph.add_edge(pydot.Edge('FEOBV', 'FEOBVQA_v2'))
         graph.add_edge(pydot.Edge('FS7_v1', 'FEOBVQA_v2'))
         graph.add_node(pydot.Node('FEOBVQA_v2', color='lightgreen'))
 
@@ -444,7 +444,7 @@ def _add_graph_page(pdf, info):
 
 
     if 'AMYVIDQA_v1' in proctypes:
-        graph.add_edge(pydot.Edge('CTAC (AMYVID)', 'AMYVIDQA_v1'))
+        graph.add_edge(pydot.Edge('AMYVID', 'AMYVIDQA_v1'))
         graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v1'))
         graph.add_node(pydot.Node('AMYVIDQA_v1', color='lightgreen'))
 
