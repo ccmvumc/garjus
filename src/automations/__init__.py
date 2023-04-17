@@ -114,7 +114,7 @@ def _run_etl_nihexaminer(project):
 
     if 'flanker_summfile' in project.field_names:
         # Alternate file field names
-        flank_field = ''
+        flank_field = 'flanker_summfile'
         nback_field = 'nback_summfile'
         shift_field = 'set_shifting_summfile'
         cpt_field = 'cpt_summfile'
@@ -182,12 +182,12 @@ def _run_etl_nihexaminer(project):
         # Check for blanks
         has_blank = False
         for k in fields:
-            if r[k] == '':
+            if r[k] == '' and k != done_field:
+                logging.info(f'blank value:{record_id}:{event_id}:{k}')
                 has_blank = True
                 break
 
         if has_blank:
-            logging.info(f'blank value:{record_id}:{event_id}')
             continue
 
         logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
@@ -337,7 +337,11 @@ def _run_scan_automations(automations, garjus, project):
                 sess_field,
                 sess_suffix)
 
+            # TODO: build the scan table and append each event, then run
+            # autoarchive once
+
             # Run
+            logging.info(f'running xnat_auto_archive:{project}')
             results += xnat_auto_archive.process_project(
                 garjus, scan_table, src_project, project)
 
@@ -402,7 +406,7 @@ def _make_scan_table(
     # Set the subject and session
     for r in rec:
         d = {}
-        d['src_session'] = r[sess_field]
+        d['src_session'] = r[sess_field].strip()
         d['src_subject'] = d['src_session']
         d['dst_subject'] = id2subj.get(r[def_field], r[def_field])
         d['dst_session'] = d['dst_subject'] + scan_suffix
