@@ -124,6 +124,9 @@ def _run_etl_nihexaminer(project):
         project.def_field,
         done_field,
         cpt_field,
+        nback_field,
+        shift_field,
+        flank_field,
         'dot_count_tot',
         'anti_trial_1',
         'anti_trial_2',
@@ -181,7 +184,22 @@ def _run_etl_nihexaminer(project):
 
         # Check for blanks
         has_blank = False
-        for k in fields:
+        check_fields = [flank_field, nback_field, shift_field, cpt_field,
+        'dot_count_tot',
+        'anti_trial_1',
+        'anti_trial_2',
+        'correct_f',
+        'correct_l',
+        'correct_animal',
+        'correct_veg',
+        'repetition_f',
+        'rule_vio_f',
+        'repetition_l',
+        'rule_vio_l', 'repetition_animal', 'rule_vio_animal', 'repetition_veg',
+        'rule_vio_veg', 'brs_1', 'brs_2', 'brs_3', 'brs_4',
+        'brs_5', 'brs_6', 'brs_7', 'brs_8', 'brs_9']
+
+        for k in check_fields:
             if r[k] == '' and k != done_field:
                 logging.info(f'blank value:{record_id}:{event_id}:{k}')
                 has_blank = True
@@ -189,6 +207,7 @@ def _run_etl_nihexaminer(project):
 
         if has_blank:
             continue
+            print('has blank!')
 
         logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
 
@@ -251,6 +270,7 @@ def _run_etl_nihexaminer(project):
                 'cf2_rv': int(r['rule_vio_cloth'])
             })
 
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
             flank_file = f'{tmpdir}/flanker.csv'
@@ -281,7 +301,7 @@ def _run_etl_nihexaminer(project):
                     nback_file,
                     shift_file)
             except Exception as err:
-                logging.error(f'processing examiner:{record_id}:{event_id}')
+                logging.error(f'processing examiner:{record_id}:{event_id}:{err}')
                 continue
 
         # Load data back to redcap
