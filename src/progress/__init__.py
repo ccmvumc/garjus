@@ -44,7 +44,7 @@ def make_progress(garjus, project, cur_progress, now):
     with tempfile.TemporaryDirectory() as outdir:
         fnow = now.strftime("%Y-%m-%d_%H_%M_%S")
         pdf_file = f'{outdir}/{project}_report_{fnow}.pdf'
-        zip_file =  f'{outdir}/{project}_stats_{fnow}.zip'
+        zip_file =  f'{outdir}/{project}_data_{fnow}.zip'
 
         make_project_report(garjus, project, pdf_file, zip_file)
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)

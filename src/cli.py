@@ -35,6 +35,15 @@ def issues(ctx, project):
     pprint.pprint(g.issues(project))
 
 
+@cli.command('subjects')
+@click.option('--project', '-p', 'project')
+@click.pass_context
+def subjects(ctx, project):
+    click.echo('garjus! subjects')
+    g = Garjus()
+    pprint.pprint(g.subjects(project))
+
+
 @cli.command('activity')
 @click.option('--project', '-p', 'project')
 def activity(project):
@@ -107,27 +116,17 @@ def dashboard():
     import webbrowser
     url = 'http://localhost:8050'
 
-    # TODO: check that we have credentials for redcap and xnat
+    # TODO: check that we have credentials for redcap and/or xnat
 
     # start up a dashboard app
-    try:
-        # TODO: install dashboard as a package and load instead of this hack
-        # to find it or or or
-        # move the dashboard into garjus as a subdir and then import from
-        # there and start rewriting it to use main garjus to get data
-        sys.path.append(os.path.expanduser(
-            '~/git/dax-dashboard/dashboard'))
-        from index import app
-    except ModuleNotFoundError as err:
-        print(f'error loading function:{err}')
-        return
+    from .dashboard import app
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)
 
     app.run_server(host='0.0.0.0')
 
-    print('app returned')
+    print('dashboard app closed!')
 
 
 def quick_test():
@@ -142,12 +141,8 @@ def quick_test():
 # info ()
 # download (images, stats)
 # upload (images)
-# issues
 # activity
 # stats
-
-
-# garjus update CHAMP
 
 # Garjus is the interface to everything that's stored in XNAT/REDCap and it uses
 # REDCap to store it's own settings and tracking data. Anytime we want to

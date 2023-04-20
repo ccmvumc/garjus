@@ -377,12 +377,37 @@ def _add_graph_page(pdf, info):
     scantypes = info['scantypes']
     proctypes = info['proctypes']
 
+    print('proctypes=', proctypes)
+
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
     pdf.cell(w=7.5, align='C', txt='Processing Graph', ln=1)
     pdf.set_font('helvetica', size=9)
-    _txt = 'Scans are orange, Processing with stats are green, Processing without stats are blue'
-    pdf.cell(h=0.7, w=7.5, txt=_txt, align='C')
+
+    # MR Scan are orange
+    pdf.set_fill_color(255, 166, 0) 
+    pdf.cell(h=0.3, txt='MR Scan', fill=True, ln=1)
+
+    # PET Scan are chocolate
+    pdf.set_fill_color(210, 105, 30)
+    pdf.cell(h=0.3, txt='PET Scan', fill=True, ln=1)
+
+    # EDAT Scan are pink
+    #pdf.set_fill_color(238, 130, 238)
+    #pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
+
+    # Processing with stats are green
+    pdf.set_fill_color(144, 238, 144)
+    pdf.cell(h=0.3, txt='Processing with stats', fill=True, ln=1)
+
+    # Processing without stats are blue
+    pdf.set_fill_color(173, 216, 230)
+    pdf.cell(h=0.3, txt='Processing without stats', fill=True, ln=1)
+
+    pdf.ln(0.5)
+
+    # Set color back to black
+    #pdf.set_text_color(255, 255, 255)
 
     # Build the graph
     graph = pydot.Dot(graph_type='digraph') #, ratio=1.0)
@@ -398,36 +423,48 @@ def _add_graph_page(pdf, info):
             if 'FEOBVQA_v2' in proctypes:
                 graph.add_node(pydot.Node('FEOBV', color='chocolate'))
 
-            if 'AMYVIDQA_v1' in proctypes:
+            if 'AMYVIDQA_v2' in proctypes:
                 graph.add_node(pydot.Node('AMYVID', color='chocolate'))
         else:
             graph.add_node(pydot.Node(scan, color='orange'))
 
-    graph.add_node(pydot.Node('EDAT', color='violet'))
+    # Default proctypes
     graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
     graph.add_node(pydot.Node('FS7HPCAMG_v1', color='lightgreen'))
     graph.add_node(pydot.Node('LST_v1', color='lightgreen'))
     graph.add_node(pydot.Node('SAMSEG_v1', color='lightgreen'))
-    graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
+
+    graph.add_edge(pydot.Edge('T1', 'LST_v1'))
+    graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'FS7HPCAMG_v1'))
+    graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
+    graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
 
     if 'fmri_msit_v2' in proctypes:
+        graph.add_node(pydot.Node('EDAT', color='violet'))
         graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
         graph.add_edge(pydot.Edge('T1', 'fmri_msit_v2'))
+        graph.add_node(pydot.Node('fmri_msit_v2', color='lightgreen'))
+        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
+
+    if 'fmri_bct_v1' in proctypes:
+        graph.add_node(pydot.Node('struct_preproc_v1', color='lightgreen'))
         graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
         graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
         graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v2'))
         graph.add_edge(pydot.Edge('fMRI_REST1', 'fmri_rest_v2'))
         graph.add_edge(pydot.Edge('fMRI_REST2', 'fmri_rest_v2'))
-        graph.add_edge(pydot.Edge('struct_preproc_noflair_v1', 'fmri_rest_v2',
-                                  style='dashed'))
-        graph.add_edge(pydot.Edge('T1', 'struct_preproc_noflair_v1',
-                                  style='dashed'))
-        graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))
-        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
         graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
         graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
         graph.add_node(pydot.Node('fmri_bct_v1', color='lightgreen'))
-        graph.add_node(pydot.Node('fmri_msit_v2', color='lightgreen'))
+
+    if 'struct_preproc_noflair_v1' in proctypes:
+        graph.add_edge(pydot.Edge(
+            'struct_preproc_noflair_v1', 'fmri_rest_v2', style='dashed'))
+        graph.add_edge(pydot.Edge(
+            'T1', 'struct_preproc_noflair_v1', style='dashed'))
+        #graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))       
 
     if 'BFC_v2' in proctypes:
         graph.add_edge(pydot.Edge('T1', 'BFC_v2'))
@@ -442,26 +479,18 @@ def _add_graph_page(pdf, info):
         graph.add_edge(pydot.Edge('T1', 'FS7sclimbic_v0'))
         graph.add_node(pydot.Node('FS7sclimbic_v0', color='lightgreen'))
 
-
-    if 'AMYVIDQA_v1' in proctypes:
-        graph.add_edge(pydot.Edge('AMYVID', 'AMYVIDQA_v1'))
-        graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v1'))
-        graph.add_node(pydot.Node('AMYVIDQA_v1', color='lightgreen'))
+    if 'AMYVIDQA_v2' in proctypes:
+        graph.add_edge(pydot.Edge('AMYVID', 'AMYVIDQA_v2'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v2'))
+        graph.add_node(pydot.Node('AMYVIDQA_v2', color='lightgreen'))
 
     if 'BrainAgeGap_v2' in proctypes:
         graph.add_node(pydot.Node('BrainAgeGap_v2', color='lightgreen'))
         graph.add_edge(pydot.Edge('T1', 'BrainAgeGap_v2'))
 
-    graph.add_edge(pydot.Edge('T1', 'LST_v1'))
-    graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
-    graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
-    graph.add_edge(pydot.Edge('FS7_v1', 'FS7HPCAMG_v1'))
-    graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
-    graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
-
     # Make the graph, draw to pdf
     image = Image.open(io.BytesIO(graph.create_png()))
-    pdf.image(image, x=0.5, y=1.5, w=7.5)
+    pdf.image(image, x=0.5, y=3, w=7.5)
 
     return pdf
 
@@ -663,7 +692,7 @@ def _add_activity_page(pdf, info):
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=3.5, h=3.3)
     pdf.ln(3)
-    pdf.multi_cell(1.5, 0.3, txt='Automations')
+    pdf.multi_cell(1.5, 0.3, txt='Autos')
 
     # issues
     df = info['issues'].copy()
@@ -926,7 +955,7 @@ def make_pdf(info, filename):
 
     # Add stats pages
     if info['stats'].empty:
-        logging.debug('no stats')
+        logging.debug('without stats')
     else:
         stats = info['stats']
         for s in info['stattypes']:
@@ -1128,16 +1157,23 @@ def make_project_report(
 
     # Save the stats to zip file
     if zipname:
-        stats2zip(stats, zipname)
+        # TODO: include a QA.csv and a subjects.csv with demographics
+        subjects = garjus.subjects(project)
+        data2zip(subjects, stats, zipname)
 
 
-def stats2zip(stats, filename):
+def data2zip(subjects, stats, filename):
     """Convert stats dict to zip of csv files, one csv per proctype."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # Prep output dir
-        stats_dir = os.path.join(tmpdir, 'stats')
-        zip_file = os.path.join(tmpdir, 'stats.zip')
-        os.mkdir(stats_dir)
+        data_dir = os.path.join(tmpdir, 'data')
+        zip_file = os.path.join(tmpdir, 'data.zip')
+        os.mkdir(data_dir)
+
+        # Save subjects csv
+        csv_file = os.path.join(data_dir, f'subjects.csv')
+        logging.info(f'saving subjects csv:{csv_file}')
+        subjects.to_csv(csv_file)
 
         # Save a csv for each proc type
         for proctype in stats.PROCTYPE.unique():
@@ -1147,12 +1183,12 @@ def stats2zip(stats, filename):
             dft = dft.sort_values('ASSR')
 
             # Save file for this type
-            csv_file = os.path.join(stats_dir, f'{proctype}.csv')
+            csv_file = os.path.join(data_dir, f'{proctype}.csv')
             logging.info(f'saving csv:{proctype}:{csv_file}')
             dft.to_csv(csv_file, index=False)
 
         # Create zip file of dir of csv files
-        shutil.make_archive(stats_dir, 'zip', stats_dir)
+        shutil.make_archive(data_dir, 'zip', data_dir)
 
         # Save it outside of temp dir
         logging.info(f'saving zip:{filename}')

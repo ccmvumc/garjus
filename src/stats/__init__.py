@@ -92,6 +92,8 @@ def transform_stats(stats_dir):
         data = _load_stats(f'{stats_dir}/stats.csv')
     elif os.path.exists(f'{stats_dir}/stats.txt'):
         data = _load_stats(f'{stats_dir}/stats.txt')
+    elif os.path.exists(f'{stats_dir}/fmriqa_stats.csv'):
+        data.update(_load_stats_tall(f'{stats_dir}/fmriqa_stats.csv'))
     elif len(glob.glob(f'{stats_dir}/*stats.txt')) > 0:
         for txt_path in glob.iglob(f'{stats_dir}/*stats.txt'):
             data.update(_load_stats_tall(txt_path))

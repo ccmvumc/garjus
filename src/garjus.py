@@ -16,7 +16,9 @@ import tempfile
 import pandas as pd
 from redcap import Project, RedcapError
 from pyxnat import Interface
+from requests.exceptions import ConnectionError
 
+from .subjects import load_subjects
 from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
@@ -27,6 +29,10 @@ from .automations import update as update_automations
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
+
+
+# TODO: export session/scan table with matching of vuiis id, subject id, and a column
+# for NDA upload yes/no
 
 
 class Garjus:
@@ -379,6 +385,18 @@ class Garjus:
     def projects(self):
         """Get list of projects."""
         return self._projects
+
+
+    #def scan_inventory():
+    # this will replace make_scan_table and be used by auto_archive
+    # as well as nda scripts, and progress exports to zip 
+
+
+    def subjects(self, project):
+        """Return subjects for project."""
+
+        return load_subjects(self, project)
+
 
     def stattypes(self, project):
         """Get list of projects stat types."""
@@ -787,8 +805,6 @@ class Garjus:
     def get_source_stats(self, project, subject, session, assessor, stats_dir):
         """Download stats files to directory."""
         resource = 'STATS'
-        if 'fmriqa_v4' in assessor:
-            resource = 'STATSWIDE'
 
         xnat_resource = self._xnat.select_assessor_resource(
             project,
@@ -828,7 +844,7 @@ class Garjus:
             logging.debug('successfully uploaded')
         except AssertionError as err:
             logging.error(f'upload failed:{err}')
-        except requests.exceptions.ConnectionError as err:
+        except ConnectionError as err:
             logging.error(err)
             logging.info('wait a minute')
             import time
@@ -1004,8 +1020,7 @@ class Garjus:
     def _default_proctypes(self):
         """Get list of default processing types."""
         return [
-            'dtiQA_synb0_v7', 'biscuit_fs_v2', 'FS7_v1', 'FEOBVQA_v1',
-            'LST_v1', 'AMYVIDQA_v1', 'BrainAgeGap_v2', 'FS7HPCAMG_v1',
+            'dtiQA_synb0_v7', 'biscuit_fs_v2', 'FS7_v1', 'LST_v1',
             'SAMSEG_v1', 'fmriqa_v4', 'slant_gpu_v1']
 
     def _default_scantypes(self):
@@ -1017,7 +1032,7 @@ class Garjus:
         return [
             'FS7_v1', 'LST_v1', 'AMYVIDQA_v1',
             'BrainAgeGap_v2', 'FS7HPCAMG_v1',
-            'SAMSEG_v1'] # 'fmriqa_v4'
+            'SAMSEG_v1',  'fmriqa_v4']
 
     def primary(self, project):
         """Connect to the primary redcap for this project."""

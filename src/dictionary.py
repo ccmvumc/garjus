@@ -40,10 +40,15 @@ COLUMNS = {
                'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
               'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
-    'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS']
+    'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS'],
+    'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
 }
 
-# TODO: load this information from processor yamls
+# TODO: load this information from processor yamls or put it in REDCap?
+# Processor main record with repeating stats
+# Processor fields: ID(name_vX), name, short_descrip, inputs_descrip, procurl
+# Stat fields: ID(auto), name, descrip
+ 
 PROCLIB = {
     'AMYVIDQA_v1': {
         'short_descrip': 'Regional Amyloid SUVR using cerebellum as reference.',
