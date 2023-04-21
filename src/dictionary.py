@@ -48,7 +48,7 @@ COLUMNS = {
 # Processor main record with repeating stats
 # Processor fields: ID(name_vX), name, short_descrip, inputs_descrip, procurl
 # Stat fields: ID(auto), name, descrip
- 
+
 PROCLIB = {
     'AMYVIDQA_v1': {
         'short_descrip': 'Regional Amyloid SUVR using cerebellum as reference.',
@@ -118,6 +118,16 @@ PROCLIB = {
 }
 
 STATLIB = {
+    'FS7_v1': {
+        'fs7_etiv': 'Estimated Total Intracranial Volume',
+        'fs7_hpc_lh': 'Hippocampus Left Hemisphere Volume',
+        'fs7_hpc_rh': 'Hippocampus Right Hemisphere Volume',
+        'fs7_latvent_lh': 'Lateral Ventricle Left Hemisphere Volume',
+        'fs7_latvent_rh': 'Lateral Ventricle Right Hemisphere Volume',
+        'fs7_stnv': 'Supra-tentorial not ventricles Volume',
+        'fs7_supflobe_lh': 'Superior Frontal Lobe Left Hemisphere Thickness',
+        'fs7_supflobe_rh': 'Superior Frontal Lobe Right Hemisphere Thickness',
+    },
     'FEOBVQA_v2': {
         'antcing_suvr': 'Anterior Cingulate SUVR normalized by Supra-ventricular White Matter',
         'antflobe_suvr': 'Anterior Frontal Lobe SUVR normalized by Supra-ventricular White Matter',
@@ -131,7 +141,7 @@ STATLIB = {
         'postcing_suvr': 'Posterior Cingulate SUVR normalized by Supra-ventricular White Matter',
     },
     'SAMSEG_v1': {
-        'samseg_lesions':  'whole brain White Matter Lesion Volume in cubic millimeters',
+        'samseg_lesions': 'whole brain White Matter Lesion Volume in cubic millimeters',
         'samseg_sbtiv': 'segmentation-based (estimated) Total Intracranial Volume in cubic millimeters',
     },
     'FS7HPCAMG_v1': {
@@ -145,5 +155,20 @@ STATLIB = {
         'hpctail_rh': 'Hippocampus Tail Right Hemisphere Volume in cubic millimeters',
         'hpcwhole_lh': 'Hippocampus Whole Left Hemisphere Volume in cubic millimeters',
         'hpcwhole_rh': 'Hippocampus Whole Right Hemisphere Volume in cubic millimeters',
+    },
+    'LST_v1': {
+        'wml_volume': 'White Matter Lesion Volume',
+    },
+    'fmriqa_v4': {
+        'dvars_mean': 'DVARS, framewise signal',
+        'fd_mean': 'Framewise Displacement',
+    },
+    'struct_preproc_v1': {
+        'Volume1': 'Gray Matter',
+        'Volume2': 'White Matter',
+        'Volume3': 'CSF',
+    },
+    'fmri_bct_v1': {
+        'Schaefer400_thr0p1_deg': 'Degree'
     }
 }
