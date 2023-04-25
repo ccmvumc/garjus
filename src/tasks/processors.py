@@ -195,7 +195,10 @@ class Processor_v3_1(Processor_v3):
         proctype = self.get_proctype()
         dfa = project_data['assessors']
         dfa = dfa[(dfa.SESSION == session) & (dfa.PROCTYPE == proctype)]
-        dfa = dfa[(dfa.INPUTS == json.dumps(inputs))]
+        print(dfa)
+        encoded_inputs = json.dumps(inputs)
+        print(encoded_inputs)
+        dfa = dfa[(dfa.INPUTS == encoded_inputs)]
         print(dfa)
 
         if len(dfa) > 0:
