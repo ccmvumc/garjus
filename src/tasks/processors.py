@@ -985,6 +985,15 @@ def build_processor(
     project_data,
     include_filters):
 
+    params = {
+        'singularity_imagedir': singularity_imagedir,
+        'jobtemplate': job_template,
+        'resdir': '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir',
+        'jobdir': '/tmp',
+        'job_rungroup': 'h_vuiis',
+        'processorlib': '/data/mcr/centos7/dax_processors',
+        }
+
     # Get lists of subjects/sessions for filtering
     all_sessions = project_data.get('scans').SESSION.unique()
     all_subjects = project_data.get('scans').SUBJECT.unique()
