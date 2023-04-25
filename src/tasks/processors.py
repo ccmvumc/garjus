@@ -992,7 +992,7 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             logging.debug('building task')
             (assr, info) = build_task(
-                assr, info, processor, project_data, params)
+                garjus, assr, info, processor, project_data, params)
 
             logging.debug(f'assr after={info}')
         else:
