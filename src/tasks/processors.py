@@ -22,7 +22,7 @@ def _get_scan_path(scan):
         scan.get('PROJECT'),
         scan.get('SUBJECT'),
         scan.get('SESSION'),
-        scan.get('SCAN')
+        scan.get('SCANID')
         )
 
 
