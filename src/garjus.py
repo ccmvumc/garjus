@@ -28,7 +28,8 @@ from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
+from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME
+from .tasks import update as update_tasks
 
 
 # TODO: export session/scan table with matching of vuiis id, subject id, and a column
@@ -64,8 +65,10 @@ class Garjus:
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
+        self.sgp_uri = utils_xnat.SGP_URI
         self.scan_rename = utils_xnat.SCAN_RENAME
         self.assr_rename = utils_xnat.ASSR_RENAME
+        self.sgp_rename = utils_xnat.SGP_RENAME
         self.activity_rename = ACTIVITY_RENAME
         self.issues_rename = ISSUES_RENAME
         self.processing_rename = PROCESSING_RENAME
@@ -166,6 +169,16 @@ class Garjus:
         # Build a dataframe
         return pd.DataFrame(data, columns=self.column_names('assessors'))
 
+    def subject_assessors(self, projects=None, proctypes=None):
+        """Query XNAT for all subject assessors, return dataframe."""
+        if not projects:
+            projects = self.projects()
+
+        data = self._load_sgp_data(projects, proctypes)
+
+        # Build a dataframe
+        return pd.DataFrame(data, columns=self.column_names('sgp'))
+
     def column_names(self, datatype):
         """Return list of colum names for this data type."""
         return self._columns.get(datatype)
@@ -201,6 +214,26 @@ class Garjus:
 
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
+
+    def tasks(self):
+        """List of task records."""
+        data = []
+
+        rec = self._rc.export_records(
+            forms=['taskqueue'],
+            fields=[self._dfield()])
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
+        for r in rec:
+            #d = {'PROJECT': r[self._dfield()], 'STATUS': 'COMPLETE'}
+            
+            for k, v in self.task_rename.items():
+                d[v] = r.get(k, '')
+
+            data.append(d)
+
+        return pd.DataFrame(data, columns=self.column_names('task'))
+
 
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
@@ -269,6 +302,7 @@ class Garjus:
             subject=subj,
             session=sess,
             result='COMPLETE')
+
 
     def copy_sess(self, src, dst):
         """Copy dicom source to destination."""
@@ -516,6 +550,26 @@ class Garjus:
 
         return assessors
 
+
+    def _load_sgp_data(self, projects=None, proctypes=None):
+        """Get assessor info from XNAT as list of dicts."""
+        assessors = []
+        uri = self.sgp_uri
+
+        if projects:
+            uri += f'&project={",".join(projects)}'
+
+        result = self._get_result(uri)
+
+        for r in result:
+            assessors.append(self._sgp_info(r))
+
+        # Filter by type
+        if proctypes:
+            assessors = [x for x in assessors if x['PROCTYPE'] in proctypes]
+
+        return assessors
+
     def _get_result(self, uri):
         """Get result of xnat query."""
         logging.debug(uri)
@@ -555,6 +609,22 @@ class Garjus:
 
         # set_modality
         info['MODALITY'] = self.xsi2mod.get(info['XSITYPE'], 'UNK')
+
+        return info
+
+    def _sgp_info(self, record):
+        """Get subject assessor info."""
+        info = {}
+
+        for k, v in self.sgp_rename.items():
+            info[v] = record[k]
+
+        # Get the full path
+        _p = '/projects/{0}/subjects/{1}/assessors/{2}'.format(
+            info['PROJECT'],
+            info['SUBJECT'],
+            info['ASSR'])
+        info['full_path'] = _p
 
         return info
 
@@ -662,8 +732,11 @@ class Garjus:
             logging.info('updating compare')
             update_compare(self, projects)
 
-        if 'jobs' in choices:
-            print('updating jobs not yet implemented, use run_build.py')
+        if 'tasks' in choices:
+            #print('updating jobs not yet implemented, use run_build.py')
+            logging.info('updating tasks')
+            update_tasks(self, projects)
+
 
     def report(self, project):
         """Create a PDF report."""
@@ -702,6 +775,24 @@ class Garjus:
         _fields = [self._dfield(), 'project_stats']
         rec = self._rc.export_records(fields=_fields)
         return [x[self._dfield()] for x in rec if x['project_stats']]
+
+    def add_task(self, project, assr, cmds, walltime, memreq):
+        """Add a new task record ."""
+        try:
+            record = {
+                'main_name': project,
+                'redcap_repeat_instrument': 'taskqueue',
+                'redcap_repeat_instance': 'new',
+                'task_assessor': assr,
+                'task_cmds': cmds,
+                'task_walltime': walltime,
+                'task_memreq': memreq,
+            }
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logging.info('successfully created new record')
+        except AssertionError as err:
+            logging.error(f'upload failed:{err}')
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""

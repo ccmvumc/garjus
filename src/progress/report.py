@@ -377,8 +377,6 @@ def _add_graph_page(pdf, info):
     scantypes = info['scantypes']
     proctypes = info['proctypes']
 
-    print('proctypes=', proctypes)
-
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
     pdf.cell(w=7.5, align='C', txt='Processing Graph', ln=1)
@@ -392,7 +390,7 @@ def _add_graph_page(pdf, info):
     pdf.set_fill_color(210, 105, 30)
     pdf.cell(h=0.3, txt='PET Scan', fill=True, ln=1)
 
-    # EDAT Scan are pink
+    # EDAT are pink
     #pdf.set_fill_color(238, 130, 238)
     #pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
 
@@ -524,26 +522,29 @@ def _add_other_page(pdf, sessions):
 
 def _add_stats_page(pdf, stats, proctype):
     pdf.add_page()
-    pdf.set_font('helvetica', size=14)
+    pdf.set_font('helvetica', size=12)
     pdf.cell(txt=proctype, ln=1)
 
     # this returns a PIL Image object
     image = plot_stats(stats, proctype)
     tot_width, tot_height = image.size
 
-    # Split horizontal image into chunks of width to fit on letter-sized page
-    # crop((left, top, right, bottom))
-    #pdf.set_fill_color(114, 172, 77)
-
+    # Split horizontal image into chunks of width to fit on 
+    # letter-sized page with crop((left, top, right, bottom))
     chunk_h = 500
-    chunk_w = 1000
+    chunk_w = 998
     rows_per_page = 3  # 3 rows per page
     page_count = math.ceil(tot_width / (rows_per_page * chunk_w))
 
     for p in range(page_count):
         for c in range(rows_per_page):
+            # Calculate the starting x for this chunk
             chunk_x = (c * chunk_w ) + (p * chunk_w * rows_per_page)
+
+            # Get the image from the cropped section
             _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
+
+            # Draw the image on the PDF
             pdf.image(_img, x=0.75, h=3.1)
 
     return pdf
@@ -829,6 +830,9 @@ def plot_stats(df, proctype):
     # Filter var list to only stats can be plotted as float
     var_list = [x for x in var_list if _plottable(df[x])]
 
+    # skip vars
+    var_list = [x for x in var_list if not x.endswith('pathlength')]
+
     # Determine how many boxplots we're making, depends on how many vars, use
     # minimum so graph doesn't get too small
     box_count = len(var_list)
@@ -851,11 +855,12 @@ def plot_stats(df, proctype):
     logging.debug(f'{box_count}, {min_box_count}, {graph_width}, {hspacing}')
 
     # Make the figure with 1 row and a column for each var we are plotting
+    var_titles = [x[:22] for x in var_list]
     fig = plotly.subplots.make_subplots(
         rows=1,
         cols=box_count,
         horizontal_spacing=hspacing,
-        subplot_titles=var_list)
+        subplot_titles=var_titles)
 
     # Add box plot for each variable
     for i, var in enumerate(var_list):
@@ -970,10 +975,9 @@ def make_pdf(info, filename):
     # Phantom pages
     if len(info['phantoms']) > 0:
         logging.debug('adding phantom page')
-        print('add Phantom page')
         _add_phantom_page(pdf, info)
     else:
-        print('no Phantom page')
+        logging.debug('no phantom page')
 
     # QA/Jobs/Issues counts
     _add_activity_page(pdf, info)

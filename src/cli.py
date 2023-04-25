@@ -35,6 +35,13 @@ def issues(ctx, project):
     pprint.pprint(g.issues(project))
 
 
+@cli.command('build')
+@click.option('--project', '-p', 'project')
+def build(project):
+    click.echo('garjus! build')
+    Garjus().build(project)
+
+
 @cli.command('subjects')
 @click.option('--project', '-p', 'project')
 @click.pass_context
@@ -52,10 +59,17 @@ def activity(project):
     pprint.pprint(g.activity(project))
 
 
+@cli.command('tasks')
+def tasks():
+    click.echo('garjus! tasks')
+    g = Garjus()
+    pprint.pprint(g.tasks())
+
+
 @cli.command('update')
 @click.argument(
     'choice', 
-    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare']),
+    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare', 'tasks']),
     required=False,
     nargs=-1)
 @click.option('--project', '-p', 'project', multiple=True)

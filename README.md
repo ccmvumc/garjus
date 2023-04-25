@@ -77,7 +77,7 @@ xnat_scan_relabel - relabels scan type in XNAT using a simple map of input to ou
 
 
 
-ToBeCompleted:edat automations
+edat automations
 
 edat_convert - convert files, input is from redcap file field, outputs to redcap file field
 
@@ -106,27 +106,34 @@ Resolved issues are deleted one week after resolution.
 activity - Each complete automation is recorded in activity.
 
 
+
 To create a new main REDCap project:
--upload from zip
--click user rights, enable API export/import, save changes
--refresh, click API, click Generate API Token, click Copy
--go to ~/.redcap.txt
--paste key, copy & paste PID from gui, name it "main"
+  - upload from zip
+  - click user rights, enable API export/import, save changes
+  - refresh, click API, click Generate API Token, click Copy
+  - go to ~/.redcap.txt
+  - paste key, copy & paste PID from gui, name it "main"
+
 
 To create a new stats REDCap project:
--copy an existing project in gui under Other Functionality, click Copy Project
--change the project name, check or uncheck
--click Copy Project (should take you to new project)
--click user rights, enable API export/import, save changes
--refresh, click API, clcik Generate API Token, click Copy
--go to ~/.redcap.txt
--paste key, copy & paste ID, name main
--paste ID into ccmutils under Main > Project Stats
+  - Copy an existing project in gui under Other Functionality, click Copy Project
+  - Change the project name
+  - Confirm checkboxes for Users, Folder
+  - Click Copy Project (should take you to new project)
+  - In the new project, click user rights, check enable API export/import, click save changes
+  - Refresh page, click API, click Generate API Token, click Copy
+  - Go to ~/.redcap.txt
+  - Paste key, copy & paste ID, name main
+  - Paste ID into ccmutils under Main > Project Stats
+
 
 To add a new primary REDCap project:
--Copy PID, key to ~/.redcap.txt, name PROJECT primary
--paste ID into ccmutils under Main > Project P
+  - Copy PID, key to ~/.redcap.txt, name PROJECT primary
+  - paste ID into ccmutils under Main > Project P
+
 
 To add a new secondary REDCap project for double entry comparison:
--Copy PID, key to ~/.redcap.txt, name PROJECT secondary
--paste ID into ccmutils under Main > Project Secondary
+  - Copy PID, key to ~/.redcap.txt, name PROJECT secondary 
+  - paste ID into ccmutils under Main > Project Secondary
+
+

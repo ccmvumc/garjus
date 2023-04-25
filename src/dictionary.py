@@ -30,6 +30,17 @@ PROCESSING_RENAME = {
     'processor_args': 'ARGS',
 }
 
+TASKS_RENAME = {
+    'task_name': 'NAME',
+    'task_memreq': 'MEMREQ',
+    'task_walltime': 'WALLTIME',
+    'task_timeused': 'TIMEUSED',
+    'task_memused': 'MEMUSED',
+    'task_assessor': 'ASSESSOR',
+    'task_procdate': 'PROCDATE',
+    'task_cmds': 'CMDS',
+}
+
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
                  'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS'],
@@ -42,6 +53,7 @@ COLUMNS = {
               'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS'],
     'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
+    'tasks': ['NAME', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE'],
 }
 
 # TODO: load this information from processor yamls or put it in REDCap?
@@ -172,3 +184,10 @@ STATLIB = {
         'Schaefer400_thr0p1_deg': 'Degree'
     }
 }
+# EDATQA
+# FS7sclimbic_v0
+# fmri_emostroop_v2
+# fmri_msit_v2 statlib
+# fmri_nback_v2
+# BFC_v2
+# BrainAgeGap_v2

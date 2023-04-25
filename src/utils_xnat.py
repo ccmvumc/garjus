@@ -42,6 +42,17 @@ proc:genprocdata/jobstartdate,\
 last_modified,\
 proc:genprocdata/inputs'
 
+SGP_URI = '/REST/subjects?xsiType=xnat:subjectdata\
+&columns=\
+project,\
+label,\
+proc:subjgenprocdata/label,\
+proc:subjgenprocdata/procstatus,\
+proc:subjgenprocdata/proctype,\
+proc:subjgenprocdata/validation/status,\
+proc:subjgenprocdata/inputs,\
+last_modified'
+
 SCAN_RENAME = {
     'project': 'PROJECT',
     'subject_label': 'SUBJECT',
@@ -74,6 +85,15 @@ ASSR_RENAME = {
     'xsiType': 'XSITYPE',
     'proc:genprocdata/inputs': 'INPUTS',
     }
+
+SGP_RENAME = {
+    'project': 'PROJECT',
+    'label': 'SUBJECT',
+    'proc:subjgenprocdata/label': 'ASSR',
+    'proc:subjgenprocdata/procstatus': 'PROCSTATUS',
+    'proc:subjgenprocdata/proctype': 'PROCTYPE',
+    'proc:subjgenprocdata/validation/status': 'QCSTATUS',
+    'proc:subjgenprocdata/inputs': 'INPUTS'}
 
 XSI2MOD = {
     'xnat:eegSessionData': 'EEG',
