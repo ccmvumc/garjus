@@ -928,7 +928,8 @@ def build_processor(
     singularity_imagedir,
     job_template,
     user_inputs,
-    project_data):
+    project_data,
+    proc_filter):
 
     # Load the processor
     processor = load_from_yaml(
@@ -942,8 +943,8 @@ def build_processor(
 
     if isinstance(processor, SgpProcessor):
         # Handle subject level processing
-        if row['filter']:
-            _filters = str(row['filter']).replace(' ', '').split(',')
+        if proc_filter:
+            _filters = str(proc_filter).replace(' ', '').split(',')
             include_subjects = filter_labels(all_subjects, _filters)
         else:
             include_subjects = all_subjects
@@ -956,8 +957,8 @@ def build_processor(
             build_subject_processor(processor, subj, project_data, params)
     else:
         # Get list of sessions to process
-        if row['filter']:
-            _filters = str(row['filter']).replace(' ', '').split(',')
+        if proc_filter:
+            _filters = str(proc_filter).replace(' ', '').split(',')
             include_sessions = filter_labels(all_sessions, _filters)
         else:
             include_sessions = all_sessions

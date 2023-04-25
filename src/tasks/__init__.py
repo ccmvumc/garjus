@@ -1,4 +1,4 @@
-'''Tasks.'''
+"""Tasks."""
 import logging
 import os
 
@@ -7,20 +7,13 @@ from .processors import build_processor
 
 def update(garjus, projects=None):
     """Update tasks."""
-
-    # Update each project
     for p in (projects or garjus.projects()):
         if p in projects:
             logging.info(f'updating tasks:{p}')
-            update_project(garjus, p)
+            _update_project(garjus, p)
 
 
-def update_project(garjus, project):
-
-#resdir: /nobackup/vuiis_daily_singularity/Spider_Upload_Dir
-#jobdir: /tmp
-#job_rungroup: h_vuiis
-#xnat_host: https://xnat2.vanderbilt.edu/xnat
+def _update_project(garjus, project):
 
     # TODO: get these from project settings
     singularity_imagedir = '/data/mcr/centos7/singularity'
@@ -87,10 +80,13 @@ def update_project(garjus, project):
 
         logging.debug(f'user_inputs:{user_inputs}')
 
+        proc_filter = row['FILTER']
+
         build_processor(
             garjus.xnat(),
             filepath,
             singularity_imagedir,
             job_template,
             user_inputs,
-            project_data)
+            project_data,
+            proc_filter)
