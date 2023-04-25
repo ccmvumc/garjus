@@ -72,6 +72,7 @@ class Garjus:
         self.activity_rename = ACTIVITY_RENAME
         self.issues_rename = ISSUES_RENAME
         self.processing_rename = PROCESSING_RENAME
+        self.tasks_rename = TASKS_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 60
         self._projects = self._load_project_names()
@@ -227,7 +228,7 @@ class Garjus:
         for r in rec:
             #d = {'PROJECT': r[self._dfield()], 'STATUS': 'COMPLETE'}
             
-            for k, v in self.task_rename.items():
+            for k, v in self.tasks_rename.items():
                 d[v] = r.get(k, '')
 
             data.append(d)
