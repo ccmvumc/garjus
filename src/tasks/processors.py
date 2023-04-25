@@ -983,7 +983,7 @@ def build_processor(
     job_template,
     user_inputs,
     project_data,
-    include_filters)
+    include_filters):
 
     # Get lists of subjects/sessions for filtering
     all_sessions = project_data.get('scans').SESSION.unique()
