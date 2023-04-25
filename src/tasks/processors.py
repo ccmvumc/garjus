@@ -1019,7 +1019,7 @@ def build_processor(
         'jobdir': '/tmp',
         'job_rungroup': 'h_vuiis',
         'processorlib': '/data/mcr/centos7/dax_processors',
-        'xnat_host': xnat._host
+        'xnat_host': xnat.host
         }
 
     # Get lists of subjects/sessions for filtering
