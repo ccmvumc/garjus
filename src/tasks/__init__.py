@@ -37,6 +37,8 @@ def _update_project(garjus, project):
     scans = garjus.scans(projects=[project])
     sgp = garjus.subject_assessors(projects=[project])
 
+    print(scans)
+
     project_data = {}
     project_data['name'] = project
     project_data['scans'] = scans
@@ -85,7 +87,7 @@ def _update_project(garjus, project):
             include_filters = []
 
         build_processor(
-            garjus.xnat(),
+            garjus,
             filepath,
             singularity_imagedir,
             job_template,
