@@ -604,7 +604,7 @@ class Garjus:
         for k, v in self.assr_rename.items():
             info[v] = record[k]
 
-        # TODO: Decode inputs into list or keep as string
+        # Decode inputs into list
         info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])
 
         # Get the full path
@@ -624,8 +624,12 @@ class Garjus:
         """Get subject assessor info."""
         info = {}
 
+        # Copy with new var names
         for k, v in self.sgp_rename.items():
             info[v] = record[k]
+
+        # Decode inputs into list
+        info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])
 
         # Get the full path
         _p = '/projects/{0}/subjects/{1}/assessors/{2}'.format(
