@@ -922,55 +922,6 @@ def load_from_yaml(
     return processor
 
 
-def build_processor(
-    xnat,
-    yamlfile,
-    singularity_imagedir,
-    job_template,
-    user_inputs,
-    project_data,
-    proc_filter):
-
-    # Load the processor
-    processor = load_from_yaml(
-        xnat,
-        yamlfile,
-        user_inputs=user_inputs,
-        singularity_imagedir=singularity_imagedir,
-        job_template=job_template)
-
-    # TODO: Handle project level processing
-
-    if isinstance(processor, SgpProcessor):
-        # Handle subject level processing
-        if proc_filter:
-            _filters = str(proc_filter).replace(' ', '').split(',')
-            include_subjects = filter_labels(all_subjects, _filters)
-        else:
-            include_subjects = all_subjects
-
-        # Handle session level processing
-        logging.debug(f'include subjects={include_subjects}')
-
-        # Apply the processor to filtered sessions
-        for subj in sorted(include_subjects):
-            build_subject_processor(processor, subj, project_data, params)
-    else:
-        # Get list of sessions to process
-        if proc_filter:
-            _filters = str(proc_filter).replace(' ', '').split(',')
-            include_sessions = filter_labels(all_sessions, _filters)
-        else:
-            include_sessions = all_sessions
-
-        # Handle session level processing
-        logging.debug(f'include sessions={include_sessions}')
-
-        # Apply the processor to filtered sessions
-        for sess in sorted(include_sessions):
-            build_session_processor(processor, sess, project_data, params)
-
-
 def build_session_processor(processor, session, project_data, params):
     logging.debug(f'{session}:{processor.name}')
     # Get list of inputs sets (not yet matched with existing)
@@ -1022,5 +973,53 @@ def build_subject_processor(processor, subject, project_data, params):
 
             logging.debug(f'assr after={info}')
         else:
-            logging.info('already built:{}'.format(info['ASSR']))
+            logging.debug('already built:{}'.format(info['ASSR']))
 
+
+def build_processor(
+    xnat,
+    filepath,
+    singularity_imagedir,
+    job_template,
+    user_inputs,
+    project_data,
+    include_filters)
+
+    # Get lists of subjects/sessions for filtering
+    all_sessions = project_data.get('scans').SESSION.unique()
+    all_subjects = project_data.get('scans').SUBJECT.unique()
+
+    # Load the processor
+    processor = load_from_yaml(
+        xnat,
+        filepath,
+        user_inputs=user_inputs,
+        singularity_imagedir=singularity_imagedir,
+        job_template=job_template)
+
+    if isinstance(processor, SgpProcessor):
+        # Handle subject level processing
+        if include_filters:
+            include_subjects = filter_labels(all_subjects, include_filters)
+        else:
+            include_subjects = all_subjects
+
+        # Handle session level processing
+        logging.debug(f'include subjects={include_subjects}')
+
+        # Apply the processor to filtered sessions
+        for subj in sorted(include_subjects):
+            build_subject_processor(processor, subj, project_data, params)
+    else:
+        # Get list of sessions to process
+        if include_filters:
+            include_sessions = filter_labels(all_sessions, include_filters)
+        else:
+            include_sessions = all_sessions
+
+        # Handle session level processing
+        logging.debug(f'include sessions={include_sessions}')
+
+        # Apply the processor to filtered sessions
+        for sess in sorted(include_sessions):
+            build_session_processor(processor, sess, project_data, params)

@@ -5,6 +5,9 @@ import os
 from .processors import build_processor
 
 
+# TODO: Handle project level processing
+
+
 def update(garjus, projects=None):
     """Update tasks."""
     for p in (projects or garjus.projects()):
@@ -39,10 +42,6 @@ def _update_project(garjus, project):
     project_data['scans'] = scans
     project_data['assessors'] = assessors
     project_data['sgp'] = sgp
-
-    # Get lists of subjects/sessions for filtering
-    all_sessions = scans.SESSION.unique()
-    all_subjects = scans.SUBJECT.unique()
 
     # Iterate processing protocols
     for i, row in protocols.iterrows():
@@ -80,7 +79,10 @@ def _update_project(garjus, project):
 
         logging.debug(f'user_inputs:{user_inputs}')
 
-        proc_filter = row['FILTER']
+        if row['FILTER']:
+            include_filters = str(row['FILTER']).replace(' ', '').split(',')
+        else:
+            include_filters = []
 
         build_processor(
             garjus.xnat(),
@@ -89,4 +91,4 @@ def _update_project(garjus, project):
             job_template,
             user_inputs,
             project_data,
-            proc_filter)
+            include_filters)
