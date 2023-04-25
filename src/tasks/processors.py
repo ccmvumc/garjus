@@ -124,7 +124,7 @@ def build_task(garjus, assr, info, processor, project_data, params):
         # that and instead adding to queue in garjus
         garjus.add_task(
             project_data['name'],
-            assr,
+            assr_label,
             cmds,
             processor.walltime_str,
             processor.memreq_mb)
