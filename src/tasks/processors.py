@@ -125,7 +125,7 @@ def build_task(garjus, assr, info, processor, project_data, params):
         garjus.add_task(
             project_data['name'],
             assr_label,
-            cmds,
+            cmds[0],
             processor.walltime_str,
             processor.memreq_mb)
 
