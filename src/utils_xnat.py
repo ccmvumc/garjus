@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import json
+import html
 import pathlib
 import logging
 from zipfile import ZipFile, ZIP_DEFLATED
