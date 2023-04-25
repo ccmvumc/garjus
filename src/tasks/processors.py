@@ -952,7 +952,7 @@ def load_from_yaml(
     return processor
 
 
-def build_session_processor(processor, session, project_data, params):
+def build_session_processor(garjus, processor, session, project_data, params):
     logging.debug(f'{session}:{processor.name}')
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_session(session, project_data)
@@ -979,7 +979,7 @@ def build_session_processor(processor, session, project_data, params):
             logging.info('already built:{}'.format(info['ASSR']))
 
 
-def build_subject_processor(processor, subject, project_data, params):
+def build_subject_processor(garjus, processor, subject, project_data, params):
     logging.debug(f'{subject}:{processor.name}')
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_subject(subject, project_data)
@@ -1007,7 +1007,7 @@ def build_subject_processor(processor, subject, project_data, params):
 
 
 def build_processor(
-    xnat,
+    garjus,
     filepath,
     singularity_imagedir,
     job_template,
@@ -1031,7 +1031,7 @@ def build_processor(
 
     # Load the processor
     processor = load_from_yaml(
-        xnat,
+        garjus.xnat(),
         filepath,
         user_inputs=user_inputs,
         singularity_imagedir=singularity_imagedir,
@@ -1049,7 +1049,7 @@ def build_processor(
 
         # Apply the processor to filtered sessions
         for subj in sorted(include_subjects):
-            build_subject_processor(processor, subj, project_data, params)
+            build_subject_processor(garjus, processor, subj, project_data, params)
     else:
         # Get list of sessions to process
         if include_filters:
@@ -1062,4 +1062,4 @@ def build_processor(
 
         # Apply the processor to filtered sessions
         for sess in sorted(include_sessions):
-            build_session_processor(processor, sess, project_data, params)
+            build_session_processor(garjus, processor, sess, project_data, params)
