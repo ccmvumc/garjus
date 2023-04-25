@@ -116,6 +116,7 @@ def build_task(assr, info, processor, project_data, params):
     resdir = params['resdir']
     jobdir = params['jobdir']
     job_rungroup = params['job_rungroup']
+    xnat_host = params['xnat_host']
 
     old_proc_status = info['PROCSTATUS']
     old_qc_status = info['QCSTATUS']
@@ -125,7 +126,6 @@ def build_task(assr, info, processor, project_data, params):
     processor_spec_path = f'{resdir}/DISKQ/processor/{assr_label}'
     job_email = None
     job_email_options = 'FAIL'
-    xnat_host = params['xnat_host']
 
     # Make directories as needed
     check_res_dir(resdir)
@@ -1019,6 +1019,7 @@ def build_processor(
         'jobdir': '/tmp',
         'job_rungroup': 'h_vuiis',
         'processorlib': '/data/mcr/centos7/dax_processors',
+        'xnat_host': xnat._host
         }
 
     # Get lists of subjects/sessions for filtering
