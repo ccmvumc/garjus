@@ -790,8 +790,7 @@ class Processor_v3_1(Processor_v3):
                     proctype = cassr.get('PROCTYPE')
                     if proctype in iv['types']:
                         # Session type and proc type both match
-                        _path = _get_assr_path(cassr)
-                        artefacts_by_input[i].append(_path)
+                        artefacts_by_input[i].append(cassr['full_path'])
 
         return artefacts_by_input
 
