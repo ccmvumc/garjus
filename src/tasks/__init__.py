@@ -15,9 +15,6 @@ def update(garjus, projects=None):
             logging.info(f'updating tasks:{p}')
             _update_project(garjus, p)
 
-    # Pass tasks from garjus to dax by writing files to DISKQ
-    garjus2dax(garjus)
-
 
 def _update_project(garjus, project):
 

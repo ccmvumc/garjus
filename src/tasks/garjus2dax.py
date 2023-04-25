@@ -96,7 +96,7 @@ def task2dax(
     shutil.chown(processor_spec_path, group='h_vuiisadmin')
 
 
-def garjus2dax(garjus):
+def queue2dax(garjus):
     tasks = garjus.tasks()
 
     for i, t in tasks.iterrows():

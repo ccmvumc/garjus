@@ -1447,6 +1447,14 @@ class Garjus:
             logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
+    # Pass tasks from garjus to dax by writing files to DISKQ
+    #def garjus2dax(garjus):
+    def queue2dax(self):
+        from .tasks import garjus2dax
+
+        garjus2dax.queue2dax(self)
+
+
     # TODO: def import_stats(self):
     # rather than source_stats from the outside, we call import_stats to tell
     # garjus to go look in xnat (or wherever) to get new stats
