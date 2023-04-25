@@ -749,7 +749,6 @@ class Garjus:
             logging.info('updating tasks')
             update_tasks(self, projects)
 
-
     def report(self, project):
         """Create a PDF report."""
         pdf_file = f'{project}_report.pdf'
@@ -760,7 +759,6 @@ class Garjus:
 
         logging.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
-
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
@@ -781,7 +779,6 @@ class Garjus:
         proj_secondary = self.secondary(project)
         make_double_report(proj_primary, proj_secondary, pdf_file, excel_file)
 
-
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
         _fields = [self._dfield(), 'project_stats']
@@ -800,6 +797,7 @@ class Garjus:
                 'task_walltime': walltime,
                 'task_memreq': memreq,
             }
+            print(record)
             response = self._rc.import_records([record])
             assert 'count' in response
             logging.info('successfully created new record')
