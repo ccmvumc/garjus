@@ -194,10 +194,11 @@ class Processor_v3_1(Processor_v3):
     def get_assessor(self, session, inputs, project_data):
         proctype = self.get_proctype()
         dfa = project_data['assessors']
+        print(dfa)
         dfa = dfa[(dfa.SESSION == session) & (dfa.PROCTYPE == proctype)]
         print(dfa)
         encoded_inputs = json.dumps(inputs)
-        print('encoded=', encoded_inputs)
+        print(inputs, 'encoded=', encoded_inputs)
         dfa = dfa[(dfa.INPUTS == encoded_inputs)]
         print(dfa)
 
