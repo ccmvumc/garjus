@@ -17,6 +17,24 @@ from dax.processors_v3 import Processor_v3, SgpProcessor, get_resource, get_uri
 from dax.errors import AutoProcessorError
 
 
+def _get_scan_path(scan):
+    return '/projects/{}/subjects/{}/experiments/{}/scans/{}'.format(
+        scan.get('PROJECT'),
+        scan.get('SUBJECT'),
+        scan.get('SESSION'),
+        scan.get('SCAN')
+        )
+
+
+def _get_assr_path(assr):
+    return '/projects/{}/subjects/{}/experiments/{}/assessors/{}'.format(
+        assr.get('PROJECT'),
+        assr.get('SUBJECT'),
+        assr.get('SESSION'),
+        assr.get('ASSR')
+        )
+
+
 def get_scan_status(project_data, scan_path):
     path_parts = scan_path.split('/')
     sess_label = path_parts[6]
@@ -762,7 +780,8 @@ class Processor_v3_1(Processor_v3):
                             if p['QUALITY'] == 'unusable':
                                 print('excluding unusable scan')
                             else:
-                                artefacts_by_input[i].append(p['full_path'])
+                                _path = _get_scan_path(p)
+                                artefacts_by_input[i].append(_path)
 
             elif iv['artefact_type'] == 'scan':
                 # Input is a scan, so we iterate subject scans
@@ -774,13 +793,15 @@ class Processor_v3_1(Processor_v3):
                         regex = re.compile(fnmatch.translate(expression))
                         if regex.match(cscan.get('SCANTYPE')):
                             scanid = cscan.get('SCANID')
+                            print('match found!', scanid)
                             if iv['skip_unusable'] and cscan.get('QUALITY') == 'unusable':
                                 logging.info(f'Excluding unusable scan:{scanid}')
                             else:
                                 # Get scan path, scan ID for each matching scan.
                                 # Break if the scan matches so we don't find it again comparing
                                 # vs a different requested type
-                                artefacts_by_input[i].append(cscan.get('full_path'))
+                                _path = _get_scan_path(cscan)
+                                artefacts_by_input[i].append(_path)
                                 break
 
             elif iv['artefact_type'] == 'assessor':
@@ -788,7 +809,8 @@ class Processor_v3_1(Processor_v3):
                     proctype = cassr.get('PROCTYPE')
                     if proctype in iv['types']:
                         # Session type and proc type both match
-                        artefacts_by_input[i].append(cassr.get('full_path'))
+                        _path = _get_assr_path(cassr)
+                        artefacts_by_input[i].append(_path)
 
         return artefacts_by_input
 
