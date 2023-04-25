@@ -123,7 +123,7 @@ def build_task(garjus, assr, info, processor, project_data, params):
         # NOTE:this is where dax would write the slurm file, we are delaying
         # that and instead adding to queue in garjus
         garjus.add_task(
-            project,
+            project_data['name'],
             assr,
             cmds,
             processor.walltime,
