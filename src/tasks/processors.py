@@ -956,6 +956,7 @@ def build_session_processor(processor, session, project_data, params):
 
     logging.debug(inputsets)
     for inputs in inputsets:
+        print(inputs)
         if inputs == {}:
             # Blank inputs
             return
