@@ -126,15 +126,12 @@ def build_task(garjus, assr, info, processor, project_data, params):
             project_data['name'],
             assr,
             cmds,
-            processor.walltime,
-            processor.memreq)
+            processor.walltime_str,
+            processor.memreq_mb)
 
         # Set new statuses to be updated
         new_proc_status = JOB_RUNNING
         new_qc_status = JOB_PENDING
-
-
-
     except NeedInputsException as e:
         new_proc_status = NEED_INPUTS
         new_qc_status = e.value
