@@ -773,7 +773,7 @@ class Processor_v3_1(Processor_v3):
                     for expression in iv['types']:
                         regex = re.compile(fnmatch.translate(expression))
                         if regex.match(cscan.get('SCANTYPE')):
-                            scanid = cscan.get('ID')
+                            scanid = cscan.get('SCANID')
                             if iv['skip_unusable'] and cscan.get('QUALITY') == 'unusable':
                                 logging.info(f'Excluding unusable scan:{scanid}')
                             else:
