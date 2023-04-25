@@ -332,6 +332,7 @@ class Processor_v3_1(Processor_v3):
         inputs = info['INPUTS']
         print(inputs)
         for k in inputs.keys():
+            print(k)
             if not isinstance(inputs[k], list):
                 inputs[k] = [inputs[k]]
 
