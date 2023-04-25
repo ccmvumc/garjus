@@ -597,7 +597,7 @@ class Garjus:
             info[v] = record[k]
 
         # TODO: Decode inputs into list or keep as string
-        # info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])
+        info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])
 
         # Get the full path
         _p = '/projects/{0}/subjects/{1}/experiments/{2}/assessors/{3}'.format(
