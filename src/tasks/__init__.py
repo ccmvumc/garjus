@@ -3,7 +3,6 @@ import logging
 import os
 
 from .processors import build_processor
-from .garjus2dax import garjus2dax
 
 # TODO: Handle project level processing
 
