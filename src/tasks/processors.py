@@ -128,7 +128,7 @@ def build_task(assr, info, processor, project_data, params):
     job_email_options = 'FAIL'
 
     # Make directories as needed
-    check_res_dir(resdir)
+    #check_res_dir(resdir)
 
     try:
         cmds = processor.build_cmds(
