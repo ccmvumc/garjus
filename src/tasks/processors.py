@@ -197,6 +197,7 @@ class Processor_v3_1(Processor_v3):
         dfa = dfa[(dfa.SESSION == session) & (dfa.PROCTYPE == proctype)]
         print(dfa)
         dfa = dfa[(dfa.INPUTS == inputs)]
+        print(inputs)
         print(dfa)
 
         if len(dfa) > 0:
