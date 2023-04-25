@@ -50,7 +50,7 @@ COLUMNS = {
     'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
                'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
     'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
-              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY'],
+              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE'],
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS'],
     'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
     'tasks': ['NAME', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE'],
