@@ -30,14 +30,10 @@ def _update_project(garjus, project):
         logging.info(f'no processing protocols for project:{project}')
         return
 
-    print(protocols)
-
     # Get scan/assr/sgp data
     assessors = garjus.assessors(projects=[project])
     scans = garjus.scans(projects=[project])
     sgp = garjus.subject_assessors(projects=[project])
-
-    print(scans)
 
     project_data = {}
     project_data['name'] = project

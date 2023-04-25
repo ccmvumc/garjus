@@ -194,14 +194,8 @@ class Processor_v3_1(Processor_v3):
     def get_assessor(self, session, inputs, project_data):
         proctype = self.get_proctype()
         dfa = project_data['assessors']
-        print(dfa)
         dfa = dfa[(dfa.SESSION == session) & (dfa.PROCTYPE == proctype)]
-        print(dfa)
-        #encoded_inputs = json.dumps(inputs).replace('"', '&quot;')
-        #print(inputs, 'encoded=', encoded_inputs)
-        #dfa = dfa[(dfa.INPUTS == encoded_inputs)]
         dfa = dfa[(dfa.INPUTS == inputs)]
-        print(dfa)
 
         if len(dfa) > 0:
             # Get the info for the assessor
@@ -217,6 +211,7 @@ class Processor_v3_1(Processor_v3):
                 info['ASSR'])
         else:
             logging.debug('no existing assessors found, creating a new one')
+
             # Get the subject for this session
             dfs = project_data['scans']
             subject = list(dfs[dfs.SESSION == session].SUBJECT.unique())[0]
@@ -331,9 +326,7 @@ class Processor_v3_1(Processor_v3):
 
         # Make every input a list, so we can iterate later
         inputs = info['INPUTS']
-        print(inputs)
         for k in inputs.keys():
-            print(k)
             if not isinstance(inputs[k], list):
                 inputs[k] = [inputs[k]]
 
@@ -786,7 +779,7 @@ class Processor_v3_1(Processor_v3):
                         if regex.match(p['SCANTYPE']):
                             # Found a match, now check quality
                             if p['QUALITY'] == 'unusable':
-                                print('excluding unusable scan')
+                                logging.debug('excluding unusable scan')
                             else:
                                 _path = _get_scan_path(p)
                                 artefacts_by_input[i].append(_path)
@@ -801,7 +794,7 @@ class Processor_v3_1(Processor_v3):
                         regex = re.compile(fnmatch.translate(expression))
                         if regex.match(cscan.get('SCANTYPE')):
                             scanid = cscan.get('SCANID')
-                            print('match found!', scanid)
+                            logging.debug('match found!')
                             if iv['skip_unusable'] and cscan.get('QUALITY') == 'unusable':
                                 logging.info(f'Excluding unusable scan:{scanid}')
                             else:
