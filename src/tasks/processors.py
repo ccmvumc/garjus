@@ -17,24 +17,6 @@ from dax.processors_v3 import Processor_v3, SgpProcessor, get_resource, get_uri
 from dax.errors import AutoProcessorError
 
 
-def _get_scan_path(scan):
-    return '/projects/{}/subjects/{}/experiments/{}/scans/{}'.format(
-        scan.get('PROJECT'),
-        scan.get('SUBJECT'),
-        scan.get('SESSION'),
-        scan.get('SCANID')
-        )
-
-
-def _get_assr_path(assr):
-    return '/projects/{}/subjects/{}/experiments/{}/assessors/{}'.format(
-        assr.get('PROJECT'),
-        assr.get('SUBJECT'),
-        assr.get('SESSION'),
-        assr.get('ASSR')
-        )
-
-
 def get_scan_status(project_data, scan_path):
     path_parts = scan_path.split('/')
     sess_label = path_parts[6]
@@ -781,8 +763,7 @@ class Processor_v3_1(Processor_v3):
                             if p['QUALITY'] == 'unusable':
                                 logging.debug('excluding unusable scan')
                             else:
-                                _path = _get_scan_path(p)
-                                artefacts_by_input[i].append(_path)
+                                artefacts_by_input[i].append(p['full_path'])
 
             elif iv['artefact_type'] == 'scan':
                 # Input is a scan, so we iterate subject scans
@@ -801,8 +782,7 @@ class Processor_v3_1(Processor_v3):
                                 # Get scan path, scan ID for each matching scan.
                                 # Break if the scan matches so we don't find it again comparing
                                 # vs a different requested type
-                                _path = _get_scan_path(cscan)
-                                artefacts_by_input[i].append(_path)
+                                artefacts_by_input[i].append(cscan['full_path'])
                                 break
 
             elif iv['artefact_type'] == 'assessor':
@@ -995,6 +975,10 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(
             processor.xnat, subject, inputs, project_data)
+
+        print(assr)
+
+        print(info)
 
         # TODO: apply reproc or rerun if needed
 

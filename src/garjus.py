@@ -587,6 +587,14 @@ class Garjus:
         # set_modality
         info['MODALITY'] = self.xsi2mod.get(info['XSITYPE'], 'UNK')
 
+        # Get the full path
+        _p = '/projects/{0}/subjects/{1}/experiments/{2}/scans/{3}'.format(
+            info['PROJECT'],
+            info['SUBJECT'],
+            info['SESSION'],
+            info['SCANID'])
+        info['full_path'] = _p
+
         return info
 
     def _assessor_info(self, record):
