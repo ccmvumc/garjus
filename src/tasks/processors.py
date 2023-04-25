@@ -112,7 +112,7 @@ def verify_artefact_status(proc_inputs, assr_inputs, project_data):
                         raise NeedInputsException(artk + ': Bad QC')
 
 
-def build_task(assr, info, processor, project_data, params):
+def build_task(garjus, assr, info, processor, project_data, params):
     resdir = params['resdir']
     jobdir = params['jobdir']
     job_rungroup = params['job_rungroup']
@@ -971,7 +971,7 @@ def build_session_processor(garjus, processor, session, project_data, params):
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             logging.debug('building task')
             (assr, info) = build_task(
-                assr, info, processor, project_data, params)
+                garjus, assr, info, processor, project_data, params)
 
             logging.debug(f'{info}')
             logging.info('status:{}:{}'.format(info['ASSR'], info['PROCSTATUS']))
