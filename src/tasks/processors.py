@@ -197,7 +197,7 @@ class Processor_v3_1(Processor_v3):
         print(dfa)
         dfa = dfa[(dfa.SESSION == session) & (dfa.PROCTYPE == proctype)]
         print(dfa)
-        encoded_inputs = json.dumps(inputs)
+        encoded_inputs = json.dumps(inputs),replace('"', '&quot')
         print(inputs, 'encoded=', encoded_inputs)
         dfa = dfa[(dfa.INPUTS == encoded_inputs)]
         print(dfa)
