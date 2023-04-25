@@ -760,7 +760,7 @@ class Processor_v3_1(Processor_v3):
                 # PET scan
                 for p in petscans:
                     # Match the tracer name
-                    tracer_name = p['tracer_name']
+                    tracer_name = p['TRACER']
                     tracer_match = False
                     for expression in iv['tracer']:
                         regex = re.compile(fnmatch.translate(expression))
