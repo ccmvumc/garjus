@@ -960,10 +960,6 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
 
     for inputs in inputsets:
 
-
-        print('inputs=', inputs)
-
-
         if inputs == {}:
             # Blank inputs
             return
@@ -972,10 +968,6 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
 
         (assr, info) = processor.get_assessor(
             processor.xnat, subject, inputs, project_data)
-
-        print('assr=', assr)
-
-        print('info=', info)
 
         # TODO: apply reproc or rerun if needed
 
