@@ -3,18 +3,16 @@ import logging
 
 from dax import cluster
 
-# This is a temporary bridge from garjus 2 dax.
 
-# This must run with access to ccmutils redcap to read the queue
+# This is a temporary bridge from garjus 2 dax.
+# This must run with access to garjus redcap to read the queue
 # and access to dax diskq directory to write slurm/processor_spec files.
 # It does not need XNAT access nor access to any individual project REDCaps,
-# the only REDCap it needs is garjus/ccmutils.
-
-# Read these from REDCap for those where status is JOB_QUEUED
-# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT)
-
+# the only REDCap it needs is garjus/ccmutils. 
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
+# Read these from REDCap for those where status is JOB_QUEUED
+# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT)
 
 
 def _write_processor_spec(
@@ -28,8 +26,6 @@ def _write_processor_spec(
     # The file is intended to be written to diskq using the assessor
     # label as the filename. These paths allow dax to read the yaml file
     # during upload to read the description, etc. and put in PDF.
-
-    # should we load the data from the yaml file at this point?
 
     with open(filename, 'w') as f:
         # write processor yaml filename
@@ -101,7 +97,7 @@ def task2dax(
 
 
 def garjus2dax(garjus):
-    garjus.tasks()
+    tasks = garjus.tasks()
 
     for i, t in tasks.iterrows():
-        print(i, t)
+        logging.info(f'{i}, {t}')

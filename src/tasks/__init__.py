@@ -3,7 +3,7 @@ import logging
 import os
 
 from .processors import build_processor
-
+from .garjus2dax import garjus2dax
 
 # TODO: Handle project level processing
 
@@ -14,6 +14,9 @@ def update(garjus, projects=None):
         if p in projects:
             logging.info(f'updating tasks:{p}')
             _update_project(garjus, p)
+
+    # Pass tasks from garjus to dax by writing files to DISKQ
+    garjus2dax(garjus)
 
 
 def _update_project(garjus, project):
