@@ -978,7 +978,16 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
     inputsets = processor.parse_subject(subject, project_data)
     logging.debug(inputsets)
 
+
+    print(inputsets)
+
+
     for inputs in inputsets:
+
+
+        print(inputs)
+
+
         if inputs == {}:
             # Blank inputs
             return
