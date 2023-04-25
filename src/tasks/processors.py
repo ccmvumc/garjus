@@ -330,6 +330,7 @@ class Processor_v3_1(Processor_v3):
 
         # Make every input a list, so we can iterate later
         inputs = info['INPUTS']
+        print(inputs)
         for k in inputs.keys():
             if not isinstance(inputs[k], list):
                 inputs[k] = [inputs[k]]
@@ -956,7 +957,6 @@ def build_session_processor(processor, session, project_data, params):
 
     logging.debug(inputsets)
     for inputs in inputsets:
-        print(inputs)
         if inputs == {}:
             # Blank inputs
             return
