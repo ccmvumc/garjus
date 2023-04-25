@@ -969,7 +969,7 @@ def build_session_processor(garjus, processor, session, project_data, params):
             logging.debug(f'{info}')
             logging.info('status:{}:{}'.format(info['ASSR'], info['PROCSTATUS']))
         else:
-            logging.info('already built:{}'.format(info['ASSR']))
+            logging.debug('already built:{}'.format(info['ASSR']))
 
 
 def build_subject_processor(garjus, processor, subject, project_data, params):
