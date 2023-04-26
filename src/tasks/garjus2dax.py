@@ -100,6 +100,7 @@ def queue2dax(garjus):
         _status = t['STATUS']
         if _status != 'JOB_QUEUED':
             logging.info(f'skipping:{t}:{_status}')
+            continue
 
         assr = t['ASSESSOR']
         walltime = t['WALLTIME']

@@ -1465,10 +1465,8 @@ class Garjus:
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
-    #def garjus2dax(garjus):
     def queue2dax(self):
         from .tasks import garjus2dax
-
         garjus2dax.queue2dax(self)
 
 
