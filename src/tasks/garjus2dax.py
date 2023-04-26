@@ -47,7 +47,7 @@ def _write_processor_spec(
         f.write('\n')
 
 
-def _task2dax(assr, walltime, memreq, yaml_file, cmds):
+def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
     singularity_imagedir = '/data/mcr/centos7/singularity'
     resdir = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
     job_rungroup = 'h_vuiis'
