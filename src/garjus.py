@@ -228,7 +228,7 @@ class Garjus:
         for r in rec:
             d = {
                 'PROJECT': r[self._dfield()],
-                'ID': x['redcap_repeat_instance']
+                'ID': r['redcap_repeat_instance']
             }
             for k, v in self.tasks_rename.items():
                 d[v] = r.get(k, '')
