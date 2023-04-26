@@ -55,7 +55,7 @@ COLUMNS = {
               'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS'],
     'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
-    'tasks': ['NAME', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE'],
+    'tasks': ['ID', 'PROJECT', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
 }
 
 # TODO: load this information from processor yamls or put it in REDCap?

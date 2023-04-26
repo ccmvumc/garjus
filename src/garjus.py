@@ -226,14 +226,29 @@ class Garjus:
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
         for r in rec:
-            #d = {'PROJECT': r[self._dfield()], 'STATUS': 'COMPLETE'}
-            d = {}
+            d = {'PROJECT': r[self._dfield()]}
             for k, v in self.tasks_rename.items():
                 d[v] = r.get(k, '')
 
             data.append(d)
 
         return pd.DataFrame(data, columns=self.column_names('task'))
+
+    def set_task_status(project, task_id, status):
+        records = [{
+                self._dfield(): project,
+                'redcap_repeat_instance': task_id,
+                'redcap_repeat_instrument': 'tasks',
+                'taskqueue_complete': 1,
+                'task_status': status,
+            }]
+
+        try:
+            response = self._rc.import_records(records)
+            assert 'count' in response
+            logging.info('task status successfully updated')
+        except AssertionError as err:
+            logging.error(f'failed to set task status:{err}')
 
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
@@ -800,6 +815,8 @@ class Garjus:
             logging.info('successfully created new record')
         except AssertionError as err:
             logging.error(f'upload failed:{err}')
+
+
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""

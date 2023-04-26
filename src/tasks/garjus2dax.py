@@ -115,3 +115,5 @@ def queue2dax(garjus):
             yaml_file,
             user_inputs,
             cmds)
+
+        garjus.set_task_status(t['PROJECT'], t['ID'], 'JOB_RUNNING')
