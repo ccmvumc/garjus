@@ -62,7 +62,7 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
     batch = cluster.PBS(
         batch_file,
         outlog,
-        cmds,
+        [cmds],
         walltime,
         mem_mb=memreq,
         ppn=1,
