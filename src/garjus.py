@@ -237,7 +237,7 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('task'))
 
-    def set_task_status(project, task_id, status):
+    def set_task_status(self, project, task_id, status):
         records = [{
                 self._dfield(): project,
                 'redcap_repeat_instance': task_id,
