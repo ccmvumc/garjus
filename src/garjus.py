@@ -812,14 +812,11 @@ class Garjus:
                 'task_yamlfile': yamlfile,
                 'task_userinputs': userinputs,
             }
-            print(record)
             response = self._rc.import_records([record])
             assert 'count' in response
             logging.info('successfully created new record')
         except AssertionError as err:
             logging.error(f'upload failed:{err}')
-
-
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""

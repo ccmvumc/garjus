@@ -96,13 +96,14 @@ def queue2dax(garjus):
     tasks = garjus.tasks()
 
     for i, t in tasks.iterrows():
-        logging.info(f'{i}, {t}')
-        _status = t['STATUS']
+        assr = t['ASSESSOR']
+        status = t['STATUS']
         if _status != 'JOB_QUEUED':
-            logging.info(f'skipping:{t}:{_status}')
+            logging.info(f'skipping:{i}:{assr}:{status}')
             continue
 
-        assr = t['ASSESSOR']
+        logging.info(f'{i}:{assr}:{status}')
+
         walltime = t['WALLTIME']
         memreq = t['MEMREQ']
         cmds = t['CMDS']
