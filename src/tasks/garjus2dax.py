@@ -98,7 +98,7 @@ def queue2dax(garjus):
     for i, t in tasks.iterrows():
         assr = t['ASSESSOR']
         status = t['STATUS']
-        if _status != 'JOB_QUEUED':
+        if status != 'JOB_QUEUED':
             logging.info(f'skipping:{i}:{assr}:{status}')
             continue
 
