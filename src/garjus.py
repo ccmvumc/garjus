@@ -241,7 +241,7 @@ class Garjus:
         records = [{
                 self._dfield(): project,
                 'redcap_repeat_instance': task_id,
-                'redcap_repeat_instrument': 'tasks',
+                'redcap_repeat_instrument': 'taskqueue',
                 'taskqueue_complete': 1,
                 'task_status': status,
             }]
