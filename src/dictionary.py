@@ -31,14 +31,14 @@ PROCESSING_RENAME = {
 }
 
 TASKS_RENAME = {
-    'task_name': 'NAME',
+    'task_assessor': 'ASSESSOR',
+    'task_status': 'STATUS',
+    'task_cmds': 'CMDS',
     'task_memreq': 'MEMREQ',
     'task_walltime': 'WALLTIME',
+    'task_procdate': 'PROCDATE',
     'task_timeused': 'TIMEUSED',
     'task_memused': 'MEMUSED',
-    'task_assessor': 'ASSESSOR',
-    'task_procdate': 'PROCDATE',
-    'task_cmds': 'CMDS',
 }
 
 COLUMNS = {
