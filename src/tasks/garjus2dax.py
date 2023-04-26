@@ -99,7 +99,7 @@ def queue2dax(garjus):
         assr = t['ASSESSOR']
         status = t['STATUS']
         if status != 'JOB_QUEUED':
-            logging.info(f'skipping:{i}:{assr}:{status}')
+            logging.debug(f'skipping:{i}:{assr}:{status}')
             continue
 
         logging.info(f'{i}:{assr}:{status}')
