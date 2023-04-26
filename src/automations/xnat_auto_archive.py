@@ -22,6 +22,7 @@ def process_project(
 
     # Process each record
     for r in scan_table:
+        logging.debug(f'xnat_auto_archive:{r}')
         src_subj = r['src_subject']
         src_sess = r['src_session']
         dst_subj = r['dst_subject']
