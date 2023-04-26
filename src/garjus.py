@@ -235,7 +235,6 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('task'))
 
-
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
 
@@ -304,7 +303,6 @@ class Garjus:
             session=sess,
             result='COMPLETE')
 
-
     def copy_sess(self, src, dst):
         """Copy dicom source to destination."""
         logging.info(f'copy from:{src}')
@@ -342,7 +340,6 @@ class Garjus:
 
         # Return as dataframe
         return pd.DataFrame(data, columns=self.column_names('scans'))
-
 
     def session_labels(self, project):
         """Return list of session labels in the archive for project."""
@@ -421,17 +418,14 @@ class Garjus:
         """Get list of projects."""
         return self._projects
 
-
     #def scan_inventory():
     # this will replace make_scan_table and be used by auto_archive
     # as well as nda scripts, and progress exports to zip 
-
 
     def subjects(self, project):
         """Return subjects for project."""
 
         return load_subjects(self, project)
-
 
     def stattypes(self, project):
         """Get list of projects stat types."""
@@ -550,7 +544,6 @@ class Garjus:
             assessors = [x for x in assessors if x['PROCTYPE'] in proctypes]
 
         return assessors
-
 
     def _load_sgp_data(self, projects=None, proctypes=None):
         """Get assessor info from XNAT as list of dicts."""
@@ -794,6 +787,7 @@ class Garjus:
                 'redcap_repeat_instrument': 'taskqueue',
                 'redcap_repeat_instance': 'new',
                 'task_assessor': assr,
+                'task_status': 'JOB_QUEUED',
                 'task_cmds': cmds,
                 'task_walltime': walltime,
                 'task_memreq': memreq,
