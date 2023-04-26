@@ -97,15 +97,10 @@ def verify_artefact_status(proc_inputs, assr_inputs, project_data):
 def build_task(garjus, assr, info, processor, project_data, params):
     resdir = params['resdir']
     jobdir = params['jobdir']
-    job_rungroup = params['job_rungroup']
-    xnat_host = params['xnat_host']
 
     old_proc_status = info['PROCSTATUS']
     old_qc_status = info['QCSTATUS']
     assr_label = info['ASSR']
-    batch_file = f'{resdir}/DISKQ/BATCH/{assr_label}.slurm'
-    outlog = f'{resdir}/DISKQ/OUTLOG/{assr_label}.txt'
-    processor_spec_path = f'{resdir}/DISKQ/processor/{assr_label}'
     job_email = None
     job_email_options = 'FAIL'
 
@@ -127,7 +122,10 @@ def build_task(garjus, assr, info, processor, project_data, params):
             assr_label,
             cmds[0],
             processor.walltime_str,
-            processor.memreq_mb)
+            processor.memreq_mb,
+            processor.yaml_file,
+            processor.user_inputs
+            )
 
         # Set new statuses to be updated
         new_proc_status = JOB_RUNNING
@@ -991,9 +989,7 @@ def build_processor(
         'jobtemplate': job_template,
         'resdir': '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir',
         'jobdir': '/tmp',
-        'job_rungroup': 'h_vuiis',
         'processorlib': '/data/mcr/centos7/dax_processors',
-        'xnat_host': garjus.xnat().host
         }
 
     # Get lists of subjects/sessions for filtering

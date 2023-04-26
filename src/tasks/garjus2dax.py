@@ -1,3 +1,4 @@
+"""garjus queue 2 dax queue."""
 import shutil
 import logging
 
@@ -8,7 +9,7 @@ from dax import cluster
 # This must run with access to garjus redcap to read the queue
 # and access to dax diskq directory to write slurm/processor_spec files.
 # It does not need XNAT access nor access to any individual project REDCaps,
-# the only REDCap it needs is garjus/ccmutils. 
+# the only REDCap it needs is garjus/ccmutils.
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
 # Read these from REDCap for those where status is JOB_QUEUED
@@ -46,17 +47,12 @@ def _write_processor_spec(
         f.write('\n')
 
 
-def task2dax(
-    walltime,
-    memreq,
-    resdir,
-    jobdir,
-    job_rungroup,
-    xnat_host,
-    xnat_user,
-    job_template,
-    yaml_file,
-    cmds):
+def _task2dax(assr, walltime, memreq, yaml_file, cmds):
+    singularity_imagedir = '/data/mcr/centos7/singularity'
+    resdir = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
+    job_rungroup = 'h_vuiis'
+    xnat_host = 'https://xnat2.vanderbilt.edu/xnat'
+    job_template = '/data/mcr/centos7/dax_templates/job_template_v3.txt'
 
     batch_file = f'{resdir}/DISKQ/BATCH/{assr}.slurm'
     outlog = f'{resdir}/DISKQ/OUTLOG/{assr}.txt'
@@ -81,7 +77,7 @@ def task2dax(
 
     # Write processor spec file for version 3
     logging.info(f'writing processor spec file:{processor_spec_path}')
-    
+
     # Does all of this need to go in the REDCap queue, or is some
     # of it assumed per dax instance?
     _write_processor_spec(
@@ -101,3 +97,21 @@ def queue2dax(garjus):
 
     for i, t in tasks.iterrows():
         logging.info(f'{i}, {t}')
+        _status = t['STATUS']
+        if _status != 'JOB_QUEUED':
+            logging.info(f'skipping:{t}:{_status}')
+
+        assr = t['ASSESSOR']
+        walltime = t['WALLTIME']
+        memreq = t['MEMREQ']
+        cmds = t['CMDS']
+        yaml_file = t['YAMLFILE']
+        user_inputs = t['USERINPUTS']
+
+        _task2dax(
+            assr,
+            walltime,
+            memreq,
+            yaml_file,
+            user_inputs,
+            cmds)

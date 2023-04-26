@@ -779,7 +779,7 @@ class Garjus:
         rec = self._rc.export_records(fields=_fields)
         return [x[self._dfield()] for x in rec if x['project_stats']]
 
-    def add_task(self, project, assr, cmds, walltime, memreq):
+    def add_task(self, project, assr, cmds, walltime, memreq, yamlfile, userinputs):
         """Add a new task record ."""
         try:
             record = {
@@ -791,6 +791,8 @@ class Garjus:
                 'task_cmds': cmds,
                 'task_walltime': walltime,
                 'task_memreq': memreq,
+                'task_yamlfile': yamlfile,
+                'task_userinputs': userinputs,
             }
             print(record)
             response = self._rc.import_records([record])

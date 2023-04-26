@@ -39,6 +39,8 @@ TASKS_RENAME = {
     'task_procdate': 'PROCDATE',
     'task_timeused': 'TIMEUSED',
     'task_memused': 'MEMUSED',
+    'task_yamfile': 'YAMLFILE',
+    'task_userinputs': 'USERINPUTS',
 }
 
 COLUMNS = {
