@@ -6,6 +6,8 @@ from .app import app
 from . import qa
 from . import activity
 from . import issues
+from . import queue
+
 
 def get_layout():
     qa_content = qa.get_content()
@@ -13,6 +15,7 @@ def get_layout():
     #stats_content = stats.get_content()
     #reports_content = reports.get_content()
     issues_content = issues.get_content()
+    queue_content = queue.get_content()
 
     report_content = [
         html.Div(
@@ -23,6 +26,8 @@ def get_layout():
                     label='Activity', value='2', children=activity_content),
                 dcc.Tab(
                     label='Issues', value='3', children=issues_content),
+                dcc.Tab(
+                    label='Queue', value='4', children=queue_content),
                 #dcc.Tab(
                 #    label='Stats', value='4', children=stats_content),
                 #dcc.Tab(

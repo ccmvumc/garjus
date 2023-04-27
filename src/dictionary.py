@@ -39,9 +39,10 @@ TASKS_RENAME = {
     'task_procdate': 'PROCDATE',
     'task_timeused': 'TIMEUSED',
     'task_memused': 'MEMUSED',
-    'task_yamfile': 'YAMLFILE',
+    'task_yamlfile': 'YAMLFILE',
     'task_userinputs': 'USERINPUTS',
 }
+
 
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
@@ -57,10 +58,6 @@ COLUMNS = {
     'tasks': ['ID', 'PROJECT', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
 }
 
-# TODO: load this information from processor yamls or put it in REDCap?
-# Processor main record with repeating stats
-# Processor fields: ID(name_vX), name, short_descrip, inputs_descrip, procurl
-# Stat fields: ID(auto), name, descrip
 
 PROCLIB = {
     'AMYVIDQA_v1': {
