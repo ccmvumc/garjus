@@ -1,4 +1,4 @@
-from pathlib import Path
+"""Shared settings for dashboard used across apps."""
 
 # These are used to set colors of graphs
 RGB_DKBLUE = 'rgb(59,89,152)'
@@ -9,10 +9,7 @@ RGB_RED = 'rgb(219,68,55)'
 RGB_PURPLE = 'rgb(160,106,255)'
 RGB_GREY = 'rgb(200,200,200)'
 RGB_PINK = 'rgb(255,182,193)'
-#RGB_LIME = 'rgb(93, 239, 168)'
-#RGB_LIME = 'rgb(88, 157, 15)'
 RGB_LIME = 'rgb(17, 180, 101)'
-#RGB_LIME = 'rgb(87, 159, 87)'
 
 # These are used to set color of html tables via style argument
 HEX_LBLUE = '#DAEBFF'
@@ -54,7 +51,3 @@ ASTATUS2COLOR = {
     'NONE': RGB_GREY,
     'COMPLETE': RGB_BLUE,
     'UNKNOWN': RGB_PURPLE}
-
-API_URL = 'https://redcap.vanderbilt.edu/api/'
-
-KEYFILE = Path.home().joinpath('.redcap.txt')

@@ -32,8 +32,18 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_R
 from .tasks import update as update_tasks
 
 
-# TODO: export session/scan table with matching of vuiis id, subject id, and a column
-# for NDA upload yes/no
+# TODO: export session/scan table with matching of vuiis id, subject id, and a
+# column for NDA upload yes/no
+
+# TODO: allow a date range filter in activity
+
+# def scan_inventory():
+# this will replace make_scan_table and be used by auto_archive
+# as well as nda scripts, and progress exports to zip
+
+# TODO: def import_stats(self):
+# rather than source_stats from the outside, we call import_stats to tell
+# garjus to go look in xnat (or wherever) to get new stats
 
 
 class Garjus:
@@ -52,7 +62,8 @@ class Garjus:
     def __init__(
         self,
         redcap_project: Project=None,
-        xnat_interface: Interface=None):
+        xnat_interface: Interface=None
+    ):
         """Initialize garjus."""
         self._disconnect_xnat = False
         self._rc = (redcap_project or self._default_redcap())
@@ -95,26 +106,37 @@ class Garjus:
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
 
-    def activity(self, project):
+    def activity(self, project=None, startdate=None):
         """List of activity records."""
         data = []
 
-        # TODO: allow a date range filter
-
-        rec = self._rc.export_records(
-            records=[project],
-            forms=['activity'],
-            fields=[self._dfield()])
+        _fields = [self._dfield()]
+        if project:
+            rec = self._rc.export_records(
+                records=[project],
+                forms=['activity'],
+                fields=_fields)
+        else:
+            # All activity
+            rec = self._rc.export_records(forms=['activity'], fields=_fields)
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'activity']
         for r in rec:
-            d = {'PROJECT': r[self._dfield()], 'STATUS': 'COMPLETE'}
+            d = {
+                'PROJECT': r[self._dfield()],
+                'STATUS': 'COMPLETE',
+                'SOURCE': 'ccmutils'}
             for k, v in self.activity_rename.items():
                 d[v] = r.get(k, '')
 
             data.append(d)
 
-        return pd.DataFrame(data, columns=self.column_names('activity'))
+        df = pd.DataFrame(data, columns=self.column_names('activity'))
+
+        if startdate:
+            df = df[df.DATETIME > startdate]
+
+        return df
 
     def add_activity(
         self,
@@ -239,12 +261,12 @@ class Garjus:
 
     def set_task_status(self, project, task_id, status):
         records = [{
-                self._dfield(): project,
-                'redcap_repeat_instance': task_id,
-                'redcap_repeat_instrument': 'taskqueue',
-                'taskqueue_complete': 1,
-                'task_status': status,
-            }]
+            self._dfield(): project,
+            'redcap_repeat_instance': task_id,
+            'redcap_repeat_instrument': 'taskqueue',
+            'taskqueue_complete': 1,
+            'task_status': status,
+        }]
 
         try:
             response = self._rc.import_records(records)
@@ -436,9 +458,6 @@ class Garjus:
         """Get list of projects."""
         return self._projects
 
-    #def scan_inventory():
-    # this will replace make_scan_table and be used by auto_archive
-    # as well as nda scripts, and progress exports to zip 
 
     def subjects(self, project):
         """Return subjects for project."""
@@ -472,6 +491,24 @@ class Garjus:
         # thus allowing periods in the main processor name
         return tmp.rsplit('.')[-4]
 
+    def all_scantypes(self):
+        """Get list of scan types."""
+        types = []
+
+        rec = self._rc.export_records(
+            forms=['scanning'],
+            export_checkbox_labels=True,
+            raw_or_label='label')
+
+        for r in rec:
+            for k, v in r.items():
+                # Append types for this scanning record
+                if v and k.startswith('scanning_scantypes'):
+                    types.append(v)
+
+        # Make the lists unique
+        return list(set(types))
+
     def scantypes(self, project):
         """Get list of scan types."""
         types = []
@@ -496,6 +533,23 @@ class Garjus:
             types = self._default_scantypes()
 
         return types
+
+    def all_proctypes(self):
+        """Get list of project proc types."""
+        types = self._default_proctypes()
+
+        rec = self._rc.export_records(forms=['processing'])
+
+        for r in rec:
+            if r['processor_file'] == 'CUSTOM':
+                dtype = self._get_proctype(r['processor_custom'])
+            else:
+                dtype = self._get_proctype(r['processor_file'])
+
+            # Finally, add to our list
+            types.append(dtype)
+
+        return list(set(types))
 
     def proctypes(self, project):
         """Get list of project proc types."""
@@ -757,7 +811,6 @@ class Garjus:
             update_compare(self, projects)
 
         if 'tasks' in choices:
-            #print('updating jobs not yet implemented, use run_build.py')
             logging.info('updating tasks')
             update_tasks(self, projects)
 
@@ -1465,11 +1518,6 @@ class Garjus:
     def queue2dax(self):
         from .tasks import garjus2dax
         garjus2dax.queue2dax(self)
-
-
-    # TODO: def import_stats(self):
-    # rather than source_stats from the outside, we call import_stats to tell
-    # garjus to go look in xnat (or wherever) to get new stats
 
 
 if __name__ == "__main__":
