@@ -199,8 +199,11 @@ def _get_changes(garjus_queue, dax_queue):
 def _get_xnat_changes(garjus_queue, assessors):
     # Make list of (ID,PROJECT,STATUS) where status doesn't match
     df = pd.merge(garjus_queue, assessors, left_on='ASSESSOR', right_on='ASSR')
+    print(df)
 
+    # Only where status mismatch
     df[df.STATUS != df.PROCSTATUS]
+
     df = df[['ID', 'PROJECT_x', 'PROCSTATUS']]
 
     # Don't revert to JOB_RUNNING
