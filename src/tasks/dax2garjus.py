@@ -196,6 +196,22 @@ def _get_changes(garjus_queue, dax_queue):
     return df
 
 
+def _get_xnat_changes(garjus_queue, assessors):
+    # Make list of (ID,PROJECT,STATUS) where status doesn't match
+    df = pd.merge(garjus_queue, assessors, left_on='ASSESSOR', right_on='ASSR')
+
+    df[df.STATUS != df.PROCSTATUS]
+    df = df[['ID', 'PROJECT_x', 'PROCSTATUS']]
+
+    # Don't revert to JOB_RUNNING
+    df = df[df.PROCSTATUS != 'JOB_RUNNING']
+
+    # Use column names expected by garjus
+    df = df.rename(columns={'PROJECT_x': 'PROJECT', 'PROCSTATUS': 'STATUS'})
+
+    return df
+
+
 def dax2queue(garjus):
     # load diskq, run squeue to get updates, compare to queue, apply changes
 
@@ -221,11 +237,19 @@ def dax2queue(garjus):
         print(df)
         garjus.set_task_statuses(df)
 
-    # TODO: get updates from XNAT (for those no longer in dax queue) to
-    # get complete or failed status
-
     # TODO: complete job information from slurm, for now we just 
     # want to know about open jobs
 
+    # Get updates from XNAT (for those no longer in dax queue) to
+    # get complete or failed status
+    assessors = garjus.assessors()
+    df = _get_xnat_changes(gqueue, assessors)
+
+    # Apply changes
+    if df.empty:
+        print('no changes to apply')
+    else:
+        print(df)
+        garjus.set_task_statuses(df)
 
     return
