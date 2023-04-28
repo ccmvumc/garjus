@@ -186,39 +186,42 @@ def _get_diskq_attr(diskq, assr, attr):
         return None
 
 
+def _get_changes(garjus_queue, dax_queue):
+    # Make list of (ID,PROJECT,STATUS) where status doesn't match
+    df = pd.merge(garjus_queue, dax_queue, left_on='ASSESSOR', right_on='LABEL')
+    df[df.STATUS_x != df.STATUS_y]
+    df = df[['ID', 'PROJECT_x', 'STATUS_y']]
+    df = df.rename(columns={'PROJECT_x': 'PROJECT', 'STATUS_y': 'STATUS'})
+
+    return df
+
+
 def dax2queue(garjus):
+    # load diskq, run squeue to get updates, compare to queue, apply changes
+
     resdir = RESDIR
 
     if not os.path.isdir(resdir):
         raise FileNotFoundError(f'upload directory not found:{resdir}')
 
-    tasks = garjus.tasks()
-    print(tasks)
+    gqueue = garjus.tasks()
 
-    # load diskq, run squeue to get updates, compare to queue, apply changes
-    df = _load_dax_queue()
+    dqueue = _load_dax_queue()
 
     # Filter projects
-    df = df[df.PROJECT.isin(garjus.projects())]
+    dqueue = dqueue[dqueue.PROJECT.isin(garjus.projects())]
 
-    # LABEL, PROJECT, STATUS, JOBID, TIME, WALLTIME
-    # REMBRANDT-x-14333-x-14333a-x-Multi_Atlas_v3-x-..., REMBRANDT, RUNNING, 51702665, 1-03:00:17, 72:00:00
+    # Get just the changes to apply
+    df = _get_changes(gqueue, dqueue)
 
-    # Make list of (ID,STATUS) where status doesn't match
-    # how can we do that with pandas?
-    tasks['LABEL'] = tasks['ASSESSOR']
-    tasks = tasks.reset_index()
-    #tasks = tasks.set_index('LABEL')
-    tasks = tasks[['LABEL', 'STATUS']]
-    print(tasks)
-    
-    #df = df.set_index('LABEL')
-    df = df.reset_index()
-    df = df[['LABEL', 'STATUS']]
-    print(df)
+    # Apply changes
+    garjus.set_task_statuses(df)
 
-    df = tasks[df.STATUS != tasks.STATUS][['LABEL', 'STATUS']]
-    #df2[df1.Number != df2.Number][['ID', 'Number']]
-    print(df)
+    # TODO: get updates from XNAT (for those no longer in dax queue) to
+    # get complete or failed status
+
+    # TODO: complete job information from slurm, for now we just 
+    # want to know about open jobs
+
 
     return

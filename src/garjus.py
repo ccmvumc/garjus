@@ -259,6 +259,28 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('task'))
 
+    def set_task_statuses(self, tasks):
+        records = []
+
+        # Build list of task updates
+        for i, t in tasks.iterrows():
+            r = {
+                self._dfield(): t['PROJECT'],
+                'redcap_repeat_instance': t['ID'],
+                'redcap_repeat_instrument': 'taskqueue',
+                #'taskqueue_complete': 1,
+                'task_status': t['STATUS']
+            }
+            records.append(r)
+
+        # Apply the updates in one call
+        try:
+            response = self._rc.import_records(records)
+            assert 'count' in response
+            logging.info('task statuses successfully updated')
+        except AssertionError as err:
+            logging.error(f'failed to set task statuses:{err}')
+
     def set_task_status(self, project, task_id, status):
         records = [{
             self._dfield(): project,
