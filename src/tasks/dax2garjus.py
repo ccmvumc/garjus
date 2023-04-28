@@ -84,17 +84,15 @@ def _load_dax_queue():
 # Loads the dax queue from disk
 def _load_diskq_queue(status=None):
     task_list = list()
+    diskq_dir = os.path.join(RESDIR, 'DISKQ')
+    batch_dir = os.path.join(diskq_dir, 'BATCH')
 
-    for d, u in zip(RESDIR, USER):
-        diskq_dir = os.path.join(d, 'DISKQ')
-        batch_dir = os.path.join(diskq_dir, 'BATCH')
-
-        for t in os.listdir(batch_dir):
-            assr = os.path.splitext(t)[0]
-            #logging.debug('load task:{}'.format(assr))
-            task = _load_diskq_task(diskq_dir, assr)
-            task['USER'] = u
-            task_list.append(task)
+    for t in os.listdir(batch_dir):
+        assr = os.path.splitext(t)[0]
+        logging.debug(f'load task:{assr}')
+        task = _load_diskq_task(diskq_dir, assr)
+        task['USER'] = USER
+        task_list.append(task)
 
     if len(task_list) > 0:
         df = pd.DataFrame(task_list)
