@@ -216,7 +216,8 @@ def _get_xnat_changes(garjus_queue, assessors):
 
 
 def dax2queue(garjus):
-    # load diskq, run squeue to get updates, compare to queue, apply changes
+    # load diskq, run squeue to get updates, compare to g queue, apply changes
+    # in a single call
 
     resdir = RESDIR
 
@@ -230,24 +231,18 @@ def dax2queue(garjus):
     # Filter projects
     dqueue = dqueue[dqueue.PROJECT.isin(garjus.projects())]
 
-    # Get just the changes to apply
-    df = _get_changes(gqueue, dqueue)
-
-    # Apply changes
-    if df.empty:
-        logging.info('no changes to apply')
-    else:
-        logging.info('applying status changes')
-        print(df)
-        garjus.set_task_statuses(df)
+    # Get the changes to apply
+    df1 = _get_changes(gqueue, dqueue)
 
     # TODO: complete job information from slurm, for now we just 
     # want to know about open jobs
 
     # Get updates from XNAT (for those no longer in dax queue) to
     # get complete or failed status
-    assessors = garjus.assessors()
-    df = _get_xnat_changes(gqueue, assessors)
+    df2 = _get_xnat_changes(gqueue, garjus.assessors())
+
+    # Combine dataframes
+    df = pd.concat([df1, df2])
 
     # Apply changes
     if df.empty:
