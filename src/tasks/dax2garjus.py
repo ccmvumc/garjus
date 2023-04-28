@@ -199,13 +199,11 @@ def _get_changes(garjus_queue, dax_queue):
 def _get_xnat_changes(garjus_queue, assessors):
     # Make list of (ID,PROJECT,STATUS) where status doesn't match
     df = pd.merge(garjus_queue, assessors, left_on='ASSESSOR', right_on='ASSR')
-    print(df[['STATUS', 'PROCSTATUS']])
 
     # Only where status mismatch
     df = df[df.STATUS != df.PROCSTATUS]
-    print(df[['STATUS', 'PROCSTATUS']])
 
-
+    # Subset of columns we need
     df = df[['ID', 'PROJECT_x', 'PROCSTATUS']]
 
     # Don't revert to JOB_RUNNING
@@ -237,9 +235,9 @@ def dax2queue(garjus):
 
     # Apply changes
     if df.empty:
-        print('no changes to apply')
+        logging.info('no changes to apply')
     else:
-        print(df)
+        logging.info('applying status changes')
         garjus.set_task_statuses(df)
 
     # TODO: complete job information from slurm, for now we just 
@@ -252,9 +250,7 @@ def dax2queue(garjus):
 
     # Apply changes
     if df.empty:
-        print('no changes to apply')
+        logging.info('no changes to apply')
     else:
-        print(df)
+        logging.info('applying status changes')
         garjus.set_task_statuses(df)
-
-    return
