@@ -123,6 +123,7 @@ def get_content():
                 {'if': {'filter_query': '{STATUS} = "WAITING"'},  'backgroundColor': STATUS2HEX['WAITING']},
                 {'if': {'filter_query': '{STATUS} = "PENDING"'},  'backgroundColor': STATUS2HEX['PENDING']},
                 {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
+                {'if': {'filter_query': '{STATUS} = "JOB_FAILED"'}, 'backgroundColor': STATUS2HEX['FAILED']},
                 {'if': {'filter_query': '{STATUS} = "FAILED"'},   'backgroundColor': STATUS2HEX['FAILED']},
                 {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
                 {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
