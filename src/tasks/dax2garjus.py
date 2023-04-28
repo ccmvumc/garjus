@@ -3,6 +3,8 @@ import logging
 import os
 from datetime import datetime
 
+import pandas as pd
+
 
 # This is a temporary bridge between garjus and dax.
 
