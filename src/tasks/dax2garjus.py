@@ -189,7 +189,7 @@ def _get_diskq_attr(diskq, assr, attr):
 def _get_changes(garjus_queue, dax_queue):
     # Make list of (ID,PROJECT,STATUS) where status doesn't match
     df = pd.merge(garjus_queue, dax_queue, left_on='ASSESSOR', right_on='LABEL')
-    df[df.STATUS_x != df.STATUS_y]
+    df = df[df.STATUS_x != df.STATUS_y]
     df = df[['ID', 'PROJECT_x', 'STATUS_y']]
     df = df.rename(columns={'PROJECT_x': 'PROJECT', 'STATUS_y': 'STATUS'})
 
@@ -199,10 +199,12 @@ def _get_changes(garjus_queue, dax_queue):
 def _get_xnat_changes(garjus_queue, assessors):
     # Make list of (ID,PROJECT,STATUS) where status doesn't match
     df = pd.merge(garjus_queue, assessors, left_on='ASSESSOR', right_on='ASSR')
-    print(df)
+    print(df[['STATUS', 'PROCSTATUS']])
 
     # Only where status mismatch
-    df[df.STATUS != df.PROCSTATUS]
+    df = df[df.STATUS != df.PROCSTATUS]
+    print(df[['STATUS', 'PROCSTATUS']])
+
 
     df = df[['ID', 'PROJECT_x', 'PROCSTATUS']]
 
