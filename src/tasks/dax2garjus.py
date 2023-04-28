@@ -206,7 +206,11 @@ def dax2queue(garjus):
     # REMBRANDT-x-14333-x-14333a-x-Multi_Atlas_v3-x-..., REMBRANDT, RUNNING, 51702665, 1-03:00:17, 72:00:00
 
     # Make list of (ID,STATUS) where status doesn't match
-
+    # how can we do that with pandas?
+    tasks.set_index('ASSESSOR')
+    df.set_index('LABEL')
+    df = tasks[df.STATUS != tasks.STATUS][['LABEL', 'STATUS']]
+    #df2[df1.Number != df2.Number][['ID', 'Number']]
     print(df)
 
     return
