@@ -185,6 +185,7 @@ def _get_diskq_attr(diskq, assr, attr):
     except PermissionError:
         return None
 
+
 def dax2queue(garjus):
     resdir = RESDIR
 
@@ -197,6 +198,14 @@ def dax2queue(garjus):
 
     # load diskq, run squeue to get updates, compare to queue, apply changes
     df = _load_dax_queue()
+
+    # Filter projects
+    df = df[df.PROJECT.isin(garjus.projects())]
+
+    # LABEL, PROJECT, STATUS, JOBID, TIME, WALLTIME
+    # REMBRANDT-x-14333-x-14333a-x-Multi_Atlas_v3-x-..., REMBRANDT, RUNNING, 51702665, 1-03:00:17, 72:00:00
+
+    # Make list of (ID,STATUS) where status doesn't match
 
     print(df)
 
