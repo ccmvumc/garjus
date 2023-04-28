@@ -208,12 +208,14 @@ def dax2queue(garjus):
     # Make list of (ID,STATUS) where status doesn't match
     # how can we do that with pandas?
     tasks['LABEL'] =  tasks['ASSESSOR']
-    tasks = tasks.set_index('LABEL')
-    tasks = tasks[['STATUS']]
+    #tasks = tasks.set_index('LABEL')
+    tasks = tasks[['LABEL','STATUS']]
+    tasks = tasks.reset_index()
     print(tasks)
     
     df = df.set_index('LABEL')
-    df = df[['STATUS']]
+    df = df[['LABEL', 'STATUS']]
+    df = df.reset_index()
     print(df)
 
     df = tasks[df.STATUS != tasks.STATUS][['LABEL', 'STATUS']]
