@@ -99,7 +99,7 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
     _write_processor_spec(
         processor_spec_path,
         yaml_file,
-        singularity_imagedir,
+        imagedir,
         job_template,
         user_inputs)
 
