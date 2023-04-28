@@ -1519,6 +1519,11 @@ class Garjus:
         from .tasks import garjus2dax
         garjus2dax.queue2dax(self)
 
+    # Update queue from dax
+    def dax2queue(self):
+        from .tasks import dax2garjus
+        dax2garjus.dax2queue(self)
+
 
 if __name__ == "__main__":
     logging.basicConfig(

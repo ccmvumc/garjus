@@ -5,7 +5,7 @@ import logging
 from dax import cluster
 
 
-# This is a temporary bridge from garjus 2 dax.
+# This is a temporary bridge between garjus and dax.
 # This must run with access to garjus redcap to read the queue
 # and access to dax diskq directory to write slurm/processor_spec files.
 # It does not need XNAT access nor access to any individual project REDCaps,
@@ -13,7 +13,14 @@ from dax import cluster
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
 # Read these from REDCap for those where status is JOB_QUEUED
-# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT)
+# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT as 
+# set when the assessor was created by garjus update tasks)
+
+IMAGEDIR = '/data/mcr/centos7/singularity'
+RESDIR = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
+RUNGROUP = 'h_vuiis'
+HOST = 'https://xnat2.vanderbilt.edu/xnat'
+TEMPLATE = '/data/mcr/centos7/dax_templates/job_template_v3.txt'
 
 
 def _write_processor_spec(
@@ -48,15 +55,23 @@ def _write_processor_spec(
 
 
 def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
-    singularity_imagedir = '/data/mcr/centos7/singularity'
-    resdir = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
-    job_rungroup = 'h_vuiis'
-    xnat_host = 'https://xnat2.vanderbilt.edu/xnat'
-    job_template = '/data/mcr/centos7/dax_templates/job_template_v3.txt'
-
+    imagedir = IMAGEDIR
+    resdir = RESDIR
+    job_rungroup = RUNGROUP
+    xnat_host = HOST
+    job_template = TEMPLATE
     batch_file = f'{resdir}/DISKQ/BATCH/{assr}.slurm'
     outlog = f'{resdir}/DISKQ/OUTLOG/{assr}.txt'
     processor_spec_path = f'{resdir}/DISKQ/processor/{assr}'
+
+    if not os.path.isdir(imagedir):
+        raise FileNotFoundError(f'singularity images not found:{imagedir}')
+
+    if not os.path.isdir(resdir):
+        raise FileNotFoundError(f'upload directory not found:{resdir}')
+
+    if not os.path.isdir(job_template):
+        raise FileNotFoundError(f'job template not found:{job_template}')
 
     logging.info(f'writing batch file:{batch_file}')
     batch = cluster.PBS(
@@ -110,12 +125,16 @@ def queue2dax(garjus):
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
 
-        _task2dax(
-            assr,
-            walltime,
-            memreq,
-            yaml_file,
-            user_inputs,
-            cmds)
+        try:
+            _task2dax(
+                assr,
+                walltime,
+                memreq,
+                yaml_file,
+                user_inputs,
+                cmds)
 
-        garjus.set_task_status(t['PROJECT'], t['ID'], 'JOB_RUNNING')
+            garjus.set_task_status(t['PROJECT'], t['ID'], 'JOB_RUNNING')
+        except Exception as err:
+            logging.error(err)
+

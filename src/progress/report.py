@@ -605,6 +605,28 @@ def _add_timeline_page(pdf, info):
     return pdf
 
 
+def _add_nda_page(pdf, info):
+    pdf.add_page()
+
+    pdf.cell(txt='NDA', ln=1)
+
+    pdf.ln(1)
+
+    return pdf
+
+def _add_settings_page(pdf, info):
+    pdf.add_page()
+
+    # Display main settings
+    pdf.set_font('helvetica', size=12)
+    #pdf.cell(txt=settings['project_scanmap'], ln=1)
+    pdf.cell(txt='Scan Map', ln=1)
+
+    # Add some space
+    pdf.ln(0.2)
+
+    return pdf
+
 def _add_proclib_page(pdf, info):
     pdf.add_page()
 
@@ -987,6 +1009,9 @@ def make_pdf(info, filename):
 
     # Directed Graph of processing
     _add_graph_page(pdf, info)
+
+    # Settings
+    _add_settings_page(pdf, info)
 
     # Save to file
     logging.debug('saving PDF to file:{}'.format(pdf.filename))
