@@ -193,7 +193,6 @@ def dax2queue(garjus):
         raise FileNotFoundError(f'upload directory not found:{resdir}')
 
     tasks = garjus.tasks()
-
     print(tasks)
 
     # load diskq, run squeue to get updates, compare to queue, apply changes
@@ -208,14 +207,14 @@ def dax2queue(garjus):
     # Make list of (ID,STATUS) where status doesn't match
     # how can we do that with pandas?
     tasks['LABEL'] = tasks['ASSESSOR']
+    tasks = tasks.reset_index()
     #tasks = tasks.set_index('LABEL')
     tasks = tasks[['LABEL', 'STATUS']]
-    tasks = tasks.reset_index()
     print(tasks)
     
     #df = df.set_index('LABEL')
-    df = df[['LABEL', 'STATUS']]
     df = df.reset_index()
+    df = df[['LABEL', 'STATUS']]
     print(df)
 
     df = tasks[df.STATUS != tasks.STATUS][['LABEL', 'STATUS']]
