@@ -874,24 +874,71 @@ class Garjus:
 
     def add_task(self, project, assr, cmds, walltime, memreq, yamlfile, userinputs):
         """Add a new task record ."""
-        try:
-            record = {
-                'main_name': project,
-                'redcap_repeat_instrument': 'taskqueue',
-                'redcap_repeat_instance': 'new',
-                'task_assessor': assr,
-                'task_status': 'JOB_QUEUED',
-                'task_cmds': cmds,
-                'task_walltime': walltime,
-                'task_memreq': memreq,
-                'task_yamlfile': yamlfile,
-                'task_userinputs': userinputs,
-            }
-            response = self._rc.import_records([record])
-            assert 'count' in response
-            logging.info('successfully created new record')
-        except AssertionError as err:
-            logging.error(f'upload failed:{err}')
+
+        # need to find and clear an existing record for this assessor first
+
+        task_id = self.assessor_task_id(project, assr)
+        print('task_id=', task_id)
+
+        if task_id:
+            try:
+                record = {
+                    'main_name': project,
+                    'redcap_repeat_instrument': 'taskqueue',
+                    'redcap_repeat_instance': task_id,
+                    'task_status': 'JOB_QUEUED',
+                    'task_cmds': cmds,
+                    'task_walltime': walltime,
+                    'task_memreq': memreq,
+                    'task_yamlfile': yamlfile,
+                    'task_userinputs': userinputs,
+                    'task_timeused': 'TBD',
+                    'task_memused': 'TBD',
+                }
+                response = self._rc.import_records([record])
+                assert 'count' in response
+                logging.info('successfully created new record')
+            except AssertionError as err:
+                logging.error(f'upload failed:{err}')
+        else:
+            try:
+                record = {
+                    'main_name': project,
+                    'redcap_repeat_instrument': 'taskqueue',
+                    'redcap_repeat_instance': 'new',
+                    'task_assessor': assr,
+                    'task_status': 'JOB_QUEUED',
+                    'task_cmds': cmds,
+                    'task_walltime': walltime,
+                    'task_memreq': memreq,
+                    'task_yamlfile': yamlfile,
+                    'task_userinputs': userinputs,
+                }
+                response = self._rc.import_records([record])
+                assert 'count' in response
+                logging.info('successfully created new record')
+            except AssertionError as err:
+                logging.error(f'upload failed:{err}')
+
+    def assessor_task_id(self, project, assessor):
+        task_id = None
+
+        rec = self._rc.export_records(
+            forms=['taskqueue'],
+            records=[project],
+            fields=[self._dfield(), 'task_assessor'])
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
+        rec = [x for x in rec if x['task_assessor'] == assessor]
+
+        if len(rec) > 1:
+            logging.warn(f'duplicate tasks for assessor, not good:{assessor}')
+            task_id = rec[0]['redcap_repeat_instance']
+        elif len(rec) == 1:
+            task_id = rec[0]['redcap_repeat_instance']
+
+        return task_id
+
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""

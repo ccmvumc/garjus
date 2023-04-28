@@ -11,11 +11,15 @@ from dax import cluster
 # and access to dax diskq directory to write slurm/processor_spec files.
 # It does not need XNAT access nor access to any individual project REDCaps,
 # the only REDCap it needs is garjus/ccmutils.
+# It can run under a user that has access to the diskq directory but
+# does not need to be the owner nor does it need to be the user that runs dax,
+# it must be able set the files to the user group that runs dax.
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
 # Read these from REDCap for those where status is JOB_QUEUED
 # then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT as 
 # set when the assessor was created by garjus update tasks)
+
 
 IMAGEDIR = '/data/mcr/centos7/singularity'
 RESDIR = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
@@ -56,6 +60,10 @@ def _write_processor_spec(
 
 
 def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
+    '''Writes a task to a dax slurm script in the local diskq.'''
+
+    # NOTE: this function does the same work as dax task.build_task()
+
     imagedir = IMAGEDIR
     resdir = RESDIR
     job_rungroup = RUNGROUP
