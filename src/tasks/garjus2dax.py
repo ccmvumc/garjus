@@ -1,6 +1,7 @@
 """garjus queue 2 dax queue."""
 import shutil
 import logging
+import os
 
 from dax import cluster
 
