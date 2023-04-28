@@ -215,7 +215,11 @@ def dax2queue(garjus):
     df = _get_changes(gqueue, dqueue)
 
     # Apply changes
-    garjus.set_task_statuses(df)
+    if df.empty:
+        print('no changes to apply')
+    else:
+        print(df)
+        garjus.set_task_statuses(df)
 
     # TODO: get updates from XNAT (for those no longer in dax queue) to
     # get complete or failed status
