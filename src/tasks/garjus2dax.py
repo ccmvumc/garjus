@@ -71,7 +71,7 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
     if not os.path.isdir(resdir):
         raise FileNotFoundError(f'upload directory not found:{resdir}')
 
-    if not os.path.isdir(job_template):
+    if not os.path.isfile(job_template):
         raise FileNotFoundError(f'job template not found:{job_template}')
 
     logging.info(f'writing batch file:{batch_file}')
