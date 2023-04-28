@@ -1,4 +1,5 @@
 """dax queue 2 garjus queue."""
+import subprocess
 import logging
 import os
 from datetime import datetime
