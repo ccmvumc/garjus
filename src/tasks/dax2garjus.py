@@ -238,6 +238,7 @@ def dax2queue(garjus):
         logging.info('no changes to apply')
     else:
         logging.info('applying status changes')
+        print(df)
         garjus.set_task_statuses(df)
 
     # TODO: complete job information from slurm, for now we just 
@@ -253,4 +254,5 @@ def dax2queue(garjus):
         logging.info('no changes to apply')
     else:
         logging.info('applying status changes')
+        print(df)
         garjus.set_task_statuses(df)
