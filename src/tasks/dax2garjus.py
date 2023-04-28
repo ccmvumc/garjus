@@ -108,14 +108,14 @@ def _load_diskq_queue(status=None):
 def _load_diskq_task(diskq, assr):
     return {
         'LABEL': assr,
-        'procstatus': get_diskq_attr(diskq, assr, 'procstatus'),
-        'jobid': get_diskq_attr(diskq, assr, 'jobid'),
-        'jobnode': get_diskq_attr(diskq, assr, 'jobnode'),
-        'jobstartdate': get_diskq_attr(diskq, assr, 'jobstartdate'),
-        'memused': get_diskq_attr(diskq, assr, 'memused'),
-        'walltimeused': get_diskq_attr(diskq, assr, 'walltimeused'),
-        'WALLTIME': get_diskq_walltime(diskq, assr),
-        'LASTMOD': get_diskq_lastmod(diskq, assr)}
+        'procstatus': _get_diskq_attr(diskq, assr, 'procstatus'),
+        'jobid': _get_diskq_attr(diskq, assr, 'jobid'),
+        'jobnode': _get_diskq_attr(diskq, assr, 'jobnode'),
+        'jobstartdate': _get_diskq_attr(diskq, assr, 'jobstartdate'),
+        'memused': _get_diskq_attr(diskq, assr, 'memused'),
+        'walltimeused': _get_diskq_attr(diskq, assr, 'walltimeused'),
+        'WALLTIME': _get_diskq_walltime(diskq, assr),
+        'LASTMOD': _get_diskq_lastmod(diskq, assr)}
 
 
 # Load slurm data
@@ -153,7 +153,7 @@ def _get_diskq_walltime(diskq, assr):
     return walltime
 
 
-def get_diskq_lastmod(diskq, assr):
+def _get_diskq_lastmod(diskq, assr):
 
     if os.path.exists(os.path.join(diskq, 'procstatus', assr)):
         apath = os.path.join(diskq, 'procstatus', assr)
@@ -167,7 +167,7 @@ def get_diskq_lastmod(diskq, assr):
     return delta
 
 
-def get_diskq_attr(diskq, assr, attr):
+def _get_diskq_attr(diskq, assr, attr):
     apath = os.path.join(diskq, attr, assr)
 
     if not os.path.exists(apath):
@@ -178,59 +178,6 @@ def get_diskq_attr(diskq, assr, attr):
             return f.read().strip()
     except PermissionError:
         return None
-
-
-def set_time(row):
-    if pd.notna(row['SUBMIT_TIME']):
-        startdt = datetime.strptime(
-            str(row['SUBMIT_TIME']), '%Y-%m-%dT%H:%M:%S')
-        row['submitdt'] = datetime.strftime(startdt, '%Y-%m-%d %H:%M:%S')
-
-    row['timeused'] = row['TIME']
-
-    return row
-
-
-def clean_values(df):
-    # Cleanup wall time used to just be number of minutes
-    df['TIMEUSED'] = df['WALLTIMEUSED'].apply(clean_timeused)
-
-    df['STARTDATE'] = df['JOBSTARTDATE'].apply(clean_startdate)
-
-    df['TIMEDELTA'] = pd.to_timedelta(df['TIMEUSED'], 'm')
-
-    df['ENDDATE'] = df['STARTDATE'] + df['TIMEDELTA']
-
-    df['DATETIME'] = df['ENDDATE'].apply(clean_enddate)
-
-    return df
-
-
-def clean_enddate(enddate):
-    return datetime.strftime(enddate, '%Y-%m-%d %H:%M:%S')
-
-
-def clean_startdate(jobstartdate):
-    return datetime.strptime(jobstartdate, '%Y-%m-%d')
-
-
-def clean_timeused(timeused):
-    # Cleanup wall time used to just be number of minutes
-    try:
-        if '-' in timeused:
-            t = datetime.strptime(timeused, '%j-%H:%M:%S')
-            delta = timedelta(
-                days=t.day,
-                hours=t.hour, minutes=t.minute, seconds=t.second)
-        else:
-            t = datetime.strptime(timeused, '%H:%M:%S')
-            delta = timedelta(
-                hours=t.hour, minutes=t.minute, seconds=t.second)
-
-        return math.ceil(delta.total_seconds() / 60)
-    except ValueError:
-        return 1
-
 
 def dax2queue(garjus):
     resdir = RESDIR
