@@ -12,8 +12,8 @@ from . import queue
 def get_layout():
     qa_content = qa.get_content()
     activity_content = activity.get_content()
-    #stats_content = stats.get_content()
-    #reports_content = reports.get_content()
+    stats_content = ['TBD']
+    reports_content = ['TBD']
     issues_content = issues.get_content()
     queue_content = queue.get_content()
 
@@ -29,9 +29,9 @@ def get_layout():
                 dcc.Tab(
                     label='Queue', value='4', children=queue_content),
                 #dcc.Tab(
-                #    label='Stats', value='4', children=stats_content),
+                #    label='Stats', value='5', children=stats_content),
                 #dcc.Tab(
-                #    label='Reports', value='5', children=reports_content),
+                #    label='Reports', value='6', children=reports_content),
             ]),
             style={
                 'width': '90%', 'display': 'flex',

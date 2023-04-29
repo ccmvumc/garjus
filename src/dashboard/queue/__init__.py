@@ -106,7 +106,11 @@ def get_content():
             page_action='none',
             sort_action='native',
             id='datatable-queue',
-            style_table={'overflowY': 'scroll', 'overflowX': 'scroll'},
+            style_table={
+                'overflowY': 'scroll',
+                'overflowX': 'scroll',
+                'width': '900px',
+            },
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
