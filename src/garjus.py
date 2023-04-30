@@ -880,6 +880,11 @@ class Garjus:
         task_id = self.assessor_task_id(project, assr)
         print('task_id=', task_id)
 
+        var2val = json.dumps(var2val)
+        inputlist = json.dumps(inputlist)
+        print('var2val=', var2val)
+        print('inputlist=', inputlist)
+
         if task_id:
             try:
                 record = {

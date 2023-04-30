@@ -113,11 +113,6 @@ def build_task(garjus, assr, info, processor, project_data):
             info,
             project_data)
 
-
-        print('var2val=', var2val)
-        print('inputlist=', inputlist)
-
-
         # NOTE:this is where dax would write the slurm file, we are delaying
         # that and instead adding to queue in garjus
         garjus.add_task(

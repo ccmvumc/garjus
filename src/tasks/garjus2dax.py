@@ -163,8 +163,8 @@ def queue2dax(garjus):
 
         walltime = t['WALLTIME']
         memreq = t['MEMREQ']
-        inputlist = t['INPUTLIST']
-        var2val = t['VAR2VAL']
+        inputlist = json.loads(t['INPUTLIST'], strict=False)
+        var2val = json.loads(t['VAR2VAL'], strict=False)
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
 
