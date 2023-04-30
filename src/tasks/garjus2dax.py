@@ -5,7 +5,7 @@ import os
 import json
 
 from dax import cluster
-
+from .processors import load_from_yaml
 
 # This is a temporary bridge between garjus and dax.
 # This must run with access to garjus redcap to read the queue
