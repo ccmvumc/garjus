@@ -75,6 +75,7 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     resdir = RESDIR
     job_rungroup = RUNGROUP
     xnat_host = HOST
+    xnat_user = USER
     job_template = TEMPLATE
 
     batch_file = f'{resdir}/DISKQ/BATCH/{assr}.slurm'
