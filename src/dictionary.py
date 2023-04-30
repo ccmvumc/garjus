@@ -34,6 +34,8 @@ TASKS_RENAME = {
     'task_assessor': 'ASSESSOR',
     'task_status': 'STATUS',
     'task_cmds': 'CMDS',
+    'task_inputlist': 'INPUTLIST',
+    'task_var2val': 'VAR2VAL',
     'task_memreq': 'MEMREQ',
     'task_walltime': 'WALLTIME',
     'task_procdate': 'PROCDATE',
@@ -55,7 +57,7 @@ COLUMNS = {
               'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS'],
     'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
-    'tasks': ['ID', 'PROJECT', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'CMDS', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
+    'tasks': ['ID', 'PROJECT', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
 }
 
 

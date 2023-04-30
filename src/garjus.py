@@ -872,7 +872,7 @@ class Garjus:
         rec = self._rc.export_records(fields=_fields)
         return [x[self._dfield()] for x in rec if x['project_stats']]
 
-    def add_task(self, project, assr, cmds, walltime, memreq, yamlfile, userinputs):
+    def add_task(self, project, assr, inputlist, var2val, walltime, memreq, yamlfile, userinputs):
         """Add a new task record ."""
 
         # need to find and clear an existing record for this assessor first
@@ -887,7 +887,8 @@ class Garjus:
                     'redcap_repeat_instrument': 'taskqueue',
                     'redcap_repeat_instance': task_id,
                     'task_status': 'JOB_QUEUED',
-                    'task_cmds': cmds,
+                    'task_inputlist': inputlist,
+                    'task_var2val': var2val,
                     'task_walltime': walltime,
                     'task_memreq': memreq,
                     'task_yamlfile': yamlfile,
@@ -908,7 +909,8 @@ class Garjus:
                     'redcap_repeat_instance': 'new',
                     'task_assessor': assr,
                     'task_status': 'JOB_QUEUED',
-                    'task_cmds': cmds,
+                    'task_inputlist': inputlist,
+                    'task_var2val': var2val,
                     'task_walltime': walltime,
                     'task_memreq': memreq,
                     'task_yamlfile': yamlfile,
