@@ -875,16 +875,13 @@ class Garjus:
     def add_task(self, project, assr, inputlist, var2val, walltime, memreq, yamlfile, userinputs):
         """Add a new task record ."""
 
-        # need to find and clear an existing record for this assessor first
-
-        task_id = self.assessor_task_id(project, assr)
-        print('task_id=', task_id)
-
+        # Convert to string for storing
         var2val = json.dumps(var2val)
         inputlist = json.dumps(inputlist)
-        print('var2val=', var2val)
-        print('inputlist=', inputlist)
 
+        # Try to match existing record
+        task_id = self.assessor_task_id(project, assr)
+ 
         if task_id:
             try:
                 record = {
@@ -898,8 +895,8 @@ class Garjus:
                     'task_memreq': memreq,
                     'task_yamlfile': yamlfile,
                     'task_userinputs': userinputs,
-                    'task_timeused': 'TBD',
-                    'task_memused': 'TBD',
+                    'task_timeused': '',
+                    'task_memused': '',
                 }
                 response = self._rc.import_records([record])
                 assert 'count' in response
