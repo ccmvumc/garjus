@@ -1,3 +1,4 @@
+"""Processors."""
 import os
 import logging
 import argparse
@@ -94,38 +95,35 @@ def verify_artefact_status(proc_inputs, assr_inputs, project_data):
                         raise NeedInputsException(artk + ': Bad QC')
 
 
-def build_task(garjus, assr, info, processor, project_data, params):
-    resdir = params['resdir']
-    jobdir = params['jobdir']
+def build_task(garjus, assr, info, processor, project_data):
+    '''Build a task, create assessor in XNAT, add new record to garjus queue'''
+    #resdir = params['resdir']
+    #jobdir = params['jobdir']
 
     old_proc_status = info['PROCSTATUS']
     old_qc_status = info['QCSTATUS']
-    assr_label = info['ASSR']
+    assr_label = info['ASSR'] 
+    # assr_label = assr.label()
     job_email = None
     job_email_options = 'FAIL'
 
-    # Make directories as needed
-    #check_res_dir(resdir)
-
     try:
-        cmds = processor.build_cmds(
+        var2val, input_list = processor.build_var2val(
             assr,
             info,
-            project_data,
-            jobdir,
-            resdir)
+            project_data)
 
         # NOTE:this is where dax would write the slurm file, we are delaying
         # that and instead adding to queue in garjus
         garjus.add_task(
             project_data['name'],
             assr_label,
-            cmds[0],
+            inputlist,
+            var2val,
             processor.walltime_str,
             processor.memreq_mb,
             processor.yaml_file,
-            processor.user_inputs
-            )
+            processor.user_inputs)
 
         # Set new statuses to be updated
         new_proc_status = JOB_RUNNING
@@ -298,7 +296,76 @@ class Processor_v3_1(Processor_v3):
                 os.path.dirname(self.job_template),
                 'job_template_v3.txt')
 
-    def build_cmds(self, assr, info, project_data, jobdir, resdir):
+    # def build_cmds(self, assr, info, project_data, jobdir, resdir):
+    #     assr_label = info['ASSR']
+
+    #     # Make every input a list, so we can iterate later
+    #     inputs = info['INPUTS']
+    #     for k in inputs.keys():
+    #         if not isinstance(inputs[k], list):
+    #             inputs[k] = [inputs[k]]
+
+    #     # Find values for the xnat inputs
+    #     var2val, input_list = self.find_inputs(assr, inputs, project_data)
+
+    #     # Append other stuff
+    #     for k, v in self.user_overrides.items():
+    #         var2val[k] = v
+
+    #     for k, v in self.extra_user_overrides.items():
+    #         var2val[k] = v
+
+    #     # Include the assessor label
+    #     var2val['assessor'] = assr_label
+
+    #     # Handle xnat attributes
+    #     for attr_in in self.xnat_attrs:
+    #         _var = attr_in['varname']
+    #         _attr = attr_in['attr']
+    #         _obj = attr_in['object']
+    #         _val = ''
+
+    #         if _obj == 'subject':
+    #             _val = assr.parent().attrs.get(_attr)
+    #         elif _obj == 'session':
+    #             _val = assr.parent().attrs.get(_attr)
+    #             _ref = attr_in['ref']
+    #             _refval = [a.rsplit('/', 1)[1] for a in inputs[_ref]]
+    #             _val = ','.join([assr.parent().experiment(r).attrs.get(_attr) for r in _refval])
+    #         elif _obj == 'scan':
+    #             _ref = attr_in['ref']
+    #             _refval = [a.rsplit('/', 1)[1] for a in inputs[_ref]]
+    #             _val = ','.join(
+    #                 [assr.parent().scan(r).attrs.get(_attr) for r in _refval]
+    #             )
+    #         elif _obj == 'assessor':
+    #             if 'ref' in attr_in:
+    #                 _ref = attr_in['ref']
+    #                 _refval = [a.rsplit('/', 1)[1] for a in inputs[_ref]]
+    #                 _val = ','.join([assr.parent().assessor(r).attrs.get(_attr) for r in _refval])
+    #             else:
+    #                 _val = assr.attrs.get(_attr)
+    #         else:
+    #             logging.error('invalid YAML')
+    #             err = 'YAML File:contains invalid attribute:{}'
+    #             raise AutoProcessorError(err.format(_attr))
+
+    #         if _val == '':
+    #             raise NeedInputsException('Missing ' + _attr)
+    #         else:
+    #             var2val[_var] = _val
+
+    #     # Build the command text
+    #     dstdir = os.path.join(resdir, assr_label)
+    #     assr_dir = os.path.join(jobdir, assr_label)
+    #     _host = assr._intf.host
+    #     _user = assr._intf.user
+    #     cmd = self.build_text(
+    #         var2val, input_list, assr_dir, dstdir, _host, _user)
+
+    #     return [cmd]
+
+    def build_var2val(self, assr, info, project_data):
         assr_label = info['ASSR']
 
         # Make every input a list, so we can iterate later
@@ -357,15 +424,7 @@ class Processor_v3_1(Processor_v3):
             else:
                 var2val[_var] = _val
 
-        # Build the command text
-        dstdir = os.path.join(resdir, assr_label)
-        assr_dir = os.path.join(jobdir, assr_label)
-        _host = assr._intf.host
-        _user = assr._intf.user
-        cmd = self.build_text(
-            var2val, input_list, assr_dir, dstdir, _host, _user)
-
-        return [cmd]
+        return var2val, input_list
 
     def create_assessor(self, project, subject, session, inputs):
         # returns:
@@ -938,7 +997,7 @@ def build_session_processor(garjus, processor, session, project_data, params):
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             logging.debug('building task')
             (assr, info) = build_task(
-                garjus, assr, info, processor, project_data, params)
+                garjus, assr, info, processor, project_data)
 
             logging.debug(f'{info}')
             logging.debug('status:{}:{}'.format(info['ASSR'], info['PROCSTATUS']))

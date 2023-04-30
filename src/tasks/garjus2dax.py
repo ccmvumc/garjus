@@ -21,10 +21,12 @@ from dax import cluster
 # set when the assessor was created by garjus update tasks)
 
 
+JOBDIR = '/tmp'
 IMAGEDIR = '/data/mcr/centos7/singularity'
 RESDIR = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
 RUNGROUP = 'h_vuiis'
 HOST = 'https://xnat2.vanderbilt.edu/xnat'
+USER = 'daxspider'
 TEMPLATE = '/data/mcr/centos7/dax_templates/job_template_v3.txt'
 
 
@@ -59,20 +61,30 @@ def _write_processor_spec(
         f.write('\n')
 
 
-def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
+#def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
+def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist, var2val):
+
     '''Writes a task to a dax slurm script in the local diskq.'''
 
     # NOTE: this function does the same work as dax task.build_task()
+    # at build_cmds() which calls processor.build_cmds(), at the point where we have
+    # var2val and the next step is to get the text...
+    # more specifically we are splitting build_cmds() where it calls build_text()
 
+    jobdir = JOBDIR
     imagedir = IMAGEDIR
     resdir = RESDIR
     job_rungroup = RUNGROUP
     xnat_host = HOST
     job_template = TEMPLATE
+
     batch_file = f'{resdir}/DISKQ/BATCH/{assr}.slurm'
     outlog = f'{resdir}/DISKQ/OUTLOG/{assr}.txt'
     processor_spec_path = f'{resdir}/DISKQ/processor/{assr}'
+    assr_dir = f'{jobdir}/{assr}'
+    dstdir = f'{resdir}/{assr}'
 
+    # Check for image dir before we give to dax
     if not os.path.isdir(imagedir):
         raise FileNotFoundError(f'singularity images not found:{imagedir}')
 
@@ -81,6 +93,23 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
 
     if not os.path.isfile(job_template):
         raise FileNotFoundError(f'job template not found:{job_template}')
+
+    # Load the processor
+    processor = load_from_yaml(
+        garjus.xnat(),
+        yaml_file,
+        user_inputs=user_inputs,
+        singularity_imagedir=imagedir,
+        job_template=job_template)
+
+    # Build the command text
+    cmds = processor.build_text(
+        var2val,
+        input_list,
+        assr_dir,
+        dstdir,
+        xnat_host,
+        xnat_user)
 
     logging.info(f'writing batch file:{batch_file}')
     batch = cluster.PBS(
@@ -96,8 +125,10 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
         rungroup=job_rungroup,
         xnat_host=xnat_host,
         job_template=job_template)
-
+    
     batch.write()
+
+    #processor.some_command(inputlist, var2val)
 
     # Write processor spec file for version 3
     logging.info(f'writing processor spec file:{processor_spec_path}')
@@ -117,12 +148,13 @@ def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
 
 
 def queue2dax(garjus):
-    
+
     tasks = garjus.tasks()
 
     for i, t in tasks.iterrows():
         assr = t['ASSESSOR']
         status = t['STATUS']
+
         if status != 'JOB_QUEUED':
             logging.debug(f'skipping:{i}:{assr}:{status}')
             continue
@@ -131,20 +163,23 @@ def queue2dax(garjus):
 
         walltime = t['WALLTIME']
         memreq = t['MEMREQ']
-        cmds = t['CMDS']
+        inputlist = t['INPUTLIST']
+        var2val = t['VAR2VAL']
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
 
-        try:
+        try:       
             _task2dax(
                 assr,
                 walltime,
                 memreq,
                 yaml_file,
                 user_inputs,
-                cmds)
+                inputlist,
+                var2val)
 
             garjus.set_task_status(t['PROJECT'], t['ID'], 'JOB_RUNNING')
+
         except Exception as err:
             logging.error(err)
 
