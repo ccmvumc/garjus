@@ -104,7 +104,7 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     # Build the command text
     cmds = processor.build_text(
         var2val,
-        input_list,
+        inputlist,
         assr_dir,
         dstdir,
         xnat_host,
