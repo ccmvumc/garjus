@@ -108,7 +108,7 @@ def build_task(garjus, assr, info, processor, project_data):
     job_email_options = 'FAIL'
 
     try:
-        var2val, input_list = processor.build_var2val(
+        var2val, inputlist = processor.build_var2val(
             assr,
             info,
             project_data)
