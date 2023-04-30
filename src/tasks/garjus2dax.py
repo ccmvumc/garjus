@@ -62,9 +62,7 @@ def _write_processor_spec(
         f.write('\n')
 
 
-#def _task2dax(assr, walltime, memreq, yaml_file, user_inputs, cmds):
 def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist, var2val):
-
     '''Writes a task to a dax slurm script in the local diskq.'''
 
     # NOTE: this function does the same work as dax task.build_task()
@@ -171,6 +169,7 @@ def queue2dax(garjus):
 
         try:       
             _task2dax(
+                garjus,
                 assr,
                 walltime,
                 memreq,
