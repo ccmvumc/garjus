@@ -875,7 +875,7 @@ def load_from_yaml(
     filepath,
     user_inputs=None,
     singularity_imagedir=None,
-    job_template=None,
+    job_template='~/job_template.txt',
 ):
     """
     Load processor from yaml
