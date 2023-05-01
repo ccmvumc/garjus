@@ -7,6 +7,12 @@ from datetime import datetime
 
 import pandas as pd
 
+# TODO: check status jobs showing as RUNNING but not in queue,
+# check residr for completed/vs failed, and set to Finished-COMPLETE, 
+# Finished-JOB_FAILED or something maybe Finished in blue vs. red?
+
+# TODO: complete job information from slurm, for now we just 
+# want to know about open jobs
 
 # This is a temporary bridge between garjus and dax.
 
@@ -224,22 +230,19 @@ def dax2queue(garjus):
     if not os.path.isdir(resdir):
         raise FileNotFoundError(f'upload directory not found:{resdir}')
 
+    # Get the garjus queue as stored in redcap
     gqueue = garjus.tasks()
 
+    # Get the dax queue on disk
     dqueue = _load_dax_queue()
 
-    # Filter projects
+    # Filter projects to only those garjus knows
     dqueue = dqueue[dqueue.PROJECT.isin(garjus.projects())]
-    print(dqueue)
 
     # Get the changes to apply
     df1 = _get_changes(gqueue, dqueue)
 
-    # TODO: complete job information from slurm, for now we just 
-    # want to know about open jobs
-
-    # Get updates from XNAT (for those no longer in dax queue) to
-    # get complete or failed status
+    # Get updates from XNAT (if no longer in dax queue), complete or failed
     df2 = _get_xnat_changes(gqueue, garjus.assessors())
 
     # Combine dataframes

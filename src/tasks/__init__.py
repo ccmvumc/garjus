@@ -17,10 +17,7 @@ def update(garjus, projects=None):
 
 def _update_project(garjus, project):
 
-    # TODO: get these from project settings
-    singularity_imagedir = '/data/mcr/centos7/singularity'
     processorlib = '/data/mcr/centos7/dax_processors'
-    job_template = '/data/mcr/centos7/dax_templates/job_template_v3.txt'
 
     # Get protocol data
     protocols = garjus.processing_protocols(project)
@@ -84,8 +81,6 @@ def _update_project(garjus, project):
         build_processor(
             garjus,
             filepath,
-            singularity_imagedir,
-            job_template,
             user_inputs,
             project_data,
             include_filters)

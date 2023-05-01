@@ -8,6 +8,7 @@ from dax import cluster
 from .processors import load_from_yaml
 
 # This is a temporary bridge between garjus and dax.
+
 # This must run with access to garjus redcap to read the queue
 # and access to dax diskq directory to write slurm/processor_spec files.
 # It does not need XNAT access nor access to any individual project REDCaps,
@@ -131,13 +132,9 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     
     batch.write()
 
-    #processor.some_command(inputlist, var2val)
-
     # Write processor spec file for version 3
     logging.info(f'writing processor spec file:{processor_spec_path}')
 
-    # Does all of this need to go in the REDCap queue, or is some
-    # of it assumed per dax instance?
     _write_processor_spec(
         processor_spec_path,
         yaml_file,

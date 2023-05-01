@@ -97,13 +97,9 @@ def verify_artefact_status(proc_inputs, assr_inputs, project_data):
 
 def build_task(garjus, assr, info, processor, project_data):
     '''Build a task, create assessor in XNAT, add new record to garjus queue'''
-    #resdir = params['resdir']
-    #jobdir = params['jobdir']
-
     old_proc_status = info['PROCSTATUS']
     old_qc_status = info['QCSTATUS']
     assr_label = info['ASSR'] 
-    # assr_label = assr.label()
     job_email = None
     job_email_options = 'FAIL'
 
@@ -909,10 +905,11 @@ def load_from_yaml(
     return processor
 
 
-def build_session_processor(garjus, processor, session, project_data, params):
-    logging.debug(f'{session}:{processor.name}')
+def build_session_processor(garjus, processor, session, project_data):
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_session(session, project_data)
+
+    logging.debug(f'{session}:{processor.name}')
 
     logging.debug(inputsets)
     for inputs in inputsets:
@@ -936,7 +933,7 @@ def build_session_processor(garjus, processor, session, project_data, params):
             logging.debug('already built:{}'.format(info['ASSR']))
 
 
-def build_subject_processor(garjus, processor, subject, project_data, params):
+def build_subject_processor(garjus, processor, subject, project_data):
     logging.debug(f'{subject}:{processor.name}')
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_subject(subject, project_data)
@@ -958,7 +955,7 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             logging.debug('building task')
             (assr, info) = build_task(
-                garjus, assr, info, processor, project_data, params)
+                garjus, assr, info, processor, project_data)
 
             logging.debug(f'assr after={info}')
         else:
@@ -968,19 +965,9 @@ def build_subject_processor(garjus, processor, subject, project_data, params):
 def build_processor(
     garjus,
     filepath,
-    singularity_imagedir,
-    job_template,
     user_inputs,
     project_data,
     include_filters):
-
-    params = {
-        'singularity_imagedir': singularity_imagedir,
-        'jobtemplate': job_template,
-        'resdir': '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir',
-        'jobdir': '/tmp',
-        'processorlib': '/data/mcr/centos7/dax_processors',
-        }
 
     # Get lists of subjects/sessions for filtering
     all_sessions = project_data.get('scans').SESSION.unique()
@@ -991,8 +978,8 @@ def build_processor(
         garjus.xnat(),
         filepath,
         user_inputs=user_inputs,
-        singularity_imagedir=singularity_imagedir,
-        job_template=job_template)
+        singularity_imagedir=None,
+        job_template=None)
 
     if isinstance(processor, SgpProcessor):
         # Handle subject level processing
@@ -1006,7 +993,7 @@ def build_processor(
 
         # Apply the processor to filtered sessions
         for subj in sorted(include_subjects):
-            build_subject_processor(garjus, processor, subj, project_data, params)
+            build_subject_processor(garjus, processor, subj, project_data)
     else:
         # Get list of sessions to process
         if include_filters:
@@ -1019,4 +1006,4 @@ def build_processor(
 
         # Apply the processor to filtered sessions
         for sess in sorted(include_sessions):
-            build_session_processor(garjus, processor, sess, project_data, params)
+            build_session_processor(garjus, processor, sess, project_data)
