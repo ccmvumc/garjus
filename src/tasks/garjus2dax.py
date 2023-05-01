@@ -94,6 +94,9 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     if not os.path.isfile(job_template):
         raise FileNotFoundError(f'job template not found:{job_template}')
 
+    for i in inputlist:
+        i['fpath'] = i['fpath'].replace('xnat.vanderbilt', 'xnat2.vanderbilt')
+
     # Load the processor
     processor = load_from_yaml(
         garjus.xnat(),
