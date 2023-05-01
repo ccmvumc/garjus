@@ -977,9 +977,7 @@ def build_processor(
     processor = load_from_yaml(
         garjus.xnat(),
         filepath,
-        user_inputs=user_inputs,
-        singularity_imagedir=None,
-        job_template=None)
+        user_inputs=user_inputs)
 
     if isinstance(processor, SgpProcessor):
         # Handle subject level processing
