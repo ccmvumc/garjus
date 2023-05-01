@@ -28,6 +28,7 @@ PROCESSING_RENAME = {
     'processor_custom': 'CUSTOM',
     'processor_filter': 'FILTER',
     'processor_args': 'ARGS',
+    'processor_yamlupload': 'YAMLUPLOAD',
 }
 
 TASKS_RENAME = {
