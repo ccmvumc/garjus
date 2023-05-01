@@ -283,6 +283,7 @@ class Processor_v3_1(Processor_v3):
             # Make sure we have the full path
             if not os.path.isabs(_tmp):
                 # If only filename, we assume it is same folder as default
+                print('self.job_template=', self.job_template, _tmp)
                 _tmp = os.path.join(os.path.dirname(self.job_template), _tmp)
 
             # Override it
