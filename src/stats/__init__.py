@@ -27,14 +27,19 @@ def update(garjus, projects):
 def update_project(garjus, project, proctypes):
     """Update stats for project proctypes."""
 
+    logging.debug(f'loading existing stats:{project}')
+    try:
+        # Get list of assessors already in stats
+        existing = garjus.stats_assessors(project, proctypes)
+    except:
+        logging.error('failed to load exists stats, check key:{project}')
+        return
+
     # Get list of all assessors
-    logging.debug(f'loading assessors updating project:{project},proctypes={proctypes}')
+    logging.debug(f'loading existing assessors:{project}')
 
     dfa = garjus.assessors([project], proctypes)
     logging.debug(f'total assessors:{len(dfa)}')
-
-    # Get list of assessors already in stats
-    existing = garjus.stats_assessors(project, proctypes)
 
     # Filter to remove already uploaded
     dfa = dfa[~dfa['ASSR'].isin(existing)]
