@@ -100,6 +100,7 @@ def get_content():
             id='dropdown-queue-user', multi=True,
             placeholder='Select Users'),
         dt.DataTable(
+            cell_selectable=False,
             columns=columns,
             data=records,
             filter_action='native',
