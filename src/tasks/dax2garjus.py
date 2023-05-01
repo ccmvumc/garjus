@@ -230,6 +230,7 @@ def dax2queue(garjus):
 
     # Filter projects
     dqueue = dqueue[dqueue.PROJECT.isin(garjus.projects())]
+    print(dqueue)
 
     # Get the changes to apply
     df1 = _get_changes(gqueue, dqueue)
