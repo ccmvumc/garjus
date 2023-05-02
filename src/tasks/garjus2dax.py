@@ -63,7 +63,7 @@ def _write_processor_spec(
         f.write('\n')
 
 
-def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist, var2val):
+def _task2dax(xnat, assr, walltime, memreq, yaml_file, user_inputs, inputlist, var2val):
     '''Writes a task to a dax slurm script in the local diskq.'''
 
     # NOTE: this function does the same work as dax task.build_task()
@@ -98,17 +98,9 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     for i in inputlist:
         i['fpath'] = i['fpath'].replace('xnat.vanderbilt', 'xnat2.vanderbilt')
 
-    if yaml_file == 'CUSTOM':
-        # Download it locally
-        yaml_file = garjus.save_task_yaml(
-            t['PROJECT'], t['ID'], f'{resdir}/DISKQ/processor')
-    else:
-        # We already have a local copy so point to it
-        yaml_file = os.path.join(garjus._yamldir, yaml_file)
-
     # Load the processor
     processor = load_from_yaml(
-        garjus.xnat(),
+        xnat,
         yaml_file,
         user_inputs=user_inputs,
         singularity_imagedir=imagedir,
@@ -178,9 +170,18 @@ def queue2dax(garjus):
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
 
-        try:       
+        try:
+            # Locate the yaml file
+            if yaml_file == 'CUSTOM':
+                # Download it locally
+                yaml_file = garjus.save_task_yaml(
+                    t['PROJECT'], t['ID'], f'{RESDIR}/DISKQ/processor')
+            else:
+                # We already have a local copy so point to it
+                yaml_file = os.path.join(garjus._yamldir, yaml_file)
+
             _task2dax(
-                garjus,
+                garjus.xnat(),
                 assr,
                 walltime,
                 memreq,
