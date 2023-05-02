@@ -267,7 +267,7 @@ class Garjus:
             project,
             'task_yamlupload',
             yaml_dir,
-            repeat_id=r['redcap_repeat_instance'])
+            repeat_id=task_id)
 
     def set_task_statuses(self, tasks):
         records = []
