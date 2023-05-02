@@ -176,6 +176,7 @@ def queue2dax(garjus):
                 # Download it locally
                 yaml_file = garjus.save_task_yaml(
                     t['PROJECT'], t['ID'], f'{RESDIR}/DISKQ/processor')
+                shutil.chown(yaml_file, group='h_vuiisadmin')
             else:
                 # We already have a local copy so point to it
                 yaml_file = os.path.join(garjus._yamldir, yaml_file)
