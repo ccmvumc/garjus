@@ -98,6 +98,14 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
     for i in inputlist:
         i['fpath'] = i['fpath'].replace('xnat.vanderbilt', 'xnat2.vanderbilt')
 
+    if yaml_file == 'CUSTOM':
+        # Download it locally
+        yaml_file = garjus.save_task_yaml(
+            t['PROJECT'], t['ID'], f'{resdir}/DISKQ/processor')
+    else:
+        # We already have a local copy so point to it
+        yaml_file = os.path.join(garjus._yamldir, yaml_file)
+
     # Load the processor
     processor = load_from_yaml(
         garjus.xnat(),
@@ -170,14 +178,6 @@ def queue2dax(garjus):
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
 
-        if yaml_file == 'CUSTOM':
-             # Download it locally
-            yaml_dir = f'{resdir}/DISKQ/processor/'
-            yaml_file = garjus.save_task_yaml(t['PROJECT'], t['ID'], yaml_dir)
-        else:
-            # We already have a local copy so point to it
-            yaml_file = os.path.join(garjus._yamldir, yaml_file)
-
         try:       
             _task2dax(
                 garjus,
@@ -193,4 +193,3 @@ def queue2dax(garjus):
 
         except Exception as err:
             logging.error(err)
-
