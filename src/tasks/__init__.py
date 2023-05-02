@@ -16,11 +16,8 @@ def update(garjus, projects=None):
 
 
 def _update_project(garjus, project):
-
-    processorlib = '/data/mcr/centos7/dax_processors'
-
-    # Get protocol data
-    protocols = garjus.processing_protocols(project)
+    # Get protocol data, download yaml files as needed
+    protocols = garjus.processing_protocols(project, download=True)
 
     if len(protocols) == 0:
         logging.info(f'no processing protocols for project:{project}')
@@ -39,26 +36,13 @@ def _update_project(garjus, project):
 
     # Iterate processing protocols
     for i, row in protocols.iterrows():
-
-        if row['FILE'] == 'CUSTOM':
-            filepath = row['CUSTOM']
-        else:
-            filepath = row['FILE']
-
-        if not os.path.isabs(filepath):
-            # Prepend lib location
-            filepath = os.path.join(processorlib, filepath)
-
-        if not os.path.isfile(filepath):
-            logging.warn(f'invalid file path:{filepath}')
-            continue
+        filepath = row['FILE']
 
         logging.info(f'file:{filepath}')
 
         user_inputs = row.get('ARGS', None)
-        logging.debug(f'overrides:{user_inputs}')
-
         if user_inputs:
+            logging.debug(f'overrides:{user_inputs}')
             rlist = user_inputs.strip().split('\r\n')
             rdict = {}
             for arg in rlist:
@@ -70,8 +54,7 @@ def _update_project(garjus, project):
                     raise XnatUtilsError(msg)
 
             user_inputs = rdict
-
-        logging.debug(f'user_inputs:{user_inputs}')
+            logging.debug(f'user_inputs:{user_inputs}')
 
         if row['FILTER']:
             include_filters = str(row['FILTER']).replace(' ', '').split(',')
