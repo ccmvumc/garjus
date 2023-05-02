@@ -1,11 +1,16 @@
 import redcap
 import os
+import logging
 
 
-def download_file(project, record_id, event_id, field_id, filename):
+def download_named_file(project, record_id, field_id, outdir, event_id=None, repeat_id=None):
+    # Get the file contents from REDCap
     try:
         (cont, hdr) = project.export_file(
-            record=record_id, event=event_id, field=field_id)
+            record=record_id,
+            field=field_id,
+            event=event_id,
+            repeat_instance=repeat_id)
 
         if cont == '':
             raise redcap.RedcapError
@@ -13,6 +18,34 @@ def download_file(project, record_id, event_id, field_id, filename):
         logging.error(f'downloading file:{err}')
         return None
 
+    # Save contents to local file
+    filename = os.path.join(outdir, hdr['name'])
+    try:
+        with open(filename, 'wb') as f:
+            f.write(cont)
+
+        return filename
+    except FileNotFoundError as err:
+        logging.error(f'file not found:{filename}:{err}')
+        return None
+
+
+def download_file(project, record_id, field_id, filename, event_id=None, repeat_id=None):
+    # Get the file contents from REDCap
+    try:
+        (cont, hdr) = project.export_file(
+            record=record_id,
+            field=field_id,
+            event=event_id,
+            repeat_instance=repeat_id)
+
+        if cont == '':
+            raise redcap.RedcapError
+    except redcap.RedcapError as err:
+        logging.error(f'downloading file:{err}')
+        return None
+
+    # Save contents to local file
     try:
         with open(filename, 'wb') as f:
             f.write(cont)

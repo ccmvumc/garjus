@@ -281,13 +281,13 @@ def _run_etl_nihexaminer(project):
             try:
                 # Download files from redcap
                 logging.debug(f'download files:{record_id}:{event_id}:{flank_file}')
-                download_file(project, record_id, event_id, flank_field, flank_file)
+                download_file(project, record_id, flank_field, flank_file, event_id=event_id)
                 logging.debug(f'download NBack:{record_id}:{event_id}:{nback_field}')
-                download_file(project, record_id, event_id, nback_field, nback_file)
+                download_file(project, record_id, nback_field, nback_file, event_id=event_id)
                 logging.debug(f'download Shift:{record_id}:{event_id}:{shift_field}')
-                download_file(project, record_id, event_id, shift_field, shift_file)
+                download_file(project, record_id, shift_field, shift_file, event_id=event_id)
                 logging.debug(f'download CPT:{record_id}:{event_id}:{cpt_field}')
-                download_file(project, record_id, event_id, cpt_field, cpt_file)
+                download_file(project, record_id, cpt_field, cpt_file, event_id=event_id)
             except Exception as err:
                 logging.error(f'downloading files:{record_id}:{event_id}')
                 continue

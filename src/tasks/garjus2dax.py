@@ -129,7 +129,7 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
         rungroup=job_rungroup,
         xnat_host=xnat_host,
         job_template=job_template)
-    
+
     batch.write()
 
     # Write processor spec file for version 3
@@ -149,8 +149,10 @@ def _task2dax(garjus, assr, walltime, memreq, yaml_file, user_inputs, inputlist,
 
 def queue2dax(garjus):
 
+    # Get the current task table from garjus
     tasks = garjus.tasks()
 
+    # Update each task
     for i, t in tasks.iterrows():
         assr = t['ASSESSOR']
         status = t['STATUS']
@@ -167,6 +169,14 @@ def queue2dax(garjus):
         var2val = json.loads(t['VAR2VAL'], strict=False)
         yaml_file = t['YAMLFILE']
         user_inputs = t['USERINPUTS']
+
+        if yaml_file == 'CUSTOM':
+             # Download it locally
+            yaml_dir = f'{resdir}/DISKQ/processor/'
+            yaml_file = garjus.save_task_yaml(t['PROJECT'], t['ID'], yaml_dir)
+        else:
+            # We already have a local copy so point to it
+            yaml_file = os.path.join(garjus._yamldir, yaml_file)
 
         try:       
             _task2dax(

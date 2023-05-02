@@ -89,6 +89,8 @@ class Garjus:
         self._projects = self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
+        self._yamldir = '/data/mcr/centos7/dax_processors'
+        self._tempdir = tempfile.mkdtemp()
 
     def __del__(self):
         """Close connectinons we opened."""
@@ -238,7 +240,7 @@ class Garjus:
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
 
-    def tasks(self):
+    def tasks(self, download=False):
         """List of task records."""
         data = []
 
@@ -258,6 +260,14 @@ class Garjus:
             data.append(d)
 
         return pd.DataFrame(data, columns=self.column_names('task'))
+
+    def save_task_yaml(self, project, task_id, yaml_dir):
+        return utils_redcap.download_named_file(
+            self._rc,
+            project,
+            'task_yamlupload',
+            yaml_dir,
+            repeat_id=r['redcap_repeat_instance'])
 
     def set_task_statuses(self, tasks):
         records = []
@@ -758,7 +768,7 @@ class Garjus:
         rec = [x for x in rec if str(x['double_complete']) == '2']
         return rec
 
-    def processing_protocols(self, project):
+    def processing_protocols(self, project, download=False):
         """Return processing protocols."""
         data = []
 
@@ -772,15 +782,34 @@ class Garjus:
             # Initialize record with project
             d = {'PROJECT': r[self._dfield()]}
 
+            # Find the yaml file
+            if r['processor_yamlupload'] and download:
+                filename = os.path.join(self._tempdir, r['processor_yamlupload'])
+                filepath = utils_redcap.download_file(
+                    self._rc,
+                    project,
+                    'processor_yamlupload',
+                    filename,
+                    repeat_id=r['redcap_repeat_instance'])
+            elif r['processor_file'] == 'CUSTOM':
+                filepath = r['processor_custom']
+            else:
+                filepath = r['processor_file']
+
+            if not os.path.isabs(filepath):
+                # Prepend lib location
+                filepath = os.path.join(self._yamldir, filepath)
+
+            if not os.path.isfile(filepath):
+                logging.warn(f'invalid file path:{filepath}')
+                continue
+
             # Get renamed variables
             for k, v in self.processing_rename.items():
                 d[v] = r.get(k, '')
 
-            # Set the processin type
-            if d['FILE'] == 'CUSTOM':
-                d['TYPE'] = self._get_proctype(d['CUSTOM'])
-            else:
-                d['TYPE'] = self._get_proctype(d['FILE'])
+            d['FILE'] = filepath
+            d['TYPE'] = self._get_proctype(d['FILE'])
 
             # Finally, add to our list
             data.append(d)
@@ -881,8 +910,14 @@ class Garjus:
 
         # Try to match existing record
         task_id = self.assessor_task_id(project, assr)
+
+        if os.path.dirname(yamlfile) != self._yamldir:
+            task_yamlfile = 'CUSTOM'
+        else:
+            task_yamlfile = os.path.basename(yamlfile)
  
         if task_id:
+            # Update existing record
             try:
                 record = {
                     'main_name': project,
@@ -893,7 +928,7 @@ class Garjus:
                     'task_var2val': var2val,
                     'task_walltime': walltime,
                     'task_memreq': memreq,
-                    'task_yamlfile': yamlfile,
+                    'task_yamlfile': task_yamlfile,
                     'task_userinputs': userinputs,
                     'task_timeused': '',
                     'task_memused': '',
@@ -903,7 +938,9 @@ class Garjus:
                 logging.info('successfully created new record')
             except AssertionError as err:
                 logging.error(f'upload failed:{err}')
+                return
         else:
+            # Create a new record
             try:
                 record = {
                     'main_name': project,
@@ -915,7 +952,7 @@ class Garjus:
                     'task_var2val': var2val,
                     'task_walltime': walltime,
                     'task_memreq': memreq,
-                    'task_yamlfile': yamlfile,
+                    'task_yamlfile': task_yamlfile,
                     'task_userinputs': userinputs,
                 }
                 response = self._rc.import_records([record])
@@ -923,6 +960,22 @@ class Garjus:
                 logging.info('successfully created new record')
             except AssertionError as err:
                 logging.error(f'upload failed:{err}')
+                return
+
+        # If the file is not in yaml dir, we need to upload it to the task
+        if task_yamlfile == 'CUSTOM':
+            logging.info(f'yaml not in shared library, uploading to task')
+            if not task_id:
+                # Try to match existing record
+                task_id = self.assessor_task_id(project, assr)
+
+            logging.info(f'uploading file:{yamlfile}')
+            utils_redcap.upload_file(
+                self._rc,
+                project,
+                'task_yamlupload',
+                yamlfile,
+                repeat_id=task_id)
 
     def assessor_task_id(self, project, assessor):
         task_id = None

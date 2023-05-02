@@ -20,9 +20,9 @@ def run(project, record_id, event_id):
 
         # Download files from redcap
         logging.debug(f'downloading file:{record_id}:{event_id}:{reg_field}:{reg_file}')
-        download_file(project, record_id, event_id, reg_field, reg_file)
+        download_file(project, record_id, reg_field, reg_file, event_id=event_id)
         logging.debug(f'downloading file:{record_id}:{event_id}:{score_field}:{score_file}')
-        download_file(project, record_id, event_id, score_field, score_file)
+        download_file(project, record_id, score_field, score_file, event_id=event_id)
 
         # Extract data from downloaded files
         reg_data = toolbox_extract_regdata(reg_file)
