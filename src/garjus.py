@@ -824,7 +824,7 @@ class Garjus:
                 filepath = os.path.join(self._yamldir, filepath)
 
             if not os.path.isfile(filepath):
-                logging.warn(f'invalid file path:{filepath}')
+                logging.debug(f'file not found:{filepath}, download={download}')
                 continue
 
             # Get renamed variables
