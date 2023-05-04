@@ -11,6 +11,31 @@ import tempfile
 
 from ..utils_redcap import download_file, field2events
 
+D3_SLICE_TIMING = [
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
+
+DM2_SLICE_TIMING = [
+    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325,
+    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325,
+    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91, 
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325]
+
+REMBRANDT_SLICE_TIMING = [
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
+
+
 
 def update(garjus, projects, autos_include=None, autos_exclude=None):
     """Update project progress."""
@@ -31,6 +56,7 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         # Apply exclude filter
         scan_autos = [x for x in scan_autos if x not in autos_exclude]
 
+    logging.info(f'running scan automations:{project}:{scan_autos}')
     _run_scan_automations(scan_autos, garjus, project)
 
     etl_autos = garjus.etl_automations(project)
@@ -207,7 +233,6 @@ def _run_etl_nihexaminer(project):
 
         if has_blank:
             continue
-            print('has blank!')
 
         logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
 
@@ -320,16 +345,39 @@ def _run_scan_automations(automations, garjus, project):
     protocols = garjus.scanning_protocols(project)
     project_redcap = garjus.primary(project)
 
+    # Add slice timing
+    if project == 'REMBRANDT':
+        logging.info(f'running add_slicetiming:{project}')
+
+        slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
+        results += slicetiming.process_project(garjus,
+            project,
+            D3_SLICE_TIMING,
+            ['fMRI_REST1', 'fMRI_REST2'],
+            sites=['VUMC'],
+        )
+    elif project == 'D3':
+        logging.info(f'running add_slicetiming:{project}')
+
+        slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
+        results += slicetiming.process_project(garjus,
+            project,
+            D3_SLICE_TIMING,
+            ['fMRI_REST1', 'fMRI_REST2'],
+        )
+
     # load the automations
     try:
         xnat_auto_archive = importlib.import_module(f'src.automations.xnat_auto_archive')
         xnat_relabel_sessions = importlib.import_module(f'src.automations.xnat_relabel_sessions')
         xnat_relabel_scans = importlib.import_module(f'src.automations.xnat_relabel_scans')
+        xnat_dcm2niix = importlib.import_module(f'src.automations.xnat_dcm2niix')
+        logging.debug('modules loaded')
     except ModuleNotFoundError as err:
         logging.error(f'error loading scan automations:{err}')
         return
 
-    if 'xnat_auto_archive' in automations and project_redcap:
+    if 'xnat_auto_archive' in automations and project_redcap and garjus.has_dcm2niix():
         # Apply autos to each scanning protocol
         for p in protocols:
             date_field = p['scanning_datefield']
@@ -361,7 +409,7 @@ def _run_scan_automations(automations, garjus, project):
             # autoarchive once
 
             # Run
-            logging.info(f'running xnat_auto_archive:{project}')
+            logging.info(f'running xnat_auto_archive:{project}:{events}')
             results += xnat_auto_archive.process_project(
                 garjus, scan_table, src_project, project)
 
@@ -383,6 +431,11 @@ def _run_scan_automations(automations, garjus, project):
         logging.debug(f'{project}:running scan relabel:{proj_scanmap}')
         results += xnat_relabel_scans.process_project(
             garjus.xnat(), project, proj_scanmap)
+
+    # d2n
+    if garjus.has_dcm2niix() and 'dcm2niix' in automations:
+        logging.info(f'{project}:running dcm2niix')
+        results += xnat_dcm2niix.process_project(garjus, project)
 
     # Upload results to garjus
     for r in results:

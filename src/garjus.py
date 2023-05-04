@@ -12,6 +12,7 @@ from datetime import datetime
 import glob
 import os
 import tempfile
+import shutil
 
 import pandas as pd
 from redcap import Project, RedcapError
@@ -107,6 +108,10 @@ class Garjus:
     def _default_redcap():
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
+
+    def has_dcm2niix(self):
+        # check we have dcm2niix binary on the path
+        return shutil.which('dcm2niix') is not None
 
     def activity(self, project=None, startdate=None):
         """List of activity records."""
@@ -281,6 +286,9 @@ class Garjus:
                 #'taskqueue_complete': 1,
                 'task_status': t['STATUS']
             }
+            if t['STATUS'] == 'COMPLETE':
+                r['taskqueue_complete'] = '2'
+
             records.append(r)
 
         # Apply the updates in one call
@@ -292,16 +300,20 @@ class Garjus:
             logging.error(f'failed to set task statuses:{err}')
 
     def set_task_status(self, project, task_id, status):
-        records = [{
+        record = {
             self._dfield(): project,
             'redcap_repeat_instance': task_id,
             'redcap_repeat_instrument': 'taskqueue',
-            'taskqueue_complete': 1,
             'task_status': status,
-        }]
+        }
+
+        if t['STATUS'] == 'COMPLETE':
+            record['taskqueue_complete'] = '2'
+        elif t['STATUS'] == 'JOB_FAILED':
+            record['taskqueue_complete'] = '0'
 
         try:
-            response = self._rc.import_records(records)
+            response = self._rc.import_records(record)
             assert 'count' in response
             logging.info('task status successfully updated')
         except AssertionError as err:
