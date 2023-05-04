@@ -853,7 +853,7 @@ class Garjus:
             projects = self._projects
 
         if not choices:
-            choices = ['compare', 'issues', 'automations', 'stats', 'progress']
+            choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
 
         logging.info(f'updating projects:{projects}:{choices}')
 
