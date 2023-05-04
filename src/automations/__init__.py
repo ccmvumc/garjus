@@ -56,8 +56,9 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         # Apply exclude filter
         scan_autos = [x for x in scan_autos if x not in autos_exclude]
 
-    logging.info(f'running scan automations:{project}:{scan_autos}')
-    _run_scan_automations(scan_autos, garjus, project)
+    if scan_autos:
+        logging.info(f'running scan automations:{project}:{scan_autos}')
+        _run_scan_automations(scan_autos, garjus, project)
 
     etl_autos = garjus.etl_automations(project)
 
