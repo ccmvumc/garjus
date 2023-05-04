@@ -307,9 +307,9 @@ class Garjus:
             'task_status': status,
         }
 
-        if t['STATUS'] == 'COMPLETE':
+        if status == 'COMPLETE':
             record['taskqueue_complete'] = '2'
-        elif t['STATUS'] == 'JOB_FAILED':
+        elif status == 'JOB_FAILED':
             record['taskqueue_complete'] = '0'
 
         try:
