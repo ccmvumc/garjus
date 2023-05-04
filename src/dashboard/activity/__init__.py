@@ -202,7 +202,7 @@ def update_activity(
     logging.debug('loading activity data')
     df = load_activity(refresh=refresh)
 
-    # Update lists of possible options for dropdowns (could have changed)
+    # Update lists of possible options for dropdowns (could have changed),
     # make these lists before we filter what to display
     projects = utils.make_options(load_project_options())
     categories = utils.make_options(load_category_options())

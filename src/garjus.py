@@ -90,7 +90,7 @@ class Garjus:
         self._projects = self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
-        self._yamldir = '/data/mcr/centos7/dax_processors'
+        self._yamldir = self.set_yamldir()
         self._tempdir = tempfile.mkdtemp()
 
     def __del__(self):
@@ -108,6 +108,17 @@ class Garjus:
     def _default_redcap():
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
+
+    def set_yamldir(self, yamldir=None):
+        if yamldir:
+            self._yamldir = yamldir
+        elif os.path.isdir(os.path.expanduser('~/yaml_processors')):
+            self._yamldir = os.path.expanduser('~/yaml_processors')
+        else:
+            # Default
+            self._yamldir = '/data/mcr/centos7/dax_processors'
+
+        return self._yamldir
 
     def has_dcm2niix(self):
         # check we have dcm2niix binary on the path
@@ -313,7 +324,7 @@ class Garjus:
             record['taskqueue_complete'] = '0'
 
         try:
-            response = self._rc.import_records(record)
+            response = self._rc.import_records([record])
             assert 'count' in response
             logging.info('task status successfully updated')
         except AssertionError as err:

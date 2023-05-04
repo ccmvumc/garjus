@@ -8,7 +8,6 @@ from ...garjus import Garjus
 
 # This is where we save our cache of the data
 def get_filename():
-    #return 'DATA/issuesdata.pkl'
     datadir = 'DATA'
     if not os.path.isdir(datadir):
         os.mkdir(datadir)

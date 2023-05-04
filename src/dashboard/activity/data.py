@@ -11,7 +11,6 @@ from ...garjus import Garjus
 
 # This is where we save our cache of the data
 def get_filename():
-    #return 'DATA/activitydata.pkl'
     datadir = 'DATA'
     if not os.path.isdir(datadir):
         os.mkdir(datadir)

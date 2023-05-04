@@ -1,46 +1,8 @@
-# TODO:
-# show scans acquired during timeframe or assessors created or jobs started
-# (later maybe jobs that finished) 
-# default filtering should select this month and then select the sessiontypes
-# and projects and scans and assessors that are found in this data
-
-
-# configure default filtering to be:
-# time should be:  by acquisition date or processing date or either
-# PI: [*]Both []Newhouse []Taylor 
-# "last 30 days" and then select the 
-# select the assessor types created in those 30 days
-# and then the scan types that are inputs to those assessors
-# then have a single "reset" button that reselects
-# so effectively we set the selected items to active projects
-# and active pipeolines
-# TODO: use exclude list to autofilter and select those types,
-# then try to make an include list based on which scans are used as inputs
-# then advise users to use the little x to clear the box and see them all
-# then make a Reset or Filter button to apply the auto filtering again if 
-# the user has made changes.
-
-
-# TODO: sessionsbytime should alow last week, this week, last month, this month,
-# and the graphs should stack by session type and have hover esp for weekly,
-# bins should be by day/week/month depending on what timeframe is selected
-# e.g. last week should show each day, weekly should show each monday date
-# then last year/this year should be monthly
-
-# TODO: show session notes in a popup?
-# TODO: show help in a clickable dialog
-# TODO: add new colors for jobs that are NEED_INPUTS, JOB_RUNNING, JOB_FAILED
-
-# highlight session rows based on whether it's:
-# "all fail"=RED, "NPUT"=YELLOW, otherwise no color?
-
-# show how long ago the data was updated using humanized time
-# and move the refresh button beside that display
-
 # DESCRIPTION:
 # the table is by session using a pivottable that aggregates the statuses
 # for each scan/assr type. then we have dropdowns to filter by project,
 # processing type, scan type, etc.
+
 
 import logging
 import re
@@ -567,11 +529,7 @@ def was_triggered(callback_ctx, button_id):
     return result
 
 
-# Now we initialize the callbacks for the app
-
-# With more recent dash, we can set multiple inputs AND multiple
-# outputs instead of having to create a new callback per output.
-# update_all() handles all of the data tab interface
+# Initialize the callbacks for the app
 
 # inputs:
 # values from assr proc types dropdown
