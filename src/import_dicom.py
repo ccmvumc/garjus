@@ -75,8 +75,6 @@ def import_dicom_zip(garjus, zip_path, project, subject, session):
 def import_dicom_dir(garjus, dir_path, project, subject, session):
     """Import directory of DICOM files, sorted or not."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        unzipped_dir = pathlib.Path(f'{temp_dir}/UNZIPPED')
-        unzipped_dir.mkdir()
         dicom_dir = pathlib.Path(f'{temp_dir}/DICOM')
         dicom_dir.mkdir()
 

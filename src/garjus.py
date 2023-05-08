@@ -1511,8 +1511,9 @@ class Garjus:
 
         return {
             'modality': data.get('Modality', None),
-            'date': data.get('AcquisitionDateTime', None)[:10],
+            'date': data.get('AcquisitionDateTime', None),
             'tracer': data.get('Radiopharmaceutical', None),
+            'ProcedureStepDescription': data.get('ProcedureStepDescription', None),
         }
 
     def _upload_scan(self, dicomdir, scan_object):
@@ -1538,6 +1539,11 @@ class Garjus:
 
         # load json data from file
         scan_info = self._load_json_info(jsonfile)
+
+        # Truncate datetime
+        if scan_info['date']:
+            scan_info['date'] = scan_info['date'][:10]
+
         scan_modality = scan_info['modality']
         scan_date = scan_info['date']
         scan_tracer = scan_info['tracer']
@@ -1551,6 +1557,11 @@ class Garjus:
         elif scan_modality == 'CT':
             sess_datatype = 'xnat:petSessionData'
             scan_datatype = 'xnat:ctScanData'
+        elif scan_info['ProcedureStepDescription'] == 'C-11_PiB':
+            sess_datatype = 'xnat:petSessionData'
+            scan_datatype = 'xnat:petScanData'
+            scan_modality = 'PET'
+            scan_tracer = 'PiB C-11'
         else:
             logging.info(f'unsupported modality:{scan_modality}')
             return
@@ -1559,8 +1570,9 @@ class Garjus:
             # create session with date, modality
             logging.info(f'creating xnat session:type={sess_datatype}')
             scan_object.parent().create(experiments=sess_datatype)
-            logging.info(f'set date={scan_date}')
-            scan_object.parent().attrs.set('date', scan_date)
+            if scan_date:
+                logging.info(f'set date={scan_date}')
+                scan_object.parent().attrs.set('date', scan_date)
 
         scan_type = os.path.basename(niftis[0])
         scan_type = scan_type.split('_', 1)[1]
@@ -1654,6 +1666,10 @@ class Garjus:
 
         # Handle each scan
         for p in sorted(pathlib.Path(session_dir).iterdir()):
+            if not p.is_dir():
+                # Ignore non-directories
+                continue
+
             scan = p.name
             scan_object = session_object.scan(scan)
 
