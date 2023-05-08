@@ -4,8 +4,6 @@ import os
 
 from .processors import build_processor
 
-# TODO: Handle project level processing
-
 
 def update(garjus, projects=None):
     """Update tasks."""

@@ -1,0 +1,28 @@
+---
+procyamlversion: 3.0.0
+containers:
+  - name: BASH
+    path: bash_latest.sif
+requirements:
+  walltime: 0-1
+  memory: 8G
+inputs:
+  xnat:
+    subjects:
+      sessions:
+        types: Baseline
+        assessors:
+        - name: assr_msit
+          types: fmri_msit_v2
+          resources:
+            - resource: 1stLEVEL
+              fmatch: con_0002.nii.gz
+            - resource: 1stLEVEL
+              fmatch: behavior.txt
+outputs:
+  - zip: DATA
+command:
+  type: singularity_run
+  container: BASH
+  args: cp -r /INPUTS /OUTPUTS/DATA
+description: Collects 1st Level Outputs for 2nd Level Analysis

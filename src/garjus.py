@@ -29,8 +29,9 @@ from .stats import update as update_stats
 from .automations import update as update_automations
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME
+from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME
 from .tasks import update as update_tasks
+from .analyses import update as update_analyses
 
 
 # TODO: export session/scan table with matching of vuiis id, subject id, and a
@@ -45,6 +46,10 @@ from .tasks import update as update_tasks
 # TODO: def import_stats(self):
 # rather than source_stats from the outside, we call import_stats to tell
 # garjus to go look in xnat (or wherever) to get new stats
+
+# TODO: 
+# setting for each automation for user@host to limit where some tasks can run
+# like dcm2niix, edat_convert, build jobs, etc.
 
 
 class Garjus:
@@ -85,6 +90,7 @@ class Garjus:
         self.issues_rename = ISSUES_RENAME
         self.processing_rename = PROCESSING_RENAME
         self.tasks_rename = TASKS_RENAME
+        self.analyses_rename = ANALYSES_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 60
         self._projects = self._load_project_names()
@@ -473,6 +479,29 @@ class Garjus:
             self._project2stats[project] = utils_redcap.get_redcap(redcap_id)
 
         return self._project2stats[project]
+
+    def analyses(self, project, download=False):
+        """Return analyses."""
+        data = []
+
+        rec = self._rc.export_records(
+            records=[project],
+            forms=['analyses'],
+            fields=[self._dfield()])
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
+        for r in rec:
+            # Initialize record with project
+            d = {'PROJECT': r[self._dfield()]}
+
+            # Get renamed variables
+            for k, v in self.analyses_rename.items():
+                d[v] = r.get(k, '')
+
+            # Finally, add to our list
+            data.append(d)
+
+        return pd.DataFrame(data, columns=self.column_names('analyses'))
 
     def stats(self, project, proctypes=None):
         """Return all stats for project, filtered by proctypes."""
@@ -887,6 +916,10 @@ class Garjus:
         if 'tasks' in choices:
             logging.info('updating tasks')
             update_tasks(self, projects)
+
+        if 'analyses' in choices:
+            logging.info('updating analyses')
+            update_analyses(self, projects)
 
     def report(self, project):
         """Create a PDF report."""

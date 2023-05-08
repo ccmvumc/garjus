@@ -59,6 +59,14 @@ def activity(project):
     pprint.pprint(g.activity(project))
 
 
+@cli.command('analyses')
+@click.option('--project', '-p', 'project')
+def analyses(project):
+    click.echo('garjus! analyses')
+    g = Garjus()
+    pprint.pprint(g.analyses(project))
+
+
 @cli.command('tasks')
 def tasks():
     click.echo('garjus! tasks')
@@ -81,7 +89,7 @@ def d2q():
 @cli.command('update')
 @click.argument(
     'choice', 
-    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare', 'tasks']),
+    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare', 'tasks', 'analyses']),
     required=False,
     nargs=-1)
 @click.option('--project', '-p', 'project', multiple=True)

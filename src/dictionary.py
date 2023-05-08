@@ -11,6 +11,13 @@ ACTIVITY_RENAME = {
     'activity_type': 'CATEGORY',
 }
 
+ANALYSES_RENAME = {
+    'redcap_repeat_instance': 'ID',
+    'analysis_name': 'NAME',
+    'analysis_subjects': 'SUBJECTS',
+    'analysis_processor': 'PROCESSOR',
+}
+
 ISSUES_RENAME = {
     'redcap_repeat_instance': 'ID',
     'issue_date': 'DATETIME',
@@ -56,6 +63,7 @@ COLUMNS = {
     'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD'],
     'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
     'tasks': ['ID', 'PROJECT', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
+    'analyses': ['ID', 'NAME'],
 }
 
 

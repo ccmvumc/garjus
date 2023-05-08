@@ -1,0 +1,32 @@
+---
+procyamlversion: 3.0.0
+containers:
+  - name: CONN
+    path: project_conn_v2.sif
+    source: docker://user/repo:v1
+requirements:
+  walltime: 0-2
+  memory: 16G
+inputs:
+  xnat:
+    subjects:
+      assessors:
+        - name: assr_conn
+          types: fmri_rest_conn_v1
+          resources:
+            - resource: PREPROC
+              fmatch: swauFMRI.nii.gz
+              fdest:  swauFMRIa.nii.gz
+            - resource: PREPROC
+              fmatch: art_regression_outliers_and_movement_auFMRI.mat
+              fdest: art_regression_outliers_and_movement_auFMRIa.mat
+  covars:
+    - name: madrs
+    - name: age
+    - name: sex
+outputs:
+  - dir: DATA
+command:
+  type: singularity_run
+  container: CONN
+description: RSFC with CONN
