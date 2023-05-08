@@ -626,7 +626,7 @@ class Garjus:
 
         for r in rec:
             if r['processor_file'] == 'CUSTOM':
-                dtype = self._get_proctype(r['processor_custom'])
+                dtype = self._get_proctype(r['processor_yamlupload'])
             else:
                 dtype = self._get_proctype(r['processor_file'])
 
@@ -844,7 +844,7 @@ class Garjus:
                     filename,
                     repeat_id=r['redcap_repeat_instance'])
             elif r['processor_file'] == 'CUSTOM':
-                filepath = r['processor_custom']
+                filepath = r['processor_yamlupload']
             else:
                 filepath = r['processor_file']
 
