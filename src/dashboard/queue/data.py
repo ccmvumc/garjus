@@ -9,7 +9,7 @@ from .. import shared
 from ...garjus import Garjus
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dashboard.queue.data')
 
 
 # This is where we save our cache of the data

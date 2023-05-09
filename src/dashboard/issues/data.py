@@ -6,7 +6,7 @@ import pandas as pd
 from ...garjus import Garjus
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dashboard.issues.data')
 
 # This is where we save our cache of the data
 def get_filename():

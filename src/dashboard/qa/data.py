@@ -10,7 +10,7 @@ from .. import shared
 from ...garjus import Garjus
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dashboard.qa.data')
 
 
 SCAN_STATUS_MAP = {
