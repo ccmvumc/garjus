@@ -199,9 +199,7 @@ def filter_types(garjus, scan_df, assr_df):
 
     # Make the lists unique
     scantypes = list(set(scantypes))
-    print(scantypes)
     assrtypes = list(set(assrtypes))
-    print(assrtypes)
 
     # Apply filters
     logging.info(f'filtering by types:{len(scan_df)}:{len(assr_df)}')
