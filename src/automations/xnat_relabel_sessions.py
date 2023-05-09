@@ -37,6 +37,9 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
     allowed_k2 = ['session_type', 'site']
     mset = {}
 
+    logging.debug(f'relabels={relabels}')
+    logging.debug(f'replace={replace}')
+
     # test each relabel
     for k1, v1, k2, v2 in relabels:
         if k1 not in allowed_k1:
