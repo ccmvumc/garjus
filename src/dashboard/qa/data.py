@@ -10,6 +10,9 @@ from .. import shared
 from ...garjus import Garjus
 
 
+logger = logging.getLogger(__name__)
+
+
 SCAN_STATUS_MAP = {
     'usable': 'P',
     'questionable': 'P',
@@ -62,10 +65,10 @@ def load_scan_options(project_filter=None):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh()
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     if project_filter:
@@ -85,10 +88,10 @@ def load_sess_options(project_filter=None):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh()
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     if project_filter:
@@ -107,10 +110,10 @@ def load_proc_options(project_filter=None):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh()
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     if project_filter:
@@ -127,10 +130,10 @@ def load_proj_options():
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh()
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     return sorted(df.PROJECT.unique())
@@ -143,7 +146,7 @@ def load_data(refresh=False, hidetypes=True):
         # TODO: check for old file and refresh too
         run_refresh(filename, hidetypes)
 
-    logging.info('reading data from file:{}'.format(filename))
+    logger.info('reading data from file:{}'.format(filename))
     return read_data(filename)
 
 
@@ -165,7 +168,7 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
     assr_df = load_assr_data(garjus, proj_filter)
 
     if hidetypes:
-        logging.info('applying filter types')
+        logger.info('applying filter types')
         scan_df, assr_df = filter_types(garjus, scan_df, assr_df)
 
     # Make a common column for type
@@ -193,7 +196,7 @@ def filter_types(garjus, scan_df, assr_df):
     assrtypes = []
 
     # Load types 
-    logging.info('loading scan/assr types')
+    logger.info('loading scan/assr types')
     scantypes = garjus.all_scantypes()
     assrtypes = garjus.all_proctypes()
 
@@ -202,10 +205,10 @@ def filter_types(garjus, scan_df, assr_df):
     assrtypes = list(set(assrtypes))
 
     # Apply filters
-    logging.info(f'filtering by types:{len(scan_df)}:{len(assr_df)}')
+    logger.info(f'filtering by types:{len(scan_df)}:{len(assr_df)}')
     scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
     assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
-    logging.info(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
+    logger.info(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
     
     return scan_df, assr_df
 
@@ -262,29 +265,29 @@ def filter_data(df, projects, proctypes, scantypes, timeframe, sesstypes):
 
     # Filter by project
     if projects:
-        logging.debug('filtering by project:')
-        logging.debug(projects)
+        logger.debug('filtering by project:')
+        logger.debug(projects)
         df = df[df['PROJECT'].isin(projects)]
 
     # Filter by proc type
     if proctypes:
-        logging.debug('filtering by proc types:')
-        logging.debug(proctypes)
+        logger.debug('filtering by proc types:')
+        logger.debug(proctypes)
         df = df[(df['PROCTYPE'].isin(proctypes)) | (df['ARTTYPE'] == 'scan')]
 
     # Filter by scan type
     if scantypes:
-        logging.debug('filtering by scan types:')
-        logging.debug(scantypes)
+        logger.debug('filtering by scan types:')
+        logger.debug(scantypes)
         df = df[(df['SCANTYPE'].isin(scantypes)) | (df['ARTTYPE'] == 'assessor')]
 
     # Filter by timeframe
     if timeframe in ['1day', '7day', '30day', '365day']:
-        logging.debug('filtering by ' + timeframe)
+        logger.debug('filtering by ' + timeframe)
         then_datetime = datetime.now() - pd.to_timedelta(timeframe)
         df = df[pd.to_datetime(df.DATE) > then_datetime]
     elif timeframe == 'lastmonth':
-        logging.debug('filtering by ' + timeframe)
+        logger.debug('filtering by ' + timeframe)
 
         # Set range to first and last day of previous month
         _end = date.today().replace(day=1) - timedelta(days=1)
@@ -292,7 +295,7 @@ def filter_data(df, projects, proctypes, scantypes, timeframe, sesstypes):
         df = df[pd.to_datetime(df.DATE).isin(pd.date_range(_start, _end))]
     else:
         # ALL
-        logging.debug('not filtering by time')
+        logger.debug('not filtering by time')
         pass
 
     # Filter by sesstype

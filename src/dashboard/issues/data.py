@@ -6,6 +6,8 @@ import pandas as pd
 from ...garjus import Garjus
 
 
+logger = logging.getLogger(__name__)
+
 # This is where we save our cache of the data
 def get_filename():
     datadir = 'DATA'
@@ -17,7 +19,7 @@ def get_filename():
 
 
 def get_data():
-    logging.info('loading issues')
+    logger.info('loading issues')
     df = load_garjus_issues()
 
     # Sort by date and reset index
@@ -48,10 +50,10 @@ def load_field_options(fieldname):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh(filename)
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     _options = df[fieldname].unique()
@@ -75,7 +77,7 @@ def load_data(refresh=False):
     if refresh or not os.path.exists(filename):
         run_refresh(filename)
 
-    logging.info('reading data from file:{}'.format(filename))
+    logger.info('reading data from file:{}'.format(filename))
     return read_data(filename)
 
 
@@ -101,14 +103,14 @@ def save_data(df, filename):
 def filter_data(df, projects, categories):
     # Filter by project
     if projects:
-        logging.debug('filtering by project:')
-        logging.debug(projects)
+        logger.debug('filtering by project:')
+        logger.debug(projects)
         df = df[df['PROJECT'].isin(projects)]
 
     # Filter by category
     if categories:
-        logging.debug('filtering by category:')
-        logging.debug(categories)
+        logger.debug('filtering by category:')
+        logger.debug(categories)
         df = df[(df['CATEGORY'].isin(categories))]
 
     return df

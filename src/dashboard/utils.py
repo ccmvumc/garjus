@@ -1,6 +1,4 @@
 import pandas as pd
-import logging
-import json
 
 
 def make_options(values):

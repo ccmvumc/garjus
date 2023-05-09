@@ -22,11 +22,14 @@ from ..shared import QASTATUS2COLOR, RGB_DKBLUE
 from . import data
 
 
+logger = logging.getLogger('dashboard.qa')
+
+
 def get_graph_content(dfp, selected_groupby='PROJECT'):
     tabs_content = []
     tab_value = 0
 
-    logging.debug('get_qa_figure')
+    logger.debug('get_qa_figure')
 
     # Make a 1x1 figure
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
@@ -34,7 +37,7 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
 
     # Check for empty data
     if len(dfp) == 0:
-        logging.debug('empty data, using empty figure')
+        logger.debug('empty data, using empty figure')
         return [fig]
 
     # First we copy the dfp and then replace the values in each
@@ -574,7 +577,7 @@ def update_all(
 ):
     refresh = False
 
-    logging.debug('update_all')
+    logger.debug('update_all')
 
     # Load our data
     # This data will already be merged scans and assessors with
@@ -582,10 +585,10 @@ def update_all(
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-qa-refresh'):
         # Refresh data if refresh button clicked
-        logging.debug('refresh:clicks={}'.format(n_clicks))
+        logger.debug('refresh:clicks={}'.format(n_clicks))
         refresh = True
 
-    logging.debug('loading data')
+    logger.debug('loading data')
     hidetypes = (selected_hidetypes == 'HIDE')
     df = load_data(refresh=refresh, hidetypes=hidetypes)
 
@@ -634,5 +637,5 @@ def update_all(
     rowcount = '{} rows'.format(len(records))
 
     # Return table, figure, dropdown options
-    logging.debug('update_all:returning data')
+    logger.debug('update_all:returning data')
     return [proc, scan, sess, proj, records, columns, tabs, rowcount]

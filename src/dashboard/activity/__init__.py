@@ -15,6 +15,9 @@ from ..shared import RGB_RED, RGB_GREEN, RGB_YELLOW, RGB_GREY, RGB_BLUE, RGB_LIM
 from . import data
 
 
+logger = logging.getLogger('dashboard.activity')
+
+
 STATUS2RGB = {
     'FAIL': RGB_RED,
     'COMPLETE': RGB_BLUE,
@@ -190,16 +193,16 @@ def update_activity(
 ):
     refresh = False
 
-    logging.debug('update_activity')
+    logger.debug('update_activity')
 
     # Load activity data
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-activity-refresh'):
         # Refresh data if refresh button clicked
-        logging.debug('activity refresh:clicks={}'.format(n_clicks))
+        logger.debug('activity refresh:clicks={}'.format(n_clicks))
         refresh = True
 
-    logging.debug('loading activity data')
+    logger.debug('loading activity data')
     df = load_activity(refresh=refresh)
 
     # Update lists of possible options for dropdowns (could have changed),
@@ -223,6 +226,6 @@ def update_activity(
     records = df.reset_index().to_dict('records')
 
     # Return table, figure, dropdown options
-    logging.debug('update_activity:returning data')
+    logger.debug('update_activity:returning data')
 
     return [categories, projects, sources, records, columns, tabs]

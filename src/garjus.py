@@ -52,6 +52,9 @@ from .analyses import update as update_analyses
 # like dcm2niix, edat_convert, build jobs, etc.
 
 
+logger = logging.getLogger('garjus')
+
+
 class Garjus:
     """
     Handles data in xnat and redcap.
@@ -102,7 +105,7 @@ class Garjus:
     def __del__(self):
         """Close connectinons we opened."""
         if self._disconnect_xnat:
-            logging.debug('disconnecting xnat')
+            logger.debug('disconnecting xnat')
             self._xnat.disconnect()
 
     @staticmethod
@@ -202,9 +205,9 @@ class Garjus:
         try:
             response = self._rc.import_records([record])
             assert 'count' in response
-            logging.debug('activity record created')
+            logger.debug('activity record created')
         except (ValueError, RedcapError, AssertionError) as err:
-            logging.error(f'error uploading:{err}')
+            logger.error(f'error uploading:{err}')
 
     def assessors(self, projects=None, proctypes=None):
         """Query XNAT for all assessors of and return list of dicts."""
@@ -320,9 +323,9 @@ class Garjus:
         try:
             response = self._rc.import_records(records)
             assert 'count' in response
-            logging.debug('task status records updated')
+            logger.debug('task status records updated')
         except AssertionError as err:
-            logging.error(f'failed to set task statuses:{err}')
+            logger.error(f'failed to set task statuses:{err}')
 
     def set_task_status(self, project, task_id, status):
         record = {
@@ -340,9 +343,9 @@ class Garjus:
         try:
             response = self._rc.import_records([record])
             assert 'count' in response
-            logging.debug('task status updated')
+            logger.debug('task status updated')
         except AssertionError as err:
-            logging.error(f'failed to set task status:{err}')
+            logger.error(f'failed to set task status:{err}')
 
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
@@ -380,7 +383,7 @@ class Garjus:
             if days_old >= days:
                 _main = r[self._dfield()],
                 _id = r['redcap_repeat_instance']
-                logging.debug(f'{_main}:{_id}:{days_old} days old')
+                logger.debug(f'{_main}:{_id}:{days_old} days old')
                 old_issues.append(r)
 
         # Apply delete to list of old issues
@@ -388,10 +391,10 @@ class Garjus:
 
     def import_dicom(self, src, dst):
         """Import dicom source to destination."""
-        logging.debug(f'uploading from:{src}')
+        logger.debug(f'uploading from:{src}')
 
         (proj, subj, sess) = dst.split('/')
-        logging.debug(f'uploading to:{proj},{subj},{sess}')
+        logger.debug(f'uploading to:{proj},{subj},{sess}')
 
         if src.endswith('.zip'):
             import_dicom_zip(self, src, proj, subj, sess)
@@ -403,7 +406,7 @@ class Garjus:
         else:
             self.import_dicom_xnat(src, proj, subj, sess)
 
-        logging.debug(f'adding activity:{src}')
+        logger.debug(f'adding activity:{src}')
         self.add_activity(
             project=proj,
             category='import_dicom',
@@ -414,8 +417,8 @@ class Garjus:
 
     def copy_sess(self, src, dst):
         """Copy dicom source to destination."""
-        logging.debug(f'copy from:{src}')
-        logging.debug(f'copy to:{dst}')
+        logger.debug(f'copy from:{src}')
+        logger.debug(f'copy to:{dst}')
         (s_proj, s_subj, s_sess) = src.split('/')
         (d_proj, d_subj, d_sess) = dst.split('/')
         self.copy_session(s_proj, s_subj, s_sess, d_proj, d_subj, d_sess)
@@ -568,7 +571,7 @@ class Garjus:
         for i, row in protocols.iterrows():
             ptype = row['TYPE']
             if ptype not in types:
-                logging.debug(f'appending proctype:{ptype}')
+                logger.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
 
         types = [x for x in types if x not in ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2']]
@@ -655,7 +658,7 @@ class Garjus:
         for i, row in protocols.iterrows():
             ptype = row['TYPE']
             if ptype not in types:
-                logging.debug(f'appending proctype:{ptype}')
+                logger.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
 
         return types
@@ -730,7 +733,7 @@ class Garjus:
 
     def _get_result(self, uri):
         """Get result of xnat query."""
-        logging.debug(uri)
+        logger.debug(uri)
         json_data = json.loads(self._xnat._exec(uri, 'GET'), strict=False)
         result = json_data['ResultSet']['Result']
         return result
@@ -861,7 +864,7 @@ class Garjus:
                 filepath = os.path.join(self._yamldir, filepath)
 
             if not os.path.isfile(filepath):
-                logging.debug(f'file not found:{filepath}, download={download}')
+                logger.debug(f'file not found:{filepath}, download={download}')
                 continue
 
             # Get renamed variables
@@ -892,41 +895,41 @@ class Garjus:
         if not choices:
             choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
 
-        logging.info(f'updating projects:{projects}:{choices}')
+        logger.info(f'updating projects:{projects}:{choices}')
 
         if 'automations' in choices:
-            logging.info('updating automations')
+            logger.info('updating automations')
             update_automations(self, projects)
 
         if 'issues' in choices:
-            logging.info('updating issues')
+            logger.info('updating issues')
             update_issues(self, projects)
-            logging.info('deleting old issues')
+            logger.info('deleting old issues')
             self.delete_old_issues(projects)
 
         if 'stats' in choices:
             # Only run on intersect of specified projects and projects with
             # stats, such that if the list is empty, nothing will run
-            logging.info('updating stats')
+            logger.info('updating stats')
             _projects = [x for x in projects if x in self.stats_projects()]
             update_stats(self, _projects)
 
         if 'progress' in choices:
             # confirm each project has report for current month with PDF & zip
-            logging.info('updating progress')
+            logger.info('updating progress')
             update_progress(self, projects)
 
         if 'compare' in choices:
             # confirm each project has report for current month
-            logging.info('updating compare')
+            logger.info('updating compare')
             update_compare(self, projects)
 
         if 'tasks' in choices:
-            logging.info('updating tasks')
+            logger.info('updating tasks')
             update_tasks(self, projects)
 
         if 'analyses' in choices:
-            logging.info('updating analyses')
+            logger.info('updating analyses')
             update_analyses(self, projects)
 
     def report(self, project):
@@ -934,10 +937,10 @@ class Garjus:
         pdf_file = f'{project}_report.pdf'
 
         if os.path.exists(pdf_file):
-            logging.info(f'{pdf_file} exists, delete or rename.')
+            logger.info(f'{pdf_file} exists, delete or rename.')
             return
 
-        logging.info(f'writing report to file:{pdf_file}.')
+        logger.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
 
     def compare(self, project):
@@ -946,14 +949,14 @@ class Garjus:
         excel_file = f'{project}_double.xlsx'
 
         if os.path.exists(pdf_file):
-            logging.info(f'{pdf_file} exists, delete or rename.')
+            logger.info(f'{pdf_file} exists, delete or rename.')
             return
 
         if os.path.exists(excel_file):
-            logging.info(f'{excel_file} exists, delete or rename.')
+            logger.info(f'{excel_file} exists, delete or rename.')
             return
 
-        logging.info(f'writing report to file:{pdf_file},{excel_file}.')
+        logger.info(f'writing report to file:{pdf_file},{excel_file}.')
         # Get the projects to compare
         proj_primary = self.primary(project)
         proj_secondary = self.secondary(project)
@@ -999,9 +1002,9 @@ class Garjus:
                 }
                 response = self._rc.import_records([record])
                 assert 'count' in response
-                logging.debug('task record created')
+                logger.debug('task record created')
             except AssertionError as err:
-                logging.error(f'upload failed:{err}')
+                logger.error(f'upload failed:{err}')
                 return
         else:
             # Create a new record
@@ -1021,19 +1024,19 @@ class Garjus:
                 }
                 response = self._rc.import_records([record])
                 assert 'count' in response
-                logging.debug('task record created')
+                logger.debug('task record created')
             except AssertionError as err:
-                logging.error(f'upload failed:{err}')
+                logger.error(f'upload failed:{err}')
                 return
 
         # If the file is not in yaml dir, we need to upload it to the task
         if task_yamlfile == 'CUSTOM':
-            logging.debug(f'yaml not in shared library, uploading to task')
+            logger.debug(f'yaml not in shared library, uploading to task')
             if not task_id:
                 # Try to match existing record
                 task_id = self.assessor_task_id(project, assr)
 
-            logging.debug(f'uploading file:{yamlfile}')
+            logger.debug(f'uploading file:{yamlfile}')
             utils_redcap.upload_file(
                 self._rc,
                 project,
@@ -1053,7 +1056,7 @@ class Garjus:
         rec = [x for x in rec if x['task_assessor'] == assessor]
 
         if len(rec) > 1:
-            logging.warn(f'duplicate tasks for assessor, not good:{assessor}')
+            logger.warn(f'duplicate tasks for assessor, not good:{assessor}')
             task_id = rec[0]['redcap_repeat_instance']
         elif len(rec) == 1:
             task_id = rec[0]['redcap_repeat_instance']
@@ -1078,10 +1081,10 @@ class Garjus:
             }
             response = self._rc.import_records([record])
             assert 'count' in response
-            logging.debug('created new progress record')
+            logger.debug('created new progress record')
 
             # Determine the new record id
-            logging.debug('locating new record')
+            logger.debug('locating new record')
             _ids = utils_redcap.match_repeat(
                 self._rc,
                 project,
@@ -1091,7 +1094,7 @@ class Garjus:
             repeat_id = _ids[-1]
 
             # Upload output files
-            logging.debug(f'uploading files to:{repeat_id}')
+            logger.debug(f'uploading files to:{repeat_id}')
             utils_redcap.upload_file(
                 self._rc,
                 project,
@@ -1106,9 +1109,9 @@ class Garjus:
                 repeat_id=repeat_id)
 
         except AssertionError as err:
-            logging.error(f'upload failed:{err}')
+            logger.error(f'upload failed:{err}')
         except (ValueError, RedcapError) as err:
-            logging.error(f'error uploading:{err}')
+            logger.error(f'error uploading:{err}')
 
     def add_double(self, project, comp_name, comp_date, comp_pdf, comp_excel):
         """Add a compare record with PDF and Excel at dated and named."""
@@ -1128,10 +1131,10 @@ class Garjus:
             }
             response = self._rc.import_records([record])
             assert 'count' in response
-            logging.debug('double record created')
+            logger.debug('double record created')
 
             # Determine the new record id
-            logging.debug('locating new record')
+            logger.debug('locating new record')
             _ids = utils_redcap.match_repeat(
                 self._rc,
                 project,
@@ -1141,7 +1144,7 @@ class Garjus:
             repeat_id = _ids[-1]
 
             # Upload output files
-            logging.debug(f'uploading files to:{repeat_id}')
+            logger.debug(f'uploading files to:{repeat_id}')
             utils_redcap.upload_file(
                 self._rc,
                 project,
@@ -1156,9 +1159,9 @@ class Garjus:
                 repeat_id=repeat_id)
 
         except AssertionError as err:
-            logging.error(f'upload failed:{err}')
+            logger.error(f'upload failed:{err}')
         except (ValueError, RedcapError) as err:
-            logging.error(f'error uploading:{err}')
+            logger.error(f'error uploading:{err}')
 
     def get_source_stats(self, project, subject, session, assessor, stats_dir):
         """Download stats files to directory."""
@@ -1178,7 +1181,7 @@ class Garjus:
     def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
         if len(data.keys()) > self.max_stats:
-            logging.debug('found more than 50 stats:too many, specify subset')
+            logger.debug('found more than 50 stats:too many, specify subset')
             return
 
         # Create list of stat records
@@ -1193,18 +1196,18 @@ class Garjus:
             r['stats_complete'] = 2
 
         # Now upload
-        logging.debug('uploading to redcap')
+        logger.debug('uploading to redcap')
         statsrc = self._stats_redcap(project)
         try:
-            logging.debug('importing records')
+            logger.debug('importing records')
             response = statsrc.import_records(rec)
             assert 'count' in response
-            logging.debug('stats record created')
+            logger.debug('stats record created')
         except AssertionError as err:
-            logging.error(f'upload failed:{err}')
+            logger.error(f'upload failed:{err}')
         except ConnectionError as err:
-            logging.error(err)
-            logging.info('wait a minute')
+            logger.error(err)
+            logger.info('wait a minute')
             import time
             time.sleep(60)
 
@@ -1331,12 +1334,12 @@ class Garjus:
             })
 
         try:
-            logging.debug(records)
+            logger.debug(records)
             response = self._rc.import_records(records)
             assert 'count' in response
-            logging.debug('issues uploaded')
+            logger.debug('issues uploaded')
         except AssertionError as err:
-            logging.error(f'issues upload failed:{err}')
+            logger.error(f'issues upload failed:{err}')
 
     def add_issue(
         self,
@@ -1371,9 +1374,9 @@ class Garjus:
         try:
             response = self._rc.import_records([record])
             assert 'count' in response
-            logging.debug('issue record created')
+            logger.debug('issue record created')
         except (ValueError, RedcapError, AssertionError) as err:
-            logging.error(f'error uploading:{err}')
+            logger.error(f'error uploading:{err}')
 
     def _default_proctypes(self):
         """Get list of default processing types."""
@@ -1397,13 +1400,13 @@ class Garjus:
         primary_redcap = None
         project_id = self.project_setting(project, 'primary')
         if not project_id:
-            logging.debug(f'no primary project id found:{project}')
+            logger.debug(f'no primary project id found:{project}')
             return None
 
         try:
             primary_redcap = utils_redcap.get_redcap(project_id)
         except Exception as err:
-            logging.info(f'failed to load primary redcap:{project}:{err}')
+            logger.info(f'failed to load primary redcap:{project}:{err}')
             primary_redcap = None
 
         return primary_redcap
@@ -1414,13 +1417,13 @@ class Garjus:
         secondary_redcap = None
         project_id = self.project_setting(project, 'secondary')
         if not project_id:
-            logging.debug(f'no secondary project id found:{project}')
+            logger.debug(f'no secondary project id found:{project}')
             return None
 
         try:
             secondary_redcap = utils_redcap.get_redcap(project_id)
         except Exception as err:
-            logging.info(f'failed to load secondary redcap:{project}:{err}')
+            logger.info(f'failed to load secondary redcap:{project}:{err}')
             secondary_redcap = None
 
         return secondary_redcap
@@ -1433,7 +1436,7 @@ class Garjus:
         try:
             alt_redcap = utils_redcap.get_redcap(project_id)
         except Exception as err:
-            logging.info(f'failed to load alternate redcap:{project_id}:{err}')
+            logger.info(f'failed to load alternate redcap:{project_id}:{err}')
             alt_redcap = None
 
         return alt_redcap
@@ -1483,9 +1486,9 @@ class Garjus:
         try:
             response = self._rc.import_records(records)
             assert 'count' in response
-            logging.debug('issues records completed')
+            logger.debug('issues records completed')
         except AssertionError as err:
-            logging.error(f'failed to set issues to complete:{err}')
+            logger.error(f'failed to set issues to complete:{err}')
 
     def delete_issues(self, issues):
         """Delete specified issues, delete in REDCap."""
@@ -1493,7 +1496,7 @@ class Garjus:
             for i in issues:
                 _main = i[self._dfield()],
                 _id = i['redcap_repeat_instance']
-                logging.debug(f'deleting:issue:{_main}:{_id}')
+                logger.debug(f'deleting:issue:{_main}:{_id}')
                 # https://redcap.vanderbilt.edu/api/help/?content=del_records
                 _payload = {
                     'action': 'delete',
@@ -1507,7 +1510,7 @@ class Garjus:
 
                 self._rc._call_api(_payload, 'del_record')
         except Exception as err:
-            logging.error(f'failed to delete records:{err}')
+            logger.error(f'failed to delete records:{err}')
 
     def rename_dicom(self, in_dir, out_dir):
         """Sort DICOM folder into scans."""
@@ -1533,13 +1536,13 @@ class Garjus:
         # check that it hasn't been converted yet
         nifti_count = len(glob.glob(os.path.join(dicomdir, '*.nii.gz')))
         if nifti_count > 0:
-            logging.info(f'nifti exists:{dicomdir}')
+            logger.info(f'nifti exists:{dicomdir}')
             return None
 
         # convert
         niftis = utils_dcm2nii.dicom2nifti(dicomdir)
         if not niftis:
-            logging.info(f'nothing converted:{dicomdir}')
+            logger.info(f'nothing converted:{dicomdir}')
             return None
 
         # if session needs to be created, get the attributes from the scan json
@@ -1571,15 +1574,15 @@ class Garjus:
             scan_modality = 'PET'
             scan_tracer = 'PiB C-11'
         else:
-            logging.info(f'unsupported modality:{scan_modality}')
+            logger.info(f'unsupported modality:{scan_modality}')
             return
 
         if not scan_object.parent().exists():
             # create session with date, modality
-            logging.debug(f'creating xnat session:type={sess_datatype}')
+            logger.debug(f'creating xnat session:type={sess_datatype}')
             scan_object.parent().create(experiments=sess_datatype)
             if scan_date:
-                logging.debug(f'set date={scan_date}')
+                logger.debug(f'set date={scan_date}')
                 scan_object.parent().attrs.set('date', scan_date)
 
         scan_type = os.path.basename(niftis[0])
@@ -1592,18 +1595,18 @@ class Garjus:
 
         if scan_modality == 'PT' and scan_tracer:
             # Set the PET tracer name at session level
-            logging.debug(f'set tracer:{scan_tracer}')
+            logger.debug(f'set tracer:{scan_tracer}')
             scan_object.parent().attrs.set('tracer_name', scan_tracer)
 
         if not scan_object.exists():
-            logging.debug(f'creating xnat scan:datatype={scan_datatype}')
+            logger.debug(f'creating xnat scan:datatype={scan_datatype}')
 
             # make the scan
             scan_object.create(scans=scan_datatype)
             scan_object.attrs.mset(scan_attrs)
 
         elif scan_object.resource('DICOMZIP').exists():
-            logging.debug('skipping, DICOMZIP already exists')
+            logger.debug('skipping, DICOMZIP already exists')
             return
 
         # upload the converted files, NIFTI/JSON/BVAL/BVEC
@@ -1612,7 +1615,7 @@ class Garjus:
                 continue
 
             if fpath.endswith('ADC.nii.gz'):
-                logging.debug(f'ignoring ADC NIFTI:{fpath}')
+                logger.debug(f'ignoring ADC NIFTI:{fpath}')
                 continue
 
             if fpath.lower().endswith('.bval'):
@@ -1628,7 +1631,7 @@ class Garjus:
 
         # more than one NIFTI
         if len(nifti_list) > 1:
-            logging.info('dcm2nii:multiple NIFTI')
+            logger.info('dcm2nii:multiple NIFTI')
 
         # Upload the dicom zip
         utils_xnat.upload_dirzip(dicomdir, scan_object.resource('DICOMZIP'))
@@ -1637,12 +1640,12 @@ class Garjus:
         utils_xnat.upload_files(nifti_list, scan_object.resource('NIFTI'))
 
         if os.path.isfile(bval_path) and os.path.isfile(bvec_path):
-            logging.info('uploading BVAL/BVEC')
+            logger.info('uploading BVAL/BVEC')
             utils_xnat.upload_file(bval_path, scan_object.resource('BVAL'))
             utils_xnat.upload_file(bvec_path, scan_object.resource('BVEC'))
 
         if os.path.isfile(json_path):
-            logging.info(f'uploading JSON:{json_path}')
+            logger.info(f'uploading JSON:{json_path}')
             utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
 
     def upload_session(self, session_dir, project, subject, session):
@@ -1653,23 +1656,23 @@ class Garjus:
 
         # Check that project exists
         if not self._xnat.select_project(project).exists():
-            logging.info('project does not exist, refusing to create')
+            logger.info('project does not exist, refusing to create')
             return
 
         # Check that subject exists, create as needed
         subject_object = self._xnat.select_subject(project, subject)
         if not subject_object.exists():
-            logging.info(f'subject does not exist, creating:{subject}')
+            logger.info(f'subject does not exist, creating:{subject}')
             subject_object.create()
         else:
-            logging.info(f'subject exists:{subject}')
+            logger.info(f'subject exists:{subject}')
 
         session_object = subject_object.experiment(session)
         if not session_object.exists():
-            logging.info(f'session does not exist, will be created later')
+            logger.info(f'session does not exist, will be created later')
             # wait until get have attributes from json file: date, modality
         else:
-            logging.info(f'session exists:{session}')
+            logger.info(f'session exists:{session}')
             session_exists = True
 
         # Handle each scan
@@ -1682,12 +1685,12 @@ class Garjus:
             scan_object = session_object.scan(scan)
 
             if session_exists and scan_object.exists():
-                logging.info(f'scan exists, skipping:{scan}')
+                logger.info(f'scan exists, skipping:{scan}')
                 continue
 
-            logging.info(f'uploading scan:{scan}')
+            logger.info(f'uploading scan:{scan}')
             self._upload_scan(p, scan_object)
-            logging.info(f'finished uploading scan:{scan}')
+            logger.info(f'finished uploading scan:{scan}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):
 
@@ -1697,7 +1700,7 @@ class Garjus:
             if src.count('/') == 3:
                 # Download specified scan
                 s_proj, s_subj, s_sess, s_scan = src.split('/')
-                logging.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
+                logger.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
                 scan = self._xnat.select_scan(s_proj, s_subj, s_sess, s_scan)
                 scan.resource('DICOM').get(temp_dir, extract=True)
             else:
@@ -1713,11 +1716,11 @@ class Garjus:
                     if not scan.resource('DICOM').exists():
                         continue
 
-                    logging.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
+                    logger.info(f'download DICOM:{s_proj}:{s_sess}:{s_scan}')
                     scan.resource('DICOM').get(temp_dir, extract=True)
 
             # Upload them
-            logging.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
+            logger.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
     # Pass tasks from garjus to dax by writing files to DISKQ

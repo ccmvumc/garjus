@@ -9,6 +9,9 @@ from .. import shared
 from ...garjus import Garjus
 
 
+logger = logging.getLogger(__name__)
+
+
 # This is where we save our cache of the data
 def get_filename():
     datadir = 'DATA'
@@ -61,10 +64,10 @@ def load_field_options(fieldname):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh(filename)
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     _options = df[fieldname].unique()
@@ -94,24 +97,24 @@ def load_data(refresh=False, hidedone=True):
     if refresh or not os.path.exists(filename):
         run_refresh(filename, hidedone)
 
-    logging.info('reading data from file:{}'.format(filename))
+    logger.info('reading data from file:{}'.format(filename))
     return utils.read_data(filename)
 
 
 def filter_data(df, proj, proc, user):
     # Filter by project
     if proj:
-        logging.debug(f'filtering by project:{proj}')
+        logger.debug(f'filtering by project:{proj}')
         df = df[df['PROJECT'].isin(proj)]
 
     # Filter by proc
     if proc:
-        logging.debug(f'filtering by proc:{proc}')
+        logger.debug(f'filtering by proc:{proc}')
         df = df[(df['PROCTYPE'].isin(proc))]
 
     # Filter by user
     if user:
-        logging.debug(f'filtering by user:{user}')
+        logger.debug(f'filtering by user:{user}')
         df = df[(df['USER'].isin(user))]
 
     return df

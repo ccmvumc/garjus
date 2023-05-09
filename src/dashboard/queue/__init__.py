@@ -14,6 +14,7 @@ from ..shared import STATUS2HEX
 from ..shared import RGB_RED, RGB_GREEN, RGB_YELLOW, RGB_GREY, RGB_BLUE, RGB_LIME, RGB_PURPLE
 from . import data
 
+logger = logging.getLogger('dashboard.queue')
 
 STATUS2RGB = {
     'FAILED': RGB_RED,
@@ -200,16 +201,16 @@ def update_queue(
 ):
     refresh = False
 
-    logging.debug('update_queue')
+    logger.debug('update_queue')
 
     # Load data
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-queue-refresh'):
         # Refresh data if refresh button clicked
-        logging.debug('queue refresh:clicks={}'.format(n_clicks))
+        logger.debug('queue refresh:clicks={}'.format(n_clicks))
         refresh = True
 
-    logging.debug('loading data')
+    logger.debug('loading data')
     hidedone = (selected_done == 'HIDE')
     df = load_data(refresh=refresh, hidedone=hidedone)
 
@@ -232,6 +233,6 @@ def update_queue(
     records = df.reset_index().to_dict('records')
 
     # Return table, figure, dropdown options
-    logging.debug('update_queue:returning data')
+    logger.debug('update_queue:returning data')
 
     return [proc, proj, user, records, tabs]

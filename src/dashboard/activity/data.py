@@ -9,6 +9,9 @@ from .. import shared
 from ...garjus import Garjus
 
 
+logger = logging.getLogger(__name__)
+
+
 # This is where we save our cache of the data
 def get_filename():
     datadir = 'DATA'
@@ -43,10 +46,10 @@ def get_data(proj_filter):
     dfx = g.assessors()
 
     dfq = load_recent_qa(dfx, startdate=startdate)
-    logging.info('loaded {} qa records'.format(len(dfq)))
+    logger.info('loaded {} qa records'.format(len(dfq)))
 
     dfj = load_recent_jobs(dfx, startdate=startdate)
-    logging.info('loaded {} job records'.format(len(dfj)))
+    logger.info('loaded {} job records'.format(len(dfj)))
 
     # Concatentate all the dataframes into one
     df = pd.concat([dfc, dfq, dfj], ignore_index=True)
@@ -119,10 +122,10 @@ def load_field_options(fieldname):
     filename = get_filename()
 
     if not os.path.exists(filename):
-        logging.debug('refreshing data for file:{}'.format(filename))
+        logger.debug('refreshing data for file:{}'.format(filename))
         run_refresh(filename)
 
-    logging.debug('reading data from file:{}'.format(filename))
+    logger.debug('reading data from file:{}'.format(filename))
     df = pd.read_pickle(filename)
 
     _options = df[fieldname].unique()
@@ -152,27 +155,27 @@ def load_data(refresh=False):
     if refresh or not os.path.exists(filename):
         run_refresh(filename)
 
-    logging.info('reading data from file:{}'.format(filename))
+    logger.info('reading data from file:{}'.format(filename))
     return utils.read_data(filename)
 
 
 def filter_data(df, projects, categories, sources):
     # Filter by project
     if projects:
-        logging.debug('filtering by project:')
-        logging.debug(projects)
+        logger.debug('filtering by project:')
+        logger.debug(projects)
         df = df[df['PROJECT'].isin(projects)]
 
     # Filter by category
     if categories:
-        logging.debug('filtering by category:')
-        logging.debug(categories)
+        logger.debug('filtering by category:')
+        logger.debug(categories)
         df = df[(df['CATEGORY'].isin(categories))]
 
     # Filter by source
     if sources:
-        logging.debug('filtering by source:')
-        logging.debug(sources)
+        logger.debug('filtering by source:')
+        logger.debug(sources)
         df = df[(df['SOURCE'].isin(sources))]
 
     return df
