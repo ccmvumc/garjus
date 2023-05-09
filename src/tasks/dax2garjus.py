@@ -7,6 +7,9 @@ from datetime import datetime
 
 import pandas as pd
 
+logger = logging.getLogger('dax2garjus')
+
+
 # TODO: check status jobs showing as RUNNING but not in queue,
 # check residr for completed/vs failed, and set to Finished-COMPLETE, 
 # Finished-JOB_FAILED or something maybe Finished in blue vs. red?
@@ -47,23 +50,23 @@ STATUS_MAP = {
 
 
 def _load_dax_queue():
-    logging.debug('loading diskq')
+    logger.debug('loading diskq')
     diskq_df = _load_diskq_queue()
 
-    logging.debug('loading squeue')
+    logger.debug('loading squeue')
     squeue_df = _load_slurm_queue()
 
     # merge squeue data into task queue
-    logging.debug('merging data')
+    logger.debug('merging data')
 
     if diskq_df.empty and squeue_df.empty:
-        logging.debug('both empty')
+        logger.debug('both empty')
         df = pd.DataFrame(columns=diskq_df.columns.union(squeue_df.columns))
     elif diskq_df.empty:
-        logging.debug('diskq empty')
+        logger.debug('diskq empty')
         df = squeue_df.reindex(squeue_df.columns.union(diskq_df.columns), axis=1)
     elif squeue_df.empty:
-        logging.debug('squeue empty')
+        logger.debug('squeue empty')
         df = diskq_df.reindex(diskq_df.columns.union(squeue_df.columns), axis=1)
     else:
         df = pd.merge(diskq_df, squeue_df, how='outer', on=['LABEL', 'USER'])
@@ -85,7 +88,7 @@ def _load_dax_queue():
     # how long has it been running, pending, waiting or complete?
 
     # Minimize columns
-    logging.debug('finishing data')
+    logger.debug('finishing data')
     df = df.reindex(columns=JOB_TAB_COLS)
 
     return df.sort_values('LABEL')
@@ -101,7 +104,7 @@ def _load_diskq_queue(status=None):
 
     for t in os.listdir(batch_dir):
         assr = os.path.splitext(t)[0]
-        logging.debug(f'load task:{assr}')
+        logger.debug(f'load task:{assr}')
         task = _load_diskq_task(diskq_dir, assr)
         task['USER'] = USER
         task_list.append(task)
@@ -156,10 +159,10 @@ def _get_diskq_walltime(diskq, assr):
                     walltime = line.split('=')[1].replace('"', '').replace("'", '')
                     break
     except IOError:
-        logging.warn('file does not exist:' + bpath)
+        logger.warn('file does not exist:' + bpath)
         return None
     except PermissionError:
-        logging.warn('permission error reading file:' + bpath)
+        logger.warn('permission error reading file:' + bpath)
         return None
 
     return walltime
@@ -250,7 +253,7 @@ def dax2queue(garjus):
 
     # Apply changes
     if df.empty:
-        logging.info('no changes to apply')
+        logger.info('no changes to apply')
     else:
-        logging.info('applying status changes')
+        logger.info('applying status changes')
         garjus.set_task_statuses(df)

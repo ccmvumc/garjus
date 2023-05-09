@@ -11,47 +11,50 @@ import glob
 import os
 
 
+logger = logging.getLogger(__name__)
+
+
 def update(garjus, projects):
     """Update project progress."""
     for p in projects:
         proctypes = garjus.stattypes(p)
 
         if not proctypes:
-            logging.info(f'no proctypes for stats project:{p}')
+            logger.info(f'no proctypes for stats project:{p}')
             continue
 
-        logging.info(f'stats updating project:{p},proctypes={proctypes}')
+        logger.info(f'stats updating project:{p},proctypes={proctypes}')
         update_project(garjus, p, proctypes)
 
 
 def update_project(garjus, project, proctypes):
     """Update stats for project proctypes."""
 
-    logging.debug(f'loading existing stats:{project}')
+    logger.debug(f'loading existing stats:{project}')
     try:
         # Get list of assessors already in stats
         existing = garjus.stats_assessors(project, proctypes)
     except:
-        logging.error(f'failed to load existing stats, check key:{project}')
+        logger.error(f'failed to load existing stats, check key:{project}')
         return
 
     # Get list of all assessors
-    logging.debug(f'loading existing assessors:{project}')
+    logger.debug(f'loading existing assessors:{project}')
 
     dfa = garjus.assessors([project], proctypes)
-    logging.debug(f'total assessors:{len(dfa)}')
+    logger.debug(f'total assessors:{len(dfa)}')
 
     # Filter to remove already uploaded
     dfa = dfa[~dfa['ASSR'].isin(existing)]
-    logging.debug(f'assessors after filtering out already uploaded:{len(dfa)}')
+    logger.debug(f'assessors after filtering out already uploaded:{len(dfa)}')
 
     # Filter to only COMPLETE
     dfa = dfa[dfa['PROCSTATUS'] == 'COMPLETE']
-    logging.debug(f'assessors after filtering only COMPLETE:{len(dfa)}')
+    logger.debug(f'assessors after filtering only COMPLETE:{len(dfa)}')
 
     # Filter to not Failed
     dfa = dfa[dfa['QCSTATUS'] != 'Failed']
-    logging.debug(f'assessors after filtering out QC Failed:{len(dfa)}')
+    logger.debug(f'assessors after filtering out QC Failed:{len(dfa)}')
 
     # Iterate xnat assessors
     for r in dfa.sort_values('ASSR').to_dict('records'):
@@ -64,25 +67,25 @@ def update_project(garjus, project, proctypes):
                 r['ASSR'],
             )
         except ConnectionError as err:
-            logging.info(err)
-            logging.info('waiting a minute')
+            logger.info(err)
+            logger.info('waiting a minute')
             os.sleep(60)
 
     # TODO: Delete assessors no longer needed
     #delete_list = list(set().difference())
     #for assr in delete_list:
     #    # delete(assr)
-    #    logging.info(f'TBD:deleting:{assr}')
+    #    logger.info(f'TBD:deleting:{assr}')
 
 
 def update_assessor(garjus, proj, subj, sess, assr):
     """Update assessor stats."""
-    logging.info(f'uploading assessor stats:{assr}')
+    logger.info(f'uploading assessor stats:{assr}')
     with tempfile.TemporaryDirectory() as tmpdir:
         try:
             _dir = garjus.get_source_stats(proj, subj, sess, assr, tmpdir)
         except Exception as err:
-            logging.warn(f'could not get stats:{assr}')
+            logger.warn(f'could not get stats:{assr}')
             return
 
         _stats = transform_stats(_dir)

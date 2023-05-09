@@ -1,6 +1,9 @@
 import logging
 
 
+logger = logging.getLogger('garjus.issues.audit_edat')
+
+
 def audit(
     project,
     events,
@@ -30,13 +33,13 @@ def audit(
 
         # Skip if not ready
         if not rec[ready_field]:
-            logging.debug(f'{subj}:{event}:not ready yet')
+            logger.debug(f'{subj}:{event}:not ready yet')
             continue
 
         # Check for edat file
         if not rec[raw_field]:
             # Missing edat
-            logging.info(f'{subj}:{event}:missing edat')
+            logger.info(f'{subj}:{event}:missing edat')
             results.append({
                 'category': 'MISSING_EDAT',
                 'subject': subj,
@@ -47,13 +50,13 @@ def audit(
 
         # Check for missing data flag
         if 'MISSING_DATA' in rec[raw_field]:
-            logging.debug('{}:{}:{}'.format(subj, event, 'missing data flag'))
+            logger.debug('{}:{}:{}'.format(subj, event, 'missing data flag'))
             continue
 
         # Check for converted edat file
         if not rec[tab_field]:
             # Missing converted edat
-            logging.info(f'{subj}:{event}:missing converted edat')
+            logger.info(f'{subj}:{event}:missing converted edat')
             results.append({
                 'category': 'MISSING_CONVERTED_EDAT',
                 'subject': subj,

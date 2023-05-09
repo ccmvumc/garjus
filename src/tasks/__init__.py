@@ -5,11 +5,14 @@ import os
 from .processors import build_processor
 
 
+logger = logging.getLogger('garjus.tasks')
+
+
 def update(garjus, projects=None):
     """Update tasks."""
     for p in (projects or garjus.projects()):
         if p in projects:
-            logging.info(f'updating tasks:{p}')
+            logger.info(f'updating tasks:{p}')
             _update_project(garjus, p)
 
 
@@ -18,7 +21,7 @@ def _update_project(garjus, project):
     protocols = garjus.processing_protocols(project, download=True)
 
     if len(protocols) == 0:
-        logging.info(f'no processing protocols for project:{project}')
+        logger.info(f'no processing protocols for project:{project}')
         return
 
     # Get scan/assr/sgp data
@@ -36,11 +39,11 @@ def _update_project(garjus, project):
     for i, row in protocols.iterrows():
         filepath = row['FILE']
 
-        logging.info(f'file:{filepath}')
+        logger.info(f'file:{filepath}')
 
         user_inputs = row.get('ARGS', None)
         if user_inputs:
-            logging.debug(f'overrides:{user_inputs}')
+            logger.debug(f'overrides:{user_inputs}')
             rlist = user_inputs.strip().split('\r\n')
             rdict = {}
             for arg in rlist:
@@ -52,7 +55,7 @@ def _update_project(garjus, project):
                     raise XnatUtilsError(msg)
 
             user_inputs = rdict
-            logging.debug(f'user_inputs:{user_inputs}')
+            logger.debug(f'user_inputs:{user_inputs}')
 
         if row['FILTER']:
             include_filters = str(row['FILTER']).replace(' ', '').split(',')

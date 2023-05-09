@@ -3,6 +3,9 @@ import logging
 import importlib
 
 
+logger = logging.getLogger(__name__)
+
+
 def update(garjus, projects=None):
     """Update issues."""
 
@@ -14,7 +17,7 @@ def update(garjus, projects=None):
     # Update each project
     for p in (projects or garjus.projects()):
         if p in projects:
-            logging.info(f'updating issues:{p}')
+            logger.info(f'updating issues:{p}')
             update_project(garjus, p, unmatched[p])
 
 
@@ -32,7 +35,7 @@ def _unmatched(garjus):
             src_project = p['scanning_srcproject']
 
             if not src_project:
-                logging.debug(f'no scanning_srcproject')
+                logger.debug(f'no scanning_srcproject')
                 continue
 
             # Get sessions to ignore
@@ -52,7 +55,7 @@ def _unmatched(garjus):
 
     # Find unmatched in each source project
     for src_project, dst_projects in src2dst.items():
-        logging.info(f'finding unmatched sessions:{src_project}')
+        logger.info(f'finding unmatched sessions:{src_project}')
         src_labels = garjus.session_labels(src_project)
         src_ignore = src2ignore[src_project]
 
@@ -70,7 +73,7 @@ def _unmatched(garjus):
 
         # Create an issue for each dst project, we don't know which is the dst
         for sess in src_unmatched:
-            logging.info(f'unmatched session:{sess}')
+            logger.info(f'unmatched session:{sess}')
             for dst_project in dst_projects:
                 unmatched[dst_project].append(sess)
 
@@ -84,13 +87,13 @@ def update_project(garjus, project, unmatched):
     # Load the project primary redcap
     project_redcap = garjus.primary(project)
     if not project_redcap:
-        logging.debug('primary redcap not found, cannot update issues')
+        logger.debug('primary redcap not found, cannot update issues')
         return
 
     # Confirm project exists on XNAT
     if not garjus.project_exists(project):
         msg = f'destination project does not exist:{project}'
-        logging.debug(msg)
+        logger.debug(msg)
         return
 
     # Audit edats
@@ -126,7 +129,7 @@ def update_project(garjus, project, unmatched):
         # check that projects exist on XNAT
         if not garjus.source_project_exists(src_project):
             msg = f'source project does not exist in XNAT:{src_project}'
-            logging.error(msg)
+            logger.error(msg)
             garjus.add_issue(msg, project, category='ERROR')
             continue
 
@@ -176,7 +179,7 @@ def _audit_edat(project, events, rawfield, convfield, readyfield):
     try:
         audit_edat = importlib.import_module(f'src.issues.audit_edat')
     except ModuleNotFoundError as err:
-        logging.error(f'error loading:{err}')
+        logger.error(f'error loading:{err}')
         return
 
     return audit_edat.audit(project, events, rawfield, convfield, readyfield)
@@ -186,7 +189,7 @@ def _audit_scanning(scan_table, src_project, project):
     try:
         audit_imaging = importlib.import_module(f'src.issues.audit_imaging')
     except ModuleNotFoundError as err:
-        logging.error(f'error loading:{err}')
+        logger.error(f'error loading:{err}')
         return
 
     return audit_imaging.audit(scan_table, src_project, project)
@@ -217,22 +220,22 @@ def _add_issues(garjus, records, project):
 
     # Upload new records
     if new_issues:
-        logging.info(f'uploading {len(new_issues)} new issues')
+        logger.info(f'uploading {len(new_issues)} new issues')
         garjus.add_issues(new_issues)
     else:
-        logging.info('no new issues to upload')
+        logger.info('no new issues to upload')
 
     if has_errors:
-        logging.info(f'errors during audit, not closing old issues')
+        logger.info(f'errors during audit, not closing old issues')
         return
 
     # Close fixed issues
     fixed_issues = _find_fixed(cur_issues, records)
     if fixed_issues:
-        logging.info(f'setting {len(fixed_issues)} resolved issues to complete')
+        logger.info(f'setting {len(fixed_issues)} resolved issues to complete')
         garjus.close_issues(fixed_issues)
     else:
-        logging.info('no resolved issues to complete')
+        logger.info('no resolved issues to complete')
 
 
 def _find_new(issues, records):
@@ -247,7 +250,7 @@ def _find_new(issues, records):
             cur_proj = cur['PROJECT']
             if _matching_issues(rec, cur):
                 isnew = False
-                logging.debug(f'matches existing issue:{cur_proj}:{cur_id}')
+                logger.debug(f'matches existing issue:{cur_proj}:{cur_id}')
                 break
 
         if isnew:
@@ -259,7 +262,7 @@ def _find_fixed(issues, records):
     """Return issues that are not in current search, i.e. resolved"""
     results = []
     # Find old issues
-    logging.debug('checking for resolved issues')
+    logger.debug('checking for resolved issues')
     for cur in issues.to_dict('records'):
         isold = True
         cur_id = cur['ID']
@@ -269,12 +272,12 @@ def _find_fixed(issues, records):
         for rec in records:
             if _matching_issues(rec, cur):
                 isold = False
-                logging.debug(f'matches existing issue:{cur_proj}:{cur_id}')
+                logger.debug(f'matches existing issue:{cur_proj}:{cur_id}')
                 break
 
         if isold:
             # Append to list as closed with current time
-            logging.debug(f'found resolved issue:{cur_proj}:{cur_id}')
+            logger.debug(f'found resolved issue:{cur_proj}:{cur_id}')
             results.append({'project': cur_proj, 'id': cur_id})
 
     return results
@@ -304,7 +307,7 @@ def _make_scan_table(
     try:
         rec = project.export_records(fields=fields, events=events)
     except Exception as err:
-        logging.error(err)
+        logger.error(err)
         return []
 
     # Only if date is entered

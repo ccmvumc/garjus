@@ -7,6 +7,10 @@ import json
 from dax import cluster
 from .processors import load_from_yaml
 
+
+logger = logging.getLogger('garjus2dax')
+
+
 # This is a temporary bridge between garjus and dax.
 
 # This must run with access to garjus redcap to read the queue
@@ -115,7 +119,7 @@ def _task2dax(xnat, assr, walltime, memreq, yaml_file, user_inputs, inputlist, v
         xnat_host,
         xnat_user)
 
-    logging.info(f'writing batch file:{batch_file}')
+    logger.info(f'writing batch file:{batch_file}')
     batch = cluster.PBS(
         batch_file,
         outlog,
@@ -133,7 +137,7 @@ def _task2dax(xnat, assr, walltime, memreq, yaml_file, user_inputs, inputlist, v
     batch.write()
 
     # Write processor spec file for version 3
-    logging.info(f'writing processor spec file:{processor_spec_path}')
+    logger.info(f'writing processor spec file:{processor_spec_path}')
 
     _write_processor_spec(
         processor_spec_path,
@@ -158,10 +162,10 @@ def queue2dax(garjus):
         status = t['STATUS']
 
         if status not in ['JOB_QUEUED', 'QUEUED']:
-            logging.debug(f'skipping:{i}:{assr}:{status}')
+            logger.debug(f'skipping:{i}:{assr}:{status}')
             continue
 
-        logging.info(f'{i}:{assr}:{status}')
+        logger.info(f'{i}:{assr}:{status}')
 
         walltime = t['WALLTIME']
         memreq = t['MEMREQ']
@@ -194,4 +198,4 @@ def queue2dax(garjus):
             garjus.set_task_status(t['PROJECT'], t['ID'], 'JOB_RUNNING')
 
         except Exception as err:
-            logging.error(err)
+            logger.error(err)

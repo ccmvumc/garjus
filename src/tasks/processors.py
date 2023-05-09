@@ -18,6 +18,9 @@ from dax.processors_v3 import Processor_v3, SgpProcessor, get_resource, get_uri
 from dax.errors import AutoProcessorError
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_scan_status(project_data, scan_path):
     path_parts = scan_path.split('/')
     sess_label = path_parts[6]
@@ -59,7 +62,7 @@ def verify_artefact_status(proc_inputs, assr_inputs, project_data):
     # Check artefact status
     logging.debug('checking status of each artefact')
     for artk, artv in list(assr_inputs.items()):
-        logging.debug(f'checking status:{artk}')
+        logger.debug(f'checking status:{artk}')
         inp = proc_inputs[artk]
         art_type = inp['artefact_type']
 
@@ -172,7 +175,7 @@ class Processor_v3_1(Processor_v3):
             # Get the info for the assessor
             info = dfa.to_dict('records')[0]
 
-            logging.debug('matches existing:{}'.format(info['ASSR']))
+            logger.debug('matches existing:{}'.format(info['ASSR']))
 
             # Get the assessor object
             assr = self.xnat.select_assessor(
@@ -181,7 +184,7 @@ class Processor_v3_1(Processor_v3):
                 info['SESSION'],
                 info['ASSR'])
         else:
-            logging.debug('no existing assessors found, creating a new one')
+            logger.debug('no existing assessors found, creating a new one')
 
             # Get the subject for this session
             dfs = project_data['scans']
@@ -192,7 +195,7 @@ class Processor_v3_1(Processor_v3):
                 session,
                 inputs)
 
-            logging.debug('created:{}'.format(info['ASSR']))
+            logger.debug('created:{}'.format(info['ASSR']))
 
         return (assr, info)
 
@@ -201,12 +204,12 @@ class Processor_v3_1(Processor_v3):
         Method to read the processor
         :param yaml_file: path to yaml file defining the processor
         """
-        logging.debug(f'reading processor from yaml:{yaml_file}')
+        logger.debug(f'reading processor from yaml:{yaml_file}')
         with open(yaml_file, "r") as y:
             try:
                 doc = yaml.load(y, Loader=yaml.FullLoader)
             except yaml.error.YAMLError as err:
-                logging.error(f'failed to load yaml file{yaml_file}:{err}')
+                logger.error(f'failed to load yaml file{yaml_file}:{err}')
                 return None
 
         # NOTE: we are assuming this yaml has already been validated
@@ -270,7 +273,7 @@ class Processor_v3_1(Processor_v3):
                 self.container_path = self.containers[0].get('path')
             else:
                 msg = 'multiple containers requires a primary to be set'
-                logging.error(msg)
+                logger.error(msg)
                 raise AutoProcessorError(msg)
 
         # Outputs from Yaml
@@ -342,7 +345,7 @@ class Processor_v3_1(Processor_v3):
                 else:
                     _val = assr.attrs.get(_attr)
             else:
-                logging.error('invalid YAML')
+                logger.error('invalid YAML')
                 err = 'YAML File:contains invalid attribute:{}'
                 raise AutoProcessorError(err.format(_attr))
 
@@ -375,7 +378,7 @@ class Processor_v3_1(Processor_v3):
                 break
 
         if count == max_count:
-            logging.error('failed to find unique ID, cannot create assessor!')
+            logger.error('failed to find unique ID, cannot create assessor!')
             raise AutoProcessorError()
 
         # Build the assessor attributes as key/value pairs
@@ -398,7 +401,7 @@ class Processor_v3_1(Processor_v3):
             f'{xsitype}/inputs': serialized_inputs}
 
         # Create the assessor
-        logging.info(f'creating session asssessor:{assr_label}:{xsitype}')
+        logger.info(f'creating session asssessor:{assr_label}:{xsitype}')
         assr.create(assessors=xsitype, **kwargs)
 
         # We keep the inputs as a dictionary in the returned info
@@ -414,19 +417,19 @@ class Processor_v3_1(Processor_v3):
         return (assr, info)
 
     def parse_session(self, session, project_data):
-        logging.debug(f'parsing session:{session}')
+        logger.debug(f'parsing session:{session}')
         """
         Parse a session to determine what assessors *should* exist for
         this processor
         """
 
         artefacts_by_input = self._map_inputs(session, project_data)
-        logging.debug('artefacts_by_input=')
-        logging.debug(artefacts_by_input)
+        logger.debug('artefacts_by_input=')
+        logger.debug(artefacts_by_input)
 
         parameter_matrix = self._generate_parameter_matrix(artefacts_by_input)
-        logging.debug('parameter_matrix=')
-        logging.debug(parameter_matrix)
+        logger.debug('parameter_matrix=')
+        logger.debug(parameter_matrix)
 
         return parameter_matrix
 
@@ -446,18 +449,18 @@ class Processor_v3_1(Processor_v3):
         # This will raise a NeedInputs exception if any inputs aren't ready
         verify_artefact_status(self.proc_inputs, inputs, project_data)
 
-        logging.debug(self.variables_to_inputs.items())
+        logger.debug(self.variables_to_inputs.items())
 
         # Map from parameters to input resources
-        logging.debug('mapping params to artefact resources')
+        logger.debug('mapping params to artefact resources')
         for k, v in list(self.variables_to_inputs.items()):
-            logging.debug('mapping:' + k, v)
+            logger.debug('mapping:' + k, v)
             inp = self.proc_inputs[v['input']]
             resource = v['resource']
 
-            logging.debug('vinput={}'.format(v['input']))
-            logging.debug(f'resource={resource}')
-            logging.debug(inp['resources'])
+            logger.debug('vinput={}'.format(v['input']))
+            logger.debug(f'resource={resource}')
+            logger.debug(inp['resources'])
 
             # Find the resource
             cur_res = None
@@ -474,7 +477,7 @@ class Processor_v3_1(Processor_v3):
                 # Get list of all files in the resource, relative paths
                 file_list = [x._urn for x in robj.files().get('path')]
                 if len(file_list) == 0:
-                    logging.debug('empty or missing resource')
+                    logger.debug('empty or missing resource')
                     raise NeedInputsException('No Resource')
 
                 if 'fmatch' in cur_res:
@@ -497,7 +500,7 @@ class Processor_v3_1(Processor_v3):
                     file_list = [x for x in file_list if regex.match(x)]
 
                     if len(file_list) == 0:
-                        logging.debug('no matching files found on resource')
+                        logger.debug('no matching files found on resource')
                         raise NeedInputsException('No Files')
 
                     if len(file_list) > 1:
@@ -507,9 +510,9 @@ class Processor_v3_1(Processor_v3):
                         # other options
 
                         if 'fmulti' in cur_res and cur_res['fmulti'] == 'any1':
-                            logging.debug('multiple files, fmulti==any1, using first found')
+                            logger.debug('multiple files, fmulti==any1, using first found')
                         else:
-                            logging.debug('multiple files, fmulti not set')
+                            logger.debug('multiple files, fmulti not set')
                             raise NeedInputsException('multiple files')
 
                     # Create the full path to the file on the resource
@@ -553,7 +556,7 @@ class Processor_v3_1(Processor_v3):
                 if 'varname' in cur_res:
                     variable_set[k] = fdest
 
-        logging.debug('finished mapping params to artefact resources')
+        logger.debug('finished mapping params to artefact resources')
 
         return variable_set, input_list
 
@@ -686,13 +689,13 @@ class Processor_v3_1(Processor_v3):
         # Get the sessions/dates for this subject
         _dfs = project_data.get('scans')
         subject = _dfs[_dfs.SESSION == session].iloc[0]['SUBJECT']
-        logging.debug(f'is_first_mr_session:{session}:{subject}:getting scans')
+        logger.debug(f'is_first_mr_session:{session}:{subject}:getting scans')
         scans = _dfs[(_dfs.SUBJECT == subject) & (_dfs.XSITYPE == 'xnat:mrSessionData')]
         scans = scans.sort_values('DATE')
 
         # Check if this is the first
         if not scans.empty and scans.iloc[0].SESSION != session:
-            logging.debug(f'is_first_mr_session:{session}:nope')
+            logger.debug(f'is_first_mr_session:{session}:nope')
             is_first = False
 
         return is_first
@@ -702,7 +705,7 @@ class Processor_v3_1(Processor_v3):
         artefacts_by_input = {k: [] for k in inputs}
 
         # Get lists for scans/assrs for this session
-        logging.debug('prepping session data')
+        logger.debug('prepping session data')
         _dfs = project_data.get('scans')
         scans = _dfs[_dfs.SESSION == session].to_dict('records')
         _dfa = project_data.get('assessors')
@@ -711,10 +714,10 @@ class Processor_v3_1(Processor_v3):
         petscans = []
         # if this is the first mri, add scans
         if self.is_first_mr_session(session, project_data):
-            logging.debug(f'is first mri, adding pets:{session}')
+            logger.debug(f'is first mri, adding pets:{session}')
             petscans = self._get_petscans(session, project_data)
 
-        logging.debug('matching artefacts')
+        logger.debug('matching artefacts')
         # Find list of scans/assessors that match each specified input
         # for i, iv in list(inputs.items()):
         for i, iv in sorted(inputs.items()):
@@ -742,7 +745,7 @@ class Processor_v3_1(Processor_v3):
                         if regex.match(p['SCANTYPE']):
                             # Found a match, now check quality
                             if p['QUALITY'] == 'unusable':
-                                logging.debug('excluding unusable scan')
+                                logger.debug('excluding unusable scan')
                             else:
                                 artefacts_by_input[i].append(p['full_path'])
 
@@ -756,9 +759,9 @@ class Processor_v3_1(Processor_v3):
                         regex = re.compile(fnmatch.translate(expression))
                         if regex.match(cscan.get('SCANTYPE')):
                             scanid = cscan.get('SCANID')
-                            logging.debug('match found!')
+                            logger.debug('match found!')
                             if iv['skip_unusable'] and cscan.get('QUALITY') == 'unusable':
-                                logging.info(f'Excluding unusable scan:{scanid}')
+                                logger.info(f'Excluding unusable scan:{scanid}')
                             else:
                                 # Get scan path, scan ID for each matching scan.
                                 # Break if the scan matches so we don't find it again comparing
@@ -886,7 +889,7 @@ def load_from_yaml(
     proc_level = get_processor_level(filepath)
 
     if proc_level == 'subject':
-        logging.debug('loading as SGP:{}'.format(filepath))
+        logger.debug('loading as SGP:{}'.format(filepath))
         processor = SgpProcessor(
             xnat,
             filepath,
@@ -894,7 +897,7 @@ def load_from_yaml(
             singularity_imagedir,
             job_template)
     else:
-        logging.debug('loading as Processor_v3_1:{}'.format(filepath))
+        logger.debug('loading as Processor_v3_1:{}'.format(filepath))
         processor = Processor_v3_1(
             xnat,
             filepath,
@@ -909,9 +912,9 @@ def build_session_processor(garjus, processor, session, project_data):
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_session(session, project_data)
 
-    logging.debug(f'{session}:{processor.name}')
+    logger.debug(f'{session}:{processor.name}')
 
-    logging.debug(inputsets)
+    logger.debug(inputsets)
     for inputs in inputsets:
         if inputs == {}:
             # Blank inputs
@@ -923,21 +926,21 @@ def build_session_processor(garjus, processor, session, project_data):
         # TODO: apply reproc or rerun if needed
 
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
-            logging.debug('building task')
+            logger.debug('building task')
             (assr, info) = build_task(
                 garjus, assr, info, processor, project_data)
 
-            logging.debug(f'{info}')
-            logging.debug('status:{}:{}'.format(info['ASSR'], info['PROCSTATUS']))
+            logger.debug(f'{info}')
+            logger.debug('status:{}:{}'.format(info['ASSR'], info['PROCSTATUS']))
         else:
-            logging.debug('already built:{}'.format(info['ASSR']))
+            logger.debug('already built:{}'.format(info['ASSR']))
 
 
 def build_subject_processor(garjus, processor, subject, project_data):
-    logging.debug(f'{subject}:{processor.name}')
+    logger.debug(f'{subject}:{processor.name}')
     # Get list of inputs sets (not yet matched with existing)
     inputsets = processor.parse_subject(subject, project_data)
-    logging.debug(inputsets)
+    logger.debug(inputsets)
 
     for inputs in inputsets:
 
@@ -953,13 +956,13 @@ def build_subject_processor(garjus, processor, subject, project_data):
         # TODO: apply reproc or rerun if needed
 
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
-            logging.debug('building task')
+            logger.debug('building task')
             (assr, info) = build_task(
                 garjus, assr, info, processor, project_data)
 
-            logging.debug(f'assr after={info}')
+            logger.debug(f'assr after={info}')
         else:
-            logging.debug('already built:{}'.format(info['ASSR']))
+            logger.debug('already built:{}'.format(info['ASSR']))
 
 
 def build_processor(
@@ -987,7 +990,7 @@ def build_processor(
             include_subjects = all_subjects
 
         # Handle session level processing
-        logging.debug(f'include subjects={include_subjects}')
+        logger.debug(f'include subjects={include_subjects}')
 
         # Apply the processor to filtered sessions
         for subj in sorted(include_subjects):
@@ -1000,7 +1003,7 @@ def build_processor(
             include_sessions = all_sessions
 
         # Handle session level processing
-        logging.debug(f'include sessions={include_sessions}')
+        logger.debug(f'include sessions={include_sessions}')
 
         # Apply the processor to filtered sessions
         for sess in sorted(include_sessions):
