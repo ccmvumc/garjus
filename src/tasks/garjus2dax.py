@@ -18,7 +18,7 @@ from .processors import load_from_yaml
 # it must be able set the files to the user group that runs dax.
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
-# Read these from REDCap for those where status is JOB_QUEUED
+# Read these from REDCap for those where status is QUEUED
 # then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT as 
 # set when the assessor was created by garjus update tasks)
 
@@ -157,7 +157,7 @@ def queue2dax(garjus):
         assr = t['ASSESSOR']
         status = t['STATUS']
 
-        if status != 'JOB_QUEUED':
+        if status not in ['JOB_QUEUED', 'QUEUED']:
             logging.debug(f'skipping:{i}:{assr}:{status}')
             continue
 

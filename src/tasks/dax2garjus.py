@@ -29,7 +29,7 @@ SQUEUE_COLS = [
     'TIME', 'SUBMIT_TIME', 'START_TIME', 'TIME_LIMIT', 'TIME_LEFT', 'USER']
 
 # we concat diskq status and squeue status to make a single status
-# squeue states: CG,F, PR, S, ST
+# squeue states: CG, F, PR, S, ST
 # diskq statuses: JOB_RUNNING, JOB_FAILED, NEED_TO_RUN, COMPLETE,
 # UPLOADING, READY_TO_COMPLETE, READY_TO_UPLOAD
 STATUS_MAP = {

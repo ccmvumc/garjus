@@ -300,17 +300,19 @@ class Garjus:
     def set_task_statuses(self, tasks):
         records = []
 
-        # Build list of task updates
+        # Build list of task updates as records with updated values
         for i, t in tasks.iterrows():
             r = {
                 self._dfield(): t['PROJECT'],
                 'redcap_repeat_instance': t['ID'],
                 'redcap_repeat_instrument': 'taskqueue',
-                #'taskqueue_complete': 1,
                 'task_status': t['STATUS']
             }
             if t['STATUS'] == 'COMPLETE':
+                # Set the redcap complete indicator too
                 r['taskqueue_complete'] = '2'
+
+            # TODO: get the job id here too
 
             records.append(r)
 
@@ -985,7 +987,7 @@ class Garjus:
                     'main_name': project,
                     'redcap_repeat_instrument': 'taskqueue',
                     'redcap_repeat_instance': task_id,
-                    'task_status': 'JOB_QUEUED',
+                    'task_status': 'QUEUED',
                     'task_inputlist': inputlist,
                     'task_var2val': var2val,
                     'task_walltime': walltime,
@@ -1009,7 +1011,7 @@ class Garjus:
                     'redcap_repeat_instrument': 'taskqueue',
                     'redcap_repeat_instance': 'new',
                     'task_assessor': assr,
-                    'task_status': 'JOB_QUEUED',
+                    'task_status': 'QUEUED',
                     'task_inputlist': inputlist,
                     'task_var2val': var2val,
                     'task_walltime': walltime,

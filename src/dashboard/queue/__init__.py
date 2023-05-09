@@ -16,13 +16,12 @@ from . import data
 
 
 STATUS2RGB = {
-    'JOB_FAILED': RGB_RED,
     'FAILED': RGB_RED,
     'COMPLETE': RGB_BLUE,
+    'UPLOADING': RGB_LIME,
     'RUNNING': RGB_GREEN,
-    'JOB_RUNNING': RGB_GREEN,
-    'WAITING': RGB_GREY,
     'PENDING': RGB_YELLOW,
+    'WAITING': RGB_GREY,
     'UNKNOWN': RGB_PURPLE}
 
 
@@ -130,12 +129,11 @@ def get_content():
                 'maxWidth': '60'},
             style_data_conditional=[
                 {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
-                {'if': {'filter_query': '{STATUS} = "JOB_RUNNING"'},  'backgroundColor': STATUS2HEX['RUNNING']},
+                {'if': {'filter_query': '{STATUS} = "QUEUED"'},  'backgroundColor': STATUS2HEX['WAITING']},
                 {'if': {'filter_query': '{STATUS} = "RUNNING"'},  'backgroundColor': STATUS2HEX['RUNNING']},
                 {'if': {'filter_query': '{STATUS} = "WAITING"'},  'backgroundColor': STATUS2HEX['WAITING']},
                 {'if': {'filter_query': '{STATUS} = "PENDING"'},  'backgroundColor': STATUS2HEX['PENDING']},
                 {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
-                {'if': {'filter_query': '{STATUS} = "JOB_FAILED"'}, 'backgroundColor': STATUS2HEX['FAILED']},
                 {'if': {'filter_query': '{STATUS} = "FAILED"'},   'backgroundColor': STATUS2HEX['FAILED']},
                 {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
                 {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
