@@ -26,6 +26,22 @@ def copy_session(src, dst):
     Garjus().copy_sess(src, dst)
 
 
+@cli.command('setsesstype')
+@click.argument('src', required=True)
+@click.argument('sesstype', required=True)
+def set_sesstype(src, sesstype):
+    click.echo('garjus! set session type')
+    Garjus().set_session_type(src, sesstype)
+
+
+@cli.command('setsite')
+@click.argument('src', required=True)
+@click.argument('site', required=True)
+def set_site(src, site):
+    click.echo('garjus! set session site')
+    Garjus().set_session_site(src, site)
+
+
 @cli.command('issues')
 @click.option('--project', '-p', 'project')
 @click.pass_context

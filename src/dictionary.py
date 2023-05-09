@@ -1,3 +1,5 @@
+# TODO: move some of this to yaml or some other format
+
 ACTIVITY_RENAME = {
     'redcap_repeat_instance': 'ID',
     'activity_description': 'DESCRIPTION',

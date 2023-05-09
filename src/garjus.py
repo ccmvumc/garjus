@@ -430,6 +430,40 @@ class Garjus:
             session=d_sess,
             result='COMPLETE')
 
+    def set_session_type(self, src, sesstype):
+        """Set Session Type in XNAT."""
+        (s_proj, s_subj, s_sess) = src.split('/')
+
+        logging.info(f'{s_proj}:{s_sess}:setting session type:{sesstype}')
+
+        self._xnat.select_session(s_proj, s_subj, s_sess).attrs.set(
+            'session_type', sesstype)
+
+        self.add_activity(
+            project=s_proj,
+            category='set_session_type',
+            description=src,
+            subject=s_subj,
+            session=s_sess,
+            result='COMPLETE')
+
+    def set_session_site(self, src, site):
+        """Set site in XNAT."""
+        (s_proj, s_subj, s_sess) = src.split('/')
+
+        logging.info(f'{s_proj}:{s_sess}:setting site:{site}')
+
+        self._xnat.select_session(s_proj, s_subj, s_sess).attrs.set(
+            'xnat:imagesessiondata/acquisition_site', site)
+
+        self.add_activity(
+            project=s_proj,
+            category='set_session_site',
+            description=src,
+            subject=s_subj,
+            session=s_sess,
+            result='COMPLETE')
+
     def scans(self, projects=None, scantypes=None, modalities='MR'):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
