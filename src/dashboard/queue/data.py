@@ -19,8 +19,9 @@ def get_filename():
     return filename
 
 
-def get_data(proj_filter):
-    df = Garjus().tasks()
+def get_data(proj_filter, hidedone=True):
+    df = Garjus().tasks(hidedone=hidedone)
+
     #df.sort_values(by=['DATETIME'], inplace=True, ascending=False)
     df.reset_index(inplace=True)
     df['ID'] = df.index
@@ -46,10 +47,10 @@ def _get_proctype(row):
     return row
 
 
-def run_refresh(filename):
+def run_refresh(filename, hidedone=True):
     proj_filter = []
 
-    df = get_data(proj_filter)
+    df = get_data(proj_filter, hidedone=hidedone)
 
     utils.save_data(df, filename)
 
@@ -87,11 +88,11 @@ def load_user_options():
     return load_field_options('USER')
 
 
-def load_data(refresh=False):
+def load_data(refresh=False, hidedone=True):
     filename = get_filename()
 
     if refresh or not os.path.exists(filename):
-        run_refresh(filename)
+        run_refresh(filename, hidedone)
 
     logging.info('reading data from file:{}'.format(filename))
     return utils.read_data(filename)

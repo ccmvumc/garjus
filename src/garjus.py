@@ -262,8 +262,9 @@ class Garjus:
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
 
-    def tasks(self, download=False):
+    def tasks(self, download=False, hidedone=True):
         """List of task records."""
+        DONE_LIST = ['COMPLETE', 'JOB_FAILED']
         data = []
 
         rec = self._rc.export_records(
@@ -271,6 +272,10 @@ class Garjus:
             fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
+
+        if hidedone:
+            rec = [x for x in rec if x['task_status'] not in DONE_LIST]
+
         for r in rec:
             d = {
                 'PROJECT': r[self._dfield()],
@@ -281,7 +286,8 @@ class Garjus:
 
             data.append(d)
 
-        return pd.DataFrame(data, columns=self.column_names('task'))
+        df = pd.DataFrame(data, columns=self.column_names('tasks'))     
+        return df
 
     def save_task_yaml(self, project, task_id, yaml_dir):
         return utils_redcap.download_named_file(

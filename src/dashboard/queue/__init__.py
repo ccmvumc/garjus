@@ -99,6 +99,13 @@ def get_content():
         dcc.Dropdown(
             id='dropdown-queue-user', multi=True,
             placeholder='Select Users'),
+        dcc.RadioItems(
+            options=[
+                {'label': 'Hide Done', 'value': 'HIDE'},
+                {'label': 'Show Done', 'value': 'SHOW'}],
+            value='HIDE',
+            id='radio-queue-hidedone',
+            labelStyle={'display': 'inline-block'}),
         dt.DataTable(
             cell_selectable=False,
             columns=columns,
@@ -146,8 +153,8 @@ def get_content():
     return queue_content
 
 
-def load_data(refresh=False):
-    return data.load_data(refresh=refresh)
+def load_data(refresh=False, hidedone=True):
+    return data.load_data(refresh=refresh, hidedone=hidedone)
 
 
 def load_proc_options():
@@ -184,11 +191,13 @@ def was_triggered(callback_ctx, button_id):
     [Input('dropdown-queue-proc', 'value'),
      Input('dropdown-queue-proj', 'value'),
      Input('dropdown-queue-user', 'value'),
+     Input('radio-queue-hidedone', 'value'),
      Input('button-queue-refresh', 'n_clicks')])
 def update_queue(
     selected_proc,
     selected_proj,
     selected_user,
+    selected_done,
     n_clicks
 ):
     refresh = False
@@ -203,7 +212,8 @@ def update_queue(
         refresh = True
 
     logging.debug('loading data')
-    df = load_data(refresh=refresh)
+    hidedone = (selected_done == 'HIDE')
+    df = load_data(refresh=refresh, hidedone=hidedone)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
