@@ -20,10 +20,10 @@ def update(garjus, projects):
         proctypes = garjus.stattypes(p)
 
         if not proctypes:
-            logger.info(f'no proctypes for stats project:{p}')
+            logger.debug(f'no proctypes for stats project:{p}')
             continue
 
-        logger.info(f'stats updating project:{p},proctypes={proctypes}')
+        logger.debug(f'stats updating project:{p},proctypes={proctypes}')
         update_project(garjus, p, proctypes)
 
 
@@ -80,7 +80,7 @@ def update_project(garjus, project, proctypes):
 
 def update_assessor(garjus, proj, subj, sess, assr):
     """Update assessor stats."""
-    logger.info(f'uploading assessor stats:{assr}')
+    logger.debug(f'uploading assessor stats:{assr}')
     with tempfile.TemporaryDirectory() as tmpdir:
         try:
             _dir = garjus.get_source_stats(proj, subj, sess, assr, tmpdir)

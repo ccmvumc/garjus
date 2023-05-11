@@ -670,7 +670,7 @@ class Garjus:
         rec = self._rc.export_records(forms=['processing'])
 
         for r in rec:
-            if r['processor_file'] == 'CUSTOM':
+            if r['processor_yamlupload']:
                 dtype = self._get_proctype(r['processor_yamlupload'])
             else:
                 dtype = self._get_proctype(r['processor_file'])

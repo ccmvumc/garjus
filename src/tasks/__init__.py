@@ -12,7 +12,7 @@ def update(garjus, projects=None):
     """Update tasks."""
     for p in (projects or garjus.projects()):
         if p in projects:
-            logger.info(f'updating tasks:{p}')
+            logger.debug(f'updating tasks:{p}')
             _update_project(garjus, p)
 
 
@@ -21,7 +21,7 @@ def _update_project(garjus, project):
     protocols = garjus.processing_protocols(project, download=True)
 
     if len(protocols) == 0:
-        logger.info(f'no processing protocols for project:{project}')
+        logger.debug(f'no processing protocols for project:{project}')
         return
 
     # Get scan/assr/sgp data
@@ -39,7 +39,7 @@ def _update_project(garjus, project):
     for i, row in protocols.iterrows():
         filepath = row['FILE']
 
-        logger.info(f'file:{filepath}')
+        logger.debug(f'file:{filepath}')
 
         user_inputs = row.get('ARGS', None)
         if user_inputs:

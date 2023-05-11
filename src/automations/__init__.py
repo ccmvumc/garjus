@@ -40,7 +40,7 @@ REMBRANDT_SLICE_TIMING = [
 def update(garjus, projects, autos_include=None, autos_exclude=None):
     """Update project progress."""
     for p in projects:
-        logging.info(f'updating automations:{p}')
+        logging.debug(f'updating automations:{p}')
         update_project(garjus, p, autos_include, autos_exclude)
 
 
@@ -57,7 +57,7 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         scan_autos = [x for x in scan_autos if x not in autos_exclude]
 
     if scan_autos:
-        logging.info(f'running scan automations:{project}:{scan_autos}')
+        logging.debug(f'running scan automations:{project}:{scan_autos}')
         _run_scan_automations(scan_autos, garjus, project)
 
     etl_autos = garjus.etl_automations(project)
@@ -71,7 +71,7 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         etl_autos = [x for x in etl_autos if x not in autos_exclude]
 
     for a in etl_autos:
-        logging.info(f'{project}:running automation:{a}')
+        logging.debug(f'{project}:running automation:{a}')
         _run_etl_automation(a, garjus, project)
 
 
@@ -235,7 +235,7 @@ def _run_etl_nihexaminer(project):
         if has_blank:
             continue
 
-        logging.info(f'running nihexaminer ETL:{record_id}:{event_id}')
+        logging.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
         # Get values needed for scoring
         manual_values = {
@@ -348,7 +348,7 @@ def _run_scan_automations(automations, garjus, project):
 
     # Add slice timing
     if project == 'REMBRANDT':
-        logging.info(f'running add_slicetiming:{project}')
+        logging.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
@@ -358,7 +358,7 @@ def _run_scan_automations(automations, garjus, project):
             sites=['VUMC'],
         )
     elif project == 'D3':
-        logging.info(f'running add_slicetiming:{project}')
+        logging.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
@@ -410,7 +410,7 @@ def _run_scan_automations(automations, garjus, project):
             # autoarchive once
 
             # Run
-            logging.info(f'running xnat_auto_archive:{project}:{events}')
+            logging.debug(f'running xnat_auto_archive:{project}:{events}')
             results += xnat_auto_archive.process_project(
                 garjus, scan_table, src_project, project)
 
@@ -435,7 +435,7 @@ def _run_scan_automations(automations, garjus, project):
 
     # d2n
     if garjus.has_dcm2niix() and 'dcm2niix' in automations:
-        logging.info(f'{project}:running dcm2niix')
+        logging.debug(f'{project}:running dcm2niix')
         results += xnat_dcm2niix.process_project(garjus, project)
 
     # Upload results to garjus
@@ -519,6 +519,6 @@ def _load(project, record_id, event_id, data):
     try:
         response = project.import_records([data])
         assert 'count' in response
-        logging.info(f'uploaded:{record_id}:{event_id}')
+        logging.debug(f'uploaded:{record_id}:{event_id}')
     except AssertionError as e:
         logging.error('error uploading', record_id, e)
