@@ -2,7 +2,7 @@
 import logging
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('garjus.issues.audit_imaging')
 
 
 def audit(scan_table, src_labels, dst_labels):
@@ -61,12 +61,12 @@ def _audit_record(record, src_labels, dst_labels):
     elif src_sess not in src_labels:
         # Check that session does actually exist in source project
         msg = f'{src_sess}:not in source project'
-        logger.info(msg)
+        logger.debug(msg)
         result.update({'category': 'MISSING_SESSION', 'description': msg})
     elif dst_sess not in dst_labels:
         # Add issue that auto archive needs to run
         msg = f'{src_sess}:auto archive not working'
-        logger.info(msg)
+        logger.debug(msg)
         result.update({'category': 'NEEDS_AUTO', 'description': msg})
 
     # Add other details

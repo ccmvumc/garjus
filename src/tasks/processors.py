@@ -18,7 +18,7 @@ from dax.processors_v3 import Processor_v3, SgpProcessor, get_resource, get_uri
 from dax.errors import AutoProcessorError
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('garjus.processors')
 
 
 def get_scan_status(project_data, scan_path):
@@ -60,7 +60,7 @@ def get_assr_status(project_data, assr_path):
 
 def verify_artefact_status(proc_inputs, assr_inputs, project_data):
     # Check artefact status
-    logging.debug('checking status of each artefact')
+    logger.debug('checking status of each artefact')
     for artk, artv in list(assr_inputs.items()):
         logger.debug(f'checking status:{artk}')
         inp = proc_inputs[artk]

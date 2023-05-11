@@ -11,6 +11,10 @@ import tempfile
 
 from ..utils_redcap import download_file, field2events
 
+
+logger = logging.getLogger('garjus.automations')
+
+
 D3_SLICE_TIMING = [
     0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
@@ -92,7 +96,7 @@ def _run_etl_automation(automation, garjus, project):
 
     project_redcap = garjus.primary(project)
     if not project_redcap:
-        logging.info('not found')
+        logger.debug(f'primary redcap not found:{project}')
         return
 
     if automation == 'etl_nihexaminer':
@@ -102,14 +106,14 @@ def _run_etl_automation(automation, garjus, project):
         try:
             m = importlib.import_module(f'src.automations.{automation}')
         except ModuleNotFoundError as err:
-            logging.error(f'error loading module:{automation}:{err}')
+            logger.error(f'error loading module:{automation}:{err}')
             return
 
         # Run it
         try:
             results = m.process_project(project_redcap)
         except Exception as err:
-            logging.error(f'{project}:{automation}:failed to run:{err}')
+            logger.error(f'{project}:{automation}:failed to run:{err}')
             return
 
     # Upload results to garjus
@@ -136,7 +140,7 @@ def _run_etl_nihexaminer(project):
     try:
         examiner = importlib.import_module(f'src.automations.etl_nihexaminer')
     except ModuleNotFoundError as err:
-        logging.error(f'error loading module:examiner:{err}')
+        logger.error(f'error loading module:examiner:{err}')
         return
 
     if 'flanker_summfile' in project.field_names:
@@ -202,11 +206,11 @@ def _run_etl_nihexaminer(project):
         event_id = r['redcap_event_name']
 
         if r[done_field]:
-            logging.debug(f'already ETL:{record_id}:{event_id}')
+            logger.debug(f'already ETL:{record_id}:{event_id}')
             continue
 
         if not r[cpt_field]:
-            logging.debug(f'no data file:{record_id}:{event_id}')
+            logger.debug(f'no data file:{record_id}:{event_id}')
             continue
 
         # Check for blanks
@@ -228,14 +232,14 @@ def _run_etl_nihexaminer(project):
 
         for k in check_fields:
             if r[k] == '' and k != done_field:
-                logging.info(f'blank value:{record_id}:{event_id}:{k}')
+                logger.info(f'blank value:{record_id}:{event_id}:{k}')
                 has_blank = True
                 break
 
         if has_blank:
             continue
 
-        logging.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
+        logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
         # Get values needed for scoring
         manual_values = {
@@ -306,16 +310,16 @@ def _run_etl_nihexaminer(project):
 
             try:
                 # Download files from redcap
-                logging.debug(f'download files:{record_id}:{event_id}:{flank_file}')
+                logger.debug(f'download files:{record_id}:{event_id}:{flank_file}')
                 download_file(project, record_id, flank_field, flank_file, event_id=event_id)
-                logging.debug(f'download NBack:{record_id}:{event_id}:{nback_field}')
+                logger.debug(f'download NBack:{record_id}:{event_id}:{nback_field}')
                 download_file(project, record_id, nback_field, nback_file, event_id=event_id)
-                logging.debug(f'download Shift:{record_id}:{event_id}:{shift_field}')
+                logger.debug(f'download Shift:{record_id}:{event_id}:{shift_field}')
                 download_file(project, record_id, shift_field, shift_file, event_id=event_id)
-                logging.debug(f'download CPT:{record_id}:{event_id}:{cpt_field}')
+                logger.debug(f'download CPT:{record_id}:{event_id}:{cpt_field}')
                 download_file(project, record_id, cpt_field, cpt_file, event_id=event_id)
             except Exception as err:
-                logging.error(f'downloading files:{record_id}:{event_id}')
+                logger.error(f'downloading files:{record_id}:{event_id}')
                 continue
 
             try:
@@ -327,7 +331,7 @@ def _run_etl_nihexaminer(project):
                     nback_file,
                     shift_file)
             except Exception as err:
-                logging.error(f'processing examiner:{record_id}:{event_id}:{err}')
+                logger.error(f'processing examiner:{record_id}:{event_id}:{err}')
                 continue
 
         # Load data back to redcap
@@ -348,7 +352,7 @@ def _run_scan_automations(automations, garjus, project):
 
     # Add slice timing
     if project == 'REMBRANDT':
-        logging.debug(f'running add_slicetiming:{project}')
+        logger.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
@@ -358,7 +362,7 @@ def _run_scan_automations(automations, garjus, project):
             sites=['VUMC'],
         )
     elif project == 'D3':
-        logging.debug(f'running add_slicetiming:{project}')
+        logger.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
@@ -373,9 +377,9 @@ def _run_scan_automations(automations, garjus, project):
         xnat_relabel_sessions = importlib.import_module(f'src.automations.xnat_relabel_sessions')
         xnat_relabel_scans = importlib.import_module(f'src.automations.xnat_relabel_scans')
         xnat_dcm2niix = importlib.import_module(f'src.automations.xnat_dcm2niix')
-        logging.debug('modules loaded')
+        logger.debug('modules loaded')
     except ModuleNotFoundError as err:
-        logging.error(f'error loading scan automations:{err}')
+        logger.error(f'error loading scan automations:{err}')
         return
 
     if 'xnat_auto_archive' in automations and project_redcap and garjus.has_dcm2niix():
@@ -410,7 +414,7 @@ def _run_scan_automations(automations, garjus, project):
             # autoarchive once
 
             # Run
-            logging.debug(f'running xnat_auto_archive:{project}:{events}')
+            logger.debug(f'running xnat_auto_archive:{project}:{events}')
             results += xnat_auto_archive.process_project(
                 garjus, scan_table, src_project, project)
 
@@ -420,7 +424,7 @@ def _run_scan_automations(automations, garjus, project):
         sess_relabel = _session_relabels(scan_data, site_data)
 
         # Run it
-        logging.debug(f'{project}:running session relabel')
+        logger.debug(f'{project}:running session relabel')
         results += xnat_relabel_sessions.process_project(
             garjus.xnat(), project, sess_relabel, sess_replace)
 
@@ -429,13 +433,13 @@ def _run_scan_automations(automations, garjus, project):
         proj_scanmap = _parse_scanmap(proj_scanmap)
 
         # Run it
-        logging.debug(f'{project}:running scan relabel:{proj_scanmap}')
+        logger.debug(f'{project}:running scan relabel:{proj_scanmap}')
         results += xnat_relabel_scans.process_project(
             garjus.xnat(), project, proj_scanmap)
 
     # d2n
     if garjus.has_dcm2niix() and 'dcm2niix' in automations:
-        logging.debug(f'{project}:running dcm2niix')
+        logger.debug(f'{project}:running dcm2niix')
         results += xnat_dcm2niix.process_project(garjus, project)
 
     # Upload results to garjus
@@ -468,7 +472,7 @@ def _make_scan_table(
     try:
         rec = project.export_records(fields=fields, events=events)
     except Exception as err:
-        logging.error(err)
+        logger.error(err)
         return []
 
     # Only if date is entered
@@ -519,6 +523,6 @@ def _load(project, record_id, event_id, data):
     try:
         response = project.import_records([data])
         assert 'count' in response
-        logging.debug(f'uploaded:{record_id}:{event_id}')
+        logger.debug(f'uploaded:{record_id}:{event_id}')
     except AssertionError as e:
-        logging.error('error uploading', record_id, e)
+        logger.error('error uploading', record_id, e)

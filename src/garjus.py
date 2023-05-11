@@ -434,7 +434,7 @@ class Garjus:
         """Set Session Type in XNAT."""
         (s_proj, s_subj, s_sess) = src.split('/')
 
-        logging.info(f'{s_proj}:{s_sess}:setting session type:{sesstype}')
+        logger.debug(f'{s_proj}:{s_sess}:setting session type:{sesstype}')
 
         self._xnat.select_session(s_proj, s_subj, s_sess).attrs.set(
             'session_type', sesstype)
@@ -451,7 +451,7 @@ class Garjus:
         """Set site in XNAT."""
         (s_proj, s_subj, s_sess) = src.split('/')
 
-        logging.info(f'{s_proj}:{s_sess}:setting site:{site}')
+        logger.debug(f'{s_proj}:{s_sess}:setting site:{site}')
 
         self._xnat.select_session(s_proj, s_subj, s_sess).attrs.set(
             'xnat:imagesessiondata/acquisition_site', site)
@@ -929,7 +929,7 @@ class Garjus:
         if not choices:
             choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
 
-        logger.info(f'updating projects:{projects}:{choices}')
+        logger.debug(f'updating projects:{projects}:{choices}')
 
         if 'automations' in choices:
             logger.info('updating automations')
@@ -1440,7 +1440,7 @@ class Garjus:
         try:
             primary_redcap = utils_redcap.get_redcap(project_id)
         except Exception as err:
-            logger.info(f'failed to load primary redcap:{project}:{err}')
+            logger.debug(f'could not load primary redcap:{project}:{err}')
             primary_redcap = None
 
         return primary_redcap

@@ -39,7 +39,7 @@ def audit(
         # Check for edat file
         if not rec[raw_field]:
             # Missing edat
-            logger.info(f'{subj}:{event}:missing edat')
+            logger.debug(f'{subj}:{event}:missing edat')
             results.append({
                 'category': 'MISSING_EDAT',
                 'subject': subj,
@@ -56,7 +56,7 @@ def audit(
         # Check for converted edat file
         if not rec[tab_field]:
             # Missing converted edat
-            logger.info(f'{subj}:{event}:missing converted edat')
+            logger.debug(f'{subj}:{event}:missing converted edat')
             results.append({
                 'category': 'MISSING_CONVERTED_EDAT',
                 'subject': subj,

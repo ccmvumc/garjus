@@ -3,7 +3,7 @@ import logging
 import importlib
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('garjus.issues')
 
 
 def update(garjus, projects=None):
@@ -17,7 +17,7 @@ def update(garjus, projects=None):
     # Update each project
     for p in (projects or garjus.projects()):
         if p in projects:
-            logger.info(f'updating issues:{p}')
+            logger.debug(f'updating issues:{p}')
             update_project(garjus, p, unmatched[p])
 
 
@@ -55,7 +55,7 @@ def _unmatched(garjus):
 
     # Find unmatched in each source project
     for src_project, dst_projects in src2dst.items():
-        logger.info(f'finding unmatched sessions:{src_project}')
+        logger.debug(f'finding unmatched sessions:{src_project}')
         src_labels = garjus.session_labels(src_project)
         src_ignore = src2ignore[src_project]
 
@@ -73,7 +73,7 @@ def _unmatched(garjus):
 
         # Create an issue for each dst project, we don't know which is the dst
         for sess in src_unmatched:
-            logger.info(f'unmatched session:{sess}')
+            logger.debug(f'unmatched session:{sess}')
             for dst_project in dst_projects:
                 unmatched[dst_project].append(sess)
 
@@ -220,22 +220,22 @@ def _add_issues(garjus, records, project):
 
     # Upload new records
     if new_issues:
-        logger.info(f'uploading {len(new_issues)} new issues')
+        logger.debug(f'uploading {len(new_issues)} new issues')
         garjus.add_issues(new_issues)
     else:
-        logger.info('no new issues to upload')
+        logger.debug('no new issues to upload')
 
     if has_errors:
-        logger.info(f'errors during audit, not closing old issues')
+        logger.debug(f'errors during audit, not closing old issues')
         return
 
     # Close fixed issues
     fixed_issues = _find_fixed(cur_issues, records)
     if fixed_issues:
-        logger.info(f'setting {len(fixed_issues)} resolved issues to complete')
+        logger.debug(f'setting {len(fixed_issues)} resolved issues to complete')
         garjus.close_issues(fixed_issues)
     else:
-        logger.info('no resolved issues to complete')
+        logger.debug('no resolved issues to complete')
 
 
 def _find_new(issues, records):

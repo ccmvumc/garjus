@@ -16,7 +16,7 @@ def process_project(
     # slicetiming is an list of floats
     results = []
 
-    logging.info(f'loading data:{project}')
+    logging.debug(f'xnat_add_slicetiming:loading data:{project}')
     df = garjus.scans(projects=[project])
 
     # Filter

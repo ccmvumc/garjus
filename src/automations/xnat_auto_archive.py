@@ -7,6 +7,9 @@ import logging
 # skips the prearchive to avoid timeout problems moving large sessions.
 
 
+logger = logging.getLogger('garjus.automations.xnat_auto_archive')
+
+
 def process_project(
     garjus,
     scan_table,
@@ -22,7 +25,7 @@ def process_project(
 
     # Process each record
     for r in scan_table:
-        logging.debug(f'xnat_auto_archive:{r}')
+        logger.debug(f'xnat_auto_archive:{r}')
         src_subj = r['src_subject']
         src_sess = r['src_session']
         dst_subj = r['dst_subject']
@@ -39,17 +42,17 @@ def process_project(
         # Check if session already exists in destination project
         if dst_sess in dst_labels:
             # Note that we don't check the other values in redcap
-            logging.debug(f'session exists on XNAT:{dst_sess}')
+            logger.debug(f'session exists on XNAT:{dst_sess}')
             continue
 
         # Check that session does exist in source project
         if src_sess not in src_labels:
-            logging.info(f'session not on XNAT:{src_sess}:{dst_subj}')
+            logger.debug(f'session not on XNAT:{src_sess}:{dst_subj}')
             continue
 
         # TODO: check last_modified and wait until it's been 1 hour
 
-        logging.info('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
+        logger.debug('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
             src_proj,
             src_subj,
             src_sess,

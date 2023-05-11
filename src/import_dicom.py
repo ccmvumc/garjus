@@ -30,11 +30,14 @@ from zipfile import ZipFile
 # -set date, tracer, scan type, description
 
 
+logger = logging.getLogger('garjus.import_dicom')
+
+
 def import_dicom(garjus, src, dst):
-    logging.info(f'uploading from:{src}')
+    logger.debug(f'uploading from:{src}')
 
     (proj, subj, sess) =  dst.split('/')
-    logging.info(f'uploading to:{proj},{subj},{sess}')
+    logger.debug(f'uploading to:{proj},{subj},{sess}')
 
     if src.endswith('.zip'):
         import_dicom_zip(garjus, src, proj, subj, sess)
@@ -44,10 +47,10 @@ def import_dicom(garjus, src, dst):
     elif os.path.isdir(src):
         import_dicom_dir(garjus, src, proj, subj, sess)
     else:
-        logging.error(f'unsupported source specified:{src}')
+        logger.error(f'unsupported source specified:{src}')
         return
 
-    logging.info('Please Note! only DICOM that successfullly converts\
+    logger.info('Please Note! only DICOM that successfullly converts\
         to NIFTI is uploaded as DICOMZIP')
 
 

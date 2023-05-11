@@ -9,6 +9,10 @@ import glob
 from .. import utils_dcm2nii
 from .. import utils_xnat
 
+
+logger = logging.getLogger('garjus.automations.xnat_dcm2niix')
+
+
 def process_project(
     garjus,
     project,
@@ -16,7 +20,7 @@ def process_project(
     """xnat dcm2niix."""
     results = []
 
-    logging.info(f'loading data:{project}')
+    logger.debug(f'loading data:{project}')
     df = garjus.scans(projects=[project])
 
     # Check each scan
@@ -24,18 +28,18 @@ def process_project(
         full_path = scan['full_path']
 
         if 'NIFTI' in scan['RESOURCES']:
-            logging.debug(f'NIFTI exists:{project}:{scan.SESSION}:{scan.SCANID}')
+            logger.debug(f'NIFTI exists:{project}:{scan.SESSION}:{scan.SCANID}')
             continue
 
         if 'JSON' in scan['RESOURCES']:
-            logging.debug(f'JSON exists:{project}:{scan.SESSION}:{scan.SCANID}')
+            logger.debug(f'JSON exists:{project}:{scan.SESSION}:{scan.SCANID}')
             continue
 
         if 'DICOMZIP' not in scan['RESOURCES']:
-            logging.debug(f'no DICOMZIP:{full_path}')
+            logger.debug(f'no DICOMZIP:{full_path}')
             continue
 
-        logging.info(f'convert DICOMZIP to NIFTI:{full_path}')
+        logger.info(f'convert DICOMZIP to NIFTI:{full_path}')
 
         res = garjus.xnat().select(f'{full_path}/resources/DICOMZIP')
 
@@ -59,7 +63,7 @@ def process_project(
             unzipped_dir.mkdir()
 
             # Unzip the zip to the temp folder
-            logging.info(f'unzip {zip_path} to {unzipped_dir}')
+            logger.info(f'unzip {zip_path} to {unzipped_dir}')
             sb.run(['unzip', '-q', zip_path, '-d', unzipped_dir])
 
             # convert to NIFTI
@@ -83,13 +87,13 @@ def _d2n(dicomdir, scan_object):
     # check that it hasn't been converted yet
     nifti_count = len(glob.glob(os.path.join(dicomdir, '*.nii.gz')))
     if nifti_count > 0:
-        logging.info(f'nifti exists:{dicomdir}')
+        logger.info(f'nifti exists:{dicomdir}')
         return None
 
     # convert
     niftis = utils_dcm2nii.dicom2nifti(dicomdir)
     if not niftis:
-        logging.info(f'nothing converted:{dicomdir}')
+        logger.info(f'nothing converted:{dicomdir}')
         return None
 
     # upload the converted files, NIFTI/JSON/BVAL/BVEC
@@ -110,17 +114,17 @@ def _d2n(dicomdir, scan_object):
 
     # More than one NIFTI
     if len(nifti_list) > 1:
-        logging.warning('dcm2niix:multiple NIFTI')
+        logger.warning('dcm2niix:multiple NIFTI')
 
     # Upload the NIFTIs
-    logging.info(f'uploading NIFTI:{nifti_list}')
+    logger.info(f'uploading NIFTI:{nifti_list}')
     utils_xnat.upload_files(nifti_list, scan_object.resource('NIFTI'))
 
     if os.path.isfile(bval_path) and os.path.isfile(bvec_path):
-        logging.info('uploading BVAL/BVEC')
+        logger.info('uploading BVAL/BVEC')
         utils_xnat.upload_file(bval_path, scan_object.resource('BVAL'))
         utils_xnat.upload_file(bvec_path, scan_object.resource('BVEC'))
 
     if os.path.isfile(json_path):
-        logging.info(f'uploading JSON:{json_path}')
+        logger.info(f'uploading JSON:{json_path}')
         utils_xnat.upload_file(json_path, scan_object.resource('JSON'))

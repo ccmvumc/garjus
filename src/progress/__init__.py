@@ -13,11 +13,14 @@ import logging
 from .report import make_project_report
 
 
+logger = logging.getLogger('garjus.progress')
+
+
 def update(garjus, projects=None):
     """Update project progress."""
     for p in (projects or garjus.projects()):
         if p in projects:
-            logging.info(f'updating progress:{p}')
+            logger.debug(f'updating progress:{p}')
             update_project(garjus, p)
 
 
@@ -34,10 +37,10 @@ def update_project(garjus, project):
     # check that each project has report for current month with PDF and zip
     has_cur = any(d.get('progress_name') == cur_progress for d in progs)
     if not has_cur:
-        logging.debug(f'making new progress record:{project}:{cur_progress}')
+        logger.debug(f'making new progress record:{project}:{cur_progress}')
         make_progress(garjus, project, cur_progress, now)
     else:
-        logging.debug(f'progress record exists:{project}:{cur_progress}')
+        logger.debug(f'progress record exists:{project}:{cur_progress}')
 
 
 def make_progress(garjus, project, cur_progress, now):
