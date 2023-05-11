@@ -932,11 +932,11 @@ class Garjus:
         logger.debug(f'updating projects:{projects}:{choices}')
 
         if 'automations' in choices:
-            logger.info('updating automations')
+            logger.debug('updating automations')
             update_automations(self, projects)
 
         if 'issues' in choices:
-            logger.info('updating issues')
+            logger.debug('updating issues')
             update_issues(self, projects)
             logger.debug('deleting old issues')
             self.delete_old_issues(projects)
@@ -944,26 +944,26 @@ class Garjus:
         if 'stats' in choices:
             # Only run on intersect of specified projects and projects with
             # stats, such that if the list is empty, nothing will run
-            logger.info('updating stats')
+            logger.debug('updating stats')
             _projects = [x for x in projects if x in self.stats_projects()]
             update_stats(self, _projects)
 
         if 'progress' in choices:
             # confirm each project has report for current month with PDF & zip
-            logger.info('updating progress')
+            logger.debug('updating progress')
             update_progress(self, projects)
 
         if 'compare' in choices:
             # confirm each project has report for current month
-            logger.info('updating compare')
+            logger.debug('updating compare')
             update_compare(self, projects)
 
         if 'tasks' in choices:
-            logger.info('updating tasks')
+            logger.debug('updating tasks')
             update_tasks(self, projects)
 
         if 'analyses' in choices:
-            logger.info('updating analyses')
+            logger.debug('updating analyses')
             update_analyses(self, projects)
 
     def report(self, project):
