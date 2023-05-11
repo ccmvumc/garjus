@@ -938,7 +938,7 @@ class Garjus:
         if 'issues' in choices:
             logger.info('updating issues')
             update_issues(self, projects)
-            logger.info('deleting old issues')
+            logger.debug('deleting old issues')
             self.delete_old_issues(projects)
 
         if 'stats' in choices:

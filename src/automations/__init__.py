@@ -232,7 +232,7 @@ def _run_etl_nihexaminer(project):
 
         for k in check_fields:
             if r[k] == '' and k != done_field:
-                logger.info(f'blank value:{record_id}:{event_id}:{k}')
+                logger.debug(f'blank value:{record_id}:{event_id}:{k}')
                 has_blank = True
                 break
 
