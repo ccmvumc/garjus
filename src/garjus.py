@@ -880,16 +880,16 @@ class Garjus:
             d = {'PROJECT': r[self._dfield()]}
 
             # Find the yaml file
-            if r['processor_yamlupload'] and download:
-                filename = os.path.join(self._tempdir, r['processor_yamlupload'])
-                filepath = utils_redcap.download_file(
-                    self._rc,
-                    project,
-                    'processor_yamlupload',
-                    filename,
-                    repeat_id=r['redcap_repeat_instance'])
-            elif r['processor_file'] == 'CUSTOM':
+            if r['processor_yamlupload']:
                 filepath = r['processor_yamlupload']
+                if download:
+                    filename = os.path.join(self._tempdir, r['processor_yamlupload'])
+                    filepath = utils_redcap.download_file(
+                        self._rc,
+                        project,
+                        'processor_yamlupload',
+                        filename,
+                        repeat_id=r['redcap_repeat_instance'])
             else:
                 filepath = r['processor_file']
 
@@ -976,6 +976,19 @@ class Garjus:
 
         logger.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
+
+
+     def export_pdf(self, project, ptype):
+        """Create a PDF report."""
+        pdf_file = f'{project}_{ptype}.pdf'
+
+        if os.path.exists(pdf_file):
+            logger.info(f'{pdf_file} exists, delete or rename.')
+            return
+
+        logger.info(f'TBD:writing report to file:{pdf_file}.')
+        # TODO: make_proc_report(self, project, ptype, pdf_file)
+
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""

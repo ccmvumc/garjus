@@ -159,6 +159,15 @@ def import_dicom(src, dst):
     g.import_dicom(src, dst)
 
 
+@cli.command('pdf')
+@click.argument('src', required=True)
+@click.option('--project', '-p', 'project', required=True)
+def export_pdf(src, project):
+    click.echo('garjus! pdf')
+    g = Garjus()
+    g.pdf(src, project)
+
+
 @cli.command('dashboard')
 def dashboard():
     import sys
