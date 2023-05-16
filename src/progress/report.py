@@ -522,8 +522,9 @@ def _add_other_page(pdf, sessions):
 
 def _add_fmriqa_pages(pdf, info, proctype):
     # TODO: get the stats data by scan type using inputs field to map to scan
-
-    _add_stats_page(pdf, info['stats'], proctype)
+    stats = info['stats']
+    stat_data = stats[stats.PROCTYPE == proctype]
+    _add_stats_page(pdf, stat_data, proctype)
 
 
 def _add_stats_page(pdf, stats, proctype):
