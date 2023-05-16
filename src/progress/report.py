@@ -520,6 +520,12 @@ def _add_other_page(pdf, sessions):
     return pdf
 
 
+def _add_fmriqa_pages(pdf, info, proctype):
+    # TODO: get the stats data by scan type using inputs field to map to scan
+
+    _add_stats_page(pdf, info['stats'], proctype)
+
+
 def _add_stats_page(pdf, stats, proctype):
     pdf.add_page()
     pdf.set_font('helvetica', size=12)
@@ -992,7 +998,10 @@ def make_pdf(info, filename):
                 logging.debug(f'no stats for proctype:{s}')
             else:
                 logging.debug(f'add stats page:{s}')
-                _add_stats_page(pdf, stat_data, s)
+                if proctype == 'fmriqa_v4':
+                    _add_fmriqa_pages(pdf, info, s)
+                else:
+                    _add_stats_page(pdf, stat_data, s)
 
     # Phantom pages
     if len(info['phantoms']) > 0:
