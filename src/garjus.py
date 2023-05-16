@@ -897,7 +897,7 @@ class Garjus:
                 # Prepend lib location
                 filepath = os.path.join(self._yamldir, filepath)
 
-            if not os.path.isfile(filepath):
+            if download and not os.path.isfile(filepath):
                 logger.debug(f'file not found:{filepath}, download={download}')
                 continue
 
