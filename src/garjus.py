@@ -977,8 +977,7 @@ class Garjus:
         logger.info(f'writing report to file:{pdf_file}.')
         make_project_report(self, project, pdf_file)
 
-
-     def export_pdf(self, project, ptype):
+    def export_pdf(self, project, ptype):
         """Create a PDF report."""
         pdf_file = f'{project}_{ptype}.pdf'
 
@@ -988,7 +987,6 @@ class Garjus:
 
         logger.info(f'TBD:writing report to file:{pdf_file}.')
         # TODO: make_proc_report(self, project, ptype, pdf_file)
-
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
