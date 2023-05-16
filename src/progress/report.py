@@ -998,7 +998,7 @@ def make_pdf(info, filename):
                 logging.debug(f'no stats for proctype:{s}')
             else:
                 logging.debug(f'add stats page:{s}')
-                if proctype == 'fmriqa_v4':
+                if s == 'fmriqa_v4':
                     _add_fmriqa_pages(pdf, info, s)
                 else:
                     _add_stats_page(pdf, stat_data, s)
