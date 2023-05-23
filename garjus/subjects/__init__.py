@@ -2,7 +2,7 @@
 import pandas as pd
 
 
-def load_subjects(garjus, project):
+def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
     
     if not project_redcap:
@@ -109,6 +109,9 @@ def load_subjects(garjus, project):
         df['AGE'] = (
             df[date_field]  - df[dob_field]
         ).astype('<m8[Y]').astype('int').astype('str')
+
+        if include_dob:
+            df['DOB'] = df[dob_field]
 
     # Exclude incomplete data
     df = df.dropna()

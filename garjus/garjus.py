@@ -27,6 +27,7 @@ from .progress import update as update_progress, make_project_report
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
+from .image03 import update as update_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME
@@ -464,16 +465,15 @@ class Garjus:
             session=s_sess,
             result='COMPLETE')
 
-    def scans(self, projects=None, scantypes=None, modalities='MR'):
+    def scans(self, projects=None, scantypes=None, modalities=None, sites=None):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
             projects = self.projects()
 
-        data = self._load_scan_data(projects, scantypes, modalities)
+        data = self._load_scan_data(projects, scantypes, modalities, sites)
 
         # Return as dataframe
         return pd.DataFrame(data, columns=self.column_names('scans'))
-
 
     def phantoms(self, project):
         """Query XNAT for all scans and return a dictionary of scan info."""
@@ -588,10 +588,10 @@ class Garjus:
         return self._projects
 
 
-    def subjects(self, project):
+    def subjects(self, project, include_dob=False):
         """Return subjects for project."""
 
-        return load_subjects(self, project)
+        return load_subjects(self, project, include_dob)
 
     def stattypes(self, project):
         """Get list of projects stat types."""
@@ -697,7 +697,7 @@ class Garjus:
 
         return types
 
-    def _load_scan_data(self, projects=None, scantypes=None, modalities=None):
+    def _load_scan_data(self, projects=None, scantypes=None, modalities=None, sites=None):
         """Get scan info from XNAT as list of dicts."""
         scans = []
         uri = self.scan_uri
@@ -724,6 +724,14 @@ class Garjus:
         # Filter by scan type
         if scantypes:
             scans = [x for x in scans if x['SCANTYPE'] in scantypes]
+
+        # Filter by modality
+        if modalities:
+            scans = [x for x in scans if x['MODALITY'] in modalities]
+
+        # Filter by site
+        if sites:
+            scans = [x for x in scans if x['SITE'] in sites]
 
         return scans
 
@@ -1767,6 +1775,9 @@ class Garjus:
             # Upload them
             logger.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
             import_dicom_dir(self, temp_dir, proj, subj, sess)
+
+    def image03(self, project):
+        update_image03(self, [project])
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

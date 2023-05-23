@@ -82,7 +82,7 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
 def _parse_scanmap(scanmap):
     """Parse scan map stored as string into map."""
     # Parse multiline string of delimited key value pairs into dictionary
-    scanmap = dict(x.strip().split(':') for x in scanmap.split('\n'))
+    scanmap = dict(x.strip().split(':',1) for x in scanmap.split('\n'))
 
     # Remove extra whitespace from keys and values
     scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}

@@ -168,6 +168,14 @@ def export_pdf(src, project):
     g.pdf(src, project)
 
 
+@cli.command('image03')
+@click.option('--project', '-p', 'project', required=True)
+def image03(project):
+    click.echo('garjus! image03')
+    g = Garjus()
+    g.image03(project)
+
+
 @cli.command('dashboard')
 def dashboard():
     import sys
