@@ -18,6 +18,10 @@ import plotly.express as px
 from fpdf import FPDF
 from PIL import Image
 
+
+logger = logging.getLogger('garjus.progress.report')
+
+
 # These are used to set colors of graphs
 RGB_DKBLUE = 'rgb(59,89,152)'
 RGB_BLUE = 'rgb(66,133,244)'
@@ -192,7 +196,12 @@ def _draw_counts(pdf, sessions, rangetype=None):
         dfs = df[df.SITE == cur_site]
         _txt = cur_site
 
+        if len(_txt) > 9:
+            pdf.set_font('helvetica', size=11)
+
         pdf.cell(**_kwargs_s, txt=_txt)
+
+        pdf.set_font('helvetica', size=18)
 
         # Count each type for this site
         for cur_type in type_list:
@@ -243,7 +252,7 @@ def plot_timeline(df, startdate=None, enddate=None):
 
         # Nothing to plot so go to next session type
         if dfs.empty:
-            logging.debug('nothing to plot:{}:{}'.format(mod, sesstype))
+            logger.debug('nothing to plot:{}:{}'.format(mod, sesstype))
             continue
 
         # markers symbols, see https://plotly.com/python/marker-style/
@@ -293,7 +302,7 @@ def plot_timeline(df, startdate=None, enddate=None):
                 _row,
                 _col)
         except Exception as err:
-            logging.error(err)
+            logger.error(err)
             return None
 
     # show lines so we can better distinguish categories
@@ -498,7 +507,7 @@ def _add_other_page(pdf, sessions):
     other_sessions = sessions[sessions.MODALITY != 'MR'].copy()
 
     if len(other_sessions) == 0:
-        logging.debug('no other modalities sessions, skipping page')
+        logger.debug('no other modalities sessions, skipping page')
         return
 
     # Start a new page
@@ -516,6 +525,60 @@ def _add_other_page(pdf, sessions):
     pdf.ln(0.25)
     _draw_counts(pdf, other_sessions, rangetype='lastmonth')
     pdf.ln(1)
+
+    return pdf
+
+def _add_wml_page(pdf, info):
+
+    # Transform the data to row per session with columsn for LST, SAMSEG wml
+    stats = info['stats']
+
+    lst_data = stats[stats.PROCTYPE == 'LST_v1']
+    sam_data = stats[stats.PROCTYPE == 'SAMSEG_v1']
+
+    if lst_data.empty:
+        logger.debug('no LST data')
+        return
+
+    if sam_data.empty:
+        logger.debug('no SAMSEG data')
+        return
+
+    df = pd.merge(lst_data, sam_data, left_on='SESSION', right_on='SESSION')
+
+    pdf.add_page()
+    pdf.cell(txt='LST vs SAMSEG', ln=1)
+
+    fig = plotly.subplots.make_subplots(rows=1, cols=1)
+
+    fig.append_trace(
+        go.Scatter(
+            x=df['wml_volume_x'].astype(float),
+            y=df['samseg_lesions_y'].astype(float)/1000.0,
+            mode='markers',
+        ), 1, 1)
+
+    _max = max(
+        df['wml_volume_x'].astype(float).max(),
+        df['samseg_lesions_y'].astype(float).max() / 1000.0,
+    )
+    _max = max(_max, 50)
+
+    fig.add_trace(
+        go.Scatter(
+            x=[0, _max],
+            y=[0, _max],
+            mode='lines',
+            name='',
+            line_color='grey'), 1, 1)
+
+    fig.update_yaxes(autorange=True)
+    fig.update_layout(showlegend=False)
+    fig.update_layout(xaxis_title="LST wml (mL)", yaxis_title="SAMSEG lesions (mL)")
+
+    # Draw to figure as image on PDF
+    _image= Image.open(io.BytesIO(fig.to_image(format="png")))
+    pdf.image(_image, x=0.75, w=7)
 
     return pdf
 
@@ -563,7 +626,7 @@ def _add_qa_page(pdf, scandata, assrdata, sesstype):
 
     if not scan_image and not assr_image:
         # skip this page b/c there's nothing to plot
-        logging.debug('skipping page, nothing to plot:{}'.format(sesstype))
+        logger.debug('skipping page, nothing to plot:{}'.format(sesstype))
         return pdf
 
     pdf.add_page()
@@ -752,7 +815,7 @@ def plot_qa(dfp):
 
     # Check for empty data
     if len(dfp) == 0:
-        logging.debug('dfp empty data')
+        logger.debug('dfp empty data')
         return None
 
     # use pandas melt function to unpivot our pivot table
@@ -769,7 +832,7 @@ def plot_qa(dfp):
 
     # Check for empty data
     if len(df) == 0:
-        logging.debug('df empty data')
+        logger.debug('df empty data')
         return None
 
     # We use fill_value to replace nan with 0
@@ -840,11 +903,11 @@ def plot_stats(df, proctype):
     box_width = 250
     min_box_count = 4
 
-    logging.debug('plot_stats:{}'.format(proctype))
+    logger.debug('plot_stats:{}'.format(proctype))
 
     # Check for empty data
     if len(df) == 0:
-        logging.debug('empty data, using empty figure')
+        logger.debug('empty data, using empty figure')
         fig = go.Figure()
         _png = fig.to_image(format="png")
         image = Image.open(io.BytesIO(_png))
@@ -865,6 +928,7 @@ def plot_stats(df, proctype):
     # Determine how many boxplots we're making, depends on how many vars, use
     # minimum so graph doesn't get too small
     box_count = len(var_list)
+    site_count = len(df['SITE'].unique())
 
     if box_count < 3:
         box_width = 500
@@ -872,6 +936,10 @@ def plot_stats(df, proctype):
     elif box_count < 6:
         box_width = 333
         min_box_count = 3
+
+    if site_count > 3:
+        box_width = 500
+        min_box_count = 2
 
     if box_count < min_box_count:
         box_count = min_box_count
@@ -881,7 +949,7 @@ def plot_stats(df, proctype):
     # Horizontal spacing cannot be greater than (1 / (cols - 1))
     hspacing = 1 / (box_count * 4)
 
-    logging.debug(f'{box_count}, {min_box_count}, {graph_width}, {hspacing}')
+    logger.debug(f'{box_count}, {min_box_count}, {graph_width}, {hspacing}')
 
     # Make the figure with 1 row and a column for each var we are plotting
     var_titles = [x[:22] for x in var_list]
@@ -895,7 +963,7 @@ def plot_stats(df, proctype):
     for i, var in enumerate(var_list):
 
         # Create boxplot for this var and add to figure
-        logging.debug('plotting var:{}'.format(var))
+        logger.debug('plotting var:{}'.format(var))
 
         _row = 1
         _col = i + 1
@@ -906,9 +974,23 @@ def plot_stats(df, proctype):
                 x=df['SITE'],
                 boxpoints='all',
                 text=df['ASSR'],
+                boxmean=True,
             ),
             _row,
             _col)
+
+
+        # Plot horizontal line at median
+        _median = df[var].str.strip('%').astype(float).median()
+        fig.add_trace(
+            go.Scatter(
+                x=df['SITE'],
+                y=[_median]*len(df),
+                mode='lines',
+                name='',
+                fillcolor='red',
+                line_color='grey'),
+            _row, _col)
 
         # fig.update_layout(yaxis=dict(tickmode='linear', tick0=0.5, dtick=0.75))
         # fig.update_layout(yaxis=dict(showexponent='all', exponentformat='e'))
@@ -917,11 +999,11 @@ def plot_stats(df, proctype):
         # ax1.set_xticks(range(0,len(x), 100))    #set interval here
 
         if var.startswith('con_') or var.startswith('inc_'):
-            logging.debug('setting beta range:{}'.format(var))
+            logger.debug('setting beta range:{}'.format(var))
             _yaxis = 'yaxis{}'.format(i + 1)
             fig['layout'][_yaxis].update(range=[-1, 1], autorange=False)
         else:
-            # logging.debug('setting autorange')
+            # logger.debug('setting autorange')
             pass
 
     # Move the subtitles to bottom instead of top of each subplot
@@ -943,7 +1025,7 @@ def plot_stats(df, proctype):
 
 def make_pdf(info, filename):
     """Make PDF from info, save to filename."""
-    logging.debug('making PDF')
+    logger.debug('making PDF')
 
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
@@ -951,26 +1033,26 @@ def make_pdf(info, filename):
     pdf.set_project(info['project'])
 
     # Add first page showing MRIs
-    logging.debug('adding first page')
+    logger.debug('adding first page')
     _add_page1(pdf, info['sessions'])
 
     # Add other Modalities, counts for each session type
-    logging.debug('adding other page')
+    logger.debug('adding other page')
     _add_other_page(pdf, info['sessions'])
 
     # Timeline
-    logging.debug('adding timeline page')
+    logger.debug('adding timeline page')
     _add_timeline_page(pdf, info)
 
     # Session type pages - counts per scans, counts per assessor
-    logging.debug('adding MR qa pages')
+    logger.debug('adding MR qa pages')
 
     mr_sessions = info['sessions'].copy()
     mr_sessions = mr_sessions[mr_sessions.MODALITY == 'MR']
 
     for curtype in mr_sessions.SESSTYPE.unique():
 
-        logging.debug('add_qa_page:{}'.format(curtype))
+        logger.debug('add_qa_page:{}'.format(curtype))
 
         # Get the scan and assr data
         scandf = info['scanqa'].copy()
@@ -989,27 +1071,30 @@ def make_pdf(info, filename):
 
     # Add stats pages
     if info['stats'].empty:
-        logging.debug('without stats')
+        logger.debug('without stats')
     else:
         stats = info['stats']
         for s in info['stattypes']:
             # Limit the data to this proctype
             stat_data = stats[stats.PROCTYPE == s]
             if stat_data.empty:
-                logging.debug(f'no stats for proctype:{s}')
+                logger.debug(f'no stats for proctype:{s}')
             else:
-                logging.debug(f'add stats page:{s}')
+                logger.debug(f'add stats page:{s}')
                 if s == 'fmriqa_v4':
                     _add_fmriqa_pages(pdf, info, s)
                 else:
                     _add_stats_page(pdf, stat_data, s)
 
+    # LST vs SAMSEG
+    _add_wml_page(pdf, info)
+
     # Phantom pages
     if len(info['phantoms']) > 0:
-        logging.debug('adding phantom page')
+        logger.debug('adding phantom page')
         _add_phantom_page(pdf, info)
     else:
-        logging.debug('no phantom page')
+        logger.debug('no phantom page')
 
     # QA/Jobs/Issues counts
     _add_activity_page(pdf, info)
@@ -1021,14 +1106,15 @@ def make_pdf(info, filename):
     _add_graph_page(pdf, info)
 
     # Settings
-    _add_settings_page(pdf, info)
+    if False:
+        _add_settings_page(pdf, info)
 
     # Save to file
-    logging.debug('saving PDF to file:{}'.format(pdf.filename))
+    logger.debug('saving PDF to file:{}'.format(pdf.filename))
     try:
         pdf.output(pdf.filename)
     except Exception as err:
-        logging.error('error while saving PDF:{}:{}'.format(pdf.filename, err))
+        logger.error('error while saving PDF:{}:{}'.format(pdf.filename, err))
 
     return True
 
@@ -1211,7 +1297,7 @@ def data2zip(subjects, stats, filename):
 
         # Save subjects csv
         csv_file = os.path.join(data_dir, f'subjects.csv')
-        logging.info(f'saving subjects csv:{csv_file}')
+        logger.info(f'saving subjects csv:{csv_file}')
         subjects.to_csv(csv_file)
 
         # Save a csv for each proc type
@@ -1223,14 +1309,14 @@ def data2zip(subjects, stats, filename):
 
             # Save file for this type
             csv_file = os.path.join(data_dir, f'{proctype}.csv')
-            logging.info(f'saving csv:{proctype}:{csv_file}')
+            logger.info(f'saving csv:{proctype}:{csv_file}')
             dft.to_csv(csv_file, index=False)
 
         # Create zip file of dir of csv files
         shutil.make_archive(data_dir, 'zip', data_dir)
 
         # Save it outside of temp dir
-        logging.info(f'saving zip:{filename}')
+        logger.info(f'saving zip:{filename}')
         shutil.copy(zip_file, filename)
 
 
