@@ -25,5 +25,5 @@ setup(
         "sphinx",
         "pydot"
     ],
-    entry_points={"console_scripts": ["garjus = src.cli:cli"]},
+    entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
 )
