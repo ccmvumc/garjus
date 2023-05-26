@@ -104,7 +104,7 @@ def _run_etl_automation(automation, garjus, project):
     else:
         # load the automation
         try:
-            m = importlib.import_module(f'src.automations.{automation}')
+            m = importlib.import_module(f'garjus.automations.{automation}')
         except ModuleNotFoundError as err:
             logger.error(f'error loading module:{automation}:{err}')
             return
@@ -138,7 +138,7 @@ def _run_etl_nihexaminer(project):
 
     # load the automation
     try:
-        examiner = importlib.import_module(f'src.automations.etl_nihexaminer')
+        examiner = importlib.import_module(f'garjus.automations.etl_nihexaminer')
     except ModuleNotFoundError as err:
         logger.error(f'error loading module:examiner:{err}')
         return
@@ -354,7 +354,7 @@ def _run_scan_automations(automations, garjus, project):
     if project == 'REMBRANDT':
         logger.debug(f'running add_slicetiming:{project}')
 
-        slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
+        slicetiming = importlib.import_module('garjus.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
             project,
             D3_SLICE_TIMING,
@@ -364,7 +364,7 @@ def _run_scan_automations(automations, garjus, project):
     elif project == 'D3':
         logger.debug(f'running add_slicetiming:{project}')
 
-        slicetiming = importlib.import_module('src.automations.xnat_add_slicetiming')
+        slicetiming = importlib.import_module('garjus.automations.xnat_add_slicetiming')
         results += slicetiming.process_project(garjus,
             project,
             D3_SLICE_TIMING,
@@ -373,10 +373,10 @@ def _run_scan_automations(automations, garjus, project):
 
     # load the automations
     try:
-        xnat_auto_archive = importlib.import_module(f'src.automations.xnat_auto_archive')
-        xnat_relabel_sessions = importlib.import_module(f'src.automations.xnat_relabel_sessions')
-        xnat_relabel_scans = importlib.import_module(f'src.automations.xnat_relabel_scans')
-        xnat_dcm2niix = importlib.import_module(f'src.automations.xnat_dcm2niix')
+        xnat_auto_archive = importlib.import_module(f'garjus.automations.xnat_auto_archive')
+        xnat_relabel_sessions = importlib.import_module(f'garjus.automations.xnat_relabel_sessions')
+        xnat_relabel_scans = importlib.import_module(f'garjus.automations.xnat_relabel_scans')
+        xnat_dcm2niix = importlib.import_module(f'garjus.automations.xnat_dcm2niix')
         logger.debug('modules loaded')
     except ModuleNotFoundError as err:
         logger.error(f'error loading scan automations:{err}')

@@ -177,7 +177,7 @@ def _matching_issues(issue1, issue2):
 
 def _audit_edat(project, events, rawfield, convfield, readyfield):
     try:
-        audit_edat = importlib.import_module(f'src.issues.audit_edat')
+        audit_edat = importlib.import_module(f'garjus.issues.audit_edat')
     except ModuleNotFoundError as err:
         logger.error(f'error loading:{err}')
         return
@@ -187,7 +187,7 @@ def _audit_edat(project, events, rawfield, convfield, readyfield):
 
 def _audit_scanning(scan_table, src_project, project):
     try:
-        audit_imaging = importlib.import_module(f'src.issues.audit_imaging')
+        audit_imaging = importlib.import_module(f'garjus.issues.audit_imaging')
     except ModuleNotFoundError as err:
         logger.error(f'error loading:{err}')
         return
