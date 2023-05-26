@@ -23,7 +23,8 @@ setup(
         "dax",
         "click",
         "sphinx",
-        "pydot"
+        "pydot",
+        "plotly",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
 )
