@@ -566,8 +566,7 @@ class Garjus:
             rec,
             columns=['stats_assr', 'stats_name', 'stats_value'])
 
-        # print(df[df.duplicated(['stats_assr', 'stats_name'], keep=False)])
-        # TODO: df = df.drop_duplicates()
+        df = df.drop_duplicates(subset=['stats_assr', 'stats_name'])
 
         # Pivot to row per assessor, col per stats_name, values as stats_value
         dfp = pd.pivot(
