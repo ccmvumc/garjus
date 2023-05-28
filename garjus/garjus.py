@@ -27,7 +27,7 @@ from .progress import update as update_progress, make_project_report
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
-from .image03 import update as update_image03
+from .image03 import update as update_image03, download as download_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME
@@ -1777,6 +1777,9 @@ class Garjus:
 
     def image03(self, project):
         update_image03(self, [project])
+
+    def image03download(self, project, image03_csv, download_dir):
+        download_image03(self, project, image03_csv, download_dir)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

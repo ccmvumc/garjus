@@ -176,6 +176,16 @@ def image03(project):
     g.image03(project)
 
 
+@cli.command('image03download')
+@click.argument('image03_csv', required=True)
+@click.argument('download_dir', required=True)
+@click.option('--project', '-p', 'project', required=True)
+def image03download(project, image03_csv, download_dir):
+    click.echo('garjus! image03download')
+    g = Garjus()
+    g.image03download(project, image03_csv, download_dir)
+
+
 @cli.command('dashboard')
 def dashboard():
     import sys

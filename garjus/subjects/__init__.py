@@ -108,7 +108,7 @@ def load_subjects(garjus, project, include_dob=False):
         df[date_field] = pd.to_datetime(df[date_field])
         df['AGE'] = (
             df[date_field]  - df[dob_field]
-        ).astype('<m8[Y]').astype('int').astype('str')
+        ).values.astype('<m8[Y]').astype('int').astype('str')
 
         if include_dob:
             df['DOB'] = df[dob_field]

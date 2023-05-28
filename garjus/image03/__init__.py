@@ -57,6 +57,10 @@ def update(garjus, projects=None):
             _update_project(garjus, p)
 
 
+def download(garjus, project, image03_csv, download_dir):
+    update_imagedir(garjus, project, image03_csv, download_dir)
+
+
 def _parse_map(mapstring):
     """Parse map stored as string into dictionary."""
 
@@ -80,12 +84,12 @@ def _update_project(garjus, project):
 
     xst2nst = garjus.project_setting(project, 'xst2nst')
     if not xst2nst:
-        print('no xst2nst')
+        logger.debug('no xst2nst')
         return
 
     xst2nei = garjus.project_setting(project, 'xst2nei')
     if not xst2nei:
-        print('no xst2nei')
+        logger.debug('no xst2nei')
         return
 
     logger.debug(f'settings:{project}:xst2nei={xst2nei}:xst2nst={xst2nst}')
@@ -118,7 +122,7 @@ def _download_dicom_zip(scan, zipfile):
         dst_zip = res.get(dstdir, extract=False)
         return dst_zip
     except BadZipFile as err:
-        print('error downloading', str(err))
+        logger.error(f'error downloading:{err}')
         return None
 
 
@@ -209,7 +213,7 @@ def get_image03_df(mr_scans, pet_scans, type_map, exp_map):
         data.append(_pet_info(cur_scan, type_map))
 
     # Initialize with template columns, ignoring first row
-    print('load template from web')
+    logger.debug('load template from web')
     df = pd.read_csv(IMAGE03_TEMPLATE, skiprows=1)
 
     # Append our records
@@ -218,14 +222,54 @@ def get_image03_df(mr_scans, pet_scans, type_map, exp_map):
     return df
 
 
+def update_files(garjus, project, df, download_dir):
+    ecount = 0
+    dcount = 0
+
+    # Merge in xnat info
+    scans = garjus.scans(projects=[project])
+    sessions = scans[['SUBJECT', 'SESSION', 'DATE']].drop_duplicates()
+    sessions['interview_date'] = pd.to_datetime(sessions['DATE']).dt.strftime('%m/%d/%Y')
+
+    df = pd.merge(
+        df, 
+        sessions,
+        how='left',
+        left_on=['src_subject_id', 'interview_date'],
+        right_on=['SUBJECT', 'interview_date'])
+
+    with garjus.xnat() as xnat:
+        for i, f in df.iterrows():
+            # Determine scan label
+            scan_label =  f['image_file'].split('/')[1].split('_')[0]
+
+            # Local file path
+            cur_file = os.path.join(download_dir, f['image_file'])
+            if os.path.exists(cur_file):
+                ecount += 1
+                continue
+
+            # connect to scan
+            scan = xnat.select_scan(
+                project,
+                f['src_subject_id'],
+                f['SESSION'],
+                scan_label)
+
+            # get the file
+            logger.info(f'downloading:{cur_file}')
+            #_download_dicom_zip(scan, cur_file)
+            _touch_dicom_zip(scan, cur_file)
+            dcount += 1
+
+    logger.info(f'{ecount} existing files, {dcount} downloaded files')
+
+
 def same_data(filename, df):
     is_same = False
 
     # Load data from the file
     df2 = pd.read_csv(filename, dtype=str, skiprows=1)
-    print(df2.columns)
-
-    print(df.columns)
 
     # Compare contents
     try:
@@ -233,8 +277,6 @@ def same_data(filename, df):
             is_same = True
     except ValueError:
         pass
-
-    print(df.compare(df2))
 
     # Return the result
     logger.info(f'is_same={is_same}')
@@ -278,7 +320,7 @@ def _make_image03_csv(
     mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_index=True)
     mscans['DATE'] = pd.to_datetime(mscans['DATE'])
     mscans['SCANAGE'] = (mscans['DATE'] + pd.DateOffset(days=15)) - mscans['DOB']
-    mscans['SCANAGE'] = mscans['SCANAGE'].astype('<m8[M]').astype('int').astype('str')
+    mscans['SCANAGE'] = mscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
 
     # Get the PETs
     pscans = garjus.scans(
@@ -294,7 +336,7 @@ def _make_image03_csv(
     #).astype('<m8[M]'
     #).astype('int').astype('str')
     pscans['SCANAGE'] = (pscans['DATE'] + pd.DateOffset(days=15)) - pscans['DOB']
-    pscans['SCANAGE'] = pscans['SCANAGE'].astype('<m8[M]').astype('int').astype('str')
+    pscans['SCANAGE'] = pscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
 
     # get the image03 formatted
     df = get_image03_df(
@@ -304,7 +346,6 @@ def _make_image03_csv(
         exp_map)
 
     # Set columns to same list and order as NDA template
-    print('load template from web')
     df = df[pd.read_csv(IMAGE03_TEMPLATE, skiprows=1).columns]
 
     # Compare to existing csv and only write to new file if something changed
@@ -319,11 +360,11 @@ def _make_image03_csv(
         # write the rest
         df.to_csv(outfile, mode='a', index=False, date_format='%m/%d/%Y')
     else:
-        print(f'no new data, use existing csv:{outfile}')
+        logger.info(f'no new data, use existing csv:{outfile}')
 
 
-def check_dir(dir_path):
-    print('check_dir', dir_path)
+def make_dirs(dir_path):
+    logger.debug(f'make_dirs{dir_path}')
     try:
         os.makedirs(dir_path)
     except OSError:
@@ -331,50 +372,12 @@ def check_dir(dir_path):
             raise
 
 
-def update_imagedir(csvfile, root_dir):
+def update_imagedir(garjus, project, csvfile, download_dir):
+
     df = pd.read_csv(csvfile, dtype=str, skiprows=1)
 
-    # Output directory where files are copied uses base name of csv file
-    batch_dir = os.path.join(root_dir, os.path.splitext(os.path.basename(csvfile))[0])
-
-    if os.path.exists(batch_dir):
-        print('dir exists')
-        return
+    # Remove already downloaded
+    df = not_downloaded(df, download_dir)
 
     # Update DICOM zips
-    ccount = 0
-    mcount = 0
-
-    for i, f in df.iterrows():
-        cur_file = f['image_file']
-
-        # Get the path to the zip in the root dir and destionation path
-        _p = cur_file.rsplit('/', 4)
-        _proj = _p[1].split('_')[0]
-        src_file = f'{root_dir}/allscans/{_proj}/{_p[2]}/{_p[3]}/{_p[4]}'
-        dst_file = f'{batch_dir}/{_p[2]}/{_p[3]}/{_p[4]}'
-
-        if os.path.exists(dst_file):
-            print('path exists:', dst_file)
-            continue
-
-        if not os.path.exists(src_file):
-            print('not found in root dir', src_file)
-            mcount += 1
-            continue
-
-        # move it
-        print(i, 'moving', src_file, dst_file)
-        check_dir(os.path.dirname(dst_file))
-        shutil.move(src_file, dst_file)
-        df.iloc[i]['image_file'] = dst_file
-        ccount += 1
-
-    print(f'found {ccount} moved files')
-    print(f'found {mcount} missing files')
-
-    # Save data to file
-    print('saving to csv file')
-    outfile = f'{batch_dir}/_image03.csv'
-    check_dir(os.path.dirname(outfile))
-    df.to_csv(outfile, index=False)
+    update_files(garjus, project, df, download_dir)
