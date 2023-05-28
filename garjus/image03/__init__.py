@@ -258,8 +258,8 @@ def update_files(garjus, project, df, download_dir):
 
             # get the file
             logger.info(f'downloading:{cur_file}')
-            #_download_dicom_zip(scan, cur_file)
-            _touch_dicom_zip(scan, cur_file)
+            _download_dicom_zip(scan, cur_file)
+            #_touch_dicom_zip(scan, cur_file)
             dcount += 1
 
     logger.info(f'{ecount} existing files, {dcount} downloaded files')
