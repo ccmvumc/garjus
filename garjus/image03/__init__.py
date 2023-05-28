@@ -285,8 +285,7 @@ def same_data(filename, df):
 
 def not_downloaded(df, image_dir):
     if not os.path.isdir(image_dir):
-        logger.error(f'image directory not found:{image_dir}')
-        raise FileExistsError(image_dir)
+        return df
 
     # Get list of DICOM zips already existing
     zip_list = glob.glob(f'{image_dir}/*/*/*/DICOM.zip')
