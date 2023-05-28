@@ -392,7 +392,7 @@ def _add_graph_page(pdf, info):
     pdf.set_font('helvetica', size=9)
 
     # MR Scan are orange
-    pdf.set_fill_color(255, 166, 0) 
+    pdf.set_fill_color(255, 166, 0)
     pdf.cell(h=0.3, txt='MR Scan', fill=True, ln=1)
 
     # PET Scan are chocolate
@@ -537,11 +537,11 @@ def _add_wml_page(pdf, info):
     sam_data = stats[stats.PROCTYPE == 'SAMSEG_v1']
 
     if lst_data.empty:
-        logger.debug('no LST data')
+        logger.info('no LST data')
         return
 
     if sam_data.empty:
-        logger.debug('no SAMSEG data')
+        logger.info('no SAMSEG data')
         return
 
     df = pd.merge(lst_data, sam_data, left_on='SESSION', right_on='SESSION')
@@ -554,7 +554,7 @@ def _add_wml_page(pdf, info):
     fig.append_trace(
         go.Scatter(
             x=df['wml_volume_x'].astype(float),
-            y=df['samseg_lesions_y'].astype(float)/1000.0,
+            y=df['samseg_lesions_y'].astype(float) / 1000.0,
             mode='markers',
         ), 1, 1)
 
@@ -683,6 +683,7 @@ def _add_nda_page(pdf, info):
     pdf.ln(1)
 
     return pdf
+
 
 def _add_settings_page(pdf, info):
     pdf.add_page()
