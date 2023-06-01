@@ -52,7 +52,7 @@ def process_project(
 
         # TODO: check last_modified and wait until it's been 1 hour
 
-        logger.debug('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
+        logger.info('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
             src_proj,
             src_subj,
             src_sess,

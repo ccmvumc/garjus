@@ -62,7 +62,7 @@ def process_project(
 
             # add it and upload
             add_slicetiming(dst, slicetiming)
-            logging.info(f'uploading to JSON:{full_path}:{dst}')
+            logging.debug(f'uploading to JSON:{full_path}:{dst}')
             res.file(src).put(dst, overwrite=True)
 
             results.append({

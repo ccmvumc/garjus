@@ -85,6 +85,11 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI parcellated with BrainColor atlas',
         'procurl': 'https://pubmed.ncbi.nlm.nih.gov/32948749/',
     },
+    'FALLYPRIDEQA_v1':{
+        'short_descrip': 'Fallypride QA with Regional SUVR using whole cerebellum as reference.',
+        'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), Fallypride PET',
+        'procurl': 'https://github.com/bud42/FALLYPRIDEQA',
+    },
     'fmri_bct_v1': {
         'short_descrip': 'Brain Connectivity Toolbox measures.',
         'inputs_descrip': 'Resting MRI processed with fmri_roi_v2',
@@ -138,6 +143,27 @@ PROCLIB = {
 }
 
 STATLIB = {
+    'FALLYPRIDEQA_v1': {
+        'accumbens_suvr': 'Accumbens regional mean SUVR normalized by Whole Cerebellum',
+        'amygdala_suvr': 'Amygdala regional mean SUVR normalized by Whole Cerebellum',
+        'antcing_suvr': 'Anterior Cingulate regional mean SUVR normalized by Whole Cerebellum',
+        'antflobe_suvr': 'Anterior Frontal Lobe mean SUVR normalized by Whole Cerebellum',
+        'caudate_suvr': 'Caudate regional mean SUVR normalized by Whole Cerebellum',
+        'cblmgm_suvr': 'Cerebellum Gray Matter regional mean SUVR normalized by Whole Cerebellum',
+        'cblmtot_suvr': 'Cerebellum Total regional mean SUVR normalized by Whole Cerebellum',
+        'cblmwm_suvr': 'Cerebellum White Matter regional mean SUVR normalized by Whole Cerebellum',
+        'compositegm_suvr': 'Composite Gray Matter regional mean SUVR normalized by Whole Cerebellum',
+        'cortwm_suvr': 'Cortical White Matter regional mean SUVR normalized by Whole Cerebellum',
+        'hippocampus_suvr': 'Hippocampus regional mean SUVR normalized by Whole Cerebellum',
+        'latplobe_suvr': 'Lateral Parietal Lobe regional mean SUVR normalized by Whole Cerebellum',
+        'lattlobe_suvr': 'Lateral Temporal Lobe regional mean SUVR normalized by Whole Cerebellum',
+        'mofc_suvr': 'Medial Orbito-frontal Cortex regional mean SUVR normalized by Whole Cerebellum',
+        'pallidum_suvr': 'Pallidum regional mean SUVR normalized by Whole Cerebellum',
+        'postcing_suvr': 'Posterior Cingulate regional mean SUVR normalized by Whole Cerebellum',
+        'putamen_suvr': 'Putamen regional mean SUVR normalized by Whole Cerebellum',
+        'thalamus_suvr': 'Thalamus regional mean SUVR normalized by Whole Cerebellum',
+        'ventraldc_suvr': 'Ventral Diencephalon regional mean SUVR normalized by Whole Cerebellum',
+    },
     'FS7_v1': {
         'fs7_etiv': 'Estimated Total Intracranial Volume',
         'fs7_hpc_lh': 'Hippocampus Left Hemisphere Volume',

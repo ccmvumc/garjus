@@ -9,6 +9,10 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 import dax
 
+
+logger = logging.getLogger('garjus.utils_xnat')
+
+
 SCAN_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
@@ -325,7 +329,7 @@ def check_attributes(src_obj, dest_obj, dtype=None):
     elif dtype == 'xnat:otherDicomScanData':
         attr_list = OTHER_DICOM_SCAN_ATTRS
     else:
-        logging.warning(f'unknown Type:{dtype}')
+        logger.warning(f'unknown Type:{dtype}')
         return
 
     for a in attr_list:
@@ -333,7 +337,7 @@ def check_attributes(src_obj, dest_obj, dtype=None):
         src_v = src_v.replace("\\", "|")
         dest_v = dest_obj.attrs.get(a)
         if src_v != dest_v:
-            logging.warning('mismatch:{a}:src={src_v}, dst={dest_v}')
+            logger.warning('mismatch:{a}:src={src_v}, dst={dest_v}')
             dest_obj.attrs.set(a, src_v)
 
 
@@ -342,7 +346,7 @@ def copy_attrs(src_obj, dest_obj, attr_list):
     try:
         src_attrs = src_obj.attrs.mget(attr_list)
     except IndexError:
-        logging.warning('failed with full attributes, trying minimal set')
+        logger.warning('failed with full attributes, trying minimal set')
         attr_list = OTHER_DICOM_SCAN_ATTRS
         src_attrs = src_obj.attrs.mget(attr_list)
 
@@ -378,7 +382,7 @@ def copy_attributes(src_obj, dest_obj):
     elif src_type == 'xnat:otherDicomScanData':
         copy_attrs(src_obj, dest_obj, OTHER_DICOM_SCAN_ATTRS)
     else:
-        logging.error(f'cannot copy attributes, unsupported type:{src_type}')
+        logger.error(f'cannot copy attributes, unsupported type:{src_type}')
 
 
 def copy_res_zip(src_r, dest_r):
@@ -388,18 +392,18 @@ def copy_res_zip(src_r, dest_r):
     '''
     try:
         # Download zip of resource
-        logging.info('downloading resource as zip')
+        logger.debug('downloading resource as zip')
         cache_z = src_r.get(tempfile.mkdtemp(), extract=False)
 
         # Upload zip of resource
-        logging.info('uploading resource as zip')
+        logger.debug('uploading resource as zip')
         dest_r.put_zip(cache_z, extract=True)
 
         # Delete local zip
         os.remove(cache_z)
 
     except IndexError:
-        logging.error('copy failed:{}:{}'.format(cache_z, sys.exc_info()[0]))
+        logger.error('copy failed:{}:{}'.format(cache_z, sys.exc_info()[0]))
         raise
 
 
@@ -414,7 +418,7 @@ def is_empty_resource(_res):
 
 
 def copy_session(src, dst):
-    logging.info('uploading session attributes')
+    logger.debug('uploading session attributes')
     dst.create(experiments=src.datatype())
     copy_attributes(src, dst)
 
@@ -422,7 +426,7 @@ def copy_session(src, dst):
     for src_scan in src.scans().fetchall('obj'):
         scan_label = src_scan.label()
 
-        logging.info(f'processing scan:{scan_label}')
+        logger.debug(f'processing scan:{scan_label}')
         dst_scan = dst.scan(scan_label)
         copy_scan(src_scan, dst_scan)
 
@@ -443,11 +447,11 @@ def copy_scan(src_scan, dst_scan):
     for src_res in src_scan.resources().fetchall('obj'):
         res_label = src_res.label()
 
-        logging.info(f'processing resource:{res_label}')
+        logger.debug(f'processing resource:{res_label}')
 
         file_count = _file_count(src_res)
         if res_label == 'DICOM' and file_count > 1000:
-            logging.debug(f'too many files, upload as DICOMZIP:{file_count}')
+            logger.debug(f'too many files, upload as DICOMZIP:{file_count}')
             dst_res = dst_scan.resource('DICOMZIP')
             copy_res_dicomzip(src_res, dst_res)
         else:
@@ -461,33 +465,33 @@ def copy_res_dicomzip(src_res, dst_res):
     '''
     try:
         # Download zip of resource
-        logging.info('downloading resource as zip')
+        logger.debug('downloading resource as zip')
         cache_z = src_res.get(tempfile.mkdtemp(), extract=False)
 
         # Upload zip of resource
-        logging.info('Uploading resource as zip, no extract')
+        logger.debug('Uploading resource as zip, no extract')
         dst_res.put_zip(cache_z, extract=False)
 
         # Delete local zip
         os.remove(cache_z)
 
     except IndexError:
-        logging.error(f'failed to copy')
+        logger.error(f'failed to copy')
         raise
 
 
 def copy_res(src_res, dst_res):
     try:
-        logging.info('copying resource as zip:'.format(src_res.label()))
+        logger.debug('copying resource as zip:'.format(src_res.label()))
         copy_res_zip(src_res, dst_res)
         return
     except Exception as err:
         try:
-            logging.info('failed, trying again:{}'.format(src_res.label()))
+            logger.debug('failed, trying again:{}'.format(src_res.label()))
             copy_res_zip(src_res, dst_res)
             return
         except Exception:
-            logging.error(f'failed twice to copy resource as zip:{err}')
+            logger.error(f'failed twice to copy resource as zip:{err}')
 
 
 def copy_xnat_session(src, dst):
@@ -497,44 +501,44 @@ def copy_xnat_session(src, dst):
     with dax.XnatUtils.get_interface() as xnat:
         src_sess_obj = xnat.select_session(src_proj, src_subj, src_sess)
         if not src_sess_obj.exists():
-            logging.info('src session does not exist')
+            logger.info('src session does not exist')
             return
 
         dst_proj_obj = xnat.select_project(dst_proj)
         if not dst_proj_obj.exists():
-            logging.info('dest project does not exist, refusing to create')
+            logger.info('dest project does not exist, refusing to create')
             return
 
         dst_subj_obj = dst_proj_obj.subject(dst_subj)
         if not dst_subj_obj.exists():
-            logging.info('destination subject does not exist, creating')
+            logger.info('destination subject does not exist, creating')
             dst_subj_obj.create()
         else:
-            logging.info('destination subject exists', dst_subj)
+            logger.info('destination subject exists', dst_subj)
 
         dst_sess_obj = dst_subj_obj.experiment(dst_sess)
         if dst_sess_obj.exists():
-            logging.info('destination session exists, refusing to overwrite')
+            logger.info('destination session exists, refusing to overwrite')
             return
 
-        logging.info(f'destination session does not exist, creating:{dst_sess}')
+        logger.info(f'destination session does not exist, creating:{dst_sess}')
         copy_session(src_sess_obj, dst_sess_obj)
 
 
 def refresh_dicom_catalog(xnat, proj, subj, sess, scan):
     _uri = '/data/services/refresh/catalog?resource='
     _uri += f'/archive/projects/{proj}/subjects/{subj}/experiments/{sess}/scans/{scan}/resources/DICOM'
-    logging.info('refreshing dicom catalog')
+    logger.info('refreshing dicom catalog')
     xnat.post(_uri)
 
 
 def upload_files(inputfiles, resource):
-    logging.debug(f'uploading:{inputfiles}')
+    logger.debug(f'uploading:{inputfiles}')
     return dax.XnatUtils.upload_files_to_obj(inputfiles, resource, remove=True)
 
 
 def upload_file(inputfile, resource):
-    logging.debug(f'uploading:{inputfile}')
+    logger.debug(f'uploading:{inputfile}')
     return dax.XnatUtils.upload_file_to_obj(inputfile, resource, remove=True)
 
 
@@ -545,10 +549,10 @@ def upload_dirzip(inputdir, resource):
             tempdir,
             '{}.zip'.format(pathlib.Path(inputdir).name))
 
-        logging.info(f'create zip:{inputdir}')
+        logger.info(f'create zip:{inputdir}')
         _create_zip(inputdir, fzip)
 
-        logging.info(f'upload:{fzip}')
+        logger.info(f'upload:{fzip}')
         dax.XnatUtils.upload_file_to_obj(fzip, resource)
 
 
