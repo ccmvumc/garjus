@@ -104,13 +104,18 @@ class MYPDF(FPDF):
         """Set the filename."""
         self.filename = filename
 
-    def set_project(self, project):
+    def set_project(self, project, disable_monthly=False):
         """Set the project name."""
         self.project = project
         today = datetime.now().strftime("%Y-%m-%d")
         self.date = today
-        self.title = '{} Monthly Report'.format(project)
-        self.subtitle = '{}'.format(datetime.now().strftime("%B %Y"))
+
+        if disable_monthly:
+            self.title = f'{project} Report'
+            self.subtitle = '{}'.format(datetime.now().strftime("%B %d, %Y"))
+        else:
+            self.title = f'{project} Monthly Report'
+            self.subtitle = '{}'.format(datetime.now().strftime("%B %Y"))
 
     def footer(self):
         """Return the custom footer."""
@@ -352,7 +357,7 @@ def plot_activity(df, pivot_index):
     return image
 
 
-def _add_page1(pdf, sessions):
+def _add_page1(pdf, sessions, disable_monthly=False):
     mr_sessions = sessions[sessions.MODALITY == 'MR'].copy()
 
     # Start the page with titles
@@ -373,11 +378,12 @@ def _add_page1(pdf, sessions):
         # Start a new page so it fits
         pdf.add_page()
 
-    # Show MRI session counts in date range
-    pdf.cell(w=7.5, h=0.4, align='C', txt='MRI')
-    pdf.ln(0.25)
-    _draw_counts(pdf, mr_sessions, rangetype='lastmonth')
-    pdf.ln(1)
+    if not disable_monthly:
+        # Show MRI session counts in date range
+        pdf.cell(w=7.5, h=0.4, align='C', txt='MRI')
+        pdf.ln(0.25)
+        _draw_counts(pdf, mr_sessions, rangetype='lastmonth')
+        pdf.ln(1)
 
     return pdf
 
@@ -400,8 +406,8 @@ def _add_graph_page(pdf, info):
     pdf.cell(h=0.3, txt='PET Scan', fill=True, ln=1)
 
     # EDAT are pink
-    #pdf.set_fill_color(238, 130, 238)
-    #pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
+    # pdf.set_fill_color(238, 130, 238)
+    # pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
 
     # Processing with stats are green
     pdf.set_fill_color(144, 238, 144)
@@ -414,10 +420,10 @@ def _add_graph_page(pdf, info):
     pdf.ln(0.5)
 
     # Set color back to black
-    #pdf.set_text_color(255, 255, 255)
+    # pdf.set_text_color(255, 255, 255)
 
     # Build the graph
-    graph = pydot.Dot(graph_type='digraph') #, ratio=1.0)
+    graph = pydot.Dot(graph_type='digraph')
     graph.set_node_defaults(
         color='lightblue',
         style='filled',
@@ -471,7 +477,6 @@ def _add_graph_page(pdf, info):
             'struct_preproc_noflair_v1', 'fmri_rest_v2', style='dashed'))
         graph.add_edge(pydot.Edge(
             'T1', 'struct_preproc_noflair_v1', style='dashed'))
-        #graph.add_edge(pydot.Edge('FieldMaps', 'fmri_rest_v2'))       
 
     if 'BFC_v2' in proctypes:
         graph.add_edge(pydot.Edge('T1', 'BFC_v2'))
@@ -502,7 +507,7 @@ def _add_graph_page(pdf, info):
     return pdf
 
 
-def _add_other_page(pdf, sessions):
+def _add_other_page(pdf, sessions, disable_monthly=False):
     # Get non-MRI sessions
     other_sessions = sessions[sessions.MODALITY != 'MR'].copy()
 
@@ -520,13 +525,15 @@ def _add_other_page(pdf, sessions):
     _draw_counts(pdf, other_sessions)
     pdf.ln(1)
 
-    # Show session counts in date range
-    pdf.cell(w=7.5, h=0.4, align='C', txt='Other Modalities')
-    pdf.ln(0.25)
-    _draw_counts(pdf, other_sessions, rangetype='lastmonth')
-    pdf.ln(1)
+    if not disable_monthly:
+        # Show session counts in date range
+        pdf.cell(w=7.5, h=0.4, align='C', txt='Other Modalities')
+        pdf.ln(0.25)
+        _draw_counts(pdf, other_sessions, rangetype='lastmonth')
+        pdf.ln(1)
 
     return pdf
+
 
 def _add_wml_page(pdf, info):
 
@@ -574,10 +581,12 @@ def _add_wml_page(pdf, info):
 
     fig.update_yaxes(autorange=True)
     fig.update_layout(showlegend=False)
-    fig.update_layout(xaxis_title="LST wml (mL)", yaxis_title="SAMSEG lesions (mL)")
+    fig.update_layout(
+        xaxis_title="LST wml (mL)",
+        yaxis_title="SAMSEG lesions (mL)")
 
     # Draw to figure as image on PDF
-    _image= Image.open(io.BytesIO(fig.to_image(format="png")))
+    _image = Image.open(io.BytesIO(fig.to_image(format="png")))
     pdf.image(_image, x=0.75, w=7)
 
     return pdf
@@ -599,7 +608,7 @@ def _add_stats_page(pdf, stats, proctype):
     image = plot_stats(stats, proctype)
     tot_width, tot_height = image.size
 
-    # Split horizontal image into chunks of width to fit on 
+    # Split horizontal image into chunks of width to fit on
     # letter-sized page with crop((left, top, right, bottom))
     chunk_h = 500
     chunk_w = 998
@@ -609,7 +618,7 @@ def _add_stats_page(pdf, stats, proctype):
     for p in range(page_count):
         for c in range(rows_per_page):
             # Calculate the starting x for this chunk
-            chunk_x = (c * chunk_w ) + (p * chunk_w * rows_per_page)
+            chunk_x = (c * chunk_w) + (p * chunk_w * rows_per_page)
 
             # Get the image from the cropped section
             _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
@@ -639,38 +648,42 @@ def _add_qa_page(pdf, scandata, assrdata, sesstype):
         pdf.ln(4.7)
 
     if assr_image:
-        pdf.cell(w=5, align='C', txt='Assessors by Type ({} Only)'.format(sesstype))
+        pdf.cell(w=5, align='C', txt=f'Assessors by Type ({sesstype} Only)')
         pdf.image(assr_image, x=0.5, y=6, w=7.5)
 
     return pdf
 
 
-def _add_timeline_page(pdf, info):
+def _add_timeline_page(pdf, info, disable_monthly=False):
     # Get the data for all
     df = info['sessions'].copy()
 
     pdf.add_page()
+
     pdf.set_font('helvetica', size=18)
 
     # Draw all timeline
-    _txt = 'Sessions Timeline (all)'
+    _txt = 'Sessions Timeline'
+    if not disable_monthly:
+        _txt += ' (all)'
+
     pdf.cell(w=7.5, align='C', txt=_txt)
     image = plot_timeline(df)
     pdf.image(image, x=0.5, y=0.75, w=7.5)
     pdf.ln(5)
 
-    # Get the dates of last month
-    enddate = date.today().replace(day=1) - timedelta(days=1)
-    startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
+    if not disable_monthly:
+        # Get the dates of last month
+        enddate = date.today().replace(day=1) - timedelta(days=1)
+        startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
 
-    # Get the name of last month
-    lastmonth = startdate.strftime("%B")
-
-    _txt = 'Sessions Timeline ({})'.format(lastmonth)
-    image = plot_timeline(df, startdate=startdate, enddate=enddate)
-    pdf.cell(w=7.5, align='C', txt=_txt)
-    pdf.image(image, x=0.5, y=5.75, w=7.5)
-    pdf.ln()
+        # Get the name of last month
+        lastmonth = startdate.strftime("%B")
+        _txt = 'Sessions Timeline ({})'.format(lastmonth)
+        image = plot_timeline(df, startdate=startdate, enddate=enddate)
+        pdf.cell(w=7.5, align='C', txt=_txt)
+        pdf.image(image, x=0.5, y=5.75, w=7.5)
+        pdf.ln()
 
     return pdf
 
@@ -1031,19 +1044,19 @@ def make_pdf(info, filename):
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
     pdf.set_filename(filename)
-    pdf.set_project(info['project'])
+    pdf.set_project(info['project'], disable_monthly=info['disable_monthly'])
 
     # Add first page showing MRIs
     logger.debug('adding first page')
-    _add_page1(pdf, info['sessions'])
+    _add_page1(pdf, info['sessions'], disable_monthly=info['disable_monthly'])
 
     # Add other Modalities, counts for each session type
     logger.debug('adding other page')
-    _add_other_page(pdf, info['sessions'])
+    _add_other_page(pdf, info['sessions'], disable_monthly=info['disable_monthly'])
 
     # Timeline
     logger.debug('adding timeline page')
-    _add_timeline_page(pdf, info)
+    _add_timeline_page(pdf, info, disable_monthly=info['disable_monthly'])
 
     # Session type pages - counts per scans, counts per assessor
     logger.debug('adding MR qa pages')
@@ -1098,7 +1111,8 @@ def make_pdf(info, filename):
         logger.debug('no phantom page')
 
     # QA/Jobs/Issues counts
-    _add_activity_page(pdf, info)
+    if not info['disable_monthly']:
+        _add_activity_page(pdf, info)
 
     # Processing Details
     _add_proclib_page(pdf, info)
@@ -1231,7 +1245,8 @@ def make_project_report(
     garjus,
     project,
     pdfname,
-    zipname=None
+    zipname=None,
+    disable_monthly=False
 ):
     """"Make the project report PDF and zip files"""
     # TODO: garjus.proctypes_info()
@@ -1277,6 +1292,7 @@ def make_project_report(
     info['scanqa'] = _scanqa(scans, scantypes)
     info['assrqa'] = _assrqa(assessors, proctypes)
     info['phantoms'] = phantoms
+    info['disable_monthly'] = disable_monthly
 
     # Save the PDF report to file
     make_pdf(info, pdfname)

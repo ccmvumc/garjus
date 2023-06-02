@@ -982,7 +982,7 @@ class Garjus:
             return
 
         logger.info(f'writing report to file:{pdf_file}.')
-        make_project_report(self, project, pdf_file)
+        make_project_report(self, project, pdf_file, disable_monthly=True)
 
     def export_pdf(self, project, ptype):
         """Create a PDF report."""
