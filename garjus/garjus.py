@@ -96,7 +96,7 @@ class Garjus:
         self.tasks_rename = TASKS_RENAME
         self.analyses_rename = ANALYSES_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
-        self.max_stats = 60
+        self.max_stats = 64
         self._projects = self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
@@ -1233,7 +1233,7 @@ class Garjus:
     def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
         if len(data.keys()) > self.max_stats:
-            logger.debug('found more than 50 stats:too many, specify subset')
+            logger.debug('found too many, specify subset')
             return
 
         # Create list of stat records
