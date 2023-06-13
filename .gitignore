@@ -132,3 +132,4 @@ dmypy.json
 *.pdf
 DATA/
 *.xlsx
+stats.csv
