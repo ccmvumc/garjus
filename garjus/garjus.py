@@ -23,7 +23,7 @@ from .subjects import load_subjects
 from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
-from .progress import update as update_progress, make_project_report
+from .progress import update as update_progress, make_project_report, make_stats_csv
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -548,18 +548,17 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('analyses'))
 
-    def stats(self, project, proctypes=None):
+    def stats(self, project):
         """Return all stats for project, filtered by proctypes."""
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
+            rec = statsrc.export_records(forms=['stats'])
+
+            # Filter out FS6 if found
+            rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
         except:
             return pd.DataFrame(columns=['stats_assr'])
-
-        rec = statsrc.export_records(forms=['stats'])
-
-        # Filter out FS6 if found
-        rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
 
         # Make a dataframe of columns we need
         df = pd.DataFrame(
@@ -570,7 +569,11 @@ class Garjus:
 
         # Pivot to row per assessor, col per stats_name, values as stats_value
         dfp = pd.pivot(
-            df, index='stats_assr', values='stats_value', columns='stats_name')
+            df,
+            index='stats_assr',
+            values='stats_value',
+            columns='stats_name')
+
         dfp = dfp.reset_index()
 
         return dfp
@@ -994,6 +997,16 @@ class Garjus:
 
         logger.info(f'TBD:writing report to file:{pdf_file}.')
         # TODO: make_proc_report(self, project, ptype, pdf_file)
+
+    def export_stats(self, projects, proctypes, sesstypes, csvname, persubject=False):
+        """Create a csv."""
+
+        if os.path.exists(csvname):
+            logger.info(f'{csvname} exists, delete or rename.')
+            return
+
+        logger.info(f'writing csv file:{csvname}.')
+        make_stats_csv(self, projects, proctypes, sesstypes, csvname, persubject)
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
@@ -1443,7 +1456,7 @@ class Garjus:
     def _default_stattypes(self):
         """Return list of default stats types."""
         return [
-            'FS7_v1', 'LST_v1', 'AMYVIDQA_v1',
+            'FS7_v1', 'LST_v1',
             'BrainAgeGap_v2', 'FS7HPCAMG_v1',
             'SAMSEG_v1',  'fmriqa_v4']
 

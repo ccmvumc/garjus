@@ -917,7 +917,7 @@ def plot_stats(df, proctype):
     box_width = 250
     min_box_count = 4
 
-    logger.debug('plot_stats:{}'.format(proctype))
+    logger.debug('plot_stats:{}:{}'.format(proctype, len(df)))
 
     # Check for empty data
     if len(df) == 0:
@@ -1241,6 +1241,9 @@ def get_metastatus(status):
     return metastatus
 
 
+
+
+
 def make_project_report(
     garjus,
     project,
@@ -1321,7 +1324,9 @@ def data2zip(subjects, stats, filename):
         for proctype in stats.PROCTYPE.unique():
             # Get the data for this processing type
             dft = stats[stats.PROCTYPE == proctype]
+
             dft = dft.dropna(axis=1, how='all')
+
             dft = dft.sort_values('ASSR')
 
             # Save file for this type

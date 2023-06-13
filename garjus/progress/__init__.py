@@ -10,6 +10,8 @@ from datetime import datetime
 import tempfile
 import logging
 
+import pandas as pd
+
 from .report import make_project_report
 
 
@@ -52,3 +54,88 @@ def make_progress(garjus, project, cur_progress, now):
         make_project_report(garjus, project, pdf_file, zip_file)
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
+def subject_pivot(df):
+    # Pivot to one row per subject
+    level_cols = ['SESSTYPE', 'PROCTYPE']
+    stat_cols = []
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE']
+
+    # Drop any duplicates found
+    df = df.drop_duplicates()
+
+    # And duplicate proctype for session
+    df = df.drop_duplicates(
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        keep='last')
+
+    df = df.drop(columns=['ASSR', 'SESSION', 'DATE'])
+
+    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
+
+    # Make the pivot table based on _index, _cols, _vars
+    dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
+
+    if len(df.SESSTYPE.unique()) > 1:
+        # Concatenate column levels to get one level with delimiter
+        dfp.columns = [f'{c[0]}_{c[1]}' for c in dfp.columns.values]
+    else:
+        dfp.columns = [c[0] for c in dfp.columns.values]
+
+    # Clear the index so all columns are named
+    dfp = dfp.dropna(axis=1, how='all')
+    dfp = dfp.reset_index()
+
+    return dfp
+
+
+def make_stats_csv(garjus, projects, proctypes, sesstypes, csvname, persubject=False):
+    """"Make the file"""  
+    acols = [
+        'ASSR',
+        'PROJECT',
+        'SUBJECT',
+        'SESSION',
+        'SESSTYPE',
+        'SITE',
+        'DATE',
+        'PROCTYPE',
+    ]
+
+    df = pd.DataFrame()
+
+    if not isinstance(projects, list):
+        projects = projects.split(',')
+
+    if not isinstance(proctypes, list):
+        proctypes = proctypes.split(',')
+
+    if not isinstance(sesstypes, list):
+        sesstypes = sesstypes.split(',')
+
+    for p in sorted(projects):
+        # Load stats with extra assessor columns
+        assessors = garjus.assessors(projects=[p], proctypes=proctypes)
+        stats = garjus.stats(p)
+        stats = pd.merge(
+            assessors[acols],
+            stats,
+            left_on='ASSR',
+            right_on='stats_assr')
+
+        stats = stats[stats.PROCTYPE.isin(proctypes)]
+        stats = stats[stats.SESSTYPE.isin(sesstypes)]
+
+        stats = stats.drop(columns=['stats_assr'])
+        stats = stats.dropna(axis=1, how='all')
+        stats = stats.sort_values('ASSR')
+        df = pd.concat([df, stats])
+
+    if persubject:
+        logger.debug(f'pivot to row per subject')
+
+        # Pivot to row per subject with sesstype prefix when multiple types
+        df = subject_pivot(df)
+
+    # Save file for this type
+    logger.info(f'saving csv:{csvname}')
+    df.to_csv(csvname, index=False)

@@ -143,6 +143,17 @@ def report(project):
     Garjus().report(project)
 
 
+@cli.command('stats')
+@click.option('--projects', '-p', 'projects', required=True)
+@click.option('--types', '-t', 'proctypes', required=True)
+@click.option('--sesstypes', '-s', 'sesstypes', required=False)
+@click.option('--persubject', is_flag=True)
+@click.argument('csv', required=True)
+def stats(projects, proctypes, sesstypes, csv, persubject):
+    click.echo('garjus! stats')
+    Garjus().export_stats(projects, proctypes, sesstypes, csv, persubject)
+
+
 @cli.command('compare')
 @click.option('--project', '-p', 'project', required=True)
 def compare(project):
