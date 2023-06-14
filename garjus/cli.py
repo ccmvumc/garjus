@@ -145,7 +145,7 @@ def report(project):
 
 @cli.command('stats')
 @click.option('--projects', '-p', 'projects', required=True)
-@click.option('--types', '-t', 'proctypes', required=True)
+@click.option('--types', '-t', 'proctypes', required=False)
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
 @click.option('--persubject', is_flag=True)
 @click.argument('csv', required=True)

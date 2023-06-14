@@ -77,7 +77,7 @@ def subject_pivot(df):
 
     if len(df.SESSTYPE.unique()) > 1:
         # Concatenate column levels to get one level with delimiter
-        dfp.columns = [f'{c[0]}_{c[1]}' for c in dfp.columns.values]
+        dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
     else:
         dfp.columns = [c[0] for c in dfp.columns.values]
 
@@ -89,45 +89,21 @@ def subject_pivot(df):
 
 
 def make_stats_csv(garjus, projects, proctypes, sesstypes, csvname, persubject=False):
-    """"Make the file"""  
-    acols = [
-        'ASSR',
-        'PROJECT',
-        'SUBJECT',
-        'SESSION',
-        'SESSTYPE',
-        'SITE',
-        'DATE',
-        'PROCTYPE',
-    ]
-
+    """"Make the file."""
     df = pd.DataFrame()
 
     if not isinstance(projects, list):
         projects = projects.split(',')
 
-    if not isinstance(proctypes, list):
+    if proctypes is not None and not isinstance(proctypes, list):
         proctypes = proctypes.split(',')
 
-    if not isinstance(sesstypes, list):
+    if sesstypes is not None and not isinstance(sesstypes, list):
         sesstypes = sesstypes.split(',')
 
     for p in sorted(projects):
-        # Load stats with extra assessor columns
-        assessors = garjus.assessors(projects=[p], proctypes=proctypes)
-        stats = garjus.stats(p)
-        stats = pd.merge(
-            assessors[acols],
-            stats,
-            left_on='ASSR',
-            right_on='stats_assr')
-
-        stats = stats[stats.PROCTYPE.isin(proctypes)]
-        stats = stats[stats.SESSTYPE.isin(sesstypes)]
-
-        stats = stats.drop(columns=['stats_assr'])
-        stats = stats.dropna(axis=1, how='all')
-        stats = stats.sort_values('ASSR')
+        # Load stats
+        stats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
         df = pd.concat([df, stats])
 
     if persubject:

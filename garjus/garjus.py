@@ -548,8 +548,20 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('analyses'))
 
-    def stats(self, project):
+    def stats(self, project, assessors=None, proctypes=None, sesstypes=None):
         """Return all stats for project, filtered by proctypes."""
+
+        acols = [
+        'ASSR',
+        'PROJECT',
+        'SUBJECT',
+        'SESSION',
+        'SESSTYPE',
+        'SITE',
+        'DATE',
+        'PROCTYPE',
+        ]
+
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
@@ -558,7 +570,7 @@ class Garjus:
             # Filter out FS6 if found
             rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
         except:
-            return pd.DataFrame(columns=['stats_assr'])
+            return pd.DataFrame(columns=[])
 
         # Make a dataframe of columns we need
         df = pd.DataFrame(
@@ -575,6 +587,25 @@ class Garjus:
             columns='stats_name')
 
         dfp = dfp.reset_index()
+
+        if assessors is None:
+            assessors = self.assessors(projects=[project], proctypes=proctypes)
+
+        # Merge with assessor columns
+        dfp = pd.merge(
+            assessors[acols], dfp, left_on='ASSR', right_on='stats_assr')
+
+        # Clean up
+        dfp = dfp.drop(columns=['stats_assr'])
+        dfp = dfp.dropna(axis=1, how='all')
+        dfp = dfp.sort_values('ASSR')
+
+        # Apply filters
+        if proctypes:
+            dfp = dfp[dfp.PROCTYPE.isin(proctypes)]
+
+        if sesstypes:
+            dfp = dfp[dfp.SESSTYPE.isin(sesstypes)]
 
         return dfp
 

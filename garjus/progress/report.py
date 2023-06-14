@@ -1284,9 +1284,9 @@ def make_project_report(
     sessions = sessions.drop_duplicates().sort_values('SESSION')
 
     # Load stats with extra assessor columns
-    stats = garjus.stats(project)
-    stats = pd.merge(assessors[ACOLS], stats, left_on='ASSR', right_on='stats_assr')
-    stats = stats.drop(columns=['stats_assr'])
+    stats = garjus.stats(project, assessors)
+    #stats = pd.merge(assessors[ACOLS], stats, left_on='ASSR', right_on='stats_assr')
+    #stats = stats.drop(columns=['stats_assr'])
 
     # Make the info dictionary for PDF
     info = {}
