@@ -147,6 +147,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
     # sessions column names are: SESSION, PROJECT, DATE, SESSTYPE, SITE
     type_list = sessions.SESSTYPE.unique()
     site_list = sessions.SITE.unique()
+    indent_width = max(2.5 - len(type_list) * 0.5, 0.3)
 
     # Get the data
     df = sessions.copy()
@@ -173,16 +174,17 @@ def _draw_counts(pdf, sessions, rangetype=None):
         _txt = 'Session Counts (all)'
 
     # Draw heading
-    pdf.set_font('helvetica', size=18)
+    pdf.set_font('helvetica', size=14)
     pdf.cell(w=7.5, h=0.5, txt=_txt, align='C', border=0, ln=1)
 
     # Header Formatting
     pdf.cell(w=1.0)
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
-    _kwargs = {'w': 1.2, 'h': 0.7, 'border': 1, 'align': 'C', 'fill': True}
+    _kwargs = {'w': 1.0, 'h': 0.7, 'border': 1, 'align': 'C', 'fill': True}
 
     # Column header for each session type
+    pdf.cell(indent_width)
     for cur_type in type_list:
         pdf.cell(**_kwargs, txt=cur_type)
 
@@ -192,12 +194,16 @@ def _draw_counts(pdf, sessions, rangetype=None):
     # Row formatting
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
-    _kwargs = {'w': 1.2, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
     _kwargs_s = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
     _kwargs_t = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
 
+    pdf.set_font('helvetica', size=18)
+
     # Row for each site
     for cur_site in site_list:
+        pdf.cell(w=indent_width)
+
         dfs = df[df.SITE == cur_site]
         _txt = cur_site
 
@@ -213,20 +219,24 @@ def _draw_counts(pdf, sessions, rangetype=None):
             cur_count = str(len(dfs[dfs.SESSTYPE == cur_type]))
             pdf.cell(**_kwargs, txt=cur_count)
 
-        # Total for site
-        cur_count = str(len(dfs))
-        pdf.cell(**_kwargs_t, txt=cur_count)
-        pdf.ln()
+        if len(type_list) > 1:
+            # Total for site
+            cur_count = str(len(dfs))
+            pdf.cell(**_kwargs_t, txt=cur_count, ln=1)
 
-    # TOTALS row
-    pdf.cell(w=1.0)
-    for cur_type in type_list:
-        pdf.set_font('helvetica', size=18)
-        cur_count = str(len(df[df.SESSTYPE == cur_type]))
-        pdf.cell(**_kwargs, txt=cur_count)
+    if len(site_list) > 1:
+        # TOTALS row
+        pdf.cell(w=indent_width)
+        pdf.cell(w=1.0)
+        for cur_type in type_list:
+            pdf.set_font('helvetica', size=18)
+            cur_count = str(len(df[df.SESSTYPE == cur_type]))
+            pdf.cell(**_kwargs, txt=cur_count)
 
-    pdf.cell(**_kwargs_t, txt=str(len(df)))
+        # Grandtotal
+        pdf.cell(**_kwargs_t, txt=str(len(df)))
 
+    # End by going to next line
     pdf.ln()
 
     return pdf
@@ -374,11 +384,11 @@ def _add_page1(pdf, sessions, disable_monthly=False):
     _draw_counts(pdf, mr_sessions)
     pdf.ln(1)
 
-    if len(mr_sessions.SITE.unique()) > 3:
-        # Start a new page so it fits
-        pdf.add_page()
-
     if not disable_monthly:
+        if len(mr_sessions.SITE.unique()) > 3:
+            # Start a new page so it fits
+            pdf.add_page()
+
         # Show MRI session counts in date range
         pdf.cell(w=7.5, h=0.4, align='C', txt='MRI')
         pdf.ln(0.25)
