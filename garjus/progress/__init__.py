@@ -2,10 +2,9 @@
 
 progress reports and exports.
 
-update will creat any missing
+update will create any missing
 
 """
-
 from datetime import datetime
 import tempfile
 import logging
@@ -54,41 +53,9 @@ def make_progress(garjus, project, cur_progress, now):
         make_project_report(garjus, project, pdf_file, zip_file)
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
-def subject_pivot(df):
-    # Pivot to one row per subject
-    level_cols = ['SESSTYPE', 'PROCTYPE']
-    stat_cols = []
-    index_cols = ['PROJECT', 'SUBJECT', 'SITE']
 
-    # Drop any duplicates found
-    df = df.drop_duplicates()
-
-    # And duplicate proctype for session
-    df = df.drop_duplicates(
-        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
-        keep='last')
-
-    df = df.drop(columns=['ASSR', 'SESSION', 'DATE'])
-
-    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
-
-    # Make the pivot table based on _index, _cols, _vars
-    dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
-
-    if len(df.SESSTYPE.unique()) > 1:
-        # Concatenate column levels to get one level with delimiter
-        dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
-    else:
-        dfp.columns = [c[0] for c in dfp.columns.values]
-
-    # Clear the index so all columns are named
-    dfp = dfp.dropna(axis=1, how='all')
-    dfp = dfp.reset_index()
-
-    return dfp
-
-
-def make_stats_csv(garjus, projects, proctypes, sesstypes, csvname, persubject=False):
+def make_stats_csv(
+    garjus, projects, proctypes, sesstypes, csvname, persubject=False):
     """"Make the file."""
     df = pd.DataFrame()
 
@@ -103,14 +70,9 @@ def make_stats_csv(garjus, projects, proctypes, sesstypes, csvname, persubject=F
 
     for p in sorted(projects):
         # Load stats
-        stats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
+        stats = garjus.stats(
+            p, proctypes=proctypes, sesstypes=sesstypes, persubject=persubject)
         df = pd.concat([df, stats])
-
-    if persubject:
-        logger.debug(f'pivot to row per subject')
-
-        # Pivot to row per subject with sesstype prefix when multiple types
-        df = subject_pivot(df)
 
     # Save file for this type
     logger.info(f'saving csv:{csvname}')

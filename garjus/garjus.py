@@ -548,7 +548,7 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('analyses'))
 
-    def stats(self, project, assessors=None, proctypes=None, sesstypes=None):
+    def stats(self, project, assessors=None, proctypes=None, sesstypes=None, persubject=False):
         """Return all stats for project, filtered by proctypes."""
 
         acols = [
@@ -580,34 +580,40 @@ class Garjus:
         df = df.drop_duplicates(subset=['stats_assr', 'stats_name'])
 
         # Pivot to row per assessor, col per stats_name, values as stats_value
-        dfp = pd.pivot(
+        df = pd.pivot(
             df,
             index='stats_assr',
             values='stats_value',
             columns='stats_name')
 
-        dfp = dfp.reset_index()
+        df = df.reset_index()
 
         if assessors is None:
             assessors = self.assessors(projects=[project], proctypes=proctypes)
 
-        # Merge with assessor columns
-        dfp = pd.merge(
-            assessors[acols], dfp, left_on='ASSR', right_on='stats_assr')
+        # Merge with assessors
+        df = pd.merge(
+            assessors[acols], df, left_on='ASSR', right_on='stats_assr')
 
         # Clean up
-        dfp = dfp.drop(columns=['stats_assr'])
-        dfp = dfp.dropna(axis=1, how='all')
-        dfp = dfp.sort_values('ASSR')
+        df = df.drop(columns=['stats_assr'])
+        df = df.dropna(axis=1, how='all')
+        df = df.sort_values('ASSR')
 
         # Apply filters
         if proctypes:
-            dfp = dfp[dfp.PROCTYPE.isin(proctypes)]
+            df = df[df.PROCTYPE.isin(proctypes)]
 
         if sesstypes:
-            dfp = dfp[dfp.SESSTYPE.isin(sesstypes)]
+            df = df[df.SESSTYPE.isin(sesstypes)]
 
-        return dfp
+        if persubject:
+            logger.debug(f'pivot to row per subject')
+
+            # Pivot to row per subject
+            df = _subject_pivot(df)
+
+        return df
 
     def stats_assessors(self, project, proctypes=None):
         """Get list of assessors alread in stats archive."""
@@ -1834,6 +1840,40 @@ class Garjus:
     def dax2queue(self):
         from .tasks import dax2garjus
         dax2garjus.dax2queue(self)
+
+
+def _subject_pivot(df):
+    # Pivot to one row per subject
+    level_cols = ['SESSTYPE', 'PROCTYPE']
+    stat_cols = []
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE']
+
+    # Drop any duplicates found
+    df = df.drop_duplicates()
+
+    # And duplicate proctype for session
+    df = df.drop_duplicates(
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        keep='last')
+
+    df = df.drop(columns=['ASSR', 'SESSION', 'DATE'])
+
+    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
+
+    # Make the pivot table based on _index, _cols, _vars
+    dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
+
+    if len(df.SESSTYPE.unique()) > 1:
+        # Concatenate column levels to get one level with delimiter
+        dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
+    else:
+        dfp.columns = [c[0] for c in dfp.columns.values]
+
+    # Clear the index so all columns are named
+    dfp = dfp.dropna(axis=1, how='all')
+    dfp = dfp.reset_index()
+
+    return dfp
 
 
 if __name__ == "__main__":
