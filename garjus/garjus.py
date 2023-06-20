@@ -30,7 +30,7 @@ from .automations import update as update_automations
 from .image03 import update as update_image03, download as download_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME
+from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
 from .analyses import update as update_analyses
 
@@ -641,7 +641,7 @@ class Garjus:
         types = []
 
         # Start with defaults
-        types = self._default_stattypes()
+        #types = self._default_stattypes()
 
         # Append others
         protocols = self.processing_protocols(project)
@@ -651,7 +651,7 @@ class Garjus:
                 logger.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
 
-        types = [x for x in types if x not in ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2']]
+        types = [x for x in types if x not in DISABLE_STATTYPES]
 
         return types
 

@@ -52,6 +52,7 @@ TASKS_RENAME = {
     'task_userinputs': 'USERINPUTS',
 }
 
+DISABLE_STATTYPES = ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2', 'Multi_Atlas_v3']
 
 COLUMNS = {
     'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
