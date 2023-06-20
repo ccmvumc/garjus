@@ -1,5 +1,3 @@
-import glob
-import re
 import logging
 import os
 import time
@@ -16,7 +14,7 @@ def process_project(
     raw_field,
     tab_field,
     convert_dir,
-    wait_time=7,
+    wait_time=70,
     wait_count=3
 ):
     results = []
