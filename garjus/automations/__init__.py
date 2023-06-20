@@ -86,7 +86,7 @@ def _run_edat_automations(automations, garjus, project):
     primary_redcap = garjus.primary(project)
     limbo = garjus.project_setting(project, 'limbodir')
     scans = garjus.scans(projects=[project]).to_dict('records')
-
+    convertdir = garjus.project_setting(project, 'convertdir')
     event2sess = {}
 
     for p in scanp:
@@ -119,7 +119,7 @@ def _run_edat_automations(automations, garjus, project):
 
         _events = [x.strip() for x in e['edat_events'].split(',')]
         _nums = [x.strip() for x in e['edat_eventnums'].split(',')]
-        _event2num = dict(zip( _events, _nums))
+        _event2num = dict(zip(_events, _nums))
 
         if 'edat_limbo2redcap' in edat_autos:
             results += edat_limbo2redcap.process_project(
@@ -137,7 +137,7 @@ def _run_edat_automations(automations, garjus, project):
                 _events,
                 e['edat_rawfield'],
                 e['edat_convfield'],
-                limbo)
+                convertdir)
 
         if 'edat_redcap2xnat' in edat_autos:
             results += edat_redcap2xnat.process_project(
@@ -148,8 +148,7 @@ def _run_edat_automations(automations, garjus, project):
                 event2sess,
                 scans,
                 e['edat_scantype'],
-                'EDAT',
-                )
+                'EDAT')
 
         # Upload results to garjus
         for r in results:
@@ -160,7 +159,7 @@ def _run_edat_automations(automations, garjus, project):
 def _parse_scanmap(scanmap):
     """Parse scan map stored as string into map."""
     # Parse multiline string of delimited key value pairs into dictionary
-    scanmap = dict(x.strip().split(':',1) for x in scanmap.split('\n'))
+    scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
 
     # Remove extra whitespace from keys and values
     scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}

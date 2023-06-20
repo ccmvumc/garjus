@@ -32,7 +32,8 @@ def process_project(
             continue
 
         if 'NIFTI' in scan['RESOURCES']:
-            logger.debug(f'NIFTI exists:{project}:{scan.SESSION}:{scan.SCANID}')
+            logger.debug(
+                f'NIFTI exists:{project}:{scan.SESSION}:{scan.SCANID}')
             continue
 
         if 'JSON' in scan['RESOURCES']:
@@ -73,12 +74,12 @@ def _dicomzip2nifti(garjus, full_path):
     files = res.files().get()
 
     if len(files) == 0:
-        msg =  f'no DICOMZIP files found:{full_path}'
+        msg = f'no DICOMZIP files found:{full_path}'
         logger.info(msg)
         raise Exception(msg)
     elif len(files) > 1:
         msg = f'too many DICOMZIP files found:{full_path}'
-        raise Exception(_msg)
+        raise Exception(msg)
 
     src = files[0]
 
@@ -105,7 +106,7 @@ def _dicomdir2nifti(garjus, full_path):
     files = res.files().get()
 
     if len(files) == 0:
-        msg =  f'no DICOM files found:{full_path}'
+        msg = f'no DICOM files found:{full_path}'
         logger.info(msg)
         raise Exception(msg)
 
