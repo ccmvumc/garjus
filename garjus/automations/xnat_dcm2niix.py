@@ -27,6 +27,10 @@ def process_project(
     for i, scan in df.iterrows():
         full_path = scan['full_path']
 
+        if scan['QUALITY'] == 'unusable':
+            logger.debug(f'skipping unusable:{scan.SESSION}:{scan.SCANID}')
+            continue
+
         if 'NIFTI' in scan['RESOURCES']:
             logger.debug(f'NIFTI exists:{project}:{scan.SESSION}:{scan.SCANID}')
             continue
@@ -35,48 +39,83 @@ def process_project(
             logger.debug(f'JSON exists:{project}:{scan.SESSION}:{scan.SCANID}')
             continue
 
-        if 'DICOMZIP' not in scan['RESOURCES']:
-            logger.debug(f'no DICOMZIP:{full_path}')
+        if 'DICOMZIP' in scan['RESOURCES']:
+            logger.debug(f'DICOMZIP to NIFTI:{full_path}')
+            try:
+                _dicomzip2nifti(garjus, full_path)
+            except Exception as err:
+                logger.error(err)
+                continue
+        elif 'DICOM' in scan['RESOURCES']:
+            logger.debug(f'No DICOMZIP found, using DICOM:{full_path}')
+            try:
+                _dicomdir2nifti(garjus, full_path)
+            except Exception as err:
+                logger.error(err)
+                continue
+        else:
+            logger.debug(f'no DICOMZIP or DICOM:{full_path}')
             continue
 
-        logger.info(f'convert DICOMZIP to NIFTI:{full_path}')
-
-        res = garjus.xnat().select(f'{full_path}/resources/DICOMZIP')
-
-        files = res.files().get()
-
-        if len(files) == 0:
-            print(i, 'no DICOMZIP files found', full_path)
-            continue
-        elif len(files) > 1:
-            print(i, 'too many DICOMZIP files found', full_path)
-            continue
-
-        src = files[0]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zip_path = os.path.join(tmpdir, src)
-            res.file(src).get(zip_path)
-
-            # unzip it
-            unzipped_dir = pathlib.Path(f'{tmpdir}/UNZIPPED')
-            unzipped_dir.mkdir()
-
-            # Unzip the zip to the temp folder
-            logger.info(f'unzip {zip_path} to {unzipped_dir}')
-            sb.run(['unzip', '-q', zip_path, '-d', unzipped_dir])
-
-            # convert to NIFTI
-            _d2n(unzipped_dir, res.parent())
-
-            results.append({
-                'result': 'COMPLETE',
-                'description': 'dcm2niix',
-                'subject': scan['SUBJECT'],
-                'session': scan['SESSION'],
-                'scan': scan['SCANID']})
+        results.append({
+            'result': 'COMPLETE',
+            'description': 'dcm2niix',
+            'subject': scan['SUBJECT'],
+            'session': scan['SESSION'],
+            'scan': scan['SCANID']})
 
     return results
+
+
+def _dicomzip2nifti(garjus, full_path):
+    res = garjus.xnat().select(f'{full_path}/resources/DICOMZIP')
+
+    files = res.files().get()
+
+    if len(files) == 0:
+        msg =  f'no DICOMZIP files found:{full_path}'
+        logger.info(msg)
+        raise Exception(msg)
+    elif len(files) > 1:
+        msg = f'too many DICOMZIP files found:{full_path}'
+        raise Exception(_msg)
+
+    src = files[0]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        zip_path = os.path.join(tmpdir, src)
+        res.file(src).get(zip_path)
+
+        # unzip it
+        unzipped_dir = pathlib.Path(f'{tmpdir}/UNZIPPED')
+        unzipped_dir.mkdir()
+
+        # Unzip the zip to the temp folder
+        logger.info(f'unzip {zip_path} to {unzipped_dir}')
+        sb.run(['unzip', '-q', zip_path, '-d', unzipped_dir])
+
+        # convert to NIFTI
+        logger.info(f'convert to NIFTI:{full_path}')
+        _d2n(unzipped_dir, res.parent())
+
+
+def _dicomdir2nifti(garjus, full_path):
+    res = garjus.xnat().select(f'{full_path}/resources/DICOM')
+
+    files = res.files().get()
+
+    if len(files) == 0:
+        msg =  f'no DICOM files found:{full_path}'
+        logger.info(msg)
+        raise Exception(msg)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        res.get(tmpdir, extract=True)
+
+        # convert to NIFTI
+        logger.info(f'convert to NIFTI:{full_path}')
+        _d2n(os.path.join(tmpdir, 'DICOM'), res.parent())
+
 
 def _d2n(dicomdir, scan_object):
     nifti_list = []
