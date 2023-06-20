@@ -58,7 +58,7 @@ def download_file(project, record_id, field_id, filename, event_id=None, repeat_
 
 def upload_file(project, record_id, field_id, filename, event_id=None, repeat_id=None):
     with open(filename, 'rb') as f:
-        project.import_file(
+        return project.import_file(
             record=record_id,
             field=field_id,
             file_name=os.path.basename(filename),

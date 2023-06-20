@@ -598,6 +598,10 @@ class Garjus:
         # Clean up
         df = df.drop(columns=['stats_assr'])
         df = df.dropna(axis=1, how='all')
+
+        if df.empty:
+            return pd.DataFrame(columns=[])
+
         df = df.sort_values('ASSR')
 
         # Apply filters
@@ -1375,6 +1379,19 @@ class Garjus:
         for x in self._rc.metadata:
             # dcm2niix, dcm2niix | xnat_auto_archive, xnat_auto_archive
             if x['field_name'] == 'main_scanautos':
+                names = x['select_choices_or_calculations']
+                names = [x for x in names.split('|')]
+                names = [n.split(',')[0].strip() for n in names]
+
+        return names
+
+    def edat_automation_choices(self):
+        """Get the names of the automations, checkboxes in REDCap."""
+        names = None
+
+        for x in self._rc.metadata:
+            # dcm2niix, dcm2niix | xnat_auto_archive, xnat_auto_archive
+            if x['field_name'] == 'edat_autos':
                 names = x['select_choices_or_calculations']
                 names = [x for x in names.split('|')]
                 names = [n.split(',')[0].strip() for n in names]

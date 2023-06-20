@@ -270,6 +270,9 @@ def plot_timeline(df, startdate=None, enddate=None):
             logger.debug('nothing to plot:{}:{}'.format(mod, sesstype))
             continue
 
+        #print(dfs.DATE.max())
+        #print(dfs.DATE.min())
+
         # markers symbols, see https://plotly.com/python/marker-style/
         if mod == 'MR':
             symb = 'circle-dot'
@@ -367,7 +370,7 @@ def plot_activity(df, pivot_index):
     return image
 
 
-def _add_page1(pdf, sessions, disable_monthly=False):
+def _add_count_pages(pdf, sessions, disable_monthly=False):
     mr_sessions = sessions[sessions.MODALITY == 'MR'].copy()
 
     # Start the page with titles
@@ -394,6 +397,10 @@ def _add_page1(pdf, sessions, disable_monthly=False):
         pdf.ln(0.25)
         _draw_counts(pdf, mr_sessions, rangetype='lastmonth')
         pdf.ln(1)
+
+    # Add other Modalities, counts for each session type
+    logger.debug('adding other counts')
+    _add_others(pdf, sessions, disable_monthly=disable_monthly)
 
     return pdf
 
@@ -517,16 +524,13 @@ def _add_graph_page(pdf, info):
     return pdf
 
 
-def _add_other_page(pdf, sessions, disable_monthly=False):
+def _add_others(pdf, sessions, disable_monthly=False):
     # Get non-MRI sessions
     other_sessions = sessions[sessions.MODALITY != 'MR'].copy()
 
     if len(other_sessions) == 0:
         logger.debug('no other modalities sessions, skipping page')
         return
-
-    # Start a new page
-    pdf.add_page()
 
     # Show all session counts
     pdf.set_font('helvetica', size=18)
@@ -549,6 +553,10 @@ def _add_wml_page(pdf, info):
 
     # Transform the data to row per session with columsn for LST, SAMSEG wml
     stats = info['stats']
+
+    if stats.empty:
+        logger.info('no stats found')
+        return
 
     lst_data = stats[stats.PROCTYPE == 'LST_v1']
     sam_data = stats[stats.PROCTYPE == 'SAMSEG_v1']
@@ -603,19 +611,29 @@ def _add_wml_page(pdf, info):
 
 
 def _add_fmriqa_pages(pdf, info, proctype):
+
     # TODO: get the stats data by scan type using inputs field to map to scan
+
     stats = info['stats']
     stat_data = stats[stats.PROCTYPE == proctype]
-    _add_stats_page(pdf, stat_data, proctype)
 
+    # use proclib to filter stats variable names
+    stat_info = info['proclib'].get(proctype, None)
+    if stat_info:
+        _subset = stat_info.get('stats_subset', None)
+        if _subset:
+            stat_data = stat_data[_subset + ['SITE', 'ASSR']]
 
-def _add_stats_page(pdf, stats, proctype):
     pdf.add_page()
     pdf.set_font('helvetica', size=12)
     pdf.cell(txt=proctype, ln=1)
+    _add_stats(pdf, stat_data)
+
+
+def _add_stats(pdf, stats):
 
     # this returns a PIL Image object
-    image = plot_stats(stats, proctype)
+    image = plot_stats(stats)
     tot_width, tot_height = image.size
 
     # Split horizontal image into chunks of width to fit on
@@ -629,6 +647,9 @@ def _add_stats_page(pdf, stats, proctype):
         for c in range(rows_per_page):
             # Calculate the starting x for this chunk
             chunk_x = (c * chunk_w) + (p * chunk_w * rows_per_page)
+            if chunk_x > tot_width - 10:
+                # out of bounds
+                continue
 
             # Get the image from the cropped section
             _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
@@ -711,15 +732,69 @@ def _add_nda_page(pdf, info):
 def _add_settings_page(pdf, info):
     pdf.add_page()
 
-    # Display main settings
-    pdf.set_font('helvetica', size=12)
-    #pdf.cell(txt=settings['project_scanmap'], ln=1)
-    pdf.cell(txt='Scan Map', ln=1)
+    pdf.set_font('helvetica', size=18, style='B')
+    pdf.cell(txt='Project Settings', ln=1)
 
     # Add some space
-    pdf.ln(0.2)
+    pdf.ln(0.5)
+
+    # Main Settings
+    pdf.set_font('helvetica', size=14, style='B')
+    pdf.cell(txt='REDCap Projects:', ln=1)
+    pdf.set_font('helvetica', size=10)
+    pdf.cell(txt=f'Settings:{info["settings_redcap"]}', ln=1)
+    pdf.cell(txt=f'Primary:{info["primary_redcap"]}', ln=1)
+    pdf.cell(txt=f'Secondary:{info["secondary_redcap"]}', ln=1)
+    pdf.cell(txt=f'Stats:{info["stats_redcap"]}', ln=1)
+    pdf.ln(0.3)
+
+    if 'xnat_scanmap' in info:
+        # Scan Map
+        pdf.set_font('helvetica', size=14, style='B')
+        pdf.cell(txt='XNAT Scan Map', ln=1)
+        pdf.set_font('helvetica', size=10)
+        _txt = _transform_scanmap(info['xnat_scanmap'])
+        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.ln(0.3)
+
+    if 'nda_scanmap' in info:
+        # NDA Scan Map
+        pdf.set_font('helvetica', size=14, style='B')
+        pdf.cell(txt='NDA Scan Map', ln=1)
+        pdf.set_font('helvetica', size=11)
+        _txt = info['nda_scanmap']
+        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.ln(0.3)
+
+    if 'nda_expmap' in info:
+        # NDA Experiment Map
+        pdf.set_font('helvetica', size=14, style='B')
+        pdf.cell(txt='NDA Experiment Map', ln=1)
+        pdf.set_font('helvetica', size=11)
+        _txt = info['nda_expmap']
+        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.ln(0.3)
+
+    if 'scan_protocols' in info:
+        # Scanning Protocols
+        pdf.set_font('helvetica', size=14, style='B')
+        pdf.cell(txt='Scanning Protocols', ln=1)
+        pdf.set_font('helvetica', size=11)
+        _txt = '\n'.join([x['scanning_eventname'] for x in info['scan_protocols']])
+        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.ln(0.3)
+
+    if 'edat_protocols' in info:
+        # EDAT Protocols
+        pdf.set_font('helvetica', size=14, style='B')
+        pdf.cell(txt='EDAT Protocols', ln=1)
+        pdf.set_font('helvetica', size=11)
+        _txt = '\n'.join([x['edat_name'] for x in info['edat_protocols']])
+        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.ln(0.2)
 
     return pdf
+
 
 def _add_proclib_page(pdf, info):
     pdf.add_page()
@@ -735,9 +810,9 @@ def _add_proclib_page(pdf, info):
         pdf.cell(txt=k, ln=1)
 
         # Build the description
-        _text = v['short_descrip'] + '\n'
-        _text += 'Inputs: ' + v['inputs_descrip'] + '\n'
-        _text += v['procurl'] + '\n'
+        _text = v.get('short_descrip', '') + '\n'
+        _text += 'Inputs: ' + v.get('inputs_descrip', '') + '\n'
+        _text += v.get('procurl', '') + '\n'
 
         # show stats
         for s, t in info['statlib'].get(k, {}).items():
@@ -752,32 +827,32 @@ def _add_proclib_page(pdf, info):
 
     return pdf
 
-def _add_phantom_page(pdf, info):
+def _add_phantoms(pdf, info, disable_monthly=False):
     # Get the data for all
     df = info['phantoms'].copy()
 
-    pdf.add_page()
-    pdf.set_font('helvetica', size=18)
-
     # Draw all timeline
     _txt = 'Phantoms (all)'
-    pdf.cell(w=7.5, align='C', txt=_txt)
+    pdf.set_font('helvetica', size=18)
+    pdf.cell(w=7.5, align='C', txt=_txt, ln=1)
     image = plot_timeline(df)
-    pdf.image(image, x=0.5, y=0.75, w=7.5)
+    #pdf.image(image, x=0.5, y=0.75, w=7.5)
+    pdf.image(image, x=0.5, w=7.5)
     pdf.ln(5)
 
-    # Get the dates of last month
-    enddate = date.today().replace(day=1) - timedelta(days=1)
-    startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
+    if not disable_monthly:
+        # Get the dates of last month
+        enddate = date.today().replace(day=1) - timedelta(days=1)
+        startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
 
-    # Get the name of last month
-    lastmonth = startdate.strftime("%B")
+        # Get the name of last month
+        lastmonth = startdate.strftime("%B")
 
-    _txt = 'Phantoms ({})'.format(lastmonth)
-    image = plot_timeline(df, startdate=startdate, enddate=enddate)
-    pdf.cell(w=7.5, align='C', txt=_txt)
-    pdf.image(image, x=0.5, y=5.75, w=7.5)
-    pdf.ln()
+        _txt = 'Phantoms ({})'.format(lastmonth)
+        image = plot_timeline(df, startdate=startdate, enddate=enddate)
+        pdf.cell(w=7.5, align='C', txt=_txt)
+        pdf.image(image, x=0.5, y=5.75, w=7.5)
+        pdf.ln()
 
     return pdf
 
@@ -922,12 +997,12 @@ def _plottable(var):
         return False
 
 
-def plot_stats(df, proctype):
+def plot_stats(df):
     """Plot stats, one boxlplot per var."""
     box_width = 250
     min_box_count = 4
 
-    logger.debug('plot_stats:{}:{}'.format(proctype, len(df)))
+    logger.debug('plot_stats:{}'.format(len(df)))
 
     # Check for empty data
     if len(df) == 0:
@@ -1047,26 +1122,89 @@ def plot_stats(df, proctype):
     return image
 
 
+def _add_stats_pages(pdf, info):
+    proclib = info['proclib']
+    stats = info['stats']
+    stattypes = info['stattypes']
+
+    for proctype in stattypes:
+        # Limit the data to this proctype
+        stat_data = stats[stats.PROCTYPE == proctype]
+
+        if stat_data.empty:
+            logger.debug(f'no stats for proctype:{proctype}')
+            continue
+
+        logger.debug(f'add stats page:{proctype}')
+        
+        # Get descriptions for this processing type
+        proc_info = proclib.get(proctype, {})
+
+        # use proclib to filter stats variable names
+        _subset = proc_info.get('stats_subset', None)
+        if _subset:
+            stat_data = stat_data[_subset + ['SITE', 'ASSR']]
+
+        # Now make the page
+        pdf.add_page()
+        pdf.set_font('helvetica', size=12)
+        pdf.cell(txt=proctype, ln=1)
+
+        if proctype == 'fmriqa_v4':
+            #_add_fmriqa(pdf, stat_data)
+            # TODO: get the stats data by scan type using inputs field to map to scan
+            _add_stats(pdf, stat_data)
+        else:
+            _add_stats(pdf, stat_data)
+
+         # Build the description
+        _text = proc_info.get('short_descrip', '') + '\n'
+        _text += 'Inputs: ' + proc_info.get('inputs_descrip', '') + '\n'
+        _text += proc_info.get('procurl', '') + '\n'
+
+        # Append stats descriptions
+        for s, t in info['statlib'].get(proctype, {}).items():
+            _text += f'{s}: {t}\n'
+
+        # Show the descriptions
+        pdf.set_font('helvetica', size=12)
+        pdf.multi_cell(0, 0.3, _text, border='LBTR', align="L", ln=0)
+
+        # Add some space
+        pdf.ln(0.2)
+
+
 def make_pdf(info, filename):
+    disable_monthly = info['disable_monthly']
     """Make PDF from info, save to filename."""
     logger.debug('making PDF')
 
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
     pdf.set_filename(filename)
-    pdf.set_project(info['project'], disable_monthly=info['disable_monthly'])
+    pdf.set_project(info['project'], disable_monthly=disable_monthly)
 
     # Add first page showing MRIs
     logger.debug('adding first page')
-    _add_page1(pdf, info['sessions'], disable_monthly=info['disable_monthly'])
-
-    # Add other Modalities, counts for each session type
-    logger.debug('adding other page')
-    _add_other_page(pdf, info['sessions'], disable_monthly=info['disable_monthly'])
+    _add_count_pages(pdf, info['sessions'], disable_monthly=disable_monthly)
 
     # Timeline
     logger.debug('adding timeline page')
-    _add_timeline_page(pdf, info, disable_monthly=info['disable_monthly'])
+    _add_timeline_page(pdf, info, disable_monthly=disable_monthly)
+
+    # Phantom pages
+    if len(info['phantoms']) > 0:
+        logger.debug('adding phantom page')
+        _add_phantoms(pdf, info, disable_monthly=disable_monthly)
+    else:
+        logger.debug('no phantom page')
+
+    # Add stats pages
+    if info['stats'].empty:
+        logger.debug('without stats')
+    else:
+        logger.debug('adding stats pages')
+        _add_stats_pages(pdf, info)
 
     # Session type pages - counts per scans, counts per assessor
     logger.debug('adding MR qa pages')
@@ -1093,46 +1231,22 @@ def make_pdf(info, filename):
         # Add the page for this session type
         _add_qa_page(pdf, scandf, assrdf, curtype)
 
-    # Add stats pages
-    if info['stats'].empty:
-        logger.debug('without stats')
-    else:
-        stats = info['stats']
-        for s in info['stattypes']:
-            # Limit the data to this proctype
-            stat_data = stats[stats.PROCTYPE == s]
-            if stat_data.empty:
-                logger.debug(f'no stats for proctype:{s}')
-            else:
-                logger.debug(f'add stats page:{s}')
-                if s == 'fmriqa_v4':
-                    _add_fmriqa_pages(pdf, info, s)
-                else:
-                    _add_stats_page(pdf, stat_data, s)
-
     # LST vs SAMSEG
     _add_wml_page(pdf, info)
 
-    # Phantom pages
-    if len(info['phantoms']) > 0:
-        logger.debug('adding phantom page')
-        _add_phantom_page(pdf, info)
-    else:
-        logger.debug('no phantom page')
 
     # QA/Jobs/Issues counts
     if not info['disable_monthly']:
         _add_activity_page(pdf, info)
 
     # Processing Details
-    _add_proclib_page(pdf, info)
+    #_add_proclib_page(pdf, info)
 
     # Directed Graph of processing
     _add_graph_page(pdf, info)
 
     # Settings
-    if False:
-        _add_settings_page(pdf, info)
+    _add_settings_page(pdf, info)
 
     # Save to file
     logger.debug('saving PDF to file:{}'.format(pdf.filename))
@@ -1251,9 +1365,6 @@ def get_metastatus(status):
     return metastatus
 
 
-
-
-
 def make_project_report(
     garjus,
     project,
@@ -1270,11 +1381,27 @@ def make_project_report(
 
     # Load types for this project
     proctypes = garjus.proctypes(project)
-    scantypes = garjus.scantypes(project)
+    #scantypes = garjus.scantypes(project)
+    scantypes = []
     stattypes = garjus.stattypes(project)
 
     # Loads scans/assessors with type filters applied
     scans = garjus.scans(projects=[project], scantypes=scantypes)
+    scantypes = list(scans.SCANTYPE.unique())
+    scantypes = list(set([x[:15].strip() for x in scantypes if x]))
+
+    # Try to filter out junk
+    scantypes = [x for x in scantypes if not x.startswith('[')]
+    scantypes = [x for x in scantypes if 'survey' not in x.lower()]
+    scantypes = [x for x in scantypes if x.lower() != 'cor']
+    scantypes = [x for x in scantypes if x.lower() != 'unknown']
+    scantypes = [x for x in scantypes if x.lower() != 'fmri_rest_fsa']
+    scantypes = [x for x in scantypes if not x.lower().startswith('screen')]
+    scantypes = [x for x in scantypes if not x.startswith('Low Dose CT')]
+    scantypes = [x for x in scantypes if not x.startswith('VWIP')]
+    scantypes = [x for x in scantypes if not x.startswith('3DFRP')]
+    scantypes = [x for x in scantypes if not x.startswith('TOPUP')]
+    scantypes = sorted(scantypes)
     assessors = garjus.assessors(projects=[project], proctypes=proctypes)
     phantoms = garjus.phantoms(project)
     phantoms = phantoms[SESSCOLS].drop_duplicates().sort_values('SESSION')
@@ -1285,8 +1412,6 @@ def make_project_report(
 
     # Load stats with extra assessor columns
     stats = garjus.stats(project, assessors)
-    #stats = pd.merge(assessors[ACOLS], stats, left_on='ASSR', right_on='stats_assr')
-    #stats = stats.drop(columns=['stats_assr'])
 
     # Make the info dictionary for PDF
     info = {}
@@ -1306,6 +1431,15 @@ def make_project_report(
     info['assrqa'] = _assrqa(assessors, proctypes)
     info['phantoms'] = phantoms
     info['disable_monthly'] = disable_monthly
+    info['xnat_scanmap'] = garjus.project_setting(project, 'scanmap')
+    info['nda_expmap'] = garjus.project_setting(project, 'xst2nei')
+    info['nda_scanmap'] = garjus.project_setting(project, 'xst2nst')
+    info['scan_protocols'] =  garjus.scanning_protocols(project)
+    info['edat_protocols'] = garjus.edat_protocols(project)
+    info['settings_redcap'] = garjus.project_setting(project, 'redcap')
+    info['primary_redcap'] = garjus.project_setting(project, 'primary')
+    info['secondary_redcap'] = garjus.project_setting(project, 'Secondary')
+    info['stats_redcap'] = garjus.project_setting(project, 'stats')
 
     # Save the PDF report to file
     make_pdf(info, pdfname)
@@ -1403,3 +1537,15 @@ def _recent_qa(assessors, startdate=None):
     df['ID'] = df.index
 
     return df
+
+
+def _transform_scanmap(scanmap):
+    """Parse scan map stored as string into map."""
+    # Parse multiline string of delimited key value pairs into dictionary
+    scanmap = dict(x.strip().split(':',1) for x in scanmap.split('\n'))
+
+    # Remove extra whitespace from keys and values
+    scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
+    scanmap = '\n'.join(f'{k} -> {v}' for k, v in scanmap.items())
+
+    return scanmap

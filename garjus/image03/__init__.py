@@ -77,26 +77,23 @@ def _parse_map(mapstring):
 
 def _update_project(garjus, project):
 
-    #image_dir = garjus.project_setting(project, 'imagedir')
-    #if not image_dir:
-    #    logger.debug(f'no imagedir set for project:{project}')
-    #    image_dir = ''
-
+    # Get map of Xnat scan types to NDA scan types
     xst2nst = garjus.project_setting(project, 'xst2nst')
     if not xst2nst:
         logger.debug('no xst2nst')
         return
 
+    # Get map of Xnat scan types to NDA experiment types (as applicable)
     xst2nei = garjus.project_setting(project, 'xst2nei')
     if not xst2nei:
         logger.debug('no xst2nei')
         return
 
-    logger.debug(f'settings:{project}:xst2nei={xst2nei}:xst2nst={xst2nst}')
-
     # Parse strings into dictionary
     xst2nst = _parse_map(xst2nst)
     xst2nei = _parse_map(xst2nei)
+
+    logger.debug(f'settings:{project}:xst2nei={xst2nei}:xst2nst={xst2nst}')
 
     outfile = f'{project}_image03.csv'
 
@@ -330,10 +327,11 @@ def _make_image03_csv(
 
     # merge in subject data
     pscans = pd.merge(pscans, dfs, left_on='SUBJECT', right_index=True)
+
+    # Format as datetime
     pscans['DATE'] = pd.to_datetime(pscans['DATE'])
-    #df['SCANAGE'] = ((df['DATE'] + pd.DateOffset(days=15)) - df['DOB']
-    #).astype('<m8[M]'
-    #).astype('int').astype('str')
+
+    # Calculate Scan age in integer of months as a string
     pscans['SCANAGE'] = (pscans['DATE'] + pd.DateOffset(days=15)) - pscans['DOB']
     pscans['SCANAGE'] = pscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
 

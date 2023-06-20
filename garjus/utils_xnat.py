@@ -46,6 +46,8 @@ proc:genprocdata/validation/validated_by,\
 proc:genprocdata/jobstartdate,\
 last_modified,\
 proc:genprocdata/inputs'
+# Including resource labels takes too long: proc:genprocdata/out/file/label'
+
 
 SGP_URI = '/REST/subjects?xsiType=xnat:subjectdata\
 &columns=\
