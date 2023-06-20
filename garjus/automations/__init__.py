@@ -25,11 +25,14 @@ D3_SLICE_TIMING = [
 
 DM2_SLICE_TIMING = [
     0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325,
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
+    0.325,
     0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325,
-    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91, 
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001, 0.325]
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
+    0.325,
+    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
+    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
+    0.325]
 
 REMBRANDT_SLICE_TIMING = [
     0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
@@ -38,7 +41,6 @@ REMBRANDT_SLICE_TIMING = [
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
     0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
-
 
 
 def update(garjus, projects, autos_include=None, autos_exclude=None):
@@ -51,32 +53,108 @@ def update(garjus, projects, autos_include=None, autos_exclude=None):
 def update_project(garjus, project, autos_include=None, autos_exclude=None):
     """Update automations for project."""
     scan_autos = garjus.scan_automations(project)
+    etl_autos = garjus.etl_automations(project)
+    edat_autos = garjus.edat_automation_choices()
 
     if autos_include:
         # Apply include filter
         scan_autos = [x for x in scan_autos if x in autos_include]
+        etl_autos = [x for x in etl_autos if x in autos_include]
+        edat_autos = [x for x in edat_autos if x in autos_include]
 
     if autos_exclude:
         # Apply exclude filter
         scan_autos = [x for x in scan_autos if x not in autos_exclude]
+        etl_autos = [x for x in etl_autos if x not in autos_exclude]
+        edat_autos = [x for x in edat_autos if x not in autos_exclude]
 
     if scan_autos:
         logging.debug(f'running scan automations:{project}:{scan_autos}')
         _run_scan_automations(scan_autos, garjus, project)
 
-    etl_autos = garjus.etl_automations(project)
-
-    if autos_include:
-        # Apply include filter
-        etl_autos = [x for x in etl_autos if x in autos_include]
-
-    if autos_exclude:
-        # Apply exclude filter
-        etl_autos = [x for x in etl_autos if x not in autos_exclude]
-
     for a in etl_autos:
-        logging.debug(f'{project}:running automation:{a}')
+        logging.debug(f'running automation:{project}:{a}')
         _run_etl_automation(a, garjus, project)
+
+    _run_edat_automations(edat_autos, garjus, project)
+
+
+def _run_edat_automations(automations, garjus, project):
+    results = []
+    edats = garjus.edat_protocols(project)
+    scanp = garjus.scanning_protocols(project)
+    primary_redcap = garjus.primary(project)
+    limbo = garjus.project_setting(project, 'limbodir')
+    scans = garjus.scans(projects=[project]).to_dict('records')
+
+    event2sess = {}
+
+    for p in scanp:
+        s = p['scanning_xnatsuffix']
+        _events = [x.strip() for x in p['scanning_events'].split(',')]
+        for e in _events:
+            event2sess[e] = s
+
+    # load the automations
+    try:
+        edat_limbo2redcap = importlib.import_module(
+            f'garjus.automations.edat_limbo2redcap')
+        edat_convert2tab = importlib.import_module(
+            f'garjus.automations.edat_convert2tab')
+        edat_redcap2xnat = importlib.import_module(
+            f'garjus.automations.edat_redcap2xnat')
+    except ModuleNotFoundError as err:
+        logger.error(f'error loading modules:{err}')
+        return
+
+    for e in edats:
+        edat_autos = [
+            k.split('edat_autos___')[1]
+            for k, v in e.items() if k.startswith('edat_autos') and v == '1']
+
+        print(edat_autos)
+
+        # Apply filter
+        edat_autos = [x for x in edat_autos if x in automations]
+
+        _events = [x.strip() for x in e['edat_events'].split(',')]
+        _nums = [x.strip() for x in e['edat_eventnums'].split(',')]
+        _event2num = dict(zip( _events, _nums))
+
+        if 'edat_limbo2redcap' in edat_autos:
+            results += edat_limbo2redcap.process_project(
+                primary_redcap,
+                _events,
+                e['edat_rawfield'],
+                e['edat_convfield'],
+                e['edat_fileprefix'],
+                limbo,
+                event2sess=_event2num)
+
+        if 'edat_convert2tab' in edat_autos:
+            results += edat_convert2tab.process_project(
+                primary_redcap,
+                _events,
+                e['edat_rawfield'],
+                e['edat_convfield'],
+                limbo)
+
+        if 'edat_redcap2xnat' in edat_autos:
+            results += edat_redcap2xnat.process_project(
+                garjus.xnat(),
+                primary_redcap,
+                _events,
+                e['edat_convfield'],
+                event2sess,
+                scans,
+                e['edat_scantype'],
+                'EDAT',
+                )
+
+        # Upload results to garjus
+        for r in results:
+            r.update({'project': project})
+            garjus.add_activity(**r)
 
 
 def _parse_scanmap(scanmap):
@@ -349,6 +427,19 @@ def _run_scan_automations(automations, garjus, project):
     site_data = garjus.sites(project)
     protocols = garjus.scanning_protocols(project)
     project_redcap = garjus.primary(project)
+
+    # MA3 stats 2 vol txt
+    # if project == 'REMBRANDT':
+    #    logger.debug(f'running ma3stats2voltxt:{project}')
+    #    stats2vol = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
+    #    assessors = garjus.assessors(projects=[project], proctypes=['MultiAtlas_v3'])
+    #    xnat = garjus.xnat()
+    #    
+    #    results += stats2vol.process_project(
+    #        xnat,
+    #        project,
+    #        assessors
+    #    )
 
     # Add slice timing
     if project == 'REMBRANDT':
