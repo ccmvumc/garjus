@@ -742,13 +742,13 @@ def _add_settings_page(pdf, info):
     pdf.set_font('helvetica', size=14, style='B')
     pdf.cell(txt='REDCap Projects:', ln=1)
     pdf.set_font('helvetica', size=10)
-    pdf.cell(txt=f'Settings:{info["settings_redcap"]}', ln=1)
-    pdf.cell(txt=f'Primary:{info["primary_redcap"]}', ln=1)
-    pdf.cell(txt=f'Secondary:{info["secondary_redcap"]}', ln=1)
-    pdf.cell(txt=f'Stats:{info["stats_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Settings:{info["settings_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Primary:{info["primary_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Secondary:{info["secondary_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Stats:{info["stats_redcap"]}', ln=1)
     pdf.ln(0.3)
 
-    if 'xnat_scanmap' in info:
+    if info.get('xnat_scanmap', False):
         # Scan Map
         pdf.set_font('helvetica', size=14, style='B')
         pdf.cell(txt='XNAT Scan Map', ln=1)
@@ -757,7 +757,7 @@ def _add_settings_page(pdf, info):
         pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
         pdf.ln(0.3)
 
-    if 'nda_scanmap' in info:
+    if info.get('nda_scanmap', False):
         # NDA Scan Map
         pdf.set_font('helvetica', size=14, style='B')
         pdf.cell(txt='NDA Scan Map', ln=1)
@@ -766,7 +766,7 @@ def _add_settings_page(pdf, info):
         pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
         pdf.ln(0.3)
 
-    if 'nda_expmap' in info:
+    if info.get('nda_expmap', False):
         # NDA Experiment Map
         pdf.set_font('helvetica', size=14, style='B')
         pdf.cell(txt='NDA Experiment Map', ln=1)
@@ -775,7 +775,7 @@ def _add_settings_page(pdf, info):
         pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
         pdf.ln(0.3)
 
-    if 'scan_protocols' in info:
+    if info.get('scan_protocols', False):
         # Scanning Protocols
         pdf.set_font('helvetica', size=14, style='B')
         pdf.cell(txt='Scanning Protocols', ln=1)
@@ -784,7 +784,7 @@ def _add_settings_page(pdf, info):
         pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
         pdf.ln(0.3)
 
-    if 'edat_protocols' in info:
+    if info.get('edat_protocols', False):
         # EDAT Protocols
         pdf.set_font('helvetica', size=14, style='B')
         pdf.cell(txt='EDAT Protocols', ln=1)
