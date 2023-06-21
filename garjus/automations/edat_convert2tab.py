@@ -27,6 +27,7 @@ def process_project(
         rec = project.export_records(fields=[def_field, sec_field])
         id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
     else:
+        rec = project.export_records(fields=[def_field])
         id2subj = {x[def_field]: x[def_field] for x in rec if x[def_field]}
 
     # Get mri records
