@@ -548,19 +548,27 @@ class Garjus:
 
         return pd.DataFrame(data, columns=self.column_names('analyses'))
 
-    def stats(self, project, assessors=None, proctypes=None, sesstypes=None, persubject=False):
-        """Return all stats for project, filtered by proctypes."""
-
-        acols = [
-        'ASSR',
-        'PROJECT',
-        'SUBJECT',
-        'SESSION',
-        'SESSTYPE',
-        'SITE',
-        'DATE',
-        'PROCTYPE',
+    def acols(self):
+        return [
+            'ASSR',
+            'PROJECT',
+            'SUBJECT',
+            'SESSION',
+            'SESSTYPE',
+            'SITE',
+            'DATE',
+            'PROCTYPE',
         ]
+
+    def stats(
+        self,
+        project,
+        assessors=None,
+        proctypes=None,
+        sesstypes=None,
+        persubject=False
+    ):
+        """Return all stats for project, filtered by proctypes."""
 
         try:
             """Get the stats data from REDCap."""
@@ -593,7 +601,7 @@ class Garjus:
 
         # Merge with assessors
         df = pd.merge(
-            assessors[acols], df, left_on='ASSR', right_on='stats_assr')
+            assessors[self.acols()], df, left_on='ASSR', right_on='stats_assr')
 
         # Clean up
         df = df.drop(columns=['stats_assr'])
@@ -620,7 +628,7 @@ class Garjus:
         return df
 
     def stats_assessors(self, project, proctypes=None):
-        """Get list of assessors alread in stats archive."""
+        """Get list of assessors already in stats archive."""
         statsrc = self._stats_redcap(project)
 
         _records = statsrc.export_records(fields=['stats_assr'])

@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from dash import dcc, html
 
@@ -7,15 +6,16 @@ from . import qa
 from . import activity
 from . import issues
 from . import queue
+from . import stats
 
 
 def get_layout():
     qa_content = qa.get_content()
     activity_content = activity.get_content()
-    stats_content = ['TBD']
-    reports_content = ['TBD']
+    stats_content = stats.get_content()
     issues_content = issues.get_content()
     queue_content = queue.get_content()
+    # reports_content = ['TBD']
 
     report_content = [
         html.Div(
@@ -28,10 +28,10 @@ def get_layout():
                     label='Issues', value='3', children=issues_content),
                 dcc.Tab(
                     label='Queue', value='4', children=queue_content),
-                #dcc.Tab(
-                #    label='Stats', value='5', children=stats_content),
-                #dcc.Tab(
-                #    label='Reports', value='6', children=reports_content),
+                dcc.Tab(
+                    label='Stats', value='5', children=stats_content),
+                # dcc.Tab(
+                #     label='Reports', value='6', children=reports_content),
             ]),
             style={
                 'width': '90%', 'display': 'flex',
