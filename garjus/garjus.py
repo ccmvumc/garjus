@@ -106,8 +106,11 @@ class Garjus:
     def __del__(self):
         """Close connectinons we opened."""
         if self._disconnect_xnat:
-            logger.debug('disconnecting xnat')
-            self._xnat.disconnect()
+            try:
+                logger.debug('disconnecting xnat')
+                self._xnat.disconnect()
+            except Exception:
+                pass
 
     @staticmethod
     def _default_xnat():
