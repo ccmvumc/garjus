@@ -36,7 +36,7 @@ def _plottable(var):
         return False
 
 
-def get_graph_content(df):
+def get_graph_content(df, selected_pivot):
     tabs_content = []
     tab_value = 0
     box_width = 250
@@ -47,11 +47,10 @@ def get_graph_content(df):
     # Check for empty data
     if len(df) == 0:
         logger.debug('empty data, using empty figure')
-        # return [plotly.subplots.make_subplots(rows=1, cols=1)]
-        _txt = 'Choose Project(s) and Type(s) to load stats'
-        return [dcc.Tab(label='  ', value='0',
-            children=[html.Div(html.P(_txt, style={'text-align': 'center', 'verticalAlign': 'middle'}),
-                style={'height': '150px', 'width': '1000px', 'verticalAlign': 'middle'})])]
+        _txt = 'Choose Project(s) then Type(s) to load stats'
+        return [dcc.Tab(label='', value='0', children=[html.Div(
+            html.P(_txt, style={'text-align': 'center'}),
+            style={'height': '150px', 'width': '1000px'})])]
 
     # Filter var list to only include those that have data
     var_list = [x for x in df.columns if not pd.isnull(df[x]).all()]
@@ -59,8 +58,45 @@ def get_graph_content(df):
     # Hide some columns
     var_list = [x for x in var_list if x not in hidecols]
 
+    # Hide more columns
+    var_list = [x for x in var_list if not (
+        x.endswith('_pctused') or 
+        x.endswith('_voltot')) or
+        x.endswith('_volused') 
+    ]
+
     # Filter var list to only stats can be plotted as float
     var_list = [x for x in var_list if _plottable(df[x])]
+
+    # Append the tab
+    _label = 'ALL'
+    _graph = get_stats_graph(df, var_list)
+    _tab = dcc.Tab(label=_label, value=str(tab_value), children=[_graph])
+    tabs_content.append(_tab)
+
+    # other pivots
+    pivots = ['SITE', 'PROJECT', 'SESSTYPE']
+    for p in pivots:
+
+        if len(df[p].unique()) <= 1:
+            continue
+
+        tab_value += 1
+        _label = 'By ' + p
+        _graph = get_stats_graph(df, var_list, p)
+        _tab = dcc.Tab(label=_label, value=str(tab_value), children=[_graph])
+        tabs_content.append(_tab)
+
+    # Return the tabs
+    return tabs_content
+
+
+def get_stats_graph(df, var_list, pivot=None):
+    box_width = 250
+    min_box_count = 4
+    hidecols = HIDECOLS
+
+    logger.debug(f'get_graph_tab:{pivot}')
 
     # Determine how many boxplots we're making, depends on how many vars, use
     # minimum so graph doesn't get too small
@@ -90,10 +126,15 @@ def get_graph_content(df):
         logger.debug(f'plotting var:{var}')
 
         # Create boxplot for this var and add to figure
+        if pivot:
+            _xvalues = df[pivot]
+        else:
+            _xvalues = None
+
         fig.append_trace(
             go.Box(
                 y=df[var].str.strip('%').astype(float),
-                x=df['SITE'],
+                x=_xvalues,
                 boxpoints='all',
                 text=df['ASSR'],
                 boxmean=True,
@@ -107,12 +148,6 @@ def get_graph_content(df):
             fig.update_yaxes(autorange=True)
             pass
 
-    # Move the subtitles to bottom instead of top of each subplot
-    if len(df['SITE'].unique()) < 4:
-        for i in range(len(fig.layout.annotations)):
-            fig.layout.annotations[i].update(y=-.15)
-        # , font={'size': 18})
-
     # Customize figure to hide legend and fit the graph
     fig.update_layout(
         showlegend=False,
@@ -120,24 +155,18 @@ def get_graph_content(df):
         width=graph_width,
         margin=dict(l=20, r=40, t=40, b=80, pad=0))
 
+    if not pivot:
+        fig.update_xaxes(showticklabels=False) # hide all the xticks
+
     # Build the tab
     # We set the graph to overflow and then limit the size to 1000px, this
     # makes the graph stay in a scrollable section
-    label = 'By Site'
     graph = html.Div(
         dcc.Graph(figure=fig, style={'overflow': 'scroll'}),
         style={'width': '1000px'})
 
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
-    tab_value += 1
-
-    # Append the tab
-    tabs_content.append(tab)
-
-    # TODO: by Session Type, All
-
-    # Return the tabs
-    return tabs_content
+    # Return the graph
+    return graph
 
 
 def get_content():
@@ -252,9 +281,6 @@ def update_stats(
 
     logger.debug('update_all')
 
-    # Load our data
-    # This data will already be merged scans and assessors with
-    # a row per scan or assessor
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-stats-refresh'):
         # Refresh data if refresh button clicked
@@ -286,7 +312,7 @@ def update_stats(
     df = data.filter_data(df, selected_proc, selected_time, selected_sess)
 
     # Get the graph content in tabs (currently only one tab)
-    tabs = get_graph_content(df)
+    tabs = get_graph_content(df, selected_pivot)
 
     # Determine columns to be included in the table
     selected_cols = df.columns
