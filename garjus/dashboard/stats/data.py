@@ -78,7 +78,10 @@ def get_data(projects):
         df = pd.concat([df, stats])
 
     # Apply tweaks
-    df['SESSTYPE'] = df['SESSTYPE'].fillna('UNKNOWN')
+    if 'SESSTYPE' in df.columns:
+        df['SESSTYPE'] = df['SESSTYPE'].fillna('UNKNOWN')
+    else:
+        df['SESSTYPE'] = 'UNKNOWN'
 
     return df
 
