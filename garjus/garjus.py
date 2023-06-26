@@ -1880,20 +1880,27 @@ class Garjus:
         failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
 
         for i, t in failed_tasks.iterrows():
+            assr = t['ASSESSOR']
+            print(assr)
+
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
                 xsitype = 'proc:subjgenprocdata'
                 assessor = self.xnat().select_sgp_assessor(
                     project,
-                    t['ASSESSOR'].split('-x-')[1],
-                    t['ASSESSOR'])
+                    assr.split('-x-')[1],
+                    assr)
             else:
                 xsitype = 'proc:genprocdata'
                 assessor = self.xnat().select_assessor(
                     project,
-                    t['ASSESSOR'].split('-x-')[1],
-                    t['ASSESSOR'].split('-x-')[2],
-                    t['ASSESSOR'])
+                    assr.split('-x-')[1],
+                    assr.split('-x-')[2],
+                    assr)
+
+            if not assessor.exists():
+                logger.debug(f'assessor not found on xnat:{assr}')
+                continue
 
             # Clear previous results
             logger.debug('clearing xnat attributes')
@@ -1925,20 +1932,27 @@ class Garjus:
             })
 
         for i, t in failed_tasks.iterrows():
+            assr =  t['ASSESSOR']
+
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
                 xsitype = 'proc:subjgenprocdata'
                 assessor = self.xnat().select_sgp_assessor(
                     project,
-                    t['ASSESSOR'].split('-x-')[1],
-                    t['ASSESSOR'])
+                    assr.split('-x-')[1],
+                    assr)
             else:
                 xsitype = 'proc:genprocdata'
                 assessor = self.xnat().select_assessor(
                     project,
-                    t['ASSESSOR'].split('-x-')[1],
-                    t['ASSESSOR'].split('-x-')[2],
-                    t['ASSESSOR'])
+                    assr.split('-x-')[1],
+                    assr.split('-x-')[2],
+                    assr)
+            
+            if not assessor.exists():
+                logger.debug(f'assessor not found on xnat:{assr}')
+                continue
+
             logger.debug('set xnat procstatus to JOB_RUNNING')
             assessor.attrs.mset({
                 f'{xsitype}/procstatus': 'JOB_RUNNING',
