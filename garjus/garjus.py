@@ -8,7 +8,7 @@ import pathlib
 from typing import Optional
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, date
 import glob
 import os
 import tempfile
@@ -1868,6 +1868,86 @@ class Garjus:
     def dax2queue(self):
         from .tasks import dax2garjus
         dax2garjus.dax2queue(self)
+
+    def retry(self, project):
+        '''Delete outputs on xnat, set to job running, reset on redcap'''
+        SKIP_LIST = ['OLD', 'EDITS']
+        records = []
+
+        # get tasks with status of fail, failcount blank or 0
+        df = self.tasks(hidedone=False)
+        df = df[df.PROJECT == project]
+        failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
+
+        for i, t in failed_tasks.iterrows():
+            # Connect to the assessor on xnat
+            if is_sgp_assessor(t['ASSESSOR']):
+                xsitype = 'proc:subjgenprocdata'
+                assessor = self.xnat().select_sgp_assessor(
+                    project,
+                    t['ASSESSOR'].split('-x-')[1],
+                    t['ASSESSOR'])
+            else:
+                xsitype = 'proc:genprocdata'
+                assessor = self.xnat().select_assessor(
+                    project,
+                    t['ASSESSOR'].split('-x-')[1],
+                    t['ASSESSOR'].split('-x-')[2],
+                    t['ASSESSOR'])
+
+            # Clear previous results
+            logger.debug('clearing xnat attributes')
+            assessor.attrs.mset({
+                f'{xsitype}/validation/status': 'Job Pending',
+                f'{xsitype}/jobid': ' ',
+                f'{xsitype}/memused': ' ',
+                f'{xsitype}/walltimeused': ' ',
+                f'{xsitype}/jobnode': ' ',
+            })
+
+            resources = assessor.out_resources()
+            resources = [x for x in resources if x.label() not in SKIP_LIST]
+            logger.debug('deleting xnat resources')
+            for res in resources:
+                try:
+                    res.delete()
+                except Exception:
+                    logger.error('deleting xnat resource')
+
+            records.append({
+                'main_name': project,
+                'redcap_repeat_instrument': 'taskqueue',
+                'redcap_repeat_instance': t['ID'],
+                'task_status': 'QUEUED',
+                'task_timeused': '',
+                'task_memused': '',
+                'task_failcount': '1',
+            })
+
+            logger.debug('set xnat procstatus to JOB_RUNNING')
+            assessor.attrs.mset({
+                f'{xsitype}/procstatus': 'JOB_RUNNING',
+                f'{xsitype}/jobstartdate': str(date.today()),
+            })
+
+        if records:
+            # Apply the updates in one call
+            try:
+                response = self._rc.import_records(records)
+                assert 'count' in response
+                logger.debug('retry task records updated')
+            except AssertionError as err:
+                logger.error(f'failed to set task statuses:{err}')
+        else:
+            logger.debug('retry, nothing to update')
+
+    
+def is_sgp_assessor(assessor):
+    import re
+    SGP_PATTERN = '^\w+-x-\w+-x-\w+_v[0-9]+-x-[0-9a-f]+$'
+
+    # Try to match the assessor label with the SGP pattern
+    return re.match(SGP_PATTERN, assessor)
 
 
 def _subject_pivot(df):

@@ -50,22 +50,33 @@ TASKS_RENAME = {
     'task_memused': 'MEMUSED',
     'task_yamlfile': 'YAMLFILE',
     'task_userinputs': 'USERINPUTS',
+    'task_failcount': 'FAILCOUNT',
 }
 
 DISABLE_STATTYPES = ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2', 'Multi_Atlas_v3']
 
 COLUMNS = {
-    'activity': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION', 'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
-    'assessors': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE',
-                  'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
-                  'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
-    'issues': ['PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
-               'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
-    'scans': ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE',
-              'SITE', 'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
-    'processing': ['PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD'],
-    'subjects': ['PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
-    'tasks': ['ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME', 'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL', 'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS'],
+    'activity': [
+        'PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
+        'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
+    'assessors': [
+        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE',
+        'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
+        'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
+    'issues': [
+        'PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
+        'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
+    'scans': [
+        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE',
+        'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
+    'processing': [
+        'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD'],
+    'subjects': [
+        'PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
+    'tasks': [
+        'ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
+        'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
+        'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'USERINPUTS', 'FAILCOUNT'],
     'analyses': ['ID', 'NAME'],
 }
 

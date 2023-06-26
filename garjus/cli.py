@@ -187,6 +187,14 @@ def image03(project):
     g.image03(project)
 
 
+@cli.command('retry')
+@click.option('--project', '-p', 'project', required=True)
+def retry(project):
+    click.echo('garjus! retry')
+    g = Garjus()
+    g.retry(project)
+
+
 @cli.command('image03download')
 @click.argument('image03_csv', required=True)
 @click.argument('download_dir', required=True)
