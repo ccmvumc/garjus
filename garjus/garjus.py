@@ -1924,6 +1924,21 @@ class Garjus:
                 'task_failcount': '1',
             })
 
+        for i, t in failed_tasks.iterrows():
+            # Connect to the assessor on xnat
+            if is_sgp_assessor(t['ASSESSOR']):
+                xsitype = 'proc:subjgenprocdata'
+                assessor = self.xnat().select_sgp_assessor(
+                    project,
+                    t['ASSESSOR'].split('-x-')[1],
+                    t['ASSESSOR'])
+            else:
+                xsitype = 'proc:genprocdata'
+                assessor = self.xnat().select_assessor(
+                    project,
+                    t['ASSESSOR'].split('-x-')[1],
+                    t['ASSESSOR'].split('-x-')[2],
+                    t['ASSESSOR'])
             logger.debug('set xnat procstatus to JOB_RUNNING')
             assessor.attrs.mset({
                 f'{xsitype}/procstatus': 'JOB_RUNNING',
