@@ -181,10 +181,12 @@ def export_pdf(src, project):
 
 @cli.command('image03')
 @click.option('--project', '-p', 'project', required=True)
-def image03(project):
+@click.option('--start', '-s', 'startdate', type=click.DateTime(formats=['%Y-%m-%d']))
+@click.option('--end', '-e', 'enddate', type=click.DateTime(formats=['%Y-%m-%d']))
+def image03(project, startdate, enddate):
     click.echo('garjus! image03')
     g = Garjus()
-    g.image03(project)
+    g.image03(project, startdate, enddate)
 
 
 @cli.command('retry')

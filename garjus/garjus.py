@@ -165,7 +165,7 @@ class Garjus:
         df = pd.DataFrame(data, columns=self.column_names('activity'))
 
         if startdate:
-            df = df[df.DATETIME > startdate]
+            df = df[df.DATETIME >= startdate]
 
         return df
 
@@ -468,15 +468,36 @@ class Garjus:
             session=s_sess,
             result='COMPLETE')
 
-    def scans(self, projects=None, scantypes=None, modalities=None, sites=None):
+    def scans(
+        self,
+        projects=None,
+        scantypes=None,
+        modalities=None,
+        sites=None,
+        startdate=None,
+        enddate=None):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
             projects = self.projects()
 
         data = self._load_scan_data(projects, scantypes, modalities, sites)
 
+        df = pd.DataFrame(data, columns=self.column_names('scans'))
+
+        # Format as datetime
+        df['DATE'] = pd.to_datetime(df['DATE'])
+
+        if startdate:
+            # Filter to begin with startdate
+            df = df[df.DATE >= startdate]
+
+        if enddate:
+            # Filter end
+            df = df[df.DATE <= enddate]
+
         # Return as dataframe
-        return pd.DataFrame(data, columns=self.column_names('scans'))
+        df = df.sort_values('full_path')
+        return df
 
     def phantoms(self, project):
         """Query XNAT for all scans and return a dictionary of scan info."""
@@ -1853,8 +1874,8 @@ class Garjus:
             logger.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
-    def image03(self, project):
-        update_image03(self, [project])
+    def image03(self, project, startdate=None, enddate=None):
+        update_image03(self, [project], startdate, enddate)
 
     def image03download(self, project, image03_csv, download_dir):
         download_image03(self, project, image03_csv, download_dir)

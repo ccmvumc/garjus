@@ -35,7 +35,6 @@ import os
 import shutil
 import glob
 import logging
-import datetime
 from numpy import datetime_as_string
 
 from dax import XnatUtils
@@ -49,12 +48,12 @@ logger = logging.getLogger('garjus.image03')
 IMAGE03_TEMPLATE = "https://nda.nih.gov/api/datadictionary/v2/datastructure/image03/template"
 
 
-def update(garjus, projects=None):
+def update(garjus, projects=None, startdate=None, enddate=None):
     """Update image03 batches."""
     for p in (projects or garjus.projects()):
         if p in projects:
             logger.debug(f'updating image03:{p}')
-            _update_project(garjus, p)
+            _update_project(garjus, p, startdate, enddate)
 
 
 def download(garjus, project, image03_csv, download_dir):
@@ -75,7 +74,7 @@ def _parse_map(mapstring):
     return parsed_map
 
 
-def _update_project(garjus, project):
+def _update_project(garjus, project, startdate=None, enddate=None):
 
     # Get map of Xnat scan types to NDA scan types
     xst2nst = garjus.project_setting(project, 'xst2nst')
@@ -102,7 +101,9 @@ def _update_project(garjus, project):
         project,
         xst2nst,
         xst2nei,
-        outfile)
+        outfile,
+        startdate,
+        enddate)
 
 def _download_dicom_zip(scan, zipfile):
     dstdir = os.path.dirname(zipfile)
@@ -301,7 +302,9 @@ def _make_image03_csv(
     project,
     type_map,
     exp_map,
-    outfile
+    outfile,
+    startdate=None,
+    enddate=None
 ):
     dfs = garjus.subjects(project, include_dob=True)
 
@@ -310,11 +313,12 @@ def _make_image03_csv(
         projects=[project],
         scantypes=type_map.keys(),
         modalities=['MR'],
-        sites=['VUMC'])
+        sites=['VUMC'],
+        startdate=startdate,
+        enddate=enddate)
 
     # merge in subject data
     mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_index=True)
-    mscans['DATE'] = pd.to_datetime(mscans['DATE'])
     mscans['SCANAGE'] = (mscans['DATE'] + pd.DateOffset(days=15)) - mscans['DOB']
     mscans['SCANAGE'] = mscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
 
@@ -323,13 +327,12 @@ def _make_image03_csv(
         projects=[project],
         scantypes=type_map.keys(),
         modalities=['PET'],
-        sites=['VUMC'])
+        sites=['VUMC'],
+        startdate=startdate,
+        enddate=enddate)
 
     # merge in subject data
     pscans = pd.merge(pscans, dfs, left_on='SUBJECT', right_index=True)
-
-    # Format as datetime
-    pscans['DATE'] = pd.to_datetime(pscans['DATE'])
 
     # Calculate Scan age in integer of months as a string
     pscans['SCANAGE'] = (pscans['DATE'] + pd.DateOffset(days=15)) - pscans['DOB']
