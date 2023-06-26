@@ -427,6 +427,8 @@ def _run_scan_automations(automations, garjus, project):
     protocols = garjus.scanning_protocols(project)
     project_redcap = garjus.primary(project)
 
+    # TODO: make a checkbox for this?
+    # TODO: move slice timing values to redcap
     # MA3 stats 2 vol txt
     # if project == 'REMBRANDT':
     #    logger.debug(f'running ma3stats2voltxt:{project}')
