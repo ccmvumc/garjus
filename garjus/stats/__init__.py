@@ -171,11 +171,17 @@ def _load_stats(filename):
 
 
 def _get_bag(garjus, project):
+
+    # Get subjects with DOB
+    subjects = garjus.subjects(project, include_dob=True)
+    if 'DOB' not in subjects.columns:
+        logger.debug('DOB not found, cannot calculate bag_age_gap')
+        return
+
     # Get BAG stats
     stats = garjus.stats(project, proctypes=['BrainAgeGap_v2'])
 
     # Merge in DOB
-    subjects = garjus.subjects(project, include_dob=True)
     stats = pd.merge(
         stats, subjects[['DOB']], left_on='SUBJECT', right_index=True)
 
@@ -190,6 +196,7 @@ def _get_bag(garjus, project):
 
     # Batch upload new stats
     for i, s in stats.iterrows():
+        logger.debug('set bag_age_gap', s.ASSR)
         garjus.set_stats(
             project,
             s.SUBJECT,
