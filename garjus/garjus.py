@@ -221,7 +221,11 @@ class Garjus:
         data = self._load_assr_data(projects, proctypes)
 
         # Build a dataframe
-        return pd.DataFrame(data, columns=self.column_names('assessors'))
+        df = pd.DataFrame(data, columns=self.column_names('assessors'))
+
+        df['DATE'] = pd.to_datetime(df['DATE'])
+
+        return df
 
     def subject_assessors(self, projects=None, proctypes=None):
         """Query XNAT for all subject assessors, return dataframe."""
@@ -1348,25 +1352,6 @@ class Garjus:
             logger.info('wait a minute')
             import time
             time.sleep(60)
-
-    def delete_stats(self, project, subject, session, assessor):
-        """Get all the repeat instances for this assessor."""
-        # Make the payload
-        # payload = {
-        # 'action': 'delete',
-        # 'returnFormat': 'json',
-        # 'content': 'record',
-        # 'format': 'json',
-        # 'instrument': 'stats',
-        # 'token': str(rc.token),
-        # 'records[0]': str(record_id),
-        # 'repeat_instance': str(repeat_id),
-        # }
-
-        # Call delete
-        # result = rc._call_api(payload, 'del_record')
-
-        pass
 
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
