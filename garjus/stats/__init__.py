@@ -10,6 +10,9 @@ import logging
 import glob
 import os
 
+import numpy as np
+import pandas as pd
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,10 @@ def update(garjus, projects):
 
         logger.debug(f'stats updating project:{p},proctypes={proctypes}')
         update_project(garjus, p, proctypes)
+
+        if 'BrainAgeGap_v2' in proctypes:
+            logger.debug('getting bag_age_gap')
+            _get_bag(garjus, p)
 
 
 def update_project(garjus, project, proctypes):
@@ -161,3 +168,31 @@ def _load_stats(filename):
         return _load_stats_tall(filename)
     else:
         return _load_stats_wide(filename)
+
+
+def _get_bag(garjus, project):
+    # Get BAG stats
+    stats = garjus.stats(project, proctypes=['BrainAgeGap_v2'])
+
+    # Merge in DOB
+    subjects = garjus.subjects(project, include_dob=True)
+    stats = pd.merge(
+        stats, subjects[['DOB']], left_on='SUBJECT', right_index=True)
+
+    if 'bag_age_gap' in stats:
+        # Only rows without existing bag_age_gap
+        stats = stats[stats.bag_age_gap.isna()]
+
+    # Calculate age at scan
+    stats['SCANDAYS'] = pd.to_datetime(stats['DATE']) - stats['DOB']
+    stats['BAGDAYS'] = (stats['bag_age_pred'].astype(float) * 365.25).astype('timedelta64[D]')
+    stats['bag_age_gap'] = (stats['BAGDAYS'] - stats['SCANDAYS'])/np.timedelta64(1, 'Y')
+
+    # Batch upload new stats
+    for i, s in stats.iterrows():
+        garjus.set_stats(
+            project,
+            s.SUBJECT,
+            s.SESSION,
+            s.ASSR,
+            {'bag_age_gap': s.bag_age_gap})
