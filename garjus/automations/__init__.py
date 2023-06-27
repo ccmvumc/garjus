@@ -442,6 +442,10 @@ def _run_scan_automations(automations, garjus, project):
     #        assessors
     #    )
 
+    # TODO: calculate brain age gap by getting brain age pred, dob, and scan date
+    # then add to stats brain age gap
+
+
     # Add slice timing
     if project == 'REMBRANDT':
         logger.debug(f'running add_slicetiming:{project}')
