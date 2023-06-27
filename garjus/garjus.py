@@ -699,49 +699,6 @@ class Garjus:
         # thus allowing periods in the main processor name
         return tmp.rsplit('.')[-4]
 
-    def all_scantypes(self):
-        """Get list of scan types."""
-        types = []
-
-        rec = self._rc.export_records(
-            forms=['scanning'],
-            export_checkbox_labels=True,
-            raw_or_label='label')
-
-        for r in rec:
-            for k, v in r.items():
-                # Append types for this scanning record
-                if v and k.startswith('scanning_scantypes'):
-                    types.append(v)
-
-        # Make the lists unique
-        return list(set(types))
-
-    def scantypes(self, project):
-        """Get list of scan types."""
-        types = []
-
-        # Get the scan types from scanning forms
-        rec = self._rc.export_records(
-            forms=['scanning'],
-            records=[project],
-            export_checkbox_labels=True,
-            raw_or_label='label')
-
-        for r in rec:
-            for k, v in r.items():
-                # Append types for this scanning record
-                if v and k.startswith('scanning_scantypes'):
-                    types.append(v)
-
-        # Make the lists unique
-        types = list(set((types)))
-
-        if not types:
-            types = self._default_scantypes()
-
-        return types
-
     def all_proctypes(self):
         """Get list of project proc types."""
         types = self._default_proctypes()
