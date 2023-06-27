@@ -423,8 +423,8 @@ def _add_graph_page(pdf, info):
     pdf.cell(h=0.3, txt='PET Scan', fill=True, ln=1)
 
     # EDAT are pink
-    # pdf.set_fill_color(238, 130, 238)
-    # pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
+    pdf.set_fill_color(238, 130, 238)
+    pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
 
     # Processing with stats are green
     pdf.set_fill_color(144, 238, 144)
@@ -435,9 +435,6 @@ def _add_graph_page(pdf, info):
     pdf.cell(h=0.3, txt='Processing without stats', fill=True, ln=1)
 
     pdf.ln(0.5)
-
-    # Set color back to black
-    # pdf.set_text_color(255, 255, 255)
 
     # Build the graph
     graph = pydot.Dot(graph_type='digraph')
@@ -572,7 +569,8 @@ def _add_wml_page(pdf, info):
     df = pd.merge(lst_data, sam_data, left_on='SESSION', right_on='SESSION')
 
     pdf.add_page()
-    pdf.cell(txt='LST vs SAMSEG', ln=1)
+    pdf.cell(txt='LST vs SAMSEG', ln=1, align='C')
+
 
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
 
@@ -610,30 +608,45 @@ def _add_wml_page(pdf, info):
     return pdf
 
 
-def _add_fmriqa_pages(pdf, info, proctype):
+def _add_stats_fmriqa(pdf, stats, info):
 
-    # TODO: get the stats data by scan type using inputs field to map to scan
+    # get the stats data by scan type using inputs field to map to scan
 
-    stats = info['stats']
-    stat_data = stats[stats.PROCTYPE == proctype]
+    scans = info['scans']
 
-    # use proclib to filter stats variable names
-    stat_info = info['proclib'].get(proctype, None)
-    if stat_info:
-        _subset = stat_info.get('stats_subset', None)
-        if _subset:
-            stat_data = stat_data[_subset + ['SITE', 'ASSR']]
+    assessors = info['assessors'].copy()
+    assessors = assessors[assessors.PROCTYPE == 'fmriqa_v4']
 
-    pdf.add_page()
-    pdf.set_font('helvetica', size=12)
-    pdf.cell(txt=proctype, ln=1)
-    _add_stats(pdf, stat_data)
+    # Extract scan fmri value into a column
+    assessors['scan_fmri'] = assessors.apply(
+        lambda row : row['INPUTS'].get('scan_fmri'), axis=1)
+
+    df = pd.merge(
+        assessors[['ASSR', 'scan_fmri']],
+        scans[['full_path', 'SCANTYPE']],
+        how='inner',
+        left_on='scan_fmri',
+        right_on='full_path')
+
+    df = pd.merge(
+        stats,
+        df[['ASSR', 'SCANTYPE']],
+        how='inner',
+        left_on='ASSR',
+        right_on='ASSR')
+
+    for t in df.SCANTYPE.unique():
+        if t in ['fMRI_rest', 'fMRI_REST_FSA']:
+            continue
+
+        pdf.set_font('helvetica', size=10)
+        _add_stats(pdf, df[df.SCANTYPE == t], plot_title=f'Scan Type: {t}')
 
 
-def _add_stats(pdf, stats):
+def _add_stats(pdf, stats, plot_title=None):
 
     # this returns a PIL Image object
-    image = plot_stats(stats)
+    image = plot_stats(stats, plot_title)
     tot_width, tot_height = image.size
 
     # Split horizontal image into chunks of width to fit on
@@ -732,8 +745,8 @@ def _add_nda_page(pdf, info):
 def _add_settings_page(pdf, info):
     pdf.add_page()
 
-    pdf.set_font('helvetica', size=18, style='B')
-    pdf.cell(txt='Project Settings', ln=1)
+    pdf.set_font('helvetica', size=18)
+    pdf.cell(w=7.5, align='C', txt='Project Settings', ln=1)
 
     # Add some space
     pdf.ln(0.5)
@@ -742,10 +755,10 @@ def _add_settings_page(pdf, info):
     pdf.set_font('helvetica', size=14, style='B')
     pdf.cell(txt='REDCap Projects:', ln=1)
     pdf.set_font('helvetica', size=10)
-    pdf.cell(h=0.2, txt=f'Settings:{info["settings_redcap"]}', ln=1)
-    pdf.cell(h=0.2, txt=f'Primary:{info["primary_redcap"]}', ln=1)
-    pdf.cell(h=0.2, txt=f'Secondary:{info["secondary_redcap"]}', ln=1)
-    pdf.cell(h=0.2, txt=f'Stats:{info["stats_redcap"]}', ln=1)
+    #pdf.cell(h=0.2, txt=f'Settings:{info["settings_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Primary PID:{info["primary_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Secondary PID:{info["secondary_redcap"]}', ln=1)
+    pdf.cell(h=0.2, txt=f'Stats PID:{info["stats_redcap"]}', ln=1)
     pdf.ln(0.3)
 
     if info.get('xnat_scanmap', False):
@@ -997,7 +1010,7 @@ def _plottable(var):
         return False
 
 
-def plot_stats(df):
+def plot_stats(df, plot_title=None):
     """Plot stats, one boxlplot per var."""
     box_width = 250
     min_box_count = 4
@@ -1110,6 +1123,10 @@ def plot_stats(df):
         for i in range(len(fig.layout.annotations)):
             fig.layout.annotations[i].update(y=-.15)
 
+    if plot_title:
+        fig.update_layout(
+            title={'text': plot_title, 'x': 0.5, 'xanchor': 'center'})
+
     # Customize figure to hide legend and fit the graph
     fig.update_layout(
         showlegend=False,
@@ -1147,20 +1164,19 @@ def _add_stats_pages(pdf, info):
 
         # Now make the page
         pdf.add_page()
-        pdf.set_font('helvetica', size=12)
+        pdf.set_font('helvetica', size=14)
         pdf.cell(txt=proctype, ln=1)
 
         if proctype == 'fmriqa_v4':
-            #_add_fmriqa(pdf, stat_data)
-            # TODO: get the stats data by scan type using inputs field to map to scan
-            _add_stats(pdf, stat_data)
+            # stats by scan type using inputs field to map to scan
+            _add_stats_fmriqa(pdf, stat_data, info)
         else:
             _add_stats(pdf, stat_data)
 
          # Build the description
         _text = proc_info.get('short_descrip', '') + '\n'
         _text += 'Inputs: ' + proc_info.get('inputs_descrip', '') + '\n'
-        _text += proc_info.get('procurl', '') + '\n'
+        #_text += proc_info.get('procurl', '') + '\n'
 
         # Append stats descriptions
         for s, t in info['statlib'].get(proctype, {}).items():
@@ -1168,10 +1184,12 @@ def _add_stats_pages(pdf, info):
 
         # Show the descriptions
         pdf.set_font('helvetica', size=12)
-        pdf.multi_cell(0, 0.3, _text, border='LBTR', align="L", ln=0)
+        pdf.multi_cell(0, 0.25, _text, border='LBTR', align="L", ln=0)
 
-        # Add some space
-        pdf.ln(0.2)
+        _url = proc_info.get('procurl', '')
+        if _url:
+            pdf.set_font('helvetica', size=10)
+            pdf.cell(txt=_url, link=_url)
 
 
 def make_pdf(info, filename):
@@ -1213,7 +1231,6 @@ def make_pdf(info, filename):
     mr_sessions = mr_sessions[mr_sessions.MODALITY == 'MR']
 
     for curtype in mr_sessions.SESSTYPE.unique():
-
         logger.debug('add_qa_page:{}'.format(curtype))
 
         # Get the scan and assr data
@@ -1388,7 +1405,6 @@ def make_project_report(
     # Loads scans/assessors with type filters applied
     scans = garjus.scans(projects=[project], scantypes=scantypes)
     scantypes = list(scans.SCANTYPE.unique())
-    scantypes = list(set([x[:15].strip() for x in scantypes if x]))
 
     # Try to filter out junk
     scantypes = [x for x in scantypes if not x.startswith('[')]
@@ -1401,8 +1417,38 @@ def make_project_report(
     scantypes = [x for x in scantypes if not x.startswith('VWIP')]
     scantypes = [x for x in scantypes if not x.startswith('3DFRP')]
     scantypes = [x for x in scantypes if not x.startswith('TOPUP')]
+    scantypes = [x for x in scantypes if not x.startswith('localizer')]
+    scantypes = [x for x in scantypes if not x.startswith('Calibration')]
+    scantypes = [x for x in scantypes if not x.endswith('PhysioLog')]
+    scantypes = [x for x in scantypes if not x.endswith('SBRef')]
+    scantypes = [x for x in scantypes if not x.endswith('FSA')]
+    scantypes = [x for x in scantypes if not x.startswith('Cor_')]
+    scantypes = [x for x in scantypes if not x.startswith('Ax_')]
+    scantypes = [x for x in scantypes if not x.startswith('AXIIAL')]
+    scantypes = [x for x in scantypes if not x.startswith('DTI_1_')]
+    scantypes = [x for x in scantypes if 'MDDW' not in x]
+    scantypes = [x for x in scantypes if not x.startswith('3-Plane')]
+    scantypes = [x for x in scantypes if not x.startswith('DTI_96d')]
+    scantypes = [x for x in scantypes if not x.startswith('Head-Low')]
+    scantypes = [x for x in scantypes if not x.startswith('MultiP')]
+    scantypes = [x for x in scantypes if not x.startswith('MPRAGE A')]
+    scantypes = [x for x in scantypes if not x.startswith('CTAC2mm')]
+    scantypes = [x for x in scantypes if not x.startswith('ORIG')]
+    scantypes = [x for x in scantypes if not x.startswith('Phoenix')]
+    scantypes = [x for x in scantypes if not x.startswith('SpinEcho')]
+    scantypes = [x for x in scantypes if not x.startswith('rsfMRI')]
+    scantypes = [x for x in scantypes if not x.startswith('Sagittal_3D_F')]
+    scantypes = [x for x in scantypes if not x.startswith('fMRI_rest')]
+    scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
+    scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
+
+
+    # Truncate names for display
+    scantypes = list(set([x[:15].strip() for x in scantypes if x]))
     scantypes = sorted(scantypes)
+
     assessors = garjus.assessors(projects=[project], proctypes=proctypes)
+    
     phantoms = garjus.phantoms(project)
     phantoms = phantoms[SESSCOLS].drop_duplicates().sort_values('SESSION')
 
@@ -1415,6 +1461,8 @@ def make_project_report(
 
     # Make the info dictionary for PDF
     info = {}
+    info['scans'] = scans
+    info['assessors'] = assessors
     info['proclib'] = proclib
     info['statlib'] = statlib
     info['project'] = project
@@ -1438,7 +1486,7 @@ def make_project_report(
     info['edat_protocols'] = garjus.edat_protocols(project)
     info['settings_redcap'] = garjus.project_setting(project, 'redcap')
     info['primary_redcap'] = garjus.project_setting(project, 'primary')
-    info['secondary_redcap'] = garjus.project_setting(project, 'Secondary')
+    info['secondary_redcap'] = garjus.project_setting(project, 'secondary')
     info['stats_redcap'] = garjus.project_setting(project, 'stats')
 
     # Save the PDF report to file
