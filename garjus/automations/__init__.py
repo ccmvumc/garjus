@@ -112,8 +112,6 @@ def _run_edat_automations(automations, garjus, project):
             k.split('edat_autos___')[1]
             for k, v in e.items() if k.startswith('edat_autos') and v == '1']
 
-        print(edat_autos)
-
         # Apply filter
         edat_autos = [x for x in edat_autos if x in automations]
 
@@ -429,22 +427,17 @@ def _run_scan_automations(automations, garjus, project):
 
     # TODO: make a checkbox for this?
     # TODO: move slice timing values to redcap
+
     # MA3 stats 2 vol txt
-    # if project == 'REMBRANDT':
-    #    logger.debug(f'running ma3stats2voltxt:{project}')
-    #    stats2vol = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
-    #    assessors = garjus.assessors(projects=[project], proctypes=['MultiAtlas_v3'])
-    #    xnat = garjus.xnat()
-    #    
-    #    results += stats2vol.process_project(
-    #        xnat,
-    #        project,
-    #        assessors
-    #    )
-
-    # TODO: calculate brain age gap by getting brain age pred, dob, and scan date
-    # then add to stats brain age gap
-
+    if False and project in ['CHAMP', 'REMBRANDT']:
+        logger.debug(f'running ma3stats2voltxt:{project}')
+        stats2vol = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
+        assessors = garjus.assessors(projects=[project], proctypes=['Multi_Atlas_v3'])
+        xnat = garjus.xnat()
+        results += stats2vol.process_project(
+            xnat,
+            project,
+            assessors)
 
     # Add slice timing
     if project == 'REMBRANDT':

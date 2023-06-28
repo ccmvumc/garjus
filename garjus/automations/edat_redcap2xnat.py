@@ -73,7 +73,6 @@ def process_project(
 
         if len(sess_scans) > 1:
             logger.debug(f'multiple scans, uhhh:{subj}:{event}:{session}')
-            print(sess_scans)
             continue
 
         # Only one scan found so use it
