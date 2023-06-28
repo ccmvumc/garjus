@@ -583,9 +583,14 @@ def _make_scan_table(
     # Set the subject and session
     for r in rec:
         d = {}
+        try:
+           d['dst_subject'] = id2subj.get(r[def_field])
+        except KeyError:
+            logger.warn(f'blank subject number:{r[def_field]}')
+            continue
+
         d['src_session'] = r[sess_field].strip()
         d['src_subject'] = d['src_session']
-        d['dst_subject'] = id2subj.get(r[def_field])
         d['dst_session'] = d['dst_subject'] + scan_suffix
         data.append(d)
 
