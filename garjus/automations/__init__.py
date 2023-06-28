@@ -562,6 +562,9 @@ def _make_scan_table(
     if sec_field:
         rec = project.export_records(fields=[def_field, sec_field])
         id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
+    else:
+        rec = project.export_records(fields=[def_field])
+        id2subj = {x[def_field]: x[def_field] for x in rec if x[def_field]}
 
     # Get mri records from redcap
     fields = [date_field, sess_field, def_field]
@@ -582,7 +585,7 @@ def _make_scan_table(
         d = {}
         d['src_session'] = r[sess_field].strip()
         d['src_subject'] = d['src_session']
-        d['dst_subject'] = id2subj.get(r[def_field], r[def_field])
+        d['dst_subject'] = id2subj.get(r[def_field])
         d['dst_session'] = d['dst_subject'] + scan_suffix
         data.append(d)
 
