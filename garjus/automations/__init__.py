@@ -589,6 +589,10 @@ def _make_scan_table(
             logger.warn(f'blank subject number:{r[def_field]}')
             continue
 
+        if not d['dst_subject']:
+            logger.warn(f'blank subject number:{r[def_field]}')
+            continue
+
         d['src_session'] = r[sess_field].strip()
         d['src_subject'] = d['src_session']
         d['dst_session'] = d['dst_subject'] + scan_suffix
