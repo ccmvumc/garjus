@@ -1,8 +1,8 @@
 """Garjus NDA image03 Management."""
 
 # DESCRIPTION:
-# image03 update script that queries REDCap and XNAT to get updated info,
-# updates dicom zips, saves csv
+# image03 update and download, queries REDCap and XNAT to get updated info,
+# save csv download each DIDOM zip
 # ==========================================================================
 # INPUTS:
 # *project

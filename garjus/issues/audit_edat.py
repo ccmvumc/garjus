@@ -65,10 +65,4 @@ def audit(
                 'description': 'need to check converter vm'})
             continue
 
-        # TODO: Check for edat on xnat
-
-        # TODO: Check for etl
-
-        # TODO: compare date in EDAT to XNAT
-
     return results

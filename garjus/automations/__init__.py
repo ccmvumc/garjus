@@ -2,7 +2,7 @@
 
 Garjus automations.
 
-Automation names corresond to folder name.
+Automation names correspond to folder name.
 
 """
 import logging

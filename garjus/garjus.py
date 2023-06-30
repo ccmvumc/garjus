@@ -30,27 +30,10 @@ from .automations import update as update_automations
 from .image03 import update as update_image03, download as download_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
-from .dictionary import COLUMNS, PROCLIB, STATLIB, ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
+from .dictionary import COLUMNS, PROCLIB, STATLIB
+from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
 from .analyses import update as update_analyses
-
-
-# TODO: export session/scan table with matching of vuiis id, subject id, and a
-# column for NDA upload yes/no
-
-# TODO: allow a date range filter in activity
-
-# def scan_inventory():
-# this will replace make_scan_table and be used by auto_archive
-# as well as nda scripts, and progress exports to zip
-
-# TODO: def import_stats(self):
-# rather than source_stats from the outside, we call import_stats to tell
-# garjus to go look in xnat (or wherever) to get new stats
-
-# TODO: 
-# setting for each automation for user@host to limit where some tasks can run
-# like dcm2niix, edat_convert, build jobs, etc.
 
 
 logger = logging.getLogger('garjus')
@@ -226,6 +209,32 @@ class Garjus:
         df['DATE'] = pd.to_datetime(df['DATE'])
 
         return df
+
+    def delete_assessor(self, project, assessor):
+        # TODO: handle sgp
+
+        # Delete from xnat
+        _, subj, sess, _, _ = assr.split('-x-')
+        assessor = self._xnat.select_assessor(project, subj, sess, assr)
+        if assessor.exists():
+            logger.debug(f'deleting assessor from xnat:{assr}')
+            assessor.delete()
+
+        # Delete from task queue
+        task_id = self.assessor_task_id(project, assr)
+        if task_id:
+            logger.debug(f'deleting assessor from redcap taskqueue:{task_id}')
+            payload = {
+                'action': 'delete',
+                'returnFormat': 'json',
+                'content': 'record',
+                'format': 'json',
+                'instrument': 'taskqueue',
+                'token': self._rc.token,
+                'records[0]': project,
+                'repeat_instance': task_id}
+            self._rc._call_api(payload, 'del_record')
+
 
     def subject_assessors(self, projects=None, proctypes=None):
         """Query XNAT for all subject assessors, return dataframe."""
@@ -597,7 +606,6 @@ class Garjus:
         persubject=False
     ):
         """Return all stats for project, filtered by proctypes."""
-
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
@@ -666,7 +674,6 @@ class Garjus:
         """Get list of projects."""
         return self._projects
 
-
     def subjects(self, project, include_dob=False):
         """Return subjects for project."""
 
@@ -675,9 +682,6 @@ class Garjus:
     def stattypes(self, project):
         """Get list of projects stat types."""
         types = []
-
-        # Start with defaults
-        #types = self._default_stattypes()
 
         # Append others
         protocols = self.processing_protocols(project)
@@ -699,29 +703,9 @@ class Garjus:
         # thus allowing periods in the main processor name
         return tmp.rsplit('.')[-4]
 
-    def all_proctypes(self):
-        """Get list of project proc types."""
-        types = self._default_proctypes()
-
-        rec = self._rc.export_records(forms=['processing'])
-
-        for r in rec:
-            if r['processor_yamlupload']:
-                dtype = self._get_proctype(r['processor_yamlupload'])
-            else:
-                dtype = self._get_proctype(r['processor_file'])
-
-            # Finally, add to our list
-            types.append(dtype)
-
-        return list(set(types))
-
     def proctypes(self, project):
         """Get list of project proc types."""
         types = []
-
-        # Start with defaults
-        types = self._default_proctypes()
 
         # Append others
         protocols = self.processing_protocols(project)
@@ -732,6 +716,23 @@ class Garjus:
                 types.append(ptype)
 
         return types
+
+    def scantypes(self, project):
+        # Get the values from the key/value scan map and return unique list
+        scanmap = self.scanmap(project)
+        return list(set([v for k, v in scanmap.items()]))
+
+    def scanmap(self, project):
+        """Parse scan map stored as string into map."""
+        scanmap = garjus.project_setting(project, 'scanmap')
+
+        # Parse multiline string of delimited key value pairs into dictionary
+        scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
+
+        # Remove extra whitespace from keys and values
+        scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
+
+        return scanmap
 
     def _load_scan_data(self, projects=None, scantypes=None, modalities=None, sites=None):
         """Get scan info from XNAT as list of dicts."""
@@ -1310,6 +1311,24 @@ class Garjus:
             import time
             time.sleep(60)
 
+    def delete_stats(self, project, subject, session, assessor):
+        #rc = self._stats_redcap(project)
+        #try:
+        #    payload = {
+        #        'action': 'delete',
+        #        'returnFormat': 'json',
+        #        'content': 'record',
+        #        'format': 'json',
+        #        'instrument': 'stats',
+        #        'token': str(rc.token),
+        #        'records[0]': r['subject_id'],
+        #        'repeat_instance': str(r['redcap_repeat_instance'])
+        #    }
+        #    rc._call_api(payload, 'del_record')
+        #except Exception:
+        #    logger.error(f'failed to delete stats:{assessor}')
+        pass
+
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
         records = self._rc.export_records(records=[project], forms=['main'])
@@ -1378,19 +1397,6 @@ class Garjus:
         auto_names = self.scan_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
-# check these settings before allowing automations for xnat
-# check that projects exist on XNAT
-#        if not xnat.select.project(src_project_name).exists():
-#            logger.error(f'source project not on XNAT:{src_project_name}')
-#            # TODO: create an issue?
-#            return
-#
-#        # check that projects exist on XNAT
-#        if not xnat.select.project(dst_project_name).exists():
-#            logger.error(f'destination project found:{dst_project_name}')
-#            # TODO: create an issue?
-#            return
-
         # Determine what scan autos we want to run
         for a in auto_names:
             if rec.get(f'main_scanautos___{a}', '') == '1':
@@ -1446,13 +1452,10 @@ class Garjus:
         category=None
     ):
         """Add a new issue."""
-        # Format for REDCap
-        issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         record = {
             self._dfield(): project,
             'issue_description': description,
-            'issue_date': issue_datetime,
+            'issue_date':  datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'issue_subject': subject,
             'issue_session': session,
             'issue_scan': scan,
@@ -1470,23 +1473,6 @@ class Garjus:
             logger.debug('issue record created')
         except (ValueError, RedcapError, AssertionError) as err:
             logger.error(f'error uploading:{err}')
-
-    def _default_proctypes(self):
-        """Get list of default processing types."""
-        return [
-            'dtiQA_synb0_v7', 'biscuit_fs_v2', 'FS7_v1', 'LST_v1',
-            'SAMSEG_v1', 'fmriqa_v4', 'slant_gpu_v1']
-
-    def _default_scantypes(self):
-        """Get list of default scan types."""
-        return ['T1', 'CTAC', 'FLAIR']
-
-    def _default_stattypes(self):
-        """Return list of default stats types."""
-        return [
-            'FS7_v1', 'LST_v1',
-            'BrainAgeGap_v2', 'FS7HPCAMG_v1',
-            'SAMSEG_v1',  'fmriqa_v4']
 
     def primary(self, project):
         """Connect to the primary redcap for this project."""
@@ -1742,7 +1728,7 @@ class Garjus:
             utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
 
     def upload_session(self, session_dir, project, subject, session):
-        # session dir - should only contain a subfolder for each series with
+        # session dir - should only contain a subfolder for each series
         # as created by rename_dicom()
 
         session_exists = False

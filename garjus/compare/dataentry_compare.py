@@ -6,12 +6,6 @@ from datetime import datetime
 import pandas as pd
 from fpdf import FPDF
 
-# TODO: Handle scenario where second only has one of two entries for an event, e.g.
-# 1079 only one step. so let's just try to match any record with by date.
-# How should we handle this? Should we do an explicit check for number of instances?
-# or do we let the it create the weirdness it is now? 
-
-# instead of partial mathing when there's whole missing instance, do what?
 
 # Compares two REDCap projects, as First and Second where Second is the
 # subset of fields that should be double-entered. Outputs a PDF file
@@ -342,13 +336,6 @@ def compare_projects(p1, p2):
             logging.info(f'event already missing:{sid},{eid}')
             continue
 
-
-
-        #if sid != 'V1040':
-        #    continue
-
-
-
         # Get id in the secondary redcap project
         try:
             rid2 = subj2id2[sid]
@@ -356,8 +343,6 @@ def compare_projects(p1, p2):
             logging.info(f'missing subject:{rid1}:{err}')
             missing_subjects.append(sid)
             continue
-     
-        #logging.info(f'finding:{sid},{eid},{rid1},{rid2},{name1},{num1}')
 
         # Get records from secondary redcap for this subject/event
         try:
@@ -380,7 +365,6 @@ def compare_projects(p1, p2):
                 num2 = str(e2.get('redcap_repeat_instance', ''))
 
                 if name1 != name2:
-                    #logging.info(f'skipping:{eid}:{name1}:{num1}:{name2}:{num2}')
                     continue
 
                 # First check specific identifiers

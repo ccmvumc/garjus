@@ -9,15 +9,7 @@ import logging
 import requests
 from zipfile import ZipFile
 
-# TODO: use path in mri_importpath field to find a zip file of the scan then 
-# run import_dicom_zip(), where mri_importpath is a storage location that can 
-# be for example a local Folder that is synced by Box or OneDrive, i.e.
-# used as an INBOX for other sites
-
-# TODO: compare the date of each scan to the existing session
-
-# inputs:
-# -source to be uploaded: either a path to zip, directory, gtudy URL, or \
+# Inputs: source to be uploaded, either a path to zip, directory, gtudy URL, or
 # XNAT urlproject/subject/session
 
 # steps:

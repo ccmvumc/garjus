@@ -93,9 +93,6 @@ ACOLS = [
     'PROCTYPE',
 ]
 
-# h=pdf.eph, w=pdf.epw/2
-# full page height, half page width
-
 
 class MYPDF(FPDF):
     """Custom PDF."""
@@ -269,9 +266,6 @@ def plot_timeline(df, startdate=None, enddate=None):
         if dfs.empty:
             logger.debug('nothing to plot:{}:{}'.format(mod, sesstype))
             continue
-
-        #print(dfs.DATE.max())
-        #print(dfs.DATE.min())
 
         # markers symbols, see https://plotly.com/python/marker-style/
         if mod == 'MR':
@@ -609,7 +603,6 @@ def _add_wml_page(pdf, info):
 
 
 def _add_stats_fmriqa(pdf, stats, info):
-
     # get the stats data by scan type using inputs field to map to scan
 
     scans = info['scans']
@@ -871,35 +864,24 @@ def _add_phantoms(pdf, info, disable_monthly=False):
 
 
 def _add_activity_page(pdf, info):
-    # 'index', 'SESSION', 'SUBJECT', 'ASSR', 'JOBDATE', 'QCSTATUS',
-    #   'session_ID', 'PROJECT', 'PROCSTATUS', 'xsiType', 'PROCTYPE',
-    #   'QCDATE', 'DATE', 'QCBY', 'LABEL', 'CATEGORY', 'STATUS',
-    #   'DESCRIPTION', 'DATETIME', 'ID'],
     pdf.add_page()
     pdf.set_font('helvetica', size=16)
 
-    # Top third is QA activity
-    #df = info['recentqa'].copy()
-    #image = plot_activity(df, 'CATEGORY')
-    #pdf.image(image, x=1.6, y=0.2, h=3.3)
-    #pdf.ln(0.5)
-    #pdf.multi_cell(1.5, 0.3, txt='QA\n')
-
-    # jobs
+    # top third is jobs section
     df = info['recentjobs'].copy()
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=0.2, h=3.3)
     pdf.ln(0.5)
     pdf.multi_cell(1.5, 0.3, txt='Jobs\n')
 
-    # others
+    # middle third is activity section
     df = info['activity'].copy()
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=3.5, h=3.3)
     pdf.ln(3)
     pdf.multi_cell(1.5, 0.3, txt='Autos')
 
-    # issues
+    # bottom third is issues
     df = info['issues'].copy()
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=7.0, h=3.3)
@@ -911,7 +893,6 @@ def _add_activity_page(pdf, info):
 
 def plot_qa(dfp):
     """Plot QA bars."""
-    # TODO: fix the code in this function b/c it's weird with the pivots/melts
     for col in dfp.columns:
         if col in ('SESSION', 'PROJECT', 'DATE', 'MODALITY'):
             # don't mess with these columns
@@ -1104,18 +1085,13 @@ def plot_stats(df, plot_title=None):
                 line_color='grey'),
             _row, _col)
 
-        # fig.update_layout(yaxis=dict(tickmode='linear', tick0=0.5, dtick=0.75))
-        # fig.update_layout(yaxis=dict(showexponent='all', exponentformat='e'))
         fig.update_yaxes(autorange=True)
-
-        # ax1.set_xticks(range(0,len(x), 100))    #set interval here
 
         if var.startswith('con_') or var.startswith('inc_'):
             logger.debug('setting beta range:{}'.format(var))
             _yaxis = 'yaxis{}'.format(i + 1)
             fig['layout'][_yaxis].update(range=[-1, 1], autorange=False)
         else:
-            # logger.debug('setting autorange')
             pass
 
     # Move the subtitles to bottom instead of top of each subplot
@@ -1256,9 +1232,6 @@ def make_pdf(info, filename):
     if not info['disable_monthly']:
         _add_activity_page(pdf, info)
 
-    # Processing Details
-    #_add_proclib_page(pdf, info)
-
     # Directed Graph of processing
     _add_graph_page(pdf, info)
 
@@ -1273,26 +1246,6 @@ def make_pdf(info, filename):
         logger.error('error while saving PDF:{}:{}'.format(pdf.filename, err))
 
     return True
-
-
-def make_main_report():
-    """Make main report."""
-
-    # last week
-
-    # show counts from last week
-
-    # show issue counts
-
-    # previous week activity
-
-    # previous month timeline
-
-    # previous year timeline
-
-    # Note that all of these can be opened interactively in dashboard
-
-    return
 
 
 def _scanqa(scans, scantypes=None):
@@ -1390,7 +1343,6 @@ def make_project_report(
     disable_monthly=False
 ):
     """"Make the project report PDF and zip files"""
-    # TODO: garjus.proctypes_info()
     proclib = garjus.processing_library()
     statlib = garjus.stats_library()
     activity = garjus.activity(project)
@@ -1398,8 +1350,7 @@ def make_project_report(
 
     # Load types for this project
     proctypes = garjus.proctypes(project)
-    #scantypes = garjus.scantypes(project)
-    scantypes = []
+    scantypes = garjus.scantypes(project)
     stattypes = garjus.stattypes(project)
 
     # Loads scans/assessors with type filters applied

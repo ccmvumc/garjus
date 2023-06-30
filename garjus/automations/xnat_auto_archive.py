@@ -50,8 +50,6 @@ def process_project(
             logger.debug(f'session not on XNAT:{src_sess}:{dst_subj}')
             continue
 
-        # TODO: check last_modified and wait until it's been 1 hour
-
         logger.info('copying:{0}/{1}/{2}:{3}/{4}/{5}'.format(
             src_proj,
             src_subj,

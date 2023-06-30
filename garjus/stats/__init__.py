@@ -78,12 +78,6 @@ def update_project(garjus, project, proctypes):
             logger.info('waiting a minute')
             os.sleep(60)
 
-    # TODO: Delete assessors no longer needed
-    #delete_list = list(set().difference())
-    #for assr in delete_list:
-    #    # delete(assr)
-    #    logger.info(f'TBD:deleting:{assr}')
-
 
 def update_assessor(garjus, proj, subj, sess, assr):
     """Update assessor stats."""

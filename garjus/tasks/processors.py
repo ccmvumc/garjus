@@ -31,7 +31,6 @@ def get_scan_status(project_data, scan_path):
 
     # Check for none found
     if _df.empty:
-        #raise XnatUtilsError(f'Invalid scan path:{scan_path}')
         return None
 
     # Return value from first record
@@ -49,7 +48,6 @@ def get_assr_status(project_data, assr_path):
 
     # Check for none found
     if _df.empty:
-        #raise XnatUtilsError(f'Invalid assessor path:{assr_path}')
         return None
 
     # Return values from first record

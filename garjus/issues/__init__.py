@@ -9,7 +9,7 @@ logger = logging.getLogger('garjus.issues')
 def update(garjus, projects=None):
     """Update issues."""
 
-    # First find unmatched across projects.
+    # First find unmatched sessions across projects.
     # these are sessions that are in source project
     # but not found in destination projects
     unmatched = _unmatched(garjus)
@@ -162,7 +162,7 @@ def update_project(garjus, project, unmatched):
 
 def _matching_issues(issue1, issue2):
     # Matching means both issues are of the same category
-    # on the same Project/Subject
+    # and on the same Project/Subject
     # and as applicable, the same XNAT Session/Scan
     # and as applicable the same REDCap Event/Field
     keys = [
@@ -172,6 +172,7 @@ def _matching_issues(issue1, issue2):
         if (k.lower() in issue1) and (issue1[k.lower()] != issue2[k]):
             return False
 
+    # Everything matched
     return True
 
 

@@ -1,5 +1,3 @@
-# TODO: move some of this to yaml or some other format
-
 ACTIVITY_RENAME = {
     'redcap_repeat_instance': 'ID',
     'activity_description': 'DESCRIPTION',
@@ -244,9 +242,3 @@ STATLIB = {
         'Schaefer400_thr0p1_deg': 'Degree'
     }
 }
-# EDATQA
-# fmri_emostroop_v2
-# fmri_msit_v2 statlib
-# fmri_nback_v2
-# BFC_v2
-# BrainAgeGap_v2

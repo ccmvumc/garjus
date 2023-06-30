@@ -214,8 +214,6 @@ def dashboard():
     import webbrowser
     url = 'http://localhost:8050'
 
-    # TODO: check that we have credentials for redcap and/or xnat
-
     # start up a dashboard app
     from .dashboard import app
 
@@ -233,17 +231,7 @@ def quick_test():
     scans = g.scans(projects=['CHAMP'])
     print(scans)
 
-# subcommmands:
-# build (jobs)
-# update (double entry, issues, automations, stats, progress reports, image03, etc)
-# info ()
-# download (images, stats)
-# upload (images)
-# activity
-# stats
-
-# Garjus is the interface to everything that's stored in XNAT/REDCap and it uses
+# Garjus is the interface to everything that's stored in XNAT/REDCap. It uses
 # REDCap to store it's own settings and tracking data. Anytime we want to
-# access these systems in python or CLI, try to use Garjus in between, creating 
-# a Garjus instance means just setting up the interfaces with minimal interaction 
-# with XNAT/REDCap, i.e. cheap. 
+# access these REDCap or XNAT in python or CLI, we use Garjus in between.
+# Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.

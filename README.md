@@ -59,7 +59,6 @@ garjus double entry comparison - compares primary REDCap to secondary REDCap
 and uploads results to REDCap.
 
 
-
 garjus dashboard - launches a dax dashboard and opens it in a new tab browser
 
 
@@ -83,7 +82,7 @@ edat_convert - convert files, input is from redcap file field, outputs to redcap
 
 edat_limbo2redcap - load files from a local folder
 
-edat_redcap2xnat
+edat_redcap2xnat - copy edat files from REDCap to XNAT
 
 edat_etl - extract data from files uploaded to redcap, transform (calculate accuracy, times), load to redcap
 
@@ -91,20 +90,11 @@ nihtoolbox_etl - extract and load
 
 examiner_etl - extract and load
 
-lifedata_etl
-
-lifedata_box2redcap
-
-
-
 issues - Any issues or errors encountered by garjus are recorded in REDCap.
 Issues are automatically resolved when the error or issues is no longer found.
 Resolved issues are deleted one week after resolution.
 
-
-
 activity - Each complete automation is recorded in activity.
-
 
 
 To create a new main REDCap project:

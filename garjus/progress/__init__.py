@@ -1,8 +1,6 @@
 """
 
-progress reports and exports.
-
-update will create any missing
+Manager progress reports. Update will create any missing.
 
 """
 from datetime import datetime
@@ -29,7 +27,7 @@ def update_project(garjus, project):
     """Update project progress."""
     progs = garjus.progress_reports(projects=[project])
 
-    # what time is it? use this for naming
+    # what time is it? we will use this for naming
     now = datetime.now()
 
     # determine current month and year to get current monthly repot id

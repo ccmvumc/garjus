@@ -53,8 +53,8 @@ def _audit_record(record, src_labels, dst_labels):
         logger.debug(msg)
         result.update({'category': 'MISSING_VALUE', 'description': msg})
     elif not scandate:
-        # We are gnoring this scenario which means we would not catch the
-        # case where the coordinator forgets to enter the session date.
+        # We are logging but ignoring this scenario which means we would not 
+        # catch the case where user forgets to enter the session date.
         msg = f'{dst_subj}:{dst_sess}:date not set'
         logger.debug(msg)
         return None
