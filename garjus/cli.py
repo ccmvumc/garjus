@@ -17,6 +17,13 @@ def cli(debug):
         click.echo('garjus! debug')
         logging.getLogger().setLevel(logging.DEBUG)
 
+@click.group()
+@click.option('--quiet', default=False)
+def cli(quiet):
+    if quiet:
+        click.echo('garjus! quiet')
+        logging.getLogger().setLevel(logging.ERROR)
+
 
 @cli.command('copysess')
 @click.argument('src', required=True)
@@ -207,6 +214,15 @@ def image03download(project, image03_csv, download_dir):
     g.image03download(project, image03_csv, download_dir)
 
 
+@cli.command('delete')
+@click.option('--project', '-p', 'project', required=True)
+@click.option('--type', '-t', 'proctype', required=True)
+def delete(project, proctype):
+    click.echo('garjus! delete')
+    g = Garjus()
+    g.delete_proctype(project, proctype)
+
+
 @cli.command('dashboard')
 def dashboard():
     import sys
@@ -230,8 +246,3 @@ def quick_test():
     g = Garjus()
     scans = g.scans(projects=['CHAMP'])
     print(scans)
-
-# Garjus is the interface to everything that's stored in XNAT/REDCap. It uses
-# REDCap to store it's own settings and tracking data. Anytime we want to
-# access these REDCap or XNAT in python or CLI, we use Garjus in between.
-# Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.

@@ -210,18 +210,36 @@ class Garjus:
 
         return df
 
+    def delete_proctype(self, project, proctype):
+        # Get list of assessors of proctype from project
+        assessors = self.assessors(projects=[project], proctypes=[proctype])
+
+        for a in sorted(assessors.ASSR.unique()):
+            logger.info(f'deleting assessor:{a}')
+            self.delete_assessor(project, a)
+
     def delete_assessor(self, project, assessor):
-        # TODO: handle sgp
+
+        # Connect to the assessor on xnat
+        if is_sgp_assessor(assessor):
+            assr = self.xnat().select_sgp_assessor(
+                project,
+                assessor.split('-x-')[1],
+                assessor)
+        else:
+            assr = self.xnat().select_assessor(
+                project,
+                assessor.split('-x-')[1],
+                assessor.split('-x-')[2],
+                assessor)
 
         # Delete from xnat
-        _, subj, sess, _, _ = assr.split('-x-')
-        assessor = self._xnat.select_assessor(project, subj, sess, assr)
-        if assessor.exists():
-            logger.debug(f'deleting assessor from xnat:{assr}')
-            assessor.delete()
+        if assr.exists():
+            logger.debug(f'deleting assessor from xnat:{assessor}')
+            assr.delete()
 
         # Delete from task queue
-        task_id = self.assessor_task_id(project, assr)
+        task_id = self.assessor_task_id(project, assessor)
         if task_id:
             logger.debug(f'deleting assessor from redcap taskqueue:{task_id}')
             payload = {
@@ -977,11 +995,11 @@ class Garjus:
         logger.debug(f'updating projects:{projects}:{choices}')
 
         if 'automations' in choices:
-            logger.debug('updating automations')
+            logger.info('updating automations')
             update_automations(self, projects)
 
         if 'issues' in choices:
-            logger.debug('updating issues')
+            logger.info('updating issues')
             update_issues(self, projects)
             logger.debug('deleting old issues')
             self.delete_old_issues(projects)
@@ -989,26 +1007,26 @@ class Garjus:
         if 'stats' in choices:
             # Only run on intersect of specified projects and projects with
             # stats, such that if the list is empty, nothing will run
-            logger.debug('updating stats')
+            logger.info('updating stats')
             _projects = [x for x in projects if x in self.stats_projects()]
             update_stats(self, _projects)
 
         if 'progress' in choices:
             # confirm each project has report for current month with PDF & zip
-            logger.debug('updating progress')
+            logger.info('updating progress')
             update_progress(self, projects)
 
         if 'compare' in choices:
             # confirm each project has report for current month
-            logger.debug('updating compare')
+            logger.info('updating compare')
             update_compare(self, projects)
 
         if 'tasks' in choices:
-            logger.debug('updating tasks')
+            logger.info('updating tasks')
             update_tasks(self, projects)
 
         if 'analyses' in choices:
-            logger.debug('updating analyses')
+            logger.info('updating analyses')
             update_analyses(self, projects)
 
     def report(self, project):
@@ -1023,7 +1041,7 @@ class Garjus:
         make_project_report(self, project, pdf_file, disable_monthly=True)
 
     def export_pdf(self, project, ptype):
-        """Create a PDF report."""
+        """Create a PDF report the merges all PDFs of this proc type."""
         pdf_file = f'{project}_{ptype}.pdf'
 
         if os.path.exists(pdf_file):

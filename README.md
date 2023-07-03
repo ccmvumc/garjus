@@ -3,6 +3,12 @@
 Garjus processes imaging data stored in REDCap and XNAT. All related settings are stored in REDCap. Each automation that runs is logged in REDCap. Any issues encountered are recorded in REDCap. Progress snapshots are stored in REDCap. Current views are in the dashboard.
 
 
+Garjus is the interface to everything that's stored in XNAT/REDCap. It uses
+REDCap to store it's own settings and tracking data. Anytime we want to
+access these REDCap or XNAT in python or CLI, we use Garjus in between.
+Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
+
+
 The main Garjus class provides these data access methods that 
 all return a Pandas DataFrame:
 ```
