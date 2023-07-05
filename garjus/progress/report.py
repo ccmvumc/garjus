@@ -1251,6 +1251,9 @@ def make_pdf(info, filename):
 def _scanqa(scans, scantypes=None):
     dfp = _scan_pivot(scans).reset_index()
 
+    if not scantypes:
+        scantypes = scans.SCANTYPE.unique()
+
     # Filter columns to include
     include_list = SESSCOLS + scantypes
     include_list = [x for x in include_list if x in dfp.columns]
@@ -1334,28 +1337,7 @@ def get_metastatus(status):
 
     return metastatus
 
-
-def make_project_report(
-    garjus,
-    project,
-    pdfname,
-    zipname=None,
-    disable_monthly=False
-):
-    """"Make the project report PDF and zip files"""
-    proclib = garjus.processing_library()
-    statlib = garjus.stats_library()
-    activity = garjus.activity(project)
-    issues = garjus.issues(project)
-
-    # Load types for this project
-    proctypes = garjus.proctypes(project)
-    scantypes = garjus.scantypes(project)
-    stattypes = garjus.stattypes(project)
-
-    # Loads scans/assessors with type filters applied
-    scans = garjus.scans(projects=[project], scantypes=scantypes)
-    scantypes = list(scans.SCANTYPE.unique())
+def _filter_scantypes(scantypes):
 
     # Try to filter out junk
     scantypes = [x for x in scantypes if not x.startswith('[')]
@@ -1393,13 +1375,47 @@ def make_project_report(
     scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
     scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
 
+    return scantypes
+
+
+def make_project_report(
+    garjus,
+    project,
+    pdfname,
+    zipname=None,
+    disable_monthly=False
+):
+    """"Make the project report PDF and zip files"""
+    proclib = garjus.processing_library()
+    statlib = garjus.stats_library()
+    activity = garjus.activity(project)
+    issues = garjus.issues(project)
+
+    # Load types for this project
+    proctypes = garjus.proctypes(project)
+    scantypes = garjus.scantypes(project)
+    stattypes = garjus.stattypes(project)
+
+    # Loads scans/assessors with type filters applied
+    scans = garjus.scans(projects=[project], scantypes=scantypes)
+    scans.SESSTYPE = scans.SESSTYPE.replace('', 'UNKNOWN')
+    scans.SITE = scans.SITE.replace('', 'UNKNOWN')
+    scans.MODALITY = scans.MODALITY.replace('', 'UNKNOWN')
+    scans.DATE = scans.DATE.fillna(datetime.now())
+
+    scantypes = list(scans.SCANTYPE.unique())
+    scantypes = _filter_scantypes(scantypes)
 
     # Truncate names for display
     scantypes = list(set([x[:15].strip() for x in scantypes if x]))
     scantypes = sorted(scantypes)
 
     assessors = garjus.assessors(projects=[project], proctypes=proctypes)
-    
+    assessors.SESSTYPE = assessors.SESSTYPE.replace('', 'UNKNOWN')
+    assessors.SITE = assessors.SITE.replace('', 'UNKNOWN')
+    assessors.MODALITY = assessors.MODALITY.replace('', 'UNKNOWN')
+    assessors.DATE = assessors.DATE.fillna(datetime.now())
+
     phantoms = garjus.phantoms(project)
     phantoms = phantoms[SESSCOLS].drop_duplicates().sort_values('SESSION')
 

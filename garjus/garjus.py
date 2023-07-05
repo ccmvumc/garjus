@@ -632,7 +632,7 @@ class Garjus:
             # Filter out FS6 if found
             rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
         except:
-            return pd.DataFrame(columns=[])
+            return pd.DataFrame(columns=['ASSR', 'PROCTYPE', 'SESSTYPE'])
 
         # Make a dataframe of columns we need
         df = pd.DataFrame(
@@ -662,7 +662,7 @@ class Garjus:
         df = df.dropna(axis=1, how='all')
 
         if df.empty:
-            return pd.DataFrame(columns=[])
+            return pd.DataFrame(columns=['ASSR', 'PROCTYPE', 'SESSTYPE'])
 
         df = df.sort_values('ASSR')
 
@@ -744,11 +744,14 @@ class Garjus:
         """Parse scan map stored as string into map."""
         scanmap = self.project_setting(project, 'scanmap')
 
-        # Parse multiline string of delimited key value pairs into dictionary
-        scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
+        try:
+            # Parse multiline string of delimited key value pairs into dictionary
+            scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
 
-        # Remove extra whitespace from keys and values
-        scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
+            # Remove extra whitespace from keys and values
+            scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
+        except ValueError as err:
+            scanmap = {}
 
         return scanmap
 
