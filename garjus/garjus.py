@@ -742,7 +742,7 @@ class Garjus:
 
     def scanmap(self, project):
         """Parse scan map stored as string into map."""
-        scanmap = garjus.project_setting(project, 'scanmap')
+        scanmap = self.project_setting(project, 'scanmap')
 
         # Parse multiline string of delimited key value pairs into dictionary
         scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
@@ -1555,6 +1555,21 @@ class Garjus:
         src_obj = self._xnat.select_session(src_proj, src_subj, src_sess)
         dst_obj = self._xnat.select_session(dst_proj, dst_subj, dst_sess)
         utils_xnat.copy_session(src_obj, dst_obj)
+
+    def copy_scan(
+        self,
+        src_proj,
+        src_subj,
+        src_sess,
+        src_scan,
+        dst_proj,
+        dst_subj,
+        dst_sess,
+    ):
+        """Copy scanning/imaging scan from source to destination."""
+        src_obj = self._xnat.select_scan(src_proj, src_subj, src_sess, src_scan)
+        dst_obj = self._xnat.select_scan(dst_proj, dst_subj, dst_sess, dst_scan)
+        utils_xnat.copy_scan(src_obj, dst_obj)
 
     def source_project_exists(self, project):
         """True if this project exist in the source projects."""
