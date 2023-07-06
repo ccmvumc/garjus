@@ -144,4 +144,11 @@ Add a new secondary REDCap project for double entry comparison:
   - Copy PID, key to ~/.redcap.txt, name PROJECT secondary 
   - paste ID into ccmutils under Main > Project Secondary
 
+## Quickstart
+
+pip install git+https://github.com/bud42/garjus.git
+
+or
+
+pip install git+https://github.com/bud42/garjus.git@v1.0.0
 
