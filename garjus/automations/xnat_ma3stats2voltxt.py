@@ -1,14 +1,7 @@
 """Downlad stats upload to vol_txt in XNAT."""
 import logging
-import subprocess as sb
 import tempfile
-import os
-import pathlib
-import glob
 import csv
-
-from .. import utils_dcm2nii
-from .. import utils_xnat
 
 
 logger = logging.getLogger('garjus.automations.xnat_ma3stats2voltxt')
@@ -85,9 +78,9 @@ def process_project(
 
 def stats2voltxt(stats, voltxt):
     with open(stats, newline='') as f:
-      reader = csv.reader(f)
-      keys = next(reader)
-      values = next(reader)
+        reader = csv.reader(f)
+        keys = next(reader)
+        values = next(reader)
 
     # Remove first two items that are not found in MA v2
     keys = keys[2:]

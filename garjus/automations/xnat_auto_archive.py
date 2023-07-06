@@ -57,7 +57,7 @@ def process_project(
             dst_proj,
             dst_subj,
             dst_sess,
-            ))
+        ))
 
         garjus.copy_session(
             src_proj,

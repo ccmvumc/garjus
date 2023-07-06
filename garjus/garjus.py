@@ -5,7 +5,6 @@ Anything outside this class should refer to scans, assessors, issues, etc.
 
 """
 import pathlib
-from typing import Optional
 import logging
 import json
 from datetime import datetime, date
@@ -23,7 +22,8 @@ from .subjects import load_subjects
 from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
-from .progress import update as update_progress, make_project_report, make_stats_csv
+from .progress import update as update_progress
+from .progress import make_project_report, make_stats_csv
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -31,7 +31,8 @@ from .image03 import update as update_image03, download as download_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB
-from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
+from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
+from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
 from .analyses import update as update_analyses
 
@@ -253,7 +254,6 @@ class Garjus:
                 'repeat_instance': task_id}
             self._rc._call_api(payload, 'del_record')
 
-
     def subject_assessors(self, projects=None, proctypes=None):
         """Query XNAT for all subject assessors, return dataframe."""
         if not projects:
@@ -324,7 +324,7 @@ class Garjus:
 
             data.append(d)
 
-        df = pd.DataFrame(data, columns=self.column_names('tasks'))     
+        df = pd.DataFrame(data, columns=self.column_names('tasks'))
         return df
 
     def save_task_yaml(self, project, task_id, yaml_dir):
@@ -506,7 +506,8 @@ class Garjus:
         modalities=None,
         sites=None,
         startdate=None,
-        enddate=None):
+        enddate=None
+    ):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
             projects = self.projects()
@@ -717,7 +718,7 @@ class Garjus:
         # Get just the filename without the directory path
         tmp = os.path.basename(procfile)
 
-        # Split on periods and grab the 4th value from right, 
+        # Split on periods and grab the 4th value from right,
         # thus allowing periods in the main processor name
         return tmp.rsplit('.')[-4]
 
@@ -750,12 +751,18 @@ class Garjus:
 
             # Remove extra whitespace from keys and values
             scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
-        except ValueError as err:
+        except ValueError:
             scanmap = {}
 
         return scanmap
 
-    def _load_scan_data(self, projects=None, scantypes=None, modalities=None, sites=None):
+    def _load_scan_data(
+        self,
+        projects=None,
+        scantypes=None,
+        modalities=None,
+        sites=None
+    ):
         """Get scan info from XNAT as list of dicts."""
         scans = []
         uri = self.scan_uri
@@ -949,7 +956,8 @@ class Garjus:
             if r['processor_yamlupload']:
                 filepath = r['processor_yamlupload']
                 if download:
-                    filename = os.path.join(self._tempdir, r['processor_yamlupload'])
+                    filename = os.path.join(
+                        self._tempdir, r['processor_yamlupload'])
                     filepath = utils_redcap.download_file(
                         self._rc,
                         project,
@@ -1103,7 +1111,7 @@ class Garjus:
             task_yamlfile = 'CUSTOM'
         else:
             task_yamlfile = os.path.basename(yamlfile)
- 
+
         if task_id:
             # Update existing record
             try:
@@ -1183,7 +1191,6 @@ class Garjus:
             task_id = rec[0]['redcap_repeat_instance']
 
         return task_id
-
 
     def add_progress(self, project, prog_name, prog_date, prog_pdf, prog_zip):
         """Add a progress record with PDF and Zip at dated and named."""
@@ -1332,24 +1339,6 @@ class Garjus:
             import time
             time.sleep(60)
 
-    def delete_stats(self, project, subject, session, assessor):
-        #rc = self._stats_redcap(project)
-        #try:
-        #    payload = {
-        #        'action': 'delete',
-        #        'returnFormat': 'json',
-        #        'content': 'record',
-        #        'format': 'json',
-        #        'instrument': 'stats',
-        #        'token': str(rc.token),
-        #        'records[0]': r['subject_id'],
-        #        'repeat_instance': str(r['redcap_repeat_instance'])
-        #    }
-        #    rc._call_api(payload, 'del_record')
-        #except Exception:
-        #    logger.error(f'failed to delete stats:{assessor}')
-        pass
-
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
         records = self._rc.export_records(records=[project], forms=['main'])
@@ -1476,7 +1465,7 @@ class Garjus:
         record = {
             self._dfield(): project,
             'issue_description': description,
-            'issue_date':  datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'issue_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'issue_subject': subject,
             'issue_session': session,
             'issue_scan': scan,
@@ -1511,7 +1500,6 @@ class Garjus:
 
         return primary_redcap
 
-
     def secondary(self, project):
         """Connect to the secondary redcap for this project."""
         secondary_redcap = None
@@ -1527,7 +1515,6 @@ class Garjus:
             secondary_redcap = None
 
         return secondary_redcap
-
 
     def alternate(self, project_id):
         """Connect to the alternate redcap with this ID."""
@@ -1568,10 +1555,13 @@ class Garjus:
         dst_proj,
         dst_subj,
         dst_sess,
+        dst_scan,
     ):
         """Copy scanning/imaging scan from source to destination."""
-        src_obj = self._xnat.select_scan(src_proj, src_subj, src_sess, src_scan)
-        dst_obj = self._xnat.select_scan(dst_proj, dst_subj, dst_sess, dst_scan)
+        src_obj = self._xnat.select_scan(
+            src_proj, src_subj, src_sess, src_scan)
+        dst_obj = self._xnat.select_scan(
+            dst_proj, dst_subj, dst_sess, dst_scan)
         utils_xnat.copy_scan(src_obj, dst_obj)
 
     def source_project_exists(self, project):
@@ -1917,7 +1907,7 @@ class Garjus:
             })
 
         for i, t in failed_tasks.iterrows():
-            assr =  t['ASSESSOR']
+            assr = t['ASSESSOR']
 
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
@@ -1933,7 +1923,7 @@ class Garjus:
                     assr.split('-x-')[1],
                     assr.split('-x-')[2],
                     assr)
-            
+
             if not assessor.exists():
                 logger.debug(f'assessor not found on xnat:{assr}')
                 continue
@@ -1955,7 +1945,7 @@ class Garjus:
         else:
             logger.debug('retry, nothing to update')
 
-    
+
 def is_sgp_assessor(assessor):
     import re
     SGP_PATTERN = '^\w+-x-\w+-x-\w+_v[0-9]+-x-[0-9a-f]+$'

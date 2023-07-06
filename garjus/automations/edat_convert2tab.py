@@ -5,7 +5,7 @@ import time
 from ..utils_redcap import upload_file, download_file
 
 
-logger = logging.getLogger('garjus.automations.edat_limbo2redcap')
+logger = logging.getLogger('garjus.automations.edat_convert2tab')
 
 
 def process_project(

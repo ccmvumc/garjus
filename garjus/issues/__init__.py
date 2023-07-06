@@ -24,7 +24,6 @@ def update(garjus, projects=None):
 def _unmatched(garjus):
     src2dst = {}
     src2ignore = {}
-    results = []
     unmatched = {}
 
     # Build the list of dst projects (and ignore list) for each source project
@@ -206,9 +205,8 @@ def _audit_scanning(scan_table, src_project, project):
 
 def _add_issues(garjus, records, project):
     new_issues = []
-    old_issues = []
     has_errors = False
-  
+
     # First check existing issues,
     # import new issues and update existing,
     # complete any no longer found
@@ -241,7 +239,7 @@ def _add_issues(garjus, records, project):
     # Close fixed issues
     fixed_issues = _find_fixed(cur_issues, records)
     if fixed_issues:
-        logger.debug(f'setting {len(fixed_issues)} resolved issues to complete')
+        logger.debug(f'setting {len(fixed_issues)} issues to complete')
         garjus.close_issues(fixed_issues)
     else:
         logger.debug('no resolved issues to complete')
@@ -297,7 +295,8 @@ def _make_scan_table(
     events,
     date_field,
     sess_field,
-    scan_suffix):
+    scan_suffix,
+):
     """Make the scan table, linking source to destination subject/session."""
     data = []
     id2subj = {}

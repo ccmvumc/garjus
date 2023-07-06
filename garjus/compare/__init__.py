@@ -74,4 +74,3 @@ def make_double_report(proj_primary, proj_secondary, pdf_file, excel_file):
     p2 = proj_secondary.export_project_info().get('project_title')
     logger.debug(f'compare {p1} to {p2}')
     run_compare(proj_primary, proj_secondary, pdf_file, excel_file)
-

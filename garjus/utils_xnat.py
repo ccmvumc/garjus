@@ -73,7 +73,7 @@ SCAN_RENAME = {
     'xnat:imagescandata/quality': 'QUALITY',
     'xsiType': 'XSITYPE',
     'xnat:imagescandata/file/label': 'RESOURCES'
-    }
+}
 
 ASSR_RENAME = {
     'project': 'PROJECT',
@@ -91,7 +91,7 @@ ASSR_RENAME = {
     'proc:genprocdata/validation/validated_by': 'QCBY',
     'xsiType': 'XSITYPE',
     'proc:genprocdata/inputs': 'INPUTS',
-    }
+}
 
 SGP_RENAME = {
     'project': 'PROJECT',
@@ -141,7 +141,6 @@ def parse_json_pairs(pairs):
             v = v.encode('utf-8').decode()
         sink_pairs.append((k, v))
     return dict(sink_pairs)
-
 
 
 MR_EXP_ATTRS = [

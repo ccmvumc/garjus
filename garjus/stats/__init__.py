@@ -3,7 +3,6 @@
 update will create any missing
 
 """
-from datetime import datetime
 import tempfile
 import csv
 import logging
@@ -41,7 +40,7 @@ def update_project(garjus, project, proctypes):
     try:
         # Get list of assessors already in stats
         existing = garjus.stats_assessors(project, proctypes)
-    except:
+    except Exception:
         logger.error(f'failed to load existing stats, check key:{project}')
         return
 
@@ -86,7 +85,7 @@ def update_assessor(garjus, proj, subj, sess, assr):
         try:
             _dir = garjus.get_source_stats(proj, subj, sess, assr, tmpdir)
         except Exception as err:
-            logger.warn(f'could not get stats:{assr}')
+            logger.warn(f'could not get stats:{assr}:{err}')
             return
 
         _stats = transform_stats(_dir)

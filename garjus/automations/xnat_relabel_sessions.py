@@ -24,7 +24,9 @@ modality'
 
 def process_project(xnat, project, relabels, replace):
     """Apply relabels to project sessions."""
-    results = relabel_sessions(xnat, project, relabels, replace=replace, overwrite=True)
+    results = relabel_sessions(
+        xnat, project, relabels, replace=replace, overwrite=True)
+
     return results
 
 
@@ -32,7 +34,6 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
     cur_sess = session['label']
     cur_proj = session['project']
     cur_subj = session['subject_label']
-    cur_site = session['xnat:imagesessiondata/acquisition_site']
     allowed_k1 = ['session_type', 'session_label']
     allowed_k2 = ['session_type', 'site']
     mset = {}
@@ -57,11 +58,9 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
 
         if (overwrite is False) or (session[k2] and (session[k2] not in replace)):
             # There's already a value there
-            #print('already set:{}:{}'.format(k2, session[k2]))
             continue
         elif session[k2] == v2:
             # have we already set this to the same thing
-            #print('already set:{}:{}'.format(k2, session[k2]))
             continue
 
         # Add the relabel to mset
@@ -69,11 +68,10 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
             # We have to use the full path for site, no shortcut
             mset['xnat:imagesessiondata/acquisition_site'] = v2
         else:
-            mset[k2] =  v2
+            mset[k2] = v2
 
     # Check for empty set
     if not mset:
-        #print('{}:nothing to set'.format(cur_sess))
         return None
 
     # Connect to the session on xnat and apply new values
@@ -81,7 +79,7 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
     sess_obj = xnat.select_session(cur_proj, cur_subj, cur_sess)
     sess_obj.attrs.mset(mset)
 
-    result =  {
+    result = {
         'description': 'xnat_relabel_session',
         'result': 'COMPLETE',
         'category': 'xnat_relabel_session',
@@ -96,7 +94,7 @@ def relabel_sessions(xnat, project, relabels, overwrite=False, replace=[]):
 
     # get a list of sessions from the project
     sess_uri = '{}&project={}'.format(SESS_URI, project)
-    json_data = json.loads(xnat._exec(sess_uri, 'GET'),  strict=False)
+    json_data = json.loads(xnat._exec(sess_uri, 'GET'), strict=False)
     sessions = json_data['ResultSet']['Result']
 
     # iterate and relabel as needed

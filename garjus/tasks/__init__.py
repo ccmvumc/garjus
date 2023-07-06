@@ -1,6 +1,5 @@
 """Tasks."""
 import logging
-import os
 
 from .processors import build_processor
 
@@ -52,7 +51,7 @@ def _update_project(garjus, project):
                     rdict[key] = val.strip()
                 except ValueError as e:
                     msg = f'invalid arguments:{project}:{filepath}:{arg}:{e}'
-                    raise XnatUtilsError(msg)
+                    raise Exception(msg)
 
             user_inputs = rdict
             logger.debug(f'user_inputs:{user_inputs}')

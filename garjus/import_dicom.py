@@ -2,8 +2,6 @@ import pathlib
 import tempfile
 import subprocess as sb
 import os
-import glob
-import json
 import io
 import logging
 import requests
@@ -28,7 +26,7 @@ logger = logging.getLogger('garjus.import_dicom')
 def import_dicom(garjus, src, dst):
     logger.debug(f'uploading from:{src}')
 
-    (proj, subj, sess) =  dst.split('/')
+    (proj, subj, sess) = dst.split('/')
     logger.debug(f'uploading to:{proj},{subj},{sess}')
 
     if src.endswith('.zip'):

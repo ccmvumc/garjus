@@ -9,7 +9,7 @@ logger = logging.getLogger('garjus.subjects')
 
 def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
-    
+
     if not project_redcap:
         return pd.DataFrame([], columns=['ID', 'PROJECT'])
 
@@ -65,11 +65,11 @@ def load_subjects(garjus, project, include_dob=False):
         try:
             rec = [x for x in rec if x[dob_field]]
         except KeyError as err:
-            logger.debug(f'cannot access dob:{dob_field}')
+            logger.debug(f'cannot access dob:{dob_field}:{err}')
 
     # Make data frame
     if project_redcap.is_longitudinal:
-        df = pd.DataFrame(rec, columns=fields+['redcap_event_name'])
+        df = pd.DataFrame(rec, columns=fields + ['redcap_event_name'])
     else:
         df = pd.DataFrame(rec, columns=fields)
 
@@ -89,10 +89,10 @@ def load_subjects(garjus, project, include_dob=False):
             'Screening (Arm 1: Currently Depressed)': 'Depress',
         })
     elif project == 'REMBRANDT':
-         # Use arm/events names to determine which arm
+        # Use arm/events names to determine which arm
         df['GROUP'] = df['redcap_event_name'].map({
             'Screening (Arm 3: Longitudinal Phase: Remitted)': 'Depress',
-            'Screening (Arm 2: Longitudinal Phase: Never Depressed)':  'Control',
+            'Screening (Arm 2: Longitudinal Phase: Never Depressed)': 'Control',
         })
 
     # Load MRI records to get first date
@@ -115,7 +115,7 @@ def load_subjects(garjus, project, include_dob=False):
         df[dob_field] = pd.to_datetime(df[dob_field])
         df[date_field] = pd.to_datetime(df[date_field])
         df['AGE'] = (
-            df[date_field]  - df[dob_field]
+            df[date_field] - df[dob_field]
         ).values.astype('<m8[Y]').astype('int').astype('str')
 
         if include_dob:

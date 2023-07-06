@@ -8,7 +8,7 @@ logger = logging.getLogger('garjus.issues.audit_imaging')
 def audit(scan_table, src_labels, dst_labels):
     """find issues with scan archiving."""
     results = []
- 
+
     # Process each record
     for r in scan_table:
         result = _audit_record(r, src_labels, dst_labels)
@@ -19,7 +19,6 @@ def audit(scan_table, src_labels, dst_labels):
 
 
 def _audit_record(record, src_labels, dst_labels):
-    src_subj = record['src_subject']
     src_sess = record['src_session']
     dst_subj = record['dst_subject']
     dst_sess = record['dst_session']
@@ -53,7 +52,7 @@ def _audit_record(record, src_labels, dst_labels):
         logger.debug(msg)
         result.update({'category': 'MISSING_VALUE', 'description': msg})
     elif not scandate:
-        # We are logging but ignoring this scenario which means we would not 
+        # We are logging but ignoring this scenario which means we would not
         # catch the case where user forgets to enter the session date.
         msg = f'{dst_subj}:{dst_sess}:date not set'
         logger.debug(msg)
@@ -75,6 +74,6 @@ def _audit_record(record, src_labels, dst_labels):
         'session': dst_sess,
         'event': event,
         'date': scandate
-        })
+    })
 
     return result

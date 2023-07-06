@@ -32,15 +32,12 @@
 # ==========================================================================
 
 import os
-import shutil
 import glob
 import logging
 from numpy import datetime_as_string
 
-from dax import XnatUtils
 from zipfile import BadZipFile
 import pandas as pd
-import redcap
 
 
 logger = logging.getLogger('garjus.image03')
@@ -105,6 +102,7 @@ def _update_project(garjus, project, startdate=None, enddate=None):
         startdate,
         enddate)
 
+
 def _download_dicom_zip(scan, zipfile):
     dstdir = os.path.dirname(zipfile)
 
@@ -133,7 +131,7 @@ def _touch_dicom_zip(scan, zipfile):
     except FileExistsError:
         pass
 
-    with open(zipfile, 'w') as f:
+    with open(zipfile, 'w'):
         pass
 
 
@@ -160,7 +158,7 @@ def _mr_info(scan_info, type_map, exp_map):
     info['scan_type'] = type_map[scan_type]
     info['sex'] = scan_info['SEX']
     info['subjectkey'] = scan_info['GUID']
-    info['interview_age'] =  scan_info['SCANAGE']
+    info['interview_age'] = scan_info['SCANAGE']
 
     if scan_type.startswith('DTI'):
         info['bvek_bval_files'] = 'Yes'
@@ -194,7 +192,7 @@ def _pet_info(scan_info, type_map):
     info['scan_type'] = type_map[scan_type]
     info['sex'] = scan_info['SEX']
     info['subjectkey'] = scan_info['GUID']
-    info['interview_age'] =  scan_info['SCANAGE']
+    info['interview_age'] = scan_info['SCANAGE']
 
     return info
 
@@ -230,7 +228,7 @@ def update_files(garjus, project, df, download_dir):
     sessions['interview_date'] = pd.to_datetime(sessions['DATE']).dt.strftime('%m/%d/%Y')
 
     df = pd.merge(
-        df, 
+        df,
         sessions,
         how='left',
         left_on=['src_subject_id', 'interview_date'],
@@ -239,7 +237,7 @@ def update_files(garjus, project, df, download_dir):
     with garjus.xnat() as xnat:
         for i, f in df.iterrows():
             # Determine scan label
-            scan_label =  f['image_file'].split('/')[1].split('_')[0]
+            scan_label = f['image_file'].split('/')[1].split('_')[0]
 
             # Local file path
             cur_file = os.path.join(download_dir, f['image_file'])
@@ -257,7 +255,6 @@ def update_files(garjus, project, df, download_dir):
             # get the file
             logger.info(f'downloading:{cur_file}')
             _download_dicom_zip(scan, cur_file)
-            #_touch_dicom_zip(scan, cur_file)
             dcount += 1
 
     logger.info(f'{ecount} existing files, {dcount} downloaded files')

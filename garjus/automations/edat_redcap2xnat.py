@@ -105,7 +105,7 @@ def process_project(
                 scan['SESSION'],
                 scan['SCANID'],
                 xnat_scan_resource)
-    
+
             # Upload file to xnat resource
             result = upload_file(tab_file, resource)
 

@@ -25,7 +25,7 @@ def relabel_scans(xnat, project, relabels):
 
     # get a list of scans from the project
     scan_uri = '{}&project={}'.format(SCAN_URI, project)
-    json_data = json.loads(xnat._exec(scan_uri, 'GET'),  strict=False)
+    json_data = json.loads(xnat._exec(scan_uri, 'GET'), strict=False)
     scan_list = json_data['ResultSet']['Result']
 
     # iterate scan and relabel if needed
@@ -46,11 +46,11 @@ def relabel_scans(xnat, project, relabels):
             new_type = relabels[scan_type]
             scan_obj.attrs.set('xnat:imagescandata/type', new_type)
             results.append({
-                    'description': f'xnat_relabel_scans:{new_type}',
-                    'result': 'COMPLETE',
-                    'category': 'xnat_relabel_scans',
-                    'subject': subj,
-                    'session': sess,
-                    'scan': scan})
+                'description': f'xnat_relabel_scans:{new_type}',
+                'result': 'COMPLETE',
+                'category': 'xnat_relabel_scans',
+                'subject': subj,
+                'session': sess,
+                'scan': scan})
 
     return results

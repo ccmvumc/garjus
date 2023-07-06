@@ -290,20 +290,35 @@ def _run_etl_nihexaminer(project):
 
         # Check for blanks
         has_blank = False
-        check_fields = [flank_field, nback_field, shift_field, cpt_field,
-        'dot_count_tot',
-        'anti_trial_1',
-        'anti_trial_2',
-        'correct_f',
-        'correct_l',
-        'correct_animal',
-        'correct_veg',
-        'repetition_f',
-        'rule_vio_f',
-        'repetition_l',
-        'rule_vio_l', 'repetition_animal', 'rule_vio_animal', 'repetition_veg',
-        'rule_vio_veg', 'brs_1', 'brs_2', 'brs_3', 'brs_4',
-        'brs_5', 'brs_6', 'brs_7', 'brs_8', 'brs_9']
+        check_fields = [
+            flank_field,
+            nback_field,
+            shift_field,
+            cpt_field,
+            'dot_count_tot',
+            'anti_trial_1',
+            'anti_trial_2',
+            'correct_f',
+            'correct_l',
+            'correct_animal',
+            'correct_veg',
+            'repetition_f',
+            'rule_vio_f',
+            'repetition_l',
+            'rule_vio_l',
+            'repetition_animal',
+            'rule_vio_animal',
+            'repetition_veg',
+            'rule_vio_veg',
+            'brs_1',
+            'brs_2',
+            'brs_3',
+            'brs_4',
+            'brs_5',
+            'brs_6',
+            'brs_7',
+            'brs_8',
+            'brs_9']
 
         for k in check_fields:
             if r[k] == '' and k != done_field:
@@ -374,7 +389,6 @@ def _run_etl_nihexaminer(project):
                 'cf2_rep': int(r['repetition_cloth']),
                 'cf2_rv': int(r['rule_vio_cloth'])
             })
-
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
@@ -499,9 +513,6 @@ def _run_scan_automations(automations, garjus, project):
                 sess_field,
                 sess_suffix)
 
-            # TODO: build the scan table and append each event, then run
-            # autoarchive once
-
             # Run
             logger.debug(f'running xnat_auto_archive:{project}:{events}')
             results += xnat_auto_archive.process_project(
@@ -542,7 +553,8 @@ def _make_scan_table(
     events,
     date_field,
     sess_field,
-    scan_suffix):
+    scan_suffix,
+):
     """Make the scan table, linking source to destination subject/session."""
     data = []
     id2subj = {}
@@ -577,7 +589,7 @@ def _make_scan_table(
     for r in rec:
         d = {}
         try:
-           d['dst_subject'] = id2subj.get(r[def_field])
+            d['dst_subject'] = id2subj.get(r[def_field])
         except KeyError:
             logger.warn(f'blank subject number:{r[def_field]}')
             continue
@@ -619,7 +631,7 @@ def _session_relabels(scan_data, site_data):
 def _load(project, record_id, event_id, data):
     data[project.def_field] = record_id
     data['redcap_event_name'] = event_id
-    data = {k: str(v) for k,v in data.items()}
+    data = {k: str(v) for k, v in data.items()}
 
     try:
         response = project.import_records([data])

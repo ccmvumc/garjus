@@ -23,7 +23,7 @@ logger = logging.getLogger('garjus2dax')
 # All info needed comes from REDCap, does not read any local files, only
 # writes. Should not need to access XNAT.
 # Read these from REDCap for those where status is QUEUED
-# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT as 
+# then set status to JOB_RUNNING. (will already be JOB_RUNNING in XNAT as
 # set when the assessor was created by garjus update tasks)
 
 
@@ -41,7 +41,8 @@ def _write_processor_spec(
     yaml_file,
     singularity_imagedir,
     job_template,
-    user_inputs=None):
+    user_inputs=None
+):
 
     # Write a file with the path to the base processor and any overrides.
     # The file is intended to be written to diskq using the assessor
@@ -67,7 +68,16 @@ def _write_processor_spec(
         f.write('\n')
 
 
-def _task2dax(xnat, assr, walltime, memreq, yaml_file, user_inputs, inputlist, var2val):
+def _task2dax(
+    xnat,
+    assr,
+    walltime,
+    memreq,
+    yaml_file,
+    user_inputs,
+    inputlist,
+    var2val
+):
     '''Writes a task to a dax slurm script in the local diskq.'''
 
     # NOTE: this function does the same work as dax task.build_task()

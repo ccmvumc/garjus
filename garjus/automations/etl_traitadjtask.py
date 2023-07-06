@@ -5,7 +5,7 @@ import io
 import pandas as pd
 import numpy as np
 
-from ...utils_redcap import get_redcap, download_file, field2events
+from ...utils_redcap import field2events, download_file
 
 
 tab_field = ''
@@ -97,11 +97,11 @@ def etl_tat(project, record_id, event_id, tab_field):
     # Download the tab file from redcap to tmp
     tmpdir = tempfile.mkdtemp()
     basename = '{}-{}-{}.txt'.format(record_id, event_id, tab_field)
-    tab_file = f'tmpdir/basename'
-    result = utils_redcap.download_file(
+    tab_file = f'{tmpdir}/{basename}'
+    result = download_file(
         project, record_id, tab_field, tab_file, event_id=event_id)
     if not result:
-        logging.error('{}:{}:{}'.format(record_id, event_id, 'download failed'))
+        logging.error(f'download failed:{record_id}:{event_id}')
         return
 
     # Extract the data
@@ -172,7 +172,7 @@ def process_project(project):
             continue
 
         # Do the ETL
-        etl_tat(project, record_id, event_id) #, tab_field)
+        etl_tat(project, record_id, event)
 
         logging.debug(visit + ':uploaded')
         results.append({
@@ -181,6 +181,5 @@ def process_project(project):
             'subject': subj,
             'event': event,
             'field': tab_field})
-        
 
     return results

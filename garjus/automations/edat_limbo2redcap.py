@@ -88,7 +88,7 @@ def process_project(
         try:
             result = upload_file(
                 project,
-                record_id, 
+                record_id,
                 raw_field,
                 edat_file,
                 event_id=event)
@@ -103,13 +103,13 @@ def process_project(
 
         logger.info(f'uploaded:{subj}:{event}')
         results.append({
-                    'result': 'COMPLETE',
-                    'description': 'edat_limbo2redcap',
-                    'category': 'edat_limbo2redcap',
-                    'subject': subj,
-                    'session': '',
-                    'scan': '',
-                    'event': event,
-                    'field': raw_field})
+            'result': 'COMPLETE',
+            'description': 'edat_limbo2redcap',
+            'category': 'edat_limbo2redcap',
+            'subject': subj,
+            'session': '',
+            'scan': '',
+            'event': event,
+            'field': raw_field})
 
     return results

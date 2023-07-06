@@ -565,7 +565,6 @@ def _add_wml_page(pdf, info):
     pdf.add_page()
     pdf.cell(txt='LST vs SAMSEG', ln=1, align='C')
 
-
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
 
     fig.append_trace(
@@ -612,7 +611,7 @@ def _add_stats_fmriqa(pdf, stats, info):
 
     # Extract scan fmri value into a column
     assessors['scan_fmri'] = assessors.apply(
-        lambda row : row['INPUTS'].get('scan_fmri'), axis=1)
+        lambda row: row['INPUTS'].get('scan_fmri'), axis=1)
 
     df = pd.merge(
         assessors[['ASSR', 'scan_fmri']],
@@ -748,7 +747,6 @@ def _add_settings_page(pdf, info):
     pdf.set_font('helvetica', size=14, style='B')
     pdf.cell(txt='REDCap Projects:', ln=1)
     pdf.set_font('helvetica', size=10)
-    #pdf.cell(h=0.2, txt=f'Settings:{info["settings_redcap"]}', ln=1)
     pdf.cell(h=0.2, txt=f'Primary PID:{info["primary_redcap"]}', ln=1)
     pdf.cell(h=0.2, txt=f'Secondary PID:{info["secondary_redcap"]}', ln=1)
     pdf.cell(h=0.2, txt=f'Stats PID:{info["stats_redcap"]}', ln=1)
@@ -833,6 +831,7 @@ def _add_proclib_page(pdf, info):
 
     return pdf
 
+
 def _add_phantoms(pdf, info, disable_monthly=False):
     # Get the data for all
     df = info['phantoms'].copy()
@@ -842,7 +841,6 @@ def _add_phantoms(pdf, info, disable_monthly=False):
     pdf.set_font('helvetica', size=18)
     pdf.cell(w=7.5, align='C', txt=_txt, ln=1)
     image = plot_timeline(df)
-    #pdf.image(image, x=0.5, y=0.75, w=7.5)
     pdf.image(image, x=0.5, w=7.5)
     pdf.ln(5)
 
@@ -987,7 +985,7 @@ def _plottable(var):
     try:
         _ = var.str.strip('%').astype(float)
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -1072,13 +1070,12 @@ def plot_stats(df, plot_title=None):
             _row,
             _col)
 
-
         # Plot horizontal line at median
         _median = df[var].str.strip('%').astype(float).median()
         fig.add_trace(
             go.Scatter(
                 x=df['SITE'],
-                y=[_median]*len(df),
+                y=[_median] * len(df),
                 mode='lines',
                 name='',
                 fillcolor='red',
@@ -1129,7 +1126,7 @@ def _add_stats_pages(pdf, info):
             continue
 
         logger.debug(f'add stats page:{proctype}')
-        
+
         # Get descriptions for this processing type
         proc_info = proclib.get(proctype, {})
 
@@ -1149,10 +1146,9 @@ def _add_stats_pages(pdf, info):
         else:
             _add_stats(pdf, stat_data)
 
-         # Build the description
+        # Build the description
         _text = proc_info.get('short_descrip', '') + '\n'
         _text += 'Inputs: ' + proc_info.get('inputs_descrip', '') + '\n'
-        #_text += proc_info.get('procurl', '') + '\n'
 
         # Append stats descriptions
         for s, t in info['statlib'].get(proctype, {}).items():
@@ -1338,6 +1334,7 @@ def get_metastatus(status):
 
     return metastatus
 
+
 def _filter_scantypes(scantypes):
 
     # Try to filter out junk
@@ -1450,7 +1447,7 @@ def make_project_report(
     info['xnat_scanmap'] = garjus.project_setting(project, 'scanmap')
     info['nda_expmap'] = garjus.project_setting(project, 'xst2nei')
     info['nda_scanmap'] = garjus.project_setting(project, 'xst2nst')
-    info['scan_protocols'] =  garjus.scanning_protocols(project)
+    info['scan_protocols'] = garjus.scanning_protocols(project)
     info['edat_protocols'] = garjus.edat_protocols(project)
     info['settings_redcap'] = garjus.project_setting(project, 'redcap')
     info['primary_redcap'] = garjus.project_setting(project, 'primary')
@@ -1558,7 +1555,7 @@ def _recent_qa(assessors, startdate=None):
 def _transform_scanmap(scanmap):
     """Parse scan map stored as string into map."""
     # Parse multiline string of delimited key value pairs into dictionary
-    scanmap = dict(x.strip().split(':',1) for x in scanmap.split('\n'))
+    scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
 
     # Remove extra whitespace from keys and values
     scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}

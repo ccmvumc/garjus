@@ -3,7 +3,14 @@ import os
 import logging
 
 
-def download_named_file(project, record_id, field_id, outdir, event_id=None, repeat_id=None):
+def download_named_file(
+    project,
+    record_id,
+    field_id,
+    outdir,
+    event_id=None,
+    repeat_id=None
+):
     # Get the file contents from REDCap
     try:
         (cont, hdr) = project.export_file(
@@ -30,7 +37,14 @@ def download_named_file(project, record_id, field_id, outdir, event_id=None, rep
         return None
 
 
-def download_file(project, record_id, field_id, filename, event_id=None, repeat_id=None):
+def download_file(
+    project,
+    record_id,
+    field_id,
+    filename,
+    event_id=None,
+    repeat_id=None
+):
     # Get the file contents from REDCap
     try:
         (cont, hdr) = project.export_file(
@@ -56,7 +70,14 @@ def download_file(project, record_id, field_id, filename, event_id=None, repeat_
         return None
 
 
-def upload_file(project, record_id, field_id, filename, event_id=None, repeat_id=None):
+def upload_file(
+    project,
+    record_id,
+    field_id,
+    filename,
+    event_id=None,
+    repeat_id=None
+):
     with open(filename, 'rb') as f:
         return project.import_file(
             record=record_id,
@@ -102,7 +123,7 @@ def get_projectkey(project_id, key_file):
             try:
                 (i, k, n) = line.strip().split(',')
                 d[i] = k
-            except:
+            except Exception:
                 pass
 
     # Return the key id for given project id
@@ -120,7 +141,7 @@ def get_projectid(projectname, keyfile):
                 (i, k, n) = line.strip().split(',')
                 # Map name to id
                 d[n] = i
-            except:
+            except Exception:
                 pass
     # Return the project id for given project name
     return d.get(projectname, None)

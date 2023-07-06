@@ -108,8 +108,16 @@ def d2q():
 
 @cli.command('update')
 @click.argument(
-    'choice', 
-    type=click.Choice(['stats' ,'issues', 'progress', 'automations', 'compare', 'tasks', 'analyses']),
+    'choice',
+    type=click.Choice([
+        'stats',
+        'issues',
+        'progress',
+        'automations',
+        'compare',
+        'tasks',
+        'analyses'
+    ]),
     required=False,
     nargs=-1)
 @click.option('--project', '-p', 'project', multiple=True)
@@ -185,8 +193,10 @@ def export_pdf(src, project):
 
 @cli.command('image03')
 @click.option('--project', '-p', 'project', required=True)
-@click.option('--start', '-s', 'startdate', type=click.DateTime(formats=['%Y-%m-%d']))
-@click.option('--end', '-e', 'enddate', type=click.DateTime(formats=['%Y-%m-%d']))
+@click.option(
+    '--start', '-s', 'startdate', type=click.DateTime(formats=['%Y-%m-%d']))
+@click.option(
+    '--end', '-e', 'enddate', type=click.DateTime(formats=['%Y-%m-%d']))
 def image03(project, startdate, enddate):
     click.echo('garjus! image03')
     g = Garjus()
@@ -222,8 +232,6 @@ def delete(project, proctype):
 
 @cli.command('dashboard')
 def dashboard():
-    import sys
-    import os
     import webbrowser
     url = 'http://localhost:8050'
 

@@ -347,7 +347,7 @@ def compare_projects(p1, p2):
         # Get records from secondary redcap for this subject/event
         try:
             records2 = p2.export_records(records=[rid2], events=[eid])
-        except Exception as err:
+        except Exception:
             import traceback
             traceback.print_exc()
             records2 = []
@@ -482,12 +482,11 @@ def _simplify(full_string):
 
     try:
         # Coerce date format
-        simple_string = datetime.strptime(simple_string, '%m/%d/%y').strftime('%Y-%m-%d')
-        print('coerced date', simple_string)
-    except:
-        #print('faild to coerce date', simple_string)
+        simple_string = datetime.strptime(
+            simple_string, '%m/%d/%y').strftime('%Y-%m-%d')
+    except Exception:
         simple_string = str(full_string)
-        simple_string = simple_string.replace(' ', '').replace('&','and')
+        simple_string = simple_string.replace(' ', '').replace('&', 'and')
         simple_string = simple_string[0:20].lower()
 
     return simple_string
@@ -530,7 +529,6 @@ def compare_records(r1, r2, fields, show_one_null=False, show_two_null=True):
         elif v2 == '':
             # First has value, Second is blank
             if show_two_null:
-                #logging.info(f'missing value:{mis}:{v1}:{v2}')
                 misvalues.append(mis)
         else:
             c1 = v1
@@ -544,14 +542,14 @@ def compare_records(r1, r2, fields, show_one_null=False, show_two_null=True):
                     if float(c1) == float(c2):
                         # Set them to be exactly the same
                         c2 = c1
-                except Exception as err:
+                except Exception:
                     # Not a float, simplifiy string
                     c1 = _simplify(c1)
                     c2 = _simplify(c2)
 
             # Now compare the cleaned values
             if c1 == c2:
-                 match_count += 1
+                match_count += 1
             else:
                 # Both have values, but don't match, show the truncated values
                 mis['1stVALUE'] = v1[0:50]

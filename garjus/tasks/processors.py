@@ -1,7 +1,6 @@
 """Processors."""
 import os
 import logging
-import argparse
 import json
 import yaml
 import fnmatch
@@ -100,9 +99,7 @@ def build_task(garjus, assr, info, processor, project_data):
     '''Build a task, create assessor in XNAT, add new record to garjus queue'''
     old_proc_status = info['PROCSTATUS']
     old_qc_status = info['QCSTATUS']
-    assr_label = info['ASSR'] 
-    job_email = None
-    job_email_options = 'FAIL'
+    assr_label = info['ASSR']
 
     try:
         var2val, inputlist = processor.build_var2val(
@@ -968,7 +965,8 @@ def build_processor(
     filepath,
     user_inputs,
     project_data,
-    include_filters):
+    include_filters
+):
 
     # Get lists of subjects/sessions for filtering
     all_sessions = project_data.get('scans').SESSION.unique()

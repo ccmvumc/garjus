@@ -55,7 +55,7 @@ def process_project(
             # upload to no slicetiming
             new_res = res.parent().resource('JSON_MissingSliceTiming')
             if new_res.exists():
-                logging.debug(f'JSON_MissingSliceTiming already exists:{full_path}')
+                logging.debug(f'JSON_MissingSliceTiming exists:{full_path}')
             else:
                 logging.debug(f'saving to JSON_MissingSliceTiming:{full_path}')
                 new_res.file(src).put(dst)
@@ -86,5 +86,3 @@ def add_slicetiming(jsonfile, slicetiming):
 def has_slicetiming(jsonfile):
     with open(jsonfile, 'r') as f:
         return ('SliceTiming' in f.read())
-
-
