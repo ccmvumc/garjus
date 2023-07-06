@@ -12,14 +12,13 @@ logging.basicConfig(
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--quiet', default=False)
+@click.option('--quiet/--no-quiet', default=False)
 def cli(debug, quiet):
     if debug:
         click.echo('garjus! debug')
         logging.getLogger().setLevel(logging.DEBUG)
 
     if quiet:
-        click.echo('garjus! quiet')
         logging.getLogger().setLevel(logging.ERROR)
 
 

@@ -1,5 +1,10 @@
 '''Subjects from REDCap.'''
+import logging
+
 import pandas as pd
+
+
+logger = logging.getLogger('garjus.subjects')
 
 
 def load_subjects(garjus, project, include_dob=False):
@@ -57,7 +62,10 @@ def load_subjects(garjus, project, include_dob=False):
 
     # Must have dob to calc age
     if dob_field:
-        rec = [x for x in rec if x[dob_field]]
+        try:
+            rec = [x for x in rec if x[dob_field]]
+        except KeyError as err:
+            logger.debug(f'cannot access dob:{dob_field}')
 
     # Make data frame
     if project_redcap.is_longitudinal:

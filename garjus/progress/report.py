@@ -1255,7 +1255,8 @@ def _scanqa(scans, scantypes=None):
         scantypes = scans.SCANTYPE.unique()
 
     # Filter columns to include
-    include_list = SESSCOLS + scantypes
+    include_list = SESSCOLS
+    include_list.extend(scantypes)
     include_list = [x for x in include_list if x in dfp.columns]
     include_list = list(set(include_list))
     dfp = dfp[include_list]

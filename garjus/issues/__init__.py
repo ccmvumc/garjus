@@ -118,6 +118,14 @@ def update_project(garjus, project, unmatched):
         sess_suffix = p['scanning_xnatsuffix']
         src_project = p['scanning_srcproject']
 
+        if not date_field:
+            logger.debug(f'missing date field')
+            continue
+
+        if not sess_field:
+            logger.debug(f'missing sess field')
+            continue
+
         src_labels = garjus.session_labels(src_project)
         dst_labels = garjus.session_labels(project)
 
@@ -308,7 +316,7 @@ def _make_scan_table(
     try:
         rec = project.export_records(fields=fields, events=events)
     except Exception as err:
-        logger.error(err)
+        logger.error(f'cannot make scan table:{err}:{fields}')
         return []
 
     # Only if date is entered
