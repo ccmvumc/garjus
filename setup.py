@@ -7,7 +7,7 @@ setup(
     author_email="brian.d.boyd@vumc.org",
     description="Python package for managing imaging data in REDCap and XNAT",
     long_description=open("README.md").read(),
-    long_description_content_type="text/x-md",
+    long_description_content_type="text/markdown",
     url="https://github.com/bud42/garjus",
     packages=find_packages(),
     classifiers=[

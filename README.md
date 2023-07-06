@@ -146,6 +146,10 @@ Add a new secondary REDCap project for double entry comparison:
 
 ## Quickstart
 
+pip install garjus
+
+or
+
 pip install git+https://github.com/bud42/garjus.git
 
 or

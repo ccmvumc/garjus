@@ -1,0 +1,6 @@
+
+To create the new release, run these steps on a workstation:
+git clone --branch vX.Y.Z https://github.com/bud42/garjus.git --single-branch
+cd garjus
+python setup.py sdist bdist_wheel
+twine upload dist/*
