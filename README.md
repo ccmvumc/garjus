@@ -11,6 +11,7 @@ Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
 
 The main Garjus class provides these data access methods that 
 all return a Pandas DataFrame:
+
 ```
 activity()
 
@@ -30,8 +31,8 @@ stats(project)
 ```
 
 
-
 To get the columns in each dataframe:
+
 ```
 column_names(type)
 e.g. 
@@ -41,8 +42,8 @@ column_names('scans')
 ```
 
 
-
 These Garjus methods returns names in a list:
+
 ```
 stattypes(project)
 
@@ -56,62 +57,71 @@ stats_projects()
 
 ```
 
-garjus progress report - exports assessors, scans, stats for a project,
-creates a summary PDF and zip of file of csv files per processing type. Can
-be access from REDCap or dashboard.
+Command-line interface:
 
-
-garjus double entry comparison - compares primary REDCap to secondary REDCap
-and uploads results to REDCap.
-
+```
+garjus report - creates a summary PDF
 
 garjus dashboard - launches a dax dashboard and opens it in a new tab browser
 
-
 garjus image03 - manages NDA image03 batches in a shared folder such as OneDrive
 
+```
+
+### Scanning Automations:
+
+  - xnat\_auto\_archive - archives scans in XNAT
+
+  - xnat\_session\_relabel - modifies labels in XNAT based on a set of rules to set the site and session type
+
+  - xnat\_scan\_relabel - relabels scan type in XNAT using a simple map of input to output labels
 
 
-garjus can run automations including:
+### EDAT Automations:
 
-xnat_auto_archive - archives scans in XNAT
+  - edat_convert - convert files, input is from redcap file field, outputs to redcap file field
 
-xnat_session_relabel - modifies labels in XNAT based on a set of rules to set the site and session type
+  - edat_limbo2redcap - load files from a local folder
 
-xnat_scan_relabel - relabels scan type in XNAT using a simple map of input to output labels
+  - edat_redcap2xnat - copy edat files from REDCap to XNAT
 
+  - edat_etl - extract data from files uploaded to redcap, transform (calculate accuracy, times), load to redcap
 
+  - nihtoolbox_etl - extract and load NIH toolbox outputs
 
-edat automations
+  - examiner_etl - extract and load NIH Examiner outputs
 
-edat_convert - convert files, input is from redcap file field, outputs to redcap file field
-
-edat_limbo2redcap - load files from a local folder
-
-edat_redcap2xnat - copy edat files from REDCap to XNAT
-
-edat_etl - extract data from files uploaded to redcap, transform (calculate accuracy, times), load to redcap
-
-nihtoolbox_etl - extract and load
-
-examiner_etl - extract and load
-
-issues - Any issues or errors encountered by garjus are recorded in REDCap.
+### Issues
+Any issues or errors encountered by garjus are recorded in REDCap.
 Issues are automatically resolved when the error or issues is no longer found.
 Resolved issues are deleted one week after resolution.
 
-activity - Each complete automation is recorded in activity.
+### Activity
+Each complete automation is recorded in activity.
 
 
-To create a new main REDCap project:
-  - upload from zip
+
+## Set up
+
+Create a new Garjus main REDCap project:
+
+  - upload from zip (see misc folder)
   - click user rights, enable API export/import, save changes
   - refresh, click API, click Generate API Token, click Copy
   - go to ~/.redcap.txt
   - paste key, copy & paste PID from gui, name it "main"
 
+Create first stats REDCap project:
 
-To create a new stats REDCap project:
+  - upload from zip (see misc folder)
+  - click user rights, check enable API export/import, click save changes
+  - Refresh page, click API, click Generate API Token, click Copy
+  - Go to ~/.redcap.txt
+  - Paste key, copy & paste ID, name
+  - Paste ID into ccmutils under Main > Project Stats
+
+Create additional stats REDCap projects:
+
   - Copy an existing project in gui under Other Functionality, click Copy Project
   - Change the project name
   - Confirm checkboxes for Users, Folder
@@ -123,12 +133,14 @@ To create a new stats REDCap project:
   - Paste ID into ccmutils under Main > Project Stats
 
 
-To add a new primary REDCap project:
+Add a new primary REDCap project to link individual study to garjus:
+  
   - Copy PID, key to ~/.redcap.txt, name PROJECT primary
-  - paste ID into ccmutils under Main > Project P
+  - paste ID into ccmutils under Main > Project Primary
 
 
-To add a new secondary REDCap project for double entry comparison:
+Add a new secondary REDCap project for double entry comparison:
+  
   - Copy PID, key to ~/.redcap.txt, name PROJECT secondary 
   - paste ID into ccmutils under Main > Project Secondary
 
