@@ -1,12 +1,9 @@
 import logging
 import os
 from datetime import datetime, date, timedelta
-import tempfile
 
 import pandas as pd
 
-from .. import utils
-from .. import shared
 from ...garjus import Garjus
 
 
@@ -195,7 +192,7 @@ def filter_types(garjus, scan_df, assr_df):
     scantypes = []
     assrtypes = []
 
-    # Load types 
+    # Load types
     logger.info('loading scan/assr types')
     scantypes = garjus.all_scantypes()
     assrtypes = garjus.all_proctypes()
@@ -209,12 +206,12 @@ def filter_types(garjus, scan_df, assr_df):
     scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
     assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
     logger.info(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
-    
+
     return scan_df, assr_df
 
 
 def load_assr_data(garjus, project_filter):
-    dfa = garjus.assessors()
+    dfa = garjus.assessors().copy()
 
     # Get subset of columns
     dfa = dfa[[
@@ -245,7 +242,7 @@ def load_assr_data(garjus, project_filter):
 def load_scan_data(garjus, project_filter):
     #  Load data
     dfs = garjus.scans()
-   
+
     dfs = dfs[[
         'PROJECT', 'SESSION', 'SUBJECT', 'DATE', 'SITE', 'SCANID',
         'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY']].copy()

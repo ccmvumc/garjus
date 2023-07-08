@@ -12,7 +12,7 @@ import dash_bootstrap_components as dbc
 from ..app import app
 from .. import utils
 from ..shared import STATUS2HEX
-from ..shared import RGB_RED, RGB_GREEN, RGB_YELLOW, RGB_GREY, RGB_BLUE
+from ..shared import RGB_RED, RGB_GREEN, RGB_GREY, RGB_BLUE
 from . import data
 
 
@@ -182,7 +182,7 @@ def was_triggered(callback_ctx, button_id):
      Output('datatable-issues', 'columns'),
      Output('tabs-issues', 'children'),
      Output('modal-issues', 'is_open'),
-     ],
+    ],
     [
      Input('dropdown-issues-category', 'value'),
      Input('dropdown-issues-project', 'value'),

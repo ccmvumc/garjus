@@ -32,15 +32,13 @@ def _plottable(var):
     try:
         _ = var.str.strip('%').astype(float)
         return True
-    except:
+    except Exception:
         return False
 
 
 def get_graph_content(df, selected_pivot):
     tabs_content = []
     tab_value = 0
-    box_width = 250
-    min_box_count = 4
     hidecols = HIDECOLS
     logger.debug('get_stats_figure')
 
@@ -94,7 +92,6 @@ def get_graph_content(df, selected_pivot):
 def get_stats_graph(df, var_list, pivot=None):
     box_width = 250
     min_box_count = 4
-    hidecols = HIDECOLS
 
     logger.debug(f'get_graph_tab:{pivot}')
 
@@ -156,7 +153,7 @@ def get_stats_graph(df, var_list, pivot=None):
         margin=dict(l=20, r=40, t=40, b=80, pad=0))
 
     if not pivot:
-        fig.update_xaxes(showticklabels=False) # hide all the xticks
+        fig.update_xaxes(showticklabels=False)  # hide all the xticks
 
     # Build the tab
     # We set the graph to overflow and then limit the size to 1000px, this

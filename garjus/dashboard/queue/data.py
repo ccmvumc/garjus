@@ -1,11 +1,9 @@
 import logging
 import os
-from datetime import datetime
 
 import pandas as pd
 
 from .. import utils
-from .. import shared
 from ...garjus import Garjus
 
 
@@ -25,7 +23,6 @@ def get_filename():
 def get_data(proj_filter, hidedone=True):
     df = Garjus().tasks(hidedone=hidedone)
 
-    #df.sort_values(by=['DATETIME'], inplace=True, ascending=False)
     df.reset_index(inplace=True)
     df['ID'] = df.index
     df['USER'] = 'vuiis_daily_singularity'

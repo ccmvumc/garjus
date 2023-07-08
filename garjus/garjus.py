@@ -736,6 +736,34 @@ class Garjus:
 
         return types
 
+    def all_scantypes(self):
+        """Get list of scan types."""
+        types = []
+
+        for p in self.projects():
+            types.extend(self.scantypes(p))
+
+        # Make the list unique
+        return list(set(types))
+
+    def all_proctypes(self):
+        """Get list of project proc types."""
+        types = []
+
+        # Get all processing records across projects
+        rec = self._rc.export_records(forms=['processing'])
+
+        for r in rec:
+            if r['processor_yamlupload']:
+                dtype = self._get_proctype(r['processor_yamlupload'])
+            else:
+                dtype = self._get_proctype(r['processor_file'])
+
+            # Finally, add to our list
+            types.append(dtype)
+
+        return list(set(types))
+
     def scantypes(self, project):
         # Get the values from the key/value scan map and return unique list
         scanmap = self.scanmap(project)

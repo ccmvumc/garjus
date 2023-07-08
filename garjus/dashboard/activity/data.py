@@ -5,7 +5,6 @@ from datetime import datetime
 import pandas as pd
 
 from .. import utils
-from .. import shared
 from ...garjus import Garjus
 
 

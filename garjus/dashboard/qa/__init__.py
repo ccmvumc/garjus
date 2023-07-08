@@ -242,10 +242,9 @@ def sessionsbytime_figure(df, selected_groupby):
                     name='{} ({})'.format(sesstype, len(dfs)),
                     x=dfs['DATE'],
                     y=dfs['PROJECT'],
-                    ),
+                ),
                 _row,
                 _col)
-
          
         elif view == 'weekly':
             # Let's do this only for the weekly view and customize it specifically
