@@ -20,7 +20,7 @@ def _update_project(garjus, project):
     protocols = garjus.processing_protocols(project, download=True)
 
     if len(protocols) == 0:
-        logger.debug(f'no processing protocols for project:{project}')
+        logger.info(f'no processing protocols for project:{project}')
         return
 
     # Get scan/assr/sgp data
@@ -38,11 +38,11 @@ def _update_project(garjus, project):
     for i, row in protocols.iterrows():
         filepath = row['FILE']
 
-        logger.debug(f'file:{filepath}')
+        logger.info(f'file:{filepath}')
 
         user_inputs = row.get('ARGS', None)
         if user_inputs:
-            logger.debug(f'overrides:{user_inputs}')
+            logger.info(f'overrides:{user_inputs}')
             rlist = user_inputs.strip().split('\r\n')
             rdict = {}
             for arg in rlist:
@@ -54,7 +54,7 @@ def _update_project(garjus, project):
                     raise Exception(msg)
 
             user_inputs = rdict
-            logger.debug(f'user_inputs:{user_inputs}')
+            logger.info(f'user_inputs:{user_inputs}')
 
         if row['FILTER']:
             include_filters = str(row['FILTER']).replace(' ', '').split(',')
