@@ -48,7 +48,7 @@ def make_progress(garjus, project, cur_progress, now):
         pdf_file = f'{outdir}/{project}_report_{fnow}.pdf'
         zip_file = f'{outdir}/{project}_data_{fnow}.zip'
 
-        make_project_report(garjus, project, pdf_file, zip_file)
+        make_project_report(garjus, project, pdf_file, zip_file, monthly=True)
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
 

@@ -150,7 +150,7 @@ def processing(project):
 
 @cli.command('report')
 @click.option('--project', '-p', 'project', required=True)
-@click.option('--monthly/--no-monthly', default=True)
+@click.option('--monthly/--no-monthly', default=True, required=False)
 def report(project, monthly):
     click.echo('garjus! report')
     Garjus().report(project, monthly=monthly)
