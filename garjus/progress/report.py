@@ -720,6 +720,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
         pdf.cell(w=7.5, align='C', txt=_txt)
         pdf.image(image, x=0.5, y=5.75, w=7.5)
         pdf.ln()
+        pdf.add_page()
 
     return pdf
 
@@ -1381,7 +1382,7 @@ def make_project_report(
     project,
     pdfname,
     zipname=None,
-    disable_monthly=False
+    monthly=False
 ):
     """"Make the project report PDF and zip files"""
     proclib = garjus.processing_library()
@@ -1443,7 +1444,7 @@ def make_project_report(
     info['scanqa'] = _scanqa(scans, scantypes)
     info['assrqa'] = _assrqa(assessors, proctypes)
     info['phantoms'] = phantoms
-    info['disable_monthly'] = disable_monthly
+    info['disable_monthly'] = (not monthly)
     info['xnat_scanmap'] = garjus.project_setting(project, 'scanmap')
     info['nda_expmap'] = garjus.project_setting(project, 'xst2nei')
     info['nda_scanmap'] = garjus.project_setting(project, 'xst2nst')

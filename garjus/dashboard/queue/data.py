@@ -35,12 +35,17 @@ def get_data(proj_filter, hidedone=True):
 
 def _get_proctype(row):
     try:
-        # Get just the filename without the directory path
-        tmp = os.path.basename(row['YAMLFILE'])
 
+        if row['YAMLUPLOAD']:
+            tmp = os.path.basename(row['YAMLUPLOAD'])
+        else:
+            tmp = os.path.basename(row['YAMLFILE'])
+
+        # Get just the filename without the directory path
         # Split on periods and grab the 4th value from right, 
         # thus allowing periods in the main processor name
         row['PROCTYPE'] = tmp.rsplit('.')[-4]
+
     except (KeyError, IndexError) as err:
         row['PROCTYPE'] = ''
 

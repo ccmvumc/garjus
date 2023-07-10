@@ -976,6 +976,10 @@ class Garjus:
             fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
+    
+        # Only enabled processing
+        rec = [x for x in rec if str(x['processing_complete']) == '2']
+
         for r in rec:
             # Initialize record with project
             d = {'PROJECT': r[self._dfield()]}
@@ -1068,7 +1072,7 @@ class Garjus:
             logger.info('updating analyses')
             update_analyses(self, projects)
 
-    def report(self, project):
+    def report(self, project, monthly=False):
         """Create a PDF report."""
         pdf_file = f'{project}_report.pdf'
 
@@ -1077,7 +1081,8 @@ class Garjus:
             return
 
         logger.info(f'writing report to file:{pdf_file}.')
-        make_project_report(self, project, pdf_file, disable_monthly=True)
+        make_project_report(
+            self, project, pdf_file, monthly=monthly)
 
     def export_pdf(self, project, ptype):
         """Create a PDF report the merges all PDFs of this proc type."""

@@ -216,7 +216,7 @@ def load_assr_data(garjus, project_filter):
     # Get subset of columns
     dfa = dfa[[
         'PROJECT', 'SESSION', 'SUBJECT', 'DATE', 'SITE', 'ASSR', 'QCSTATUS',
-        'PROCSTATUS', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']].copy()
+        'PROCSTATUS', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']]
 
     dfa.drop_duplicates(inplace=True)
 
