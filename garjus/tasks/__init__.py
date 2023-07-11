@@ -38,7 +38,7 @@ def _update_project(garjus, project):
     for i, row in protocols.iterrows():
         filepath = row['FILE']
 
-        logger.info(f'file:{filepath}')
+        logger.info(f'file:{project}:{filepath}')
 
         user_inputs = row.get('ARGS', None)
         if user_inputs:
