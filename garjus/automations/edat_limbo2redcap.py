@@ -15,7 +15,6 @@ def process_project(
     tab_field,
     edat_prefix,
     limbo_dir,
-    use_secondary=False,
     event2sess=None,
 ):
     results = []
@@ -23,15 +22,14 @@ def process_project(
     fields = [def_field, raw_field, tab_field]
     id2subj = {}
 
-    if use_secondary:
-        # Handle secondary ID
-        sec_field = project.export_project_info()['secondary_unique_field']
-        if not sec_field:
-            logger.error('secondary enabled, but no secondary field found')
-            return
-
+    # Handle secondary ID
+    sec_field = project.export_project_info()['secondary_unique_field']
+    if sec_field:
         rec = project.export_records(fields=[def_field, sec_field])
         id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
+    else:
+        rec = project.export_records(fields=[def_field])
+        id2subj = {x[def_field]: x[def_field] for x in rec if x[def_field]}
 
     # Get mri records
     rec = project.export_records(fields=fields, events=events)
@@ -45,15 +43,16 @@ def process_project(
         if event2sess is not None:
             sess_num = event2sess[event]
 
-        if use_secondary:
-            try:
-                subj = id2subj[record_id]
-                logger.debug(f'{subj}:{event} using secondary id:{record_id}')
-            except KeyError as err:
-                logger.debug(f'record without subject number:{err}')
-                continue
-        else:
-            subj = record_id
+        try:
+            subj = id2subj[record_id]
+            logger.debug(f'{subj}:{event} using secondary id:{record_id}')
+        except KeyError as err:
+            logger.debug(f'record without subject number:{err}')
+            continue
+
+        if not subj:
+            logger.warn(f'blank subject number:{record_id}')
+            continue
 
         # Check for no raw file
         if r[raw_field]:
