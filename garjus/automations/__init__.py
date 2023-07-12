@@ -129,7 +129,7 @@ def _run_edat_automations(automations, garjus, project):
                 limbo,
                 event2sess=_event2num)
 
-        if 'edat_convert2tab' in edat_autos:
+        if 'edat_convert2tab' in edat_autos and convertdir:
             results += edat_convert2tab.process_project(
                 primary_redcap,
                 _events,
@@ -147,6 +147,19 @@ def _run_edat_automations(automations, garjus, project):
                 scans,
                 e['edat_scantype'],
                 'EDAT')
+
+        if 'edat_etl' in edat_autos:
+            #results += edat_etl.process_project(
+            #    garjus.xnat(),
+            #    primary_redcap,
+            #    _events,
+            #    e['edat_convfield'],
+            #    event2sess,
+            #    scans,
+            #    e['edat_scantype'],
+            #    'EDAT')
+            print('TBD:edat_etl')
+            pass
 
         # Upload results to garjus
         for r in results:
