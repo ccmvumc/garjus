@@ -149,17 +149,27 @@ def _run_edat_automations(automations, garjus, project):
                 'EDAT')
 
         if 'edat_etl' in edat_autos:
-            #results += edat_etl.process_project(
-            #    garjus.xnat(),
-            #    primary_redcap,
-            #    _events,
-            #    e['edat_convfield'],
-            #    event2sess,
-            #    scans,
-            #    e['edat_scantype'],
-            #    'EDAT')
-            print('TBD:edat_etl')
-            pass
+            if e['edat_convfield'] == 'tat_conv':
+                # Trait Adjective Task
+                try:
+                    etl_traitadjtask = importlib.import_module(
+                        'garjus.automations.etl_traitadjtask')
+
+                    logger.info(f'{project}:ETL Trait Adjective Task')
+                    results += etl_traitadjtask.process_project(primary_redcap)
+                except ModuleNotFoundError as err:
+                    logger.error(f'error loading modules:{err}')
+
+            elif e['edat_convfield'] == 'tat_recall_conv':
+                # Trait Adjective Recall
+                try:
+                    etl_traitadjrecall = importlib.import_module(
+                        'garjus.automations.etl_traitadjrecall')
+                    logger.info(f'{project}:ETL Trait Adjective Recall')
+                    results += etl_traitadjrecall.process_project(primary_redcap)
+                except ModuleNotFoundError as err:
+                    logger.error(f'error loading modules:{err}')
+                    return
 
         # Upload results to garjus
         for r in results:
