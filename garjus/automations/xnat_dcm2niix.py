@@ -92,7 +92,7 @@ def _dicomzip2nifti(garjus, full_path):
         unzipped_dir.mkdir()
 
         # Unzip the zip to the temp folder
-        logger.info(f'unzip {zip_path} to {unzipped_dir}')
+        logger.debug(f'unzip {zip_path} to {unzipped_dir}')
         sb.run(['unzip', '-q', zip_path, '-d', unzipped_dir])
 
         # convert to NIFTI
@@ -157,14 +157,14 @@ def _d2n(dicomdir, scan_object):
         logger.warning('dcm2niix:multiple NIFTI')
 
     # Upload the NIFTIs
-    logger.info(f'uploading NIFTI:{nifti_list}')
+    logger.debug(f'uploading NIFTI:{nifti_list}')
     utils_xnat.upload_files(nifti_list, scan_object.resource('NIFTI'))
 
     if os.path.isfile(bval_path) and os.path.isfile(bvec_path):
-        logger.info('uploading BVAL/BVEC')
+        logger.debug('uploading BVAL/BVEC')
         utils_xnat.upload_file(bval_path, scan_object.resource('BVAL'))
         utils_xnat.upload_file(bvec_path, scan_object.resource('BVEC'))
 
     if os.path.isfile(json_path):
-        logger.info(f'uploading JSON:{json_path}')
+        logger.debug(f'uploading JSON:{json_path}')
         utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
