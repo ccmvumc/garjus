@@ -1,4 +1,6 @@
 """Garjus Issues Management."""
+import os
+
 import logging
 import importlib
 
@@ -164,6 +166,8 @@ def update_project(garjus, project, unmatched):
             'session': sess,
             'description': sess})
 
+    results += _audit_inbox(garjus, project)
+
     _add_issues(garjus, results, project)
 
 
@@ -262,6 +266,7 @@ def _find_new(issues, records):
 
         if isnew:
             results.append(rec)
+
     return results
 
 
@@ -340,3 +345,24 @@ def _make_scan_table(
         data.append(d)
 
     return data
+
+
+def _audit_inbox(garjus, project):
+    results = []
+
+    # Create a single issue if there are any files other than ARCHIVE
+    project_inbox = garjus.project_setting(project, 'inbox')
+    print(project_inbox)
+
+    if not project_inbox:
+        logger.debug(f'no project_inbox:{project}')
+    elif not os.path.isdir(project_inbox):
+        logger.error(f'cannot check, file not found:{project}:{project_inbox}')
+        results.append({'category': 'ERROR','description': 'inbox not found'})
+    elif len(os.listdir(project_inbox)) > 0:
+        results.append({
+            'project': project,
+            'category': 'UNMATCHED_SESSION',
+            'description': 'Inbox contains unmatched uploads'})
+
+    return results
