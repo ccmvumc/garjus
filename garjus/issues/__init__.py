@@ -352,7 +352,6 @@ def _audit_inbox(garjus, project):
 
     # Create a single issue if there are any files other than ARCHIVE
     project_inbox = garjus.project_setting(project, 'inbox')
-    print(project_inbox)
 
     if not project_inbox:
         logger.debug(f'no project_inbox:{project}')
