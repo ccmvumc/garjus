@@ -53,15 +53,15 @@ def import_dicom_zip(garjus, zip_path, project, subject, session):
         dicom_dir.mkdir()
 
         # Unzip the zip to the temp folder
-        logging.info(f'unzip {zip_path} to {unzipped_dir}')
+        logger.info(f'unzip {zip_path} to {unzipped_dir}')
         sb.run(['unzip', '-q', zip_path, '-d', unzipped_dir])
 
         # Rename/sort dicom
-        logging.info(f'rename/sort dicom from {unzipped_dir} to {dicom_dir}')
+        logger.info(f'rename/sort dicom from {unzipped_dir} to {dicom_dir}')
         garjus.rename_dicom(unzipped_dir, dicom_dir)
 
         # Upload
-        logging.info(f'uploading:{dicom_dir}')
+        logger.info(f'uploading:{dicom_dir}')
         garjus.upload_session(dicom_dir, project, subject, session)
 
 
@@ -72,11 +72,11 @@ def import_dicom_dir(garjus, dir_path, project, subject, session):
         dicom_dir.mkdir()
 
         # Rename/sort dicom
-        logging.info(f'rename/sort dicom from {dir_path} to {dicom_dir}')
+        logger.info(f'rename/sort dicom from {dir_path} to {dicom_dir}')
         garjus.rename_dicom(dir_path, dicom_dir)
 
         # Upload
-        logging.info(f'uploading:{dicom_dir}')
+        logger.info(f'uploading:{dicom_dir}')
         garjus.upload_session(dicom_dir, project, subject, session)
 
 
@@ -94,9 +94,9 @@ def import_dicom_url(garjus, url_path, project, subject, session):
         z.extractall(unzipped_dir)
 
         # Rename/sort dicom
-        logging.info(f'rename/sort dicom from {unzipped_dir} to {dicom_dir}')
+        logger.info(f'rename/sort dicom from {unzipped_dir} to {dicom_dir}')
         garjus.rename_dicom(unzipped_dir, dicom_dir)
 
         # Upload
-        logging.info(f'uploading:{dicom_dir}')
+        logger.info(f'uploading:{dicom_dir}')
         garjus.upload_session(dicom_dir, project, subject, session)

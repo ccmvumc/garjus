@@ -92,7 +92,7 @@ def process_project(
                 edat_file,
                 event_id=event)
 
-            logger.info(f'uploaded:{subj}:{event}:{edat_file}')
+            logger.debug(f'uploaded:{subj}:{event}:{edat_file}')
         except (ValueError) as err:
             logger.error(f'error uploading:{edat_file}:{err}')
 
@@ -100,7 +100,7 @@ def process_project(
             logger.error(f'upload failed:{subj}:{event}')
             continue
 
-        logger.info(f'uploaded:{subj}:{event}')
+        logger.debug(f'uploaded:{subj}:{event}')
         results.append({
             'result': 'COMPLETE',
             'description': 'edat_limbo2redcap',

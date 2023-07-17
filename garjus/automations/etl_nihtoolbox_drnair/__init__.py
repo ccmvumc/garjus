@@ -6,6 +6,9 @@ import pandas as pd
 from ...utils_redcap import get_redcap, download_file, field2events
 
 
+logger = logging.getLogger('garjus.automations')
+
+
 reg_field = 'toolbox_regdata'
 score_field = 'toolbox_cogscores'
 done_field = 'toolbox_pin'
@@ -19,9 +22,9 @@ def run(project, record_id, event_id):
         score_file = f'{tmpdir}/scorefile.csv'
 
         # Download files from redcap
-        logging.debug(f'downloading file:{record_id}:{event_id}:{reg_field}:{reg_file}')
+        logger.debug(f'downloading file:{record_id}:{event_id}:{reg_field}:{reg_file}')
         download_file(project, record_id, reg_field, reg_file, event_id=event_id)
-        logging.debug(f'downloading file:{record_id}:{event_id}:{score_field}:{score_file}')
+        logger.debug(f'downloading file:{record_id}:{event_id}:{score_field}:{score_file}')
         download_file(project, record_id, score_field, score_file, event_id=event_id)
 
         # Extract data from downloaded files
@@ -154,9 +157,9 @@ def toolbox_load(project, record_id, event_id, data):
     try:
         response = project.import_records([data])
         assert 'count' in response
-        logging.info('uploaded')
+        logger.debug('uploaded')
     except AssertionError as e:
-        logging.error('error uploading', record_id, e)
+        logger.error('error uploading', record_id, e)
 
 
 def toolbox_extract_regdata(filename):
@@ -164,7 +167,7 @@ def toolbox_extract_regdata(filename):
 
     try:
         df = pd.read_csv(filename)
-    except:
+    except Exception:
         df = pd.read_excel(filename)
 
     # Get data from last row
@@ -179,7 +182,7 @@ def toolbox_extract_cogscores(filename):
     # Load csv
     try:
         df = pd.read_csv(filename)
-    except:
+    except Exception:
         df = pd.read_excel(filename)
 
     # Drop instrument duplicates, keeping the last only
@@ -206,14 +209,14 @@ def process_project(project):
         event_id = r['redcap_event_name']
 
         if r[done_field]:
-            logging.debug(f'already ETL:{record_id}:{event_id}')
+            logger.debug(f'already ETL:{record_id}:{event_id}')
             continue
 
         if not r[score_field]:
-            logging.debug(f'no data file:{record_id}:{event_id}')
+            logger.debug(f'no data file:{record_id}:{event_id}')
             continue
 
-        logging.info(f'running ETL:{record_id}:{event_id}')
+        logger.debug(f'running ETL:{record_id}:{event_id}')
         results.append({'subject': record_id, 'event': event_id})
         run(project, record_id, event_id)
 

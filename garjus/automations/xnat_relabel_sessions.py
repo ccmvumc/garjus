@@ -4,6 +4,9 @@ import json
 import logging
 
 
+logger = logging.getLogger('garjus.automations.xnat_relabel_session')
+
+
 SESS_URI = '/REST/experiments?xsiType=xnat:imagesessiondata&columns=\
 ID,\
 label,\
@@ -38,8 +41,8 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
     allowed_k2 = ['session_type', 'site']
     mset = {}
 
-    logging.debug(f'relabels={relabels}')
-    logging.debug(f'replace={replace}')
+    logger.debug(f'relabels={relabels}')
+    logger.debug(f'replace={replace}')
 
     # test each relabel
     for k1, v1, k2, v2 in relabels:
@@ -75,7 +78,7 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
         return None
 
     # Connect to the session on xnat and apply new values
-    logging.info(f'{cur_proj}:{cur_sess}:setting:{mset}')
+    logger.info(f'{cur_proj}:{cur_sess}:setting:{mset}')
     sess_obj = xnat.select_session(cur_proj, cur_subj, cur_sess)
     sess_obj.attrs.mset(mset)
 

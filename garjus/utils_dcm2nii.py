@@ -7,7 +7,7 @@ import os
 def dicom2nifti(dicomdir):
     """ convert dicom to nifti + json using dcm2niix """
     cmd = f'dcm2niix -9 -ba n -z o -f %s_%d {dicomdir}'
-    logging.info(f'running cmd:{cmd}')
+    logging.debug(f'running cmd:{cmd}')
     try:
         sb.run(cmd, shell=True)
     except sb.CalledProcessError:
@@ -21,7 +21,7 @@ def dicom2nifti(dicomdir):
 def rename_dicom(in_dir, out_dir):
     # Use "dcm2niix -r" to sort the dicoms into series folders
     # with each file named with instance number zero-padded to 5 digits
-    logging.info('creating renamed/sorted dicom...')
+    logging.debug('creating renamed/sorted dicom...')
     try:
         sb.run([
             'dcm2niix',

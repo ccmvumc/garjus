@@ -64,7 +64,7 @@ def process_project(
         # Download to the convert dir
         basename = f'{subj}_{event}_{raw_field}.edat2'
         raw_file = f'{convert_dir}/{basename}'
-        logger.info(f'downloading {subj}:{event}:{raw_file}')
+        logger.debug(f'downloading {subj}:{event}:{raw_file}')
 
         res = download_file(
             project, record_id, raw_field, raw_file, event_id=event)
@@ -80,7 +80,7 @@ def process_project(
                 found = True
                 break
 
-            logger.info(f'{subj}:{event}:waiting for converted file:{i}')
+            logger.debug(f'{subj}:{event}:waiting for converted file:{i}')
             time.sleep(wait_time)
 
         if not found:
