@@ -366,6 +366,8 @@ def _audit_inbox(garjus, project):
             results.append({
                 'project': project,
                 'category': 'UNMATCHED_SESSION',
+                'session': 'UNKNOWN',
+                'subject': 'UNKNOWN',
                 'description': 'Inbox contains unmatched uploads'})
 
     return results
