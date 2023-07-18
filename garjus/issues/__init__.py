@@ -359,7 +359,9 @@ def _audit_inbox(garjus, project):
         logger.error(f'cannot check, file not found:{project}:{project_inbox}')
         results.append({'category': 'ERROR','description': 'inbox not found'})
     else:
-        logger.debug(f'auditing inbox:{project_inbox}')
+        logger.debug(f'auditing inbox:{project}:{project_inbox}')
+
+        print(os.listdir(project_inbox))
 
         if len(os.listdir(project_inbox)) > 0:
             results.append({
