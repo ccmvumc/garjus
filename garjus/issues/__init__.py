@@ -361,7 +361,10 @@ def _audit_inbox(garjus, project):
         results.append({'category': 'ERROR','description': 'inbox not found'})
     else:
         logger.debug(f'auditing inbox:{project}:{project_inbox}')
-        if len(os.listdir(project_inbox)) > 0:
+        inbox_files = os.listdir(project_inbox)
+        inbox_files = [x for x in inbox_files if x != ['ARCHIVED']]
+        print(inbox_files)
+        if len(inbox_files) > 0:
             results.append({
                 'project': project,
                 'category': 'UNMATCHED_SESSION',
