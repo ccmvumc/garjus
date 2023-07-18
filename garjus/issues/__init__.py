@@ -262,7 +262,8 @@ def _find_new(issues, records):
             cur_proj = cur['PROJECT']
             if _matching_issues(rec, cur):
                 isnew = False
-                logger.debug(f'matches existing issue:{cur_proj}:{cur_id}', rec)
+                logger.debug(f'matches existing issue:{cur_proj}:{cur_id}')
+                print(rec)
                 break
 
         if isnew:
