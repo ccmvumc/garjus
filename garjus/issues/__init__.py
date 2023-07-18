@@ -364,7 +364,6 @@ def _audit_inbox(garjus, project):
         inbox_files = os.listdir(project_inbox)
         inbox_files = [x for x in inbox_files if x not in ['ARCHIVED', '.DS_Store']]
         inbox_files = [x for x in inbox_files if not x.endswith('.docx')]
-        print(inbox_files)
         if len(inbox_files) > 0:
             results.append({
                 'project': project,
