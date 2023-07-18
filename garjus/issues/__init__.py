@@ -370,4 +370,6 @@ def _audit_inbox(garjus, project):
                 'category': 'UNMATCHED_SESSION',
                 'description': 'Inbox contains unmatched uploads'})
 
+    print(results)
+
     return results
