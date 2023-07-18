@@ -358,10 +358,13 @@ def _audit_inbox(garjus, project):
     elif not os.path.isdir(project_inbox):
         logger.error(f'cannot check, file not found:{project}:{project_inbox}')
         results.append({'category': 'ERROR','description': 'inbox not found'})
-    elif len(os.listdir(project_inbox)) > 0:
-        results.append({
-            'project': project,
-            'category': 'UNMATCHED_SESSION',
-            'description': 'Inbox contains unmatched uploads'})
+    else:
+        logger.debug(f'auditing inbox:{project_inbox}')
+
+        if len(os.listdir(project_inbox)) > 0:
+            results.append({
+                'project': project,
+                'category': 'UNMATCHED_SESSION',
+                'description': 'Inbox contains unmatched uploads'})
 
     return results
