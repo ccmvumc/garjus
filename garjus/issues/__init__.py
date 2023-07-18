@@ -166,6 +166,7 @@ def update_project(garjus, project, unmatched):
             'session': sess,
             'description': sess})
 
+    # Check for externally uploaded images
     results += _audit_inbox(garjus, project)
 
     _add_issues(garjus, results, project)
@@ -210,6 +211,8 @@ def _audit_scanning(scan_table, src_project, project):
 def _add_issues(garjus, records, project):
     new_issues = []
     has_errors = False
+
+    print(records)
 
     # First check existing issues,
     # import new issues and update existing,
@@ -360,16 +363,10 @@ def _audit_inbox(garjus, project):
         results.append({'category': 'ERROR','description': 'inbox not found'})
     else:
         logger.debug(f'auditing inbox:{project}:{project_inbox}')
-
-        print(os.listdir(project_inbox))
-        print(len(os.listdir(project_inbox)))
-
         if len(os.listdir(project_inbox)) > 0:
             results.append({
                 'project': project,
                 'category': 'UNMATCHED_SESSION',
                 'description': 'Inbox contains unmatched uploads'})
-
-    print(results)
 
     return results
