@@ -362,6 +362,7 @@ def _audit_inbox(garjus, project):
         logger.debug(f'auditing inbox:{project}:{project_inbox}')
 
         print(os.listdir(project_inbox))
+        print(len(os.listdir(project_inbox)))
 
         if len(os.listdir(project_inbox)) > 0:
             results.append({
