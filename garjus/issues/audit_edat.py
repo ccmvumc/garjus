@@ -36,6 +36,11 @@ def audit(
             logger.debug(f'{subj}:{event}:not ready yet')
             continue
 
+        # already has converted
+        if rec[tab_field]:
+            logger.debug(f'{subj}:{event}:converted found')
+            continue
+
         # Check for edat file
         if not rec[raw_field]:
             # Missing edat
