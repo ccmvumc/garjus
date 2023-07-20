@@ -156,9 +156,24 @@ def _mr_info(scan_info, type_map, exp_map):
     info['interview_date'] = scan_date
     info['image_description'] = scan_type
     info['scan_type'] = type_map[scan_type]
-    info['sex'] = scan_info['SEX']
-    info['subjectkey'] = scan_info['GUID']
-    info['interview_age'] = scan_info['SCANAGE']
+
+    if 'SEX' in scan_info:
+        info['sex'] = scan_info['SEX']
+    else:
+        logger.debug(f'SEX not found')
+        info['sex'] = ''
+
+    if 'GUID' in scan_info:
+        info['subjectkey'] = scan_info['GUID']
+    else:
+        logger.debug(f'GUID not found')
+        info['subjectkey'] = ''
+
+    if 'SCANAGE' in scan_info:
+        info['interview_age'] = scan_info['SCANAGE']
+    else:
+        logger.debug(f'SCANAGE not found')
+        info['interview_age'] = ''
 
     if scan_type.startswith('DTI'):
         info['bvek_bval_files'] = 'Yes'
@@ -190,9 +205,24 @@ def _pet_info(scan_info, type_map):
     info['interview_date'] = scan_date
     info['image_description'] = scan_type
     info['scan_type'] = type_map[scan_type]
-    info['sex'] = scan_info['SEX']
-    info['subjectkey'] = scan_info['GUID']
-    info['interview_age'] = scan_info['SCANAGE']
+
+    if 'SEX' in scan_info:
+        info['sex'] = scan_info['SEX']
+    else:
+        logger.debug(f'SEX not found')
+        info['sex'] = ''
+
+    if 'GUID' in scan_info:
+        info['subjectkey'] = scan_info['GUID']
+    else:
+        logger.debug(f'GUID not found')
+        info['subjectkey'] = ''
+
+    if 'SCANAGE' in scan_info:
+        info['interview_age'] = scan_info['SCANAGE']
+    else:
+        logger.debug(f'SCANAGE not found')
+        info['interview_age'] = ''
 
     return info
 
@@ -314,11 +344,6 @@ def _make_image03_csv(
         startdate=startdate,
         enddate=enddate)
 
-    # merge in subject data
-    mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_index=True)
-    mscans['SCANAGE'] = (mscans['DATE'] + pd.DateOffset(days=15)) - mscans['DOB']
-    mscans['SCANAGE'] = mscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
-
     # Get the PETs
     pscans = garjus.scans(
         projects=[project],
@@ -329,11 +354,19 @@ def _make_image03_csv(
         enddate=enddate)
 
     # merge in subject data
+    mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_index=True)
     pscans = pd.merge(pscans, dfs, left_on='SUBJECT', right_index=True)
 
-    # Calculate Scan age in integer of months as a string
-    pscans['SCANAGE'] = (pscans['DATE'] + pd.DateOffset(days=15)) - pscans['DOB']
-    pscans['SCANAGE'] = pscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
+    if 'DOB' in mscans:
+        # Calculate Scan age in integer of months as a string
+        mscans['SCANAGE'] = (mscans['DATE'] + pd.DateOffset(days=15)) - mscans['DOB']
+        mscans['SCANAGE'] = mscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str') 
+        pscans['SCANAGE'] = (pscans['DATE'] + pd.DateOffset(days=15)) - pscans['DOB']
+        pscans['SCANAGE'] = pscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str')
+    else:
+        logger.debug(f'DOB not found, cannot calculate scan age')
+        mscans['SCANAGE'] = ''
+        pscans['SCANAGE'] = ''
 
     # get the image03 formatted
     df = get_image03_df(
