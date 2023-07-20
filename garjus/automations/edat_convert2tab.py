@@ -102,7 +102,7 @@ def process_project(
             logger.error(f'upload failed:{subj}:{event}')
             continue
 
-        logger.debug(f'uploaded:{subj}:{event}:{tab_file}')
+        logger.info(f'uploaded:{subj}:{event}:{tab_file}')
         results.append({
             'result': 'COMPLETE',
             'description': 'edat_convert2tab',
