@@ -156,6 +156,9 @@ def update_project(garjus, project, unmatched):
             sess_field,
             sess_suffix)
 
+        #if project == 'DSCHOL':
+        #    scan_table = _dschol_scan_table(scan_table)
+
         results += _audit_scanning(scan_table, src_labels, dst_labels)
 
     # Issues for unmatched
@@ -327,7 +330,7 @@ def _make_scan_table(
     # Only if date is entered
     rec = [x for x in rec if x[date_field]]
 
-    # Only if entered
+    # Only if session id entered
     rec = [x for x in rec if x[sess_field]]
 
     # Set the subject and session
@@ -345,6 +348,20 @@ def _make_scan_table(
 
         data.append(d)
 
+    return data
+
+
+def _dschol_scan_table(data):
+
+    for d in data:
+        if d['dst_subject'].startswith('1'):
+            d['dst_subject'] = 'DST30500' + d['dst_subject'][1:]
+            d['dst_session'] = 'DST30500' + d['dst_session'][1:]
+        elif d['dst_subject'].startswith('2'):
+            d['dst_subject'] = 'DSCHOL' + d['dst_subject']
+            d['dst_session'] = 'DSCHOL' + d['dst_session']
+
+    print(data)
     return data
 
 
