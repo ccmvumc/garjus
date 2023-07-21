@@ -95,3 +95,7 @@ def load_from_yaml(
 
     return processor
 
+
+def download_analysis_inputs(garjus, project, analysis_id, download_dir):
+    print(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
+
