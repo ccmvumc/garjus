@@ -242,16 +242,26 @@ def delete(project, proctype):
 
 
 @cli.command('dashboard')
-def dashboard():
+@click.option('--auth', 'auth_file', required=False)
+def dashboard(auth_file=None):
+    from .dashboard import app
     import webbrowser
     url = 'http://localhost:8050'
 
-    # start up a dashboard app
-    from .dashboard import app
+    if auth_file:
+        import yaml
+        import dash_auth
+
+        # Load user passwords to use dash's basic authentication
+        with open(auth_file, 'rt') as file:
+            _data = yaml.load(file, yaml.SafeLoader)
+            auth = dash_auth.BasicAuth(
+                app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)
 
+    # start up a dashboard app
     app.run_server(host='0.0.0.0')
 
     print('dashboard app closed!')
