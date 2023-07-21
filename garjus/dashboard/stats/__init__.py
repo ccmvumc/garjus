@@ -197,7 +197,7 @@ def get_content():
         dcc.RadioItems(
             options=[
                 {'label': 'Row per Assessor', 'value': 'assr'},
-                # TODO: {'label': 'Row per Session', 'value': 'sess'},
+                {'label': 'Row per Session', 'value': 'sess'},
                 {'label': 'Row per Subject', 'value': 'subj'}],
             value='assr',
             id='radio-stats-pivot',
@@ -250,6 +250,70 @@ def was_triggered(callback_ctx, button_id):
         and callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
 
     return result
+
+
+def _subject_pivot(df):
+    # Pivot to one row per subject
+    level_cols = ['SESSTYPE', 'PROCTYPE']
+    stat_cols = []
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE']
+
+    # Drop any duplicates found
+    df = df.drop_duplicates()
+
+    # And duplicate proctype for session
+    df = df.drop_duplicates(
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        keep='last')
+
+    df = df.drop(columns=['ASSR', 'SESSION', 'DATE'])
+
+    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
+
+    # Make the pivot table based on _index, _cols, _vars
+    dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
+
+    if len(df.SESSTYPE.unique()) > 1:
+        # Concatenate column levels to get one level with delimiter
+        dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
+    else:
+        dfp.columns = [c[0] for c in dfp.columns.values]
+
+    # Clear the index so all columns are named
+    dfp = dfp.dropna(axis=1, how='all')
+    dfp = dfp.reset_index()
+
+    return dfp
+
+
+def _session_pivot(df):
+    # Pivot to one row per session
+    level_cols = ['PROCTYPE']
+    stat_cols = []
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE', 'SESSION']
+
+    # Drop any duplicates found
+    df = df.drop_duplicates()
+
+    # And drop any duplicate proctypes per session
+    df = df.drop_duplicates(
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        keep='last')
+
+    df = df.drop(columns=['ASSR'])
+
+    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
+
+    # Make the pivot table based on _index, _cols, _vars
+    dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
+
+    dfp.columns = [c[0] for c in dfp.columns.values]
+
+    # Clear the index so all columns are named
+    dfp = dfp.dropna(axis=1, how='all')
+    dfp = dfp.reset_index()
+
+    return dfp
 
 
 @app.callback(
@@ -311,12 +375,22 @@ def update_stats(
     # Get the graph content in tabs (currently only one tab)
     tabs = get_graph_content(df, selected_pivot)
 
-    # Determine columns to be included in the table
-    selected_cols = df.columns
+    if selected_pivot == 'subj':
+        df = _subject_pivot(df)
+        columns = utils.make_columns(df.columns)
+        records = df.reset_index().to_dict('records')
+    elif selected_pivot == 'sess':
+        df = _session_pivot(df)
+        selected_cols = df.columns
+        columns = utils.make_columns(selected_cols)
+        records = df.reset_index().to_dict('records')
+    else:
+        # Determine columns to be included in the table
+        selected_cols = df.columns
 
-    # Get the table data as one row per assessor
-    columns = utils.make_columns(selected_cols)
-    records = df.reset_index().to_dict('records')
+        # Get the table data as one row per assessor
+        columns = utils.make_columns(selected_cols)
+        records = df.reset_index().to_dict('records')
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

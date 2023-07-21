@@ -185,6 +185,8 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
     df.PROJECT = df.PROJECT.replace(['TAYLOR_CAARE'], 'CAARE')
     df.PROJECT = df.PROJECT.replace(['TAYLOR_DepMIND'], 'DepMIND1')
 
+    df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
+
     return df
 
 

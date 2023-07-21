@@ -83,6 +83,9 @@ def get_data(projects):
     else:
         df['SESSTYPE'] = 'UNKNOWN'
 
+    # Format as string to drop the time portion
+    df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
+
     return df
 
 
