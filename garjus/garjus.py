@@ -710,6 +710,7 @@ class Garjus:
         types = []
 
         # Append others
+        logger.debug(f'loading proctypes:{project}')
         protocols = self.processing_protocols(project)
         for i, row in protocols.iterrows():
             ptype = row['TYPE']

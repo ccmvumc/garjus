@@ -353,6 +353,7 @@ def update_stats(
 
     if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
         # A new project was selected so we force refresh
+        logger.debug('new project selected, refreshing')
         df = load_stats(selected_proj, refresh=True)
 
     # Get options based on selected projects, only show proc for those projects
