@@ -12,6 +12,9 @@ import tempfile
 from ..utils_redcap import download_file, field2events
 
 
+# TODO: move slice timing to redcap
+
+
 logger = logging.getLogger('garjus.automations')
 
 
@@ -462,20 +465,6 @@ def _run_scan_automations(automations, garjus, project):
     protocols = garjus.scanning_protocols(project)
     project_redcap = garjus.primary(project)
 
-    # TODO: make a checkbox for this?
-    # TODO: move slice timing values to redcap
-
-    # MA3 stats 2 vol txt
-    if False and project in ['CHAMP', 'REMBRANDT']:
-        logger.debug(f'running ma3stats2voltxt:{project}')
-        stats2vol = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
-        assessors = garjus.assessors(projects=[project], proctypes=['Multi_Atlas_v3'])
-        xnat = garjus.xnat()
-        results += stats2vol.process_project(
-            xnat,
-            project,
-            assessors)
-
     # Add slice timing
     if project == 'REMBRANDT':
         logger.debug(f'running add_slicetiming:{project}')
@@ -503,6 +492,7 @@ def _run_scan_automations(automations, garjus, project):
         xnat_relabel_sessions = importlib.import_module(f'garjus.automations.xnat_relabel_sessions')
         xnat_relabel_scans = importlib.import_module(f'garjus.automations.xnat_relabel_scans')
         xnat_dcm2niix = importlib.import_module(f'garjus.automations.xnat_dcm2niix')
+        xnat_ma3stats2voltxt = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
         logger.debug('modules loaded')
     except ModuleNotFoundError as err:
         logger.error(f'error loading scan automations:{err}')
@@ -559,6 +549,23 @@ def _run_scan_automations(automations, garjus, project):
         logger.debug(f'{project}:running scan relabel:{proj_scanmap}')
         results += xnat_relabel_scans.process_project(
             garjus.xnat(), project, proj_scanmap)
+
+    # MA3 stats 2 vol txt
+    if 'xnat_ma3stats2voltxt' in automations:
+        logger.info(f'running ma3stats2voltxt:{project}')
+        assessors = garjus.assessors(projects=[project], proctypes=['Multi_Atlas_v3'])    
+        xnat = garjus.xnat()
+
+        # Add resource information, note takes a minute to load resources
+        _resources = garjus.assessor_resources(project, 'Multi_Atlas_v3')
+        assessors['RESOURCES'] = assessors.apply(
+            lambda x: _resources.get(x.ASSR, ''), axis=1)
+
+        # Run it
+        results += xnat_ma3stats2voltxt.process_project(
+            xnat,
+            project,
+            assessors)
 
     # d2n
     if garjus.has_dcm2niix() and 'dcm2niix' in automations:

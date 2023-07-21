@@ -211,6 +211,13 @@ class Garjus:
 
         return df
 
+    def assessor_resources(self, project, proctype):
+        """Query XNAT and return dict"""
+
+        data = self._load_ares_data(project, proctype)
+
+        return data
+
     def delete_proctype(self, project, proctype):
         # Get list of assessors of proctype from project
         assessors = self.assessors(projects=[project], proctypes=[proctype])
@@ -846,6 +853,27 @@ class Garjus:
             assessors = [x for x in assessors if x['PROCTYPE'] in proctypes]
 
         return assessors
+
+    def _load_ares_data(self, project, proctype):
+        data = {}
+        uri = self.assr_uri + ',proc:genprocdata/out/file/label'
+        uri += f'&project={project}'
+
+        result = self._get_result(uri)
+
+        for r in result:
+            assr = r.get('proc:genprocdata/label', '')
+            res = r.get('proc:genprocdata/out/file/label', '')
+            if not res:
+                continue
+
+            if assr in data.keys():
+                # Append to list of resources
+                data[assr] += ',' + res
+            else:
+                data[assr] = res
+
+        return data
 
     def _load_sgp_data(self, projects=None, proctypes=None):
         """Get assessor info from XNAT as list of dicts."""
@@ -1889,7 +1917,6 @@ class Garjus:
 
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
-            print(assr)
 
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):

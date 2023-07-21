@@ -15,6 +15,7 @@ def update(garjus, projects=None):
     # these are sessions that are in source project
     # but not found in destination projects
     unmatched = _unmatched(garjus)
+    # TODO: only need to check projects with same source project
 
     # Update each project
     for p in (projects or garjus.projects()):

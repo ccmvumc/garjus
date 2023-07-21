@@ -16,26 +16,12 @@ def process_project(
     results = []
 
     for i, assr in assessors.iterrows():
-        vol_res = xnat.select_assessor_resource(
-            assr['PROJECT'],
-            assr['SUBJECT'],
-            assr['SESSION'],
-            assr['ASSR'],
-            'VOL_TXT')
-
-        if vol_res.exists():
-            logger.debug('VOL_TXT exists')
+        if 'VOL_TXT' in assr['RESOURCES'].split(','):
+            logger.debug(f'VOL_TXT found in RESOURCES:{assr.ASSR}')
             continue
 
-        stats_res = xnat.select_assessor_resource(
-            assr['PROJECT'],
-            assr['SUBJECT'],
-            assr['SESSION'],
-            assr['ASSR'],
-            'STATS')
-
-        if not stats_res.exists():
-            logger.debug('STATS does not exist')
+        if 'STATS' not in assr['RESOURCES'].split(','):
+            logger.debug(f'STATS not found in RESOURCES not:{assr.ASSR}')
             continue
 
         # Download stats, transform, upload
@@ -68,10 +54,11 @@ def process_project(
 
         results.append({
             'result': 'COMPLETE',
-            'description': 'ma3stats2voltxt',
+            'category': 'ma3stats2voltxt',
+            'description': assr['ASSR'],
             'subject': assr['SUBJECT'],
             'session': assr['SESSION'],
-            'assessor': assr['ASSR']})
+        })
 
     return results
 
