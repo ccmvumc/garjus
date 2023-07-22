@@ -174,6 +174,9 @@ def _get_bag(garjus, project):
     # Get BAG stats
     stats = garjus.stats(project, proctypes=['BrainAgeGap_v2'])
 
+    if stats.empty:
+        return
+
     # Merge in DOB
     stats = pd.merge(
         stats, subjects[['DOB']], left_on='SUBJECT', right_index=True)
