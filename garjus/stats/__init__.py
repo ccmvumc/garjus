@@ -142,12 +142,17 @@ def _load_stats_wide(filename):
 def _load_stats_tall(filename):
     data = {}
     rows = []
-    with open(filename) as f:
-        rows = f.readlines()
 
-    for r in rows:
-        (k, v) = r.strip().replace('=', ',').split(',')
-        data[k] = v
+    try:
+        with open(filename) as f:
+            rows = f.readlines()
+
+        for r in rows:
+            (k, v) = r.strip().replace('=', ',').split(',')
+            data[k] = v
+    except ValueError:
+        logger.error(f'cannot load stats file')
+        return {}
 
     return data
 
