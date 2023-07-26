@@ -12,6 +12,7 @@ import glob
 import os
 import tempfile
 import shutil
+import yaml
 
 import pandas as pd
 from redcap import Project, RedcapError
@@ -588,12 +589,12 @@ class Garjus:
 
         return self._project2stats[project]
 
-    def analyses(self, project, download=False):
+    def analyses(self, projects, download=True):
         """Return analyses."""
         data = []
 
         rec = self._rc.export_records(
-            records=[project],
+            records=projects,
             forms=['analyses'],
             fields=[self._dfield()])
 
@@ -1484,6 +1485,39 @@ class Garjus:
         """Return list of scanning protocol records."""
         return self._rc.export_records(records=[project], forms=['scanning'])
 
+    def load_analysis(self, project, analysis_id):
+        """Return analysis protocol record."""
+        rec = self._rc.export_records(
+            fields=[self._dfield()],
+            forms=['analyses'],
+            records=[project],
+        )
+
+        rec = [x for x in rec if str(x['redcap_repeat_instance']) == analysis_id]
+
+        rec = rec[0]
+
+        # Download the yaml file and load it too
+        if rec['analysis_processor']:
+            print('loading', rec['analysis_processor'])
+            with tempfile.TemporaryDirectory() as temp_dir:
+                yaml_file = utils_redcap.download_named_file(
+                    self._rc,
+                    project,
+                    'analysis_processor',
+                    temp_dir,
+                    repeat_id=analysis_id)
+
+                # Load yaml contents
+                try:
+                    with open(yaml_file, "r") as f:
+                        rec['processor'] = yaml.load(f, Loader=yaml.FullLoader)
+                except yaml.error.YAMLError as err:
+                    logger.error(f'failed to load yaml file{yaml_file}:{err}')
+                    return None
+
+        return rec
+
     def add_issues(self, issues):
         """Add list of issues."""
         records = []
@@ -1898,6 +1932,7 @@ class Garjus:
 
     def get_analysis_inputs(self, project, analysis_id, download_dir):
         download_analysis_inputs(self, project, analysis_id, download_dir)
+
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

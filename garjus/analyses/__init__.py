@@ -1,5 +1,6 @@
 """Analyses."""
 import logging
+import os
 
 
 def update(garjus, projects=None):
@@ -17,16 +18,6 @@ def _update_project(garjus, project):
         logging.info(f'no analyses for project:{project}')
         return
 
-    # Get a snapshot of project scan/assr/sgp data
-    assessors = garjus.assessors(projects=[project])
-    scans = garjus.scans(projects=[project])
-    sgp = garjus.subject_assessors(projects=[project])
-    project_data = {}
-    project_data['name'] = project
-    project_data['scans'] = scans
-    project_data['assessors'] = assessors
-    project_data['sgp'] = sgp
-
     # Handle each record
     for i, row in analyses.iterrows():
         aname = row['NAME']
@@ -36,66 +27,59 @@ def _update_project(garjus, project):
         update_analysis(
             garjus,
             filepath,
-            subjects,
-            project_data)
+            subjects)
 
 
 def update_analysis(
     garjus,
-    filepath,
-    subjects,
-    project_data):
+    project,
+    analysis_id):
 
-    # Load the processor
-    project_processor = load_from_yaml(garjus, filepath)
-
-    (assr, info) = project_processor.get_assessor(
-        garjus, subjects, project_data)
-
-    # TODO: apply reproc or rerun if needed
-
-    if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
-        logging.debug('building task')
-        #(assr, info) = build_task(garjus, assr, info, processor, project_data)
-        #logging.debug(f'assr after={info}')
-    else:
-        logging.debug('already built:{}'.format(info['ASSR']))
-
-
-def load_from_yaml(
-    xnat,
-    filepath,
-    job_template='~/job_template.txt',
-):
-    """
-    Load processor from yaml
-    :param filepath: path to yaml file
-    :return: processor
-    """
-
-    processor = None
-    proc_level = get_processor_level(filepath)
-
-    if proc_level == 'subject':
-        logging.debug('loading as SGP:{}'.format(filepath))
-        processor = SgpProcessor(
-            xnat,
-            filepath,
-            user_inputs,
-            singularity_imagedir,
-            job_template)
-    else:
-        logging.debug('loading as Processor_v3_1:{}'.format(filepath))
-        processor = Processor_v3_1(
-            xnat,
-            filepath,
-            user_inputs,
-            singularity_imagedir,
-            job_template)
-
-    return processor
+    print('TBD:update_analysis')
 
 
 def download_analysis_inputs(garjus, project, analysis_id, download_dir):
     print(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
 
+    # Make the output directory
+    try:
+        os.makedirs(download_dir)
+    except FileExistsError:
+        pass
+
+    # Determine what we need to download
+    a = garjus.load_analysis(project, analysis_id)
+
+    print(a['processor'])
+
+    assessors = garjus.assessors(project=project)
+
+    #'inputs': {'xnat': {'subjects': 
+    #{'sessions': {'types': 'Baseline',
+    #'assessors': [{'name': 'assr_msit', 'types': 'fmri_msit_v2',
+    #'resources': [{'resource': '1stLEVEL', 'fmatch': 'con_0002.nii.gz'},
+    #{'resource': '1stLEVEL', 'fmatch': 'behavior.txt'}]}]}}}}]
+
+    # TODO: first confirm everything is found on xnat for these subjects
+
+    subjects = a['analysis_include'].splitlines()
+    for s in subjects:
+        print(s)
+        sdir = f'{download_dir}/{s}'
+
+        try:
+            os.makedirs(sdir)
+        except FileExistsError:
+            pass
+
+        # get the subjects sessions
+        # filter by types
+        # iterate sessions
+            # get the sessions assessors
+            # filter by resource
+
+
+
+    # Download it
+
+    # Done
