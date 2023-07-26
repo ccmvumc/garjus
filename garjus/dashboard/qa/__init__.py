@@ -18,7 +18,7 @@ import dash
 
 from ..app import app
 from .. import utils
-from ..shared import QASTATUS2COLOR, RGB_DKBLUE
+from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
 
 
@@ -127,7 +127,7 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
             1, 1)
 
     # Customize figure
-    fig['layout'].update(barmode='stack', showlegend=True, width=900)
+    fig['layout'].update(barmode='stack', showlegend=True, width=GWIDTH)
 
     # Build the tab
     label = 'By {}'.format('TYPE')
@@ -168,7 +168,7 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
         1, 1)
 
     # Customize figure
-    fig['layout'].update(barmode='stack', showlegend=True, width=900)
+    fig['layout'].update(barmode='stack', showlegend=True, width=GWIDTH)
 
     # Build the tab
     label = 'By {}'.format('PROJECT')
@@ -268,7 +268,7 @@ def sessionsbytime_figure(df, selected_groupby):
 
             fig.update_layout(
                 barmode='stack',
-                width=900,
+                width=GWIDTH,
                 #bargroupgap=0,
                 #wbidth=100,
                 bargap=0.1)
@@ -348,7 +348,7 @@ def sessionsbytime_figure(df, selected_groupby):
                         '2021-11-22',
                         '2021-11-29'])
 
-            fig.update_layout(width=900)
+            fig.update_layout(width=GWIDTH)
 
 
     return fig
@@ -431,7 +431,7 @@ def get_content():
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': '900px',
+                'width': f'{GWIDTH}px',
             },
             style_cell={
                 'textAlign': 'left',

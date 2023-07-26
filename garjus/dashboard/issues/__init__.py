@@ -11,7 +11,7 @@ import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX
+from ..shared import STATUS2HEX, GWIDTH
 from ..shared import RGB_RED, RGB_GREEN, RGB_GREY, RGB_BLUE
 from . import data
 
@@ -57,7 +57,7 @@ def _get_graph_content(df):
                 opacity=0.9), 1, 1)
 
         # Customize figure
-        fig['layout'].update(barmode='stack', showlegend=True, width=900)
+        fig['layout'].update(barmode='stack', showlegend=True, width=GWIDTH)
 
         # Build the tab
         label = 'By {}'.format(pindex)
@@ -116,7 +116,7 @@ def get_content():
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': '900px',
+                'width': f'{GWIDTH}px',
             },
             style_cell={
                 'textAlign': 'left',

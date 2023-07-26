@@ -11,6 +11,7 @@ import dash
 from ..app import app
 from .. import utils
 from . import data
+from ..shared import GWIDTH
 
 
 logger = logging.getLogger('dashboard.stats')
@@ -48,7 +49,7 @@ def get_graph_content(df, selected_pivot):
         _txt = 'Choose Project(s) then Type(s) to load stats'
         return [dcc.Tab(label='', value='0', children=[html.Div(
             html.P(_txt, style={'text-align': 'center'}),
-            style={'height': '150px', 'width': '1000px'})])]
+            style={'padding':'100px', 'height': '150px', 'width': '500px'})])]
 
     # Filter var list to only include those that have data
     var_list = [x for x in df.columns if not pd.isnull(df[x]).all()]
@@ -160,7 +161,7 @@ def get_stats_graph(df, var_list, pivot=None):
     # makes the graph stay in a scrollable section
     graph = html.Div(
         dcc.Graph(figure=fig, style={'overflow': 'scroll'}),
-        style={'width': '1000px'})
+        style={'width': f'{GWIDTH}px'})
 
     # Return the graph
     return graph
@@ -212,7 +213,7 @@ def get_content():
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': '1000px'},
+                'width': f'{GWIDTH}px'},
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
