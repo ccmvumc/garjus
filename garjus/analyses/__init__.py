@@ -52,7 +52,9 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
 
     print(a['processor'])
 
-    assessors = garjus.assessors(project=project)
+    assessors = garjus.assessors(projects=[project])
+
+    print(assessors)
 
     #'inputs': {'xnat': {'subjects': 
     #{'sessions': {'types': 'Baseline',
@@ -64,7 +66,9 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
 
     subjects = a['analysis_include'].splitlines()
     for s in subjects:
-        print(s)
+        subj_assessors = assessors[assessors.SUBJECT == s]
+        print(s, subj_assessors)
+
         sdir = f'{download_dir}/{s}'
 
         try:
@@ -73,11 +77,14 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
             pass
 
         # get the subjects sessions
+
         # filter by types
         # iterate sessions
             # get the sessions assessors
             # filter by resource
 
+
+    print(a['processor']['inputs']['xnat']['subjects'])
 
 
     # Download it

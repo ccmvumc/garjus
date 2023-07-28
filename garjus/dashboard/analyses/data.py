@@ -67,3 +67,15 @@ def get_data(projects):
     df = garjus.analyses(projects)
 
     return df
+
+
+def filter_data(df, time=None):
+    # Filter by project
+    if time:
+        #logger.debug('filtering by project:')
+        #logger.debug(projects)
+        #df = df[df['PROJECT'].isin(projects)]
+        print('TBD:time filter')
+
+
+    return df

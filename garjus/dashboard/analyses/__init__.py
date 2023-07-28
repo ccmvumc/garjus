@@ -39,13 +39,6 @@ def get_graph_content(df):
 def get_content():
 
     content = [
-        dcc.Loading(id="loading-analyses", children=[
-            html.Div(dcc.Tabs(
-                id='tabs-analyses',
-                value='0',
-                children=[],
-                vertical=True))]),
-        html.Button('Refresh Data', id='button-analyses-refresh'),
         dcc.Dropdown(
             id='dropdown-analyses-time',
             options=[
@@ -87,17 +80,17 @@ def get_content():
             export_format='xlsx',
             export_headers='names',
             export_columns='visible'),
-        html.Label('0', id='label-rowcount-analyses')]
+        html.Label('0', id='label-analyses-rowcount')]
 
     return content
 
 
-def load_analyses(projects=[], refresh=False):
+def load_analyses(projects=[]):
 
     if projects is None:
         projects = []
 
-    return data.load_analyses(projects, refresh=refresh)
+    return data.load_data(projects, refresh=True)
 
 
 def was_triggered(callback_ctx, button_id):
@@ -109,53 +102,38 @@ def was_triggered(callback_ctx, button_id):
 
 
 @app.callback(
-    [Output('dropdown-analyses-proj', 'options'),
-     Output('datatable-analyses', 'data'),
-     Output('datatable-analyses', 'columns'),
-     Output('tabs-analyses', 'children'),
-     Output('label-rowcount-analyses', 'children')],
-    [Input('dropdown-analyses-proc', 'value'),
-     Input('dropdown-analyses-proj', 'value'),
-     Input('dropdown-analyses-time', 'value'),
-     Input('button-analyses-refresh', 'n_clicks')])
+    [
+    Output('dropdown-analyses-proj', 'options'),
+    Output('datatable-analyses', 'data'),
+    Output('datatable-analyses', 'columns'),
+    Output('label-analyses-rowcount', 'children'),
+    ],
+    [
+    Input('dropdown-analyses-proj', 'value'),
+    Input('dropdown-analyses-time', 'value'),
+    ])
 def update_analyses(
-    selected_proc,
     selected_proj,
     selected_time,
-    n_clicks
 ):
-    refresh = False
 
     logger.debug('update_all')
 
     ctx = dash.callback_context
-    if was_triggered(ctx, 'button-analyses-refresh'):
-        # Refresh data if refresh button clicked
-        logger.debug('refresh:clicks={}'.format(n_clicks))
-        refresh = True
 
     # Load selected data with refresh if requested
-    df = load_analyses(selected_proj, refresh=refresh)
-
-    if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
-        # A new project was selected so we force refresh
-        logger.debug('new project selected, refreshing')
-        df = load_analyses(selected_proj, refresh=True)
+    df = load_analyses(selected_proj)
 
     # Get options based on selected projects, only show proc for those projects
-    proj_options = data.load_options(selected_proj)
+    proj_options = data.load_options()
 
     logger.debug(f'loaded options:{proj_options}')
 
     proj = utils.make_options(proj_options)
 
     # Filter data based on dropdown values
-    df = data.filter_data(df, selected_proc, selected_time)
+    df = data.filter_data(df, selected_time)
 
-    # Get the graph content in tabs (currently only one tab)
-    tabs = get_graph_content(df)
-
-   
     # Determine columns to be included in the table
     selected_cols = df.columns
 
@@ -168,4 +146,4 @@ def update_analyses(
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')
-    return [proj, records, columns, tabs, rowcount]
+    return [proj, records, columns, rowcount]
