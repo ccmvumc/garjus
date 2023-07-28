@@ -6,7 +6,7 @@ if __name__ == "__main__":
     from garjus.automations.etl_arcapp import process_project
 
     api_url = 'https://redcap.vanderbilt.edu/api/'
-    api_key = '70E813FDB14AC969E244CFBD87ED3537'  # this is a test copy of REM
+    api_key = ''  # this is a test copy of REM
     rc = redcap.Project(api_url, api_key)
 
     logging.basicConfig(
