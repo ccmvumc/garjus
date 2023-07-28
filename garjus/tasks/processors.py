@@ -915,6 +915,10 @@ def build_session_processor(garjus, processor, session, project_data):
             # Blank inputs
             return
 
+        # TODO: check garjus queue for existing inputset that was
+        # added after we project_data was made????
+
+
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(session, inputs, project_data)
 

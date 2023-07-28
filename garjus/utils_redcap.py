@@ -173,5 +173,12 @@ def match_repeat(rc, record_id, repeat_name, match_field, match_value):
 
 
 def field2events(project, field_id):
-    _form = [x['form_name'] for x in project.metadata if x['field_name'] == field_id][0]
-    return [x['unique_event_name'] for x in project.export_instrument_event_mappings() if x['form'] == _form]
+    events = []
+
+    try:
+        _form = [x['form_name'] for x in project.metadata if x['field_name'] == field_id][0]
+        events = [x['unique_event_name'] for x in project.export_instrument_event_mappings() if x['form'] == _form]
+    except IndexError:
+        events = []
+
+    return events
