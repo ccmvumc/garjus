@@ -70,6 +70,9 @@ def process_project(project):
         event_id = r['redcap_event_name']
         subj = id2subj.get(record_id)
 
+        #if False and record_id != '6':
+        #    continue
+
         # Check for converted file
         if not r[file_field]:
             logging.debug(f'no life file:{record_id}:{subj}:{event_id}')
@@ -153,7 +156,7 @@ def _process(project, record_id, event_id):
         _response = project.import_records(data)
         assert 'count' in _response
         logging.info(f'uploaded:{record_id}')
-    except AssertionError as err:
+    except (AssertionError, Exception) as err:
         logging.error(f'uploading:{record_id}:{err}')
         return False
 
@@ -176,7 +179,8 @@ def get_response(df, label):
     if len(df[df['Prompt Label'] == label]) > 1:
         print('duplicates!')
     elif len(df[df['Prompt Label'] == label]) == 0:
-        print('missing')
+        logger.debug(f'missing:{label}')
+        return ''
 
     return df[df['Prompt Label'] == label].iloc[0].Response
 
@@ -202,17 +206,20 @@ def _transform(filename):
         d = {
             'redcap_repeat_instance': str(i),
             'redcap_repeat_instrument': 'ema_lifedata_survey',
-            'lifedata_session_no': str(i),
             'ema_lifedata_survey_complete': '2'}
 
-        dfs = df[df['Session Instance No'] == str(float(i))]
+        # one record per notification
+        dfs = df[df['Notification No'] == str(i)]
 
         if dfs.empty:
-            logger.debug(f'no rows for session:{i}')
+            logger.debug(f'no rows for Notification No:{i}')
             continue
 
         d['lifedata_notification_time'] = dfs.iloc[0]['Notification Time']
         d['lifedata_notification_no'] = dfs.iloc[0]['Notification No']
+
+        if dfs.iloc[0]['Session Instance No']:
+            d['lifedata_session_no'] = str(int(float(dfs.iloc[0]['Session Instance No'])))
 
         if dfs.iloc[0]['Responded'] != '1':
             d['lifedata_responded'] = '0'
@@ -220,13 +227,18 @@ def _transform(filename):
             d['lifedata_responded'] = '1'
 
             if dfs.iloc[0]['Prompt Response Time']:
-                d['lifedata_session_length'] = dfs.iloc[0]['Session Length'].split(':', 1)[1]
+                # Get the response date and time separately
                 d['lifedata_response_date'] = dfs.iloc[0]['Prompt Response Time'].split(' ')[0]
                 d['lifedata_response_time'] = dfs.iloc[0]['Prompt Response Time'].split(' ')[1].rsplit(':', 1)[0]
 
                 # Get the prompt values
                 for k, v in VARMAP.items():
-                    d[k] = str(int(float(get_response(dfs, v))))
+                    response = get_response(dfs, v)
+                    if response:
+                        d[k] = str(int(float(response)))
+
+            if dfs.iloc[0]['Session Length']:
+                d['lifedata_session_length'] = dfs.iloc[0]['Session Length'].split(':', 1)[1]
 
         # Append to our list of records
         data.append(d)
