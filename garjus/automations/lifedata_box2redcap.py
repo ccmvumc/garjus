@@ -3,11 +3,13 @@ import logging
 
 import redcap
 
-from utils_redcap import upload_file, get_redcap
+from ..utils_redcap import field2events, upload_file
+
 
 # TODO: get a date from redcap and compare it with data in file
 
 class LifeDataBox2Redcap():
+    # map of redcap event to session number in the filename as saved to BoxDir
     event2sess = {
         'baselinemonth_0_arm_2': '1',
         'baselinemonth_0_arm_3': '1',
@@ -19,8 +21,10 @@ class LifeDataBox2Redcap():
         'month_24_arm_3': '4',
     }
 
+    # name of field in redcap where file is to be uploaded
     file_field = 'life_file'
 
+    # initialize the uploader with a pycap project and a box directory
     def __init__(self, rc, boxdir=''):
         self.rc = rc
         self.boxdir = boxdir
@@ -34,6 +38,7 @@ class LifeDataBox2Redcap():
         self.id2subj = {x[dfield]: x[sfield] for x in rec if x[sfield]}
 
     def upload_life_file(self, record, event, filename):
+        '''upload a lifedata file to specified record and event.'''
         upload_file(
             self.rc,
             record,
@@ -43,11 +48,13 @@ class LifeDataBox2Redcap():
         )
 
     def get_session_files(self, subj, sess_num):
+        '''Returns list of file paths for specified subject and session number'''
         sess_glob = f'{self.boxdir}/{subj}/LifeData/*{sess_num}*.csv'
         file_list = sorted(glob.glob(sess_glob))
         return file_list
 
     def process_record(self, r):
+        '''Process the given record dictionary.'''
         record_id = r[self.rc.def_field]
         event = r['redcap_event_name']
         sess_num = self.event2sess[event]
@@ -64,7 +71,6 @@ class LifeDataBox2Redcap():
             return None
 
         # Find files for this subject/session
-        logging.debug(f'{subj}:{event}:{sess_num}:looking for files')
         file_list = self.get_session_files(subj, sess_num)
         file_count = len(file_list)
         if file_count <= 0:
@@ -101,6 +107,9 @@ class LifeDataBox2Redcap():
         # Get records for those fields/events
         logging.info('export records from REDCap')
         records =  self.rc.export_records(fields=fields, events=events)
+
+        #records = sorted(records, key=lambda x: self.id2subj[x[self.rc.def_field]])
+
         return records
 
     def run(self):
@@ -113,24 +122,3 @@ class LifeDataBox2Redcap():
                 results += result
 
         return results
-
-
-if __name__ == "__main__":
-# For development/testing we can create a connection and run it. 
-# In production, process_project will be run by run_updates.py
-    logging.basicConfig(
-        format='%(asctime)s - %(levelname)s:%(module)s:%(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S')
-
-    BOXDIR = '/Volumes/SharedData/admin-BOX/Box Sync/Rembrandt EMA Output'
-    PID = '104046'  #  REMBRANDT REDCap Project ID
-
-    logging.info('connecting to redcap')
-    rc = get_redcap(PID)
-
-    logging.info('Running it')
-    results = LifeDataBox2Redcap(rc, BOXDIR).run()
-    logging.info(results)
-
-    logging.info('Done!')
