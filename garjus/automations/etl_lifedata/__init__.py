@@ -202,14 +202,14 @@ def _transform(filename):
         logging.error('extract failed')
         return
 
-    for i in range(1,29):
+    # make a record per notification
+    for i in df['Notification No'].unique():
         d = {
             'redcap_repeat_instance': str(i),
             'redcap_repeat_instrument': 'ema_lifedata_survey',
             'ema_lifedata_survey_complete': '2'}
 
-        # one record per notification
-        dfs = df[df['Notification No'] == str(i)]
+        dfs = df[df['Notification No'] == i]
 
         if dfs.empty:
             logger.debug(f'no rows for Notification No:{i}')
