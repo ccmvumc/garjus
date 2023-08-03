@@ -23,6 +23,8 @@ def get_filename():
 def get_data(proj_filter, hidedone=True):
     df = Garjus().tasks(hidedone=hidedone)
 
+    df = df[df.STATUS != 'NEED_INPUTS']
+
     df.reset_index(inplace=True)
     df['ID'] = df.index
     df['USER'] = 'vuiis_daily_singularity'
