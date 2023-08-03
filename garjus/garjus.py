@@ -308,14 +308,20 @@ class Garjus:
         # Finally, build a dataframe
         return pd.DataFrame(data, columns=self.column_names('issues'))
 
-    def tasks(self, download=False, hidedone=True):
+    def tasks(self, download=False, hidedone=True, projects=None):
         """List of task records."""
         DONE_LIST = ['COMPLETE', 'JOB_FAILED']
         data = []
 
-        rec = self._rc.export_records(
-            forms=['taskqueue'],
-            fields=[self._dfield()])
+        if projects:
+            rec = self._rc.export_records(
+                records=projects,
+                forms=['taskqueue'],
+                fields=[self._dfield()])
+        else:
+            rec = self._rc.export_records(
+                forms=['taskqueue'],
+                fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
 
@@ -593,10 +599,17 @@ class Garjus:
         """Return analyses."""
         data = []
 
-        rec = self._rc.export_records(
-            records=projects,
-            forms=['analyses'],
-            fields=[self._dfield()])
+        print('analyses projects=', projects)
+
+        if projects:
+            rec = self._rc.export_records(
+                records=projects,
+                forms=['analyses'],
+                fields=[self._dfield()])
+        else:
+            rec = self._rc.export_records(
+                forms=['analyses'],
+                fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
         for r in rec:
@@ -1944,6 +1957,28 @@ class Garjus:
         from .tasks import dax2garjus
         dax2garjus.dax2queue(self)
 
+    # Check for duplicate build
+    def detect_duplicate(self, project_data):
+        detected = False
+
+        logger.debug('checking for duplicate build')
+
+        # Get current tasks
+        logger.debug('load tasks')
+        df = self.tasks(
+            download=False,
+            hidedone=True,
+            projects=[project_data['name']])
+
+        # Check for any newly created assessors
+        logger.debug('compare')
+        df = df[df.PROJECT == project_data['name']]
+        df = df[~df.ASSESSOR.isin(project_data['assessors'].ASSR)]
+        if len(df) > 0:
+            detected = True
+
+        return detected
+
     def retry(self, project):
         '''Delete outputs on xnat, set to job running, reset on redcap'''
         SKIP_LIST = ['OLD', 'EDITS']
@@ -1954,6 +1989,7 @@ class Garjus:
         df = df[df.PROJECT == project]
         failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
 
+        logger.info('deleting files from failed tasks')
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
 
