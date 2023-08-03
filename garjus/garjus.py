@@ -87,6 +87,7 @@ class Garjus:
         self._columns = self._default_column_names()
         self._yamldir = self.set_yamldir()
         self._tempdir = tempfile.mkdtemp()
+        self._created_assessors = []
 
     def __del__(self):
         """Close connectinons we opened."""
@@ -1233,6 +1234,10 @@ class Garjus:
                 response = self._rc.import_records([record])
                 assert 'count' in response
                 logger.debug('task record created')
+
+                # Add this to our list we created
+                self._created_assessors.append(assr)
+
             except AssertionError as err:
                 logger.error(f'upload failed:{err}')
                 return
@@ -1973,10 +1978,11 @@ class Garjus:
             hidedone=True,
             projects=[project_data['name']])
 
-        # Check for any newly created assessors
+        # Check for any newly created assessors that we didn't create
         logger.debug('compare')
         df = df[df.PROJECT == project_data['name']]
-        df = df[~df.ASSESSOR.isin(project_data['assessors'].ASSR)]
+        df = df[~df.ASSESSOR.isin(list(project_data['assessors'].ASSR))]
+        df = df[~df.ASSESSOR.isin(self._created_assessors)]
         if len(df) > 0:
             detected = True
 
