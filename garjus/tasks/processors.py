@@ -975,12 +975,7 @@ def build_session_processor(garjus, processor, session, project_data):
             # Blank inputs
             return
 
-        # check garjus queue for existing inputset that was
-        # added after we project_data was made by a duplicate build process
-        # we can't check the queue for every inputs, we only want to do it
-        # just before we create a new assessor in xnat. problem is 
-        # that assessor is being created in get_asssessor if it doesnt exist
-        # so we'll check project_data here.
+        # check for duplicate build, only just before we create new assessor
         proctype = processor.get_proctype()
         df = project_data['assessors']
         df = df[(df.SESSION == session) & (df.PROCTYPE == proctype)]
@@ -988,7 +983,7 @@ def build_session_processor(garjus, processor, session, project_data):
 
         if df.empty and garjus.detect_duplicate(project_data):
             logger.debug(f'detected duplicate:quitting:{session}:{inputs}')
-            return
+            raise AutoProcessorError('duplicate build detected')
 
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(session, inputs, project_data)

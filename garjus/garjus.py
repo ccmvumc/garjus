@@ -1109,7 +1109,10 @@ class Garjus:
 
         if 'tasks' in choices:
             logger.info('updating tasks')
-            update_tasks(self, projects)
+            try:
+                update_tasks(self, projects)
+            except Exception:
+                logger.info('problem updating tasks, duplicate build')
 
         if 'analyses' in choices:
             logger.info('updating analyses')
