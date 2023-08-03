@@ -87,7 +87,7 @@ class Garjus:
         self._columns = self._default_column_names()
         self._yamldir = self.set_yamldir()
         self._tempdir = tempfile.mkdtemp()
-        self._created_assessors = []
+        self._our_assessors = set()
 
     def __del__(self):
         """Close connectinons we opened."""
@@ -1235,9 +1235,6 @@ class Garjus:
                 assert 'count' in response
                 logger.debug('task record created')
 
-                # Add this to our list we created
-                self._created_assessors.append(assr)
-
             except AssertionError as err:
                 logger.error(f'upload failed:{err}')
                 return
@@ -1958,6 +1955,7 @@ class Garjus:
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):
         from .tasks import garjus2dax
+        # TODO: check for duplicate inputs
         garjus2dax.queue2dax(self)
 
     # Update queue from dax
@@ -1982,8 +1980,9 @@ class Garjus:
         logger.debug('compare')
         df = df[df.PROJECT == project_data['name']]
         df = df[~df.ASSESSOR.isin(list(project_data['assessors'].ASSR))]
-        df = df[~df.ASSESSOR.isin(self._created_assessors)]
-        if len(df) > 0:
+        df = df[~df.ASSESSOR.isin(self.our_assessors())]
+
+        if not df.empty:
             detected = True
 
         return detected
@@ -2088,6 +2087,19 @@ class Garjus:
                 logger.error(f'failed to set task statuses:{err}')
         else:
             logger.debug('retry, nothing to update')
+
+    def session_assessor_labels(self, project, subject, session):
+        """Return list of labels."""
+        uri = f'/REST/projects/{project}/subjects/{subject}/experiments/{session}/assessors?columns=label'
+        result = self._get_result(uri)
+        label_list = [x['label'] for x in result]
+        return label_list
+
+    def add_our_assessor(self, assessor):
+        self._our_assessors.add(assessor)
+
+    def our_assessors(self):
+        return list(self._our_assessors)
 
 
 def is_sgp_assessor(assessor):

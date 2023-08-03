@@ -981,9 +981,28 @@ def build_session_processor(garjus, processor, session, project_data):
         df = df[(df.SESSION == session) & (df.PROCTYPE == proctype)]
         df = df[(df.INPUTS == inputs)]
 
-        if df.empty and garjus.detect_duplicate(project_data):
-            logger.debug(f'detected duplicate:quitting:{session}:{inputs}')
-            raise AutoProcessorError('duplicate build detected')
+        if df.empty:
+
+            # First let garjus check for new stuff in the queue that we didn't
+            # create for this project
+            garjus.detect_duplicate(project_data)
+
+            # Then check on xnat
+            try:
+                # Get list of assessors on session, compare to list in project_data
+                _df = project_data['scans']
+                _df = _df[_df.SESSION == session]
+                project = project_data['name']
+                subject = list(_df.SUBJECT)[0]
+                cur_labels = garjus.session_assessor_labels(project, subject, session)
+                cache_labels = list(project_data['assessors'].ASSR)
+                our_labels = garjus.our_assessors()
+                labels = [x for x in cur_labels if x not in cache_labels and x not in our_labels]
+                if len(labels) > 0:
+                    logger.debug(f'detected duplicate:{labels}')
+                    raise AutoProcessorError('duplicate build detected')
+            except Exception as err:
+                logger.err(f'could not check for duplicates:{err}')
 
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(session, inputs, project_data)
@@ -991,6 +1010,8 @@ def build_session_processor(garjus, processor, session, project_data):
         # TODO: apply reproc or rerun if needed
 
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
+            garjus.add_our_assessor(info['ASSR'])
+
             logger.debug('building task')
             (assr, info) = build_task(
                 garjus, assr, info, processor, project_data)
