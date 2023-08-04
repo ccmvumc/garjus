@@ -48,7 +48,7 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
     # the original df? yes, later
     dfp_copy = dfp.copy()
     for col in dfp_copy.columns:
-        if col in ('SESSION', 'PROJECT', 'DATE'):
+        if col in ('SESSION', 'PROJECT', 'DATE', 'NOTE'):
             # don't mess with these columns
             # TODO: do we need this if we haven't reindexed yet?
             continue
@@ -81,7 +81,8 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
             'DATE',
             'SITE',
             'SESSTYPE',
-            'MODALITY'),
+            'MODALITY',
+            'NOTE'),
         value_name='STATUS')
 
     # We use fill_value to replace nan with 0
@@ -493,7 +494,7 @@ def qa_pivot(df):
         index=(
             'SESSION', 'SUBJECT', 'PROJECT',
             #'AGE', 'SEX', 'DEPRESS',
-            'DATE', 'SESSTYPE', 'SITE', 'MODALITY'),
+            'DATE', 'SESSTYPE', 'SITE', 'MODALITY', 'NOTE'),
         columns='TYPE',
         values='STATUS',
         aggfunc=lambda x: ''.join(x))
@@ -591,6 +592,9 @@ def update_all(
     hidetypes = (selected_hidetypes == 'HIDE')
     df = load_data(refresh=refresh, hidetypes=hidetypes)
 
+    # Truncate NOTE
+    df['NOTE'] = df['NOTE'].str.slice(0,30)
+
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
     proj = utils.make_options(load_proj_options())
@@ -617,8 +621,7 @@ def update_all(
 
     # Get the table data
     selected_cols = [
-        'SESSION', 'SUBJECT', 'PROJECT',
-        'DATE', 'SESSTYPE', 'SITE']
+        'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
 
     if selected_proc:
         selected_cols += selected_proc
@@ -626,6 +629,10 @@ def update_all(
     if selected_scan:
         selected_cols += selected_scan
 
+    # Final column is always notes
+    selected_cols.append('NOTE')
+
+    # Format as column names and record dictionaries for dash table
     columns = utils.make_columns(selected_cols)
     records = dfp.reset_index().to_dict('records')
 

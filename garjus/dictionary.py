@@ -59,14 +59,14 @@ COLUMNS = {
         'PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
         'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
     'assessors': [
-        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE',
+        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'NOTE', 'DATE', 'SITE',
         'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
         'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
     'issues': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
         'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
     'scans': [
-        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'DATE', 'SITE',
+        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'NOTE', 'DATE', 'SITE',
         'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': [
         'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD'],

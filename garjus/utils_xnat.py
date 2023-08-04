@@ -19,6 +19,7 @@ project,\
 subject_label,\
 session_label,\
 session_type,\
+xnat:imagesessiondata/note,\
 xnat:imagesessiondata/date,\
 tracer_name,\
 xnat:imagesessiondata/acquisition_site,\
@@ -35,6 +36,7 @@ subject_label,\
 session_label,\
 session_type,\
 xnat:imagesessiondata/acquisition_site,\
+xnat:imagesessiondata/note,\
 xnat:imagesessiondata/date,\
 xnat:imagesessiondata/label,\
 proc:genprocdata/label,\
@@ -66,6 +68,7 @@ SCAN_RENAME = {
     'session_label': 'SESSION',
     'session_type': 'SESSTYPE',
     'tracer_name': 'TRACER',
+    'xnat:imagesessiondata/note': 'NOTE',
     'xnat:imagesessiondata/date': 'DATE',
     'xnat:imagesessiondata/acquisition_site': 'SITE',
     'xnat:imagescandata/id': 'SCANID',
@@ -80,6 +83,7 @@ ASSR_RENAME = {
     'subject_label': 'SUBJECT',
     'session_label': 'SESSION',
     'session_type': 'SESSTYPE',
+    'xnat:imagesessiondata/note': 'NOTE',
     'xnat:imagesessiondata/date': 'DATE',
     'xnat:imagesessiondata/acquisition_site': 'SITE',
     'proc:genprocdata/label': 'ASSR',

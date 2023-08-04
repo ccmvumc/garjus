@@ -29,7 +29,7 @@ ASSR_STATUS_MAP = {
 
 QA_COLS = [
     'SESSION', 'SUBJECT', 'PROJECT',
-    'SITE', 'DATE', 'TYPE', 'STATUS',
+    'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
     'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']
 
 
@@ -217,7 +217,7 @@ def load_assr_data(garjus, project_filter):
 
     # Get subset of columns
     dfa = dfa[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'DATE', 'SITE', 'ASSR', 'QCSTATUS',
+        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'ASSR', 'QCSTATUS',
         'PROCSTATUS', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']]
 
     dfa.drop_duplicates(inplace=True)
@@ -246,7 +246,7 @@ def load_scan_data(garjus, project_filter):
     dfs = garjus.scans()
 
     dfs = dfs[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'DATE', 'SITE', 'SCANID',
+        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
         'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY']].copy()
     dfs.drop_duplicates(inplace=True)
 
