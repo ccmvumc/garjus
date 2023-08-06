@@ -76,7 +76,7 @@ COLUMNS = {
         'ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
         'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
         'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 'FAILCOUNT'],
-    'analyses': ['ID', 'NAME'],
+    'analyses': ['PROJECT', 'ID', 'NAME'],
 }
 
 
