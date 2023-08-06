@@ -600,7 +600,7 @@ class Garjus:
         """Return analyses."""
         data = []
 
-        print('analyses projects=', projects)
+        logger.debug(f'analyses projects={projects}')
 
         if projects:
             rec = self._rc.export_records(
