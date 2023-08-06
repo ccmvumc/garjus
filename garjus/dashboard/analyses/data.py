@@ -60,9 +60,6 @@ def get_data(projects):
     df = pd.DataFrame()
     garjus = Garjus()
 
-    if not projects:
-        return df
-
     # Load
     df = garjus.analyses(projects)
 
