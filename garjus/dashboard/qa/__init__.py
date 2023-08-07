@@ -1,8 +1,10 @@
+"""qa.
+
 # DESCRIPTION:
 # the table is by session using a pivottable that aggregates the statuses
 # for each scan/assr type. then we have dropdowns to filter by project,
 # processing type, scan type, etc.
-
+"""
 
 import logging
 import re
@@ -25,7 +27,7 @@ from . import data
 logger = logging.getLogger('dashboard.qa')
 
 
-def get_graph_content(dfp, selected_groupby='PROJECT'):
+def _get_graph_content(dfp, selected_groupby='PROJECT'):
     tabs_content = []
     tab_value = 0
 
@@ -196,7 +198,7 @@ def get_graph_content(dfp, selected_groupby='PROJECT'):
     return tabs_content
 
 
-def sessionsbytime_figure(df, selected_groupby):
+def _sessionsbytime_figure(df, selected_groupby):
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
     fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
 
@@ -208,13 +210,13 @@ def sessionsbytime_figure(df, selected_groupby):
     # or could have "by subject" choice that has a subject per y value
 
     # Customize figure
-    #fig['layout'].update(xaxis={'automargin': True}, yaxis={'automargin': True})
+    # fig['layout'].update(xaxis={'automargin': True}, yaxis={'automargin': True})
 
     from itertools import cycle
     import plotly.express as px
     palette = cycle(px.colors.qualitative.Plotly)
-    #palette = cycle(px.colors.qualitative.Vivid)
-    #palette = cycle(px.colors.qualitative.Bold)
+    # palette = cycle(px.colors.qualitative.Vivid)
+    # palette = cycle(px.colors.qualitative.Bold)
 
     for mod, sesstype in itertools.product(df.MODALITY.unique(), df.SESSTYPE.unique()):
 
@@ -246,7 +248,7 @@ def sessionsbytime_figure(df, selected_groupby):
                 ),
                 _row,
                 _col)
-         
+
         elif view == 'weekly':
             # Let's do this only for the weekly view and customize it specifically
             # for Mon thru Fri and allow you to choose this week and last week
@@ -260,18 +262,13 @@ def sessionsbytime_figure(df, selected_groupby):
                     name='{} ({})'.format(sesstype, len(dfs)),
                     x=dfs['DATE'],
                     y=dfs['ONE'],
-                    ),
+                ),
                 _row,
                 _col)
-
-            # width function of number of days being plotted
-            #@width = 
 
             fig.update_layout(
                 barmode='stack',
                 width=GWIDTH,
-                #bargroupgap=0,
-                #wbidth=100,
                 bargap=0.1)
         else:
             # Create boxplot for this var and add to figure
@@ -295,7 +292,7 @@ def sessionsbytime_figure(df, selected_groupby):
                     int(_color[5:7], 16),
                     0.7)
             else:
-                _r,_g,_b = _color[4:-1].split(',')
+                _r, _g, _b = _color[4:-1].split(',')
                 _a = 0.7
                 _rgba = 'rgba({},{},{},{})'.format(_r, _g, _b, _a)
 
@@ -328,8 +325,6 @@ def sessionsbytime_figure(df, selected_groupby):
             # show lines so we can better distinguish categories
             fig.update_yaxes(showgrid=True)
 
-            #fig.update_xaxes(range=[])
-            #full_fig = fig.full_figure_for_development()
             x_mins = []
             x_maxs = []
             for trace_data in fig.data:
@@ -351,23 +346,24 @@ def sessionsbytime_figure(df, selected_groupby):
 
             fig.update_layout(width=GWIDTH)
 
-
     return fig
 
 
 def get_content():
-    # The data will be pivoted by session to show a row per session and
-    # a column per scan/assessor type,
-    # the values in the column a string of characters
-    # that represent the status of one scan or assesor,
-    # the number of characters is the number of scans or assessors
-    # the columns will be the merged
-    # status column with harmonized values to be red/yellow/green/blue
+    '''Get QA page content.'''
     df = data.load_data(hidetypes=True)
+
+    # The data will be pivoted by session to show a row per session and
+# a column per scan/assessor type,
+# the values in the column a string of characters
+# that represent the status of one scan or assesor,
+# the number of characters is the number of scans or assessors
+# the columns will be the merged
+# status column with harmonized values to be red/yellow/green/blue
 
     dfp = qa_pivot(df)
 
-    qa_graph_content = get_graph_content(dfp)
+    qa_graph_content = _get_graph_content(dfp)
 
     # Get the rows and colums for the table
     qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
@@ -493,7 +489,6 @@ def qa_pivot(df):
     dfp = df.pivot_table(
         index=(
             'SESSION', 'SUBJECT', 'PROJECT',
-            #'AGE', 'SEX', 'DEPRESS',
             'DATE', 'SESSTYPE', 'SITE', 'MODALITY', 'NOTE'),
         columns='TYPE',
         values='STATUS',
@@ -635,6 +630,19 @@ def update_all(
     # Format as column names and record dictionaries for dash table
     columns = utils.make_columns(selected_cols)
     records = dfp.reset_index().to_dict('records')
+
+    # Format records
+    for r in records:
+        if r['SESSION']:
+            _session = r['SESSION']
+            _uri = ''
+            r['SESSION'] = f'[{_session}]({_uri})'
+
+    # Format columns
+    for i, c in enumerate(columns):
+        if c['name'] == 'OUTPUT':
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
 
     # TODO: should we only include data for selected columns here,
     # to reduce amount of data sent?

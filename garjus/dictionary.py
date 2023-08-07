@@ -16,6 +16,7 @@ ANALYSES_RENAME = {
     'analysis_name': 'NAME',
     'analysis_subjects': 'SUBJECTS',
     'analysis_processor': 'PROCESSOR',
+    'analysis_output': 'OUTPUT',
 }
 
 ISSUES_RENAME = {
@@ -76,7 +77,7 @@ COLUMNS = {
         'ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
         'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
         'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 'FAILCOUNT'],
-    'analyses': ['PROJECT', 'ID', 'NAME'],
+    'analyses': ['PROJECT', 'ID', 'NAME', 'OUTPUT'],
 }
 
 

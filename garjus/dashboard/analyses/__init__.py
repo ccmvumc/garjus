@@ -141,6 +141,18 @@ def update_analyses(
     columns = utils.make_columns(selected_cols)
     records = df.reset_index().to_dict('records')
 
+    # Format records
+    for r in records:
+        if r['OUTPUT']:
+            _output = r['OUTPUT']
+            r['OUTPUT'] = f'[OUTPUT]({_output})'
+
+    # Format columns
+    for i, c in enumerate(columns):
+        if c['name'] == 'OUTPUT':
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
+
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
 

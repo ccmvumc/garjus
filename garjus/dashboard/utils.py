@@ -6,6 +6,7 @@ def make_options(values):
 
 
 def make_columns(values):
+    #return [{'name': x, 'id': x, 'type': 'text', 'presentation': 'markdown'} for x in values]
     return [{'name': x, 'id': x} for x in values]
 
 
