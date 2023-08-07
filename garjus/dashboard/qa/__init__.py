@@ -612,7 +612,7 @@ def update_all(
     # Get the qa pivot from the filtered data
     dfp = qa_pivot(df)
 
-    tabs = get_graph_content(dfp, selected_groupby)
+    tabs = _get_graph_content(dfp, selected_groupby)
 
     # Get the table data
     selected_cols = [
