@@ -187,6 +187,11 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
+    df['SESSIONLINK'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION']
+
     return df
 
 

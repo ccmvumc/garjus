@@ -353,7 +353,7 @@ def get_content():
     '''Get QA page content.'''
     df = data.load_data(hidetypes=True)
 
-    # The data will be pivoted by session to show a row per session and
+# The data will be pivoted by session to show a row per session and
 # a column per scan/assessor type,
 # the values in the column a string of characters
 # that represent the status of one scan or assesor,
@@ -488,7 +488,7 @@ def get_metastatus(status):
 def qa_pivot(df):
     dfp = df.pivot_table(
         index=(
-            'SESSION', 'SUBJECT', 'PROJECT',
+            'SESSION', 'SESSIONLINK', 'SUBJECT', 'PROJECT',
             'DATE', 'SESSTYPE', 'SITE', 'MODALITY', 'NOTE'),
         columns='TYPE',
         values='STATUS',
@@ -633,14 +633,14 @@ def update_all(
 
     # Format records
     for r in records:
-        if r['SESSION']:
-            _session = r['SESSION']
-            _uri = ''
-            r['SESSION'] = f'[{_session}]({_uri})'
+        if r['SESSION'] and 'SESSIONLINK' in r:
+            _sess = r['SESSION']
+            _link = r['SESSIONLINK']
+            r['SESSION'] = f'[{_sess}]({_link})'
 
     # Format columns
     for i, c in enumerate(columns):
-        if c['name'] == 'OUTPUT':
+        if c['name'] == 'SESSION':
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
