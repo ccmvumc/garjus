@@ -183,7 +183,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
 
     # Append the by-time graph (this was added later with separate function)
     dfs = df[['PROJECT', 'DATE', 'SESSION', 'SESSTYPE', 'SITE', 'MODALITY']].drop_duplicates()
-    fig = sessionsbytime_figure(dfs, selected_groupby)
+    fig = _sessionsbytime_figure(dfs, selected_groupby)
     label = 'By {}'.format('TIME')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
