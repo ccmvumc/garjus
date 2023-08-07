@@ -143,9 +143,18 @@ def update_analyses(
 
     # Format records
     for r in records:
-        if r['OUTPUT']:
-            _output = r['OUTPUT']
-            r['OUTPUT'] = f'[OUTPUT]({_output})'
+        if not r['OUTPUT']:
+            continue
+
+        link = r['OUTPUT']
+        if 'sharepoint.com' in link:
+            text = 'OneDrive'
+        elif 'xnat' in link:
+            text = 'XNAT'
+        else:
+            text = 'OUTPUT'
+
+        r['OUTPUT'] = f'[{text}]({link})'
 
     # Format columns
     for i, c in enumerate(columns):

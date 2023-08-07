@@ -8,7 +8,6 @@ The .netrc file uses the same format as DAX. If you already have credentials for
 Configure XNAT credentials for garjus:
 
 
-
 Test your credentials by running a garjus command such as garjus quicktest which will test all credentials. You can also open a dashboard in your browser with garjus dashboard. Then you can load and test a specific item of data.
 
 
@@ -30,9 +29,4 @@ PowerPoint
 
 
 same data can be loaded in dashboard and exported.
-
-dsahboard buttos to open redcap/xnat in a new tab. then try connecting that to records. for settings redcap and for project redcap and then even stats?
-
-
-14008', '14041', '14054', '14080', '14092', '14098', '14118', '14125', '14137', '14145', '14148', '14168', '14205', '14211', '14295', '14312', '14322', '14346', '14440', '14468', '14491', '28003', '28004', '28034', '28043', '28284', '3REM010', '3REM029'
 
