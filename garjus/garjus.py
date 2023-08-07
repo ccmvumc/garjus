@@ -2001,6 +2001,8 @@ class Garjus:
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
 
+            logger.info(f'deleting files from failed task:{assr}')
+
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
                 xsitype = 'proc:subjgenprocdata'
