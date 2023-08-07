@@ -1946,7 +1946,7 @@ class Garjus:
             logger.info(f'uploading session:{temp_dir}:{proj}:{subj}:{sess}')
             import_dicom_dir(self, temp_dir, proj, subj, sess)
 
-    def image03(self, project, startdate=None, enddate=None):
+    def image03csv(self, project, startdate=None, enddate=None):
         update_image03(self, [project], startdate, enddate)
 
     def image03download(self, project, image03_csv, download_dir):
