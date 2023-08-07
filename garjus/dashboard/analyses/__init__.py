@@ -146,15 +146,16 @@ def update_analyses(
         if not r['OUTPUT']:
             continue
 
-        link = r['OUTPUT']
-        if 'sharepoint.com' in link:
-            text = 'OneDrive'
-        elif 'xnat' in link:
-            text = 'XNAT'
+        if 'sharepoint.com' in r['OUTPUT']:
+            _link = r['OUTPUT']
+            _text = 'OneDrive'
+            r['OUTPUT'] = f'[{_text}]({_link})'
+        elif 'xnat' in r['OUTPUT']:
+            _link = r['OUTPUT']
+            _text = 'XNAT'
+            r['OUTPUT'] = f'[{_text}]({_link})'
         else:
-            text = 'OUTPUT'
-
-        r['OUTPUT'] = f'[{text}]({link})'
+            r['OUTPUT'] = r['OUTPUT']
 
     # Format columns
     for i, c in enumerate(columns):
