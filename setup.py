@@ -25,6 +25,7 @@ setup(
         "sphinx",
         "pydot",
         "plotly",
+        "dash_bootstrap_components",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
 )

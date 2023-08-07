@@ -66,8 +66,12 @@ class Garjus:
         if xnat_interface:
             self._xnat = xnat_interface
         else:
-            self._xnat = self._default_xnat()
-            self._disconnect_xnat = True
+            try:
+                self._xnat = self._default_xnat()
+                self._disconnect_xnat = True
+            except Exception as err:
+                logger.error('could not connect to XNAT')
+                raise Exception('could not connect to XNAT')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
