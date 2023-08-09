@@ -469,8 +469,10 @@ def _run_scan_automations(automations, garjus, project):
     if project == 'REMBRANDT':
         logger.debug(f'running add_slicetiming:{project}')
 
-        slicetiming = importlib.import_module('garjus.automations.xnat_add_slicetiming')
-        results += slicetiming.process_project(garjus,
+        slicetiming = importlib.import_module(
+            'garjus.automations.xnat_add_slicetiming')
+        results += slicetiming.process_project(
+            garjus,
             project,
             D3_SLICE_TIMING,
             ['fMRI_REST1', 'fMRI_REST2'],
@@ -479,8 +481,10 @@ def _run_scan_automations(automations, garjus, project):
     elif project == 'D3':
         logger.debug(f'running add_slicetiming:{project}')
 
-        slicetiming = importlib.import_module('garjus.automations.xnat_add_slicetiming')
-        results += slicetiming.process_project(garjus,
+        slicetiming = importlib.import_module(
+            'garjus.automations.xnat_add_slicetiming')
+        results += slicetiming.process_project(
+            garjus,
             project,
             D3_SLICE_TIMING,
             ['fMRI_REST1', 'fMRI_REST2'],
@@ -488,11 +492,16 @@ def _run_scan_automations(automations, garjus, project):
 
     # load the automations
     try:
-        xnat_auto_archive = importlib.import_module(f'garjus.automations.xnat_auto_archive')
-        xnat_relabel_sessions = importlib.import_module(f'garjus.automations.xnat_relabel_sessions')
-        xnat_relabel_scans = importlib.import_module(f'garjus.automations.xnat_relabel_scans')
-        xnat_dcm2niix = importlib.import_module(f'garjus.automations.xnat_dcm2niix')
-        xnat_ma3stats2voltxt = importlib.import_module('garjus.automations.xnat_ma3stats2voltxt')
+        xnat_auto_archive = importlib.import_module(
+            f'garjus.automations.xnat_auto_archive')
+        xnat_relabel_sessions = importlib.import_module(
+            f'garjus.automations.xnat_relabel_sessions')
+        xnat_relabel_scans = importlib.import_module(
+            f'garjus.automations.xnat_relabel_scans')
+        xnat_dcm2niix = importlib.import_module(
+            f'garjus.automations.xnat_dcm2niix')
+        xnat_ma3stats2voltxt = importlib.import_module(
+            'garjus.automations.xnat_ma3stats2voltxt')
         logger.debug('modules loaded')
     except ModuleNotFoundError as err:
         logger.error(f'error loading scan automations:{err}')
@@ -553,7 +562,8 @@ def _run_scan_automations(automations, garjus, project):
     # MA3 stats 2 vol txt
     if 'xnat_ma3stats2voltxt' in automations:
         logger.info(f'running ma3stats2voltxt:{project}')
-        assessors = garjus.assessors(projects=[project], proctypes=['Multi_Atlas_v3'])    
+        assessors = garjus.assessors(
+            projects=[project], proctypes=['Multi_Atlas_v3'])
         xnat = garjus.xnat()
 
         # Add resource information, note takes a minute to load resources

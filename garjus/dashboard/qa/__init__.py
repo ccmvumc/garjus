@@ -588,7 +588,7 @@ def update_all(
     df = load_data(refresh=refresh, hidetypes=hidetypes)
 
     # Truncate NOTE
-    df['NOTE'] = df['NOTE'].str.slice(0,30)
+    df['NOTE'] = df['NOTE'].str.slice(0, 30)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display

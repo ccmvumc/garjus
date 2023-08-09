@@ -47,8 +47,8 @@ def _update_project(garjus, project):
 
         update_analysis(
             garjus,
-            filepath,
-            subjects)
+            project,
+            row['ID'])
 
 
 def update_analysis(
@@ -90,11 +90,12 @@ def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
     res = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
 
     # TODO: apply regex or wildcards in fmatch
-    #res_obj.files()[0].label()).get(fpath)
+    # res_obj.files()[0].label()).get(fpath)
     # res.files().label()
 
     res.file(fmatch).get(dst)
     return dst
+
 
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     # Make the folders for destination path
@@ -185,7 +186,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                         except Exception as err:
                             logger.error(f'{subj}:{sess}:{assr}:{res}:{fmatch}:{err}')
                             raise err
-                else:                 
+                else:
                     # Download whole resource
 
                     # Where shall we save it?
@@ -255,7 +256,7 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
                 subj,
                 sessions,
                 assessors)
-        except Exception as err:
+        except Exception:
             errors.append(subj)
             continue
 
