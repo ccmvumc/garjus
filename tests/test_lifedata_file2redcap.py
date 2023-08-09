@@ -1,14 +1,14 @@
 import logging
 import sys
 import redcap
-from garjus.automations.lifedata_box2redcap import LifeDataBox2Redcap
+from garjus.automations.lifedata_file2redcap import LifeDataFile2Redcap
 
 
 # For testing, we create a connection and run it.
 # In production, process_project will be run garjus.update.automations
 
 
-BOXDIR = '/Volumes/SharedData/admin-BOX/Box Sync/Rembrandt EMA Output'
+ROOTDIR = '/tmp/EMA_data'
 
 
 if __name__ == "__main__":
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     rc = redcap.Project(api_url, api_key)
 
     logging.info('Running it')
-    results = LifeDataBox2Redcap(rc, BOXDIR).run()
+    results = LifeDataFile2Redcap(rc, ROOTDIR).run()
 
     logging.info(results)
     logging.info('Done!')
