@@ -1,6 +1,5 @@
 """Life Data."""
 import logging
-import os
 import tempfile
 
 import pandas as pd
@@ -39,10 +38,30 @@ VARMAP = {
 }
 
 
+SUMS = {
+    'lifedata_deptot' : ['lifedata_worthless', 'lifedata_helpless', 'lifedata_depressed', 'lifedata_hopeless'],
+    'lifedata_fatiguetot': ['lifedata_tired', 'lifedata_stress'],
+    'lifedata_rumtot': ['lifedata_deserve', 'lifedata_react', 'lifedata_situation', 'lifedata_problems', 'lifedata_handle'],
+    'lifedata_postot': ['lifedata_happy', 'lifedata_cheerful', 'lifedata_satisfied'],
+    'lifedata_negtot': ['lifedata_down', 'lifedata_guilty', 'lifedata_lonely', 'lifedata_anxious']
+}
+
+
 logger = logging.getLogger('garjus.automations.etl_lifedata')
 
 
 # TODO: function to check for correct config of repeating instruments
+
+
+def sum_responses(data, labels):
+    response_sum = 0
+    for r in labels:
+        if r not in data:
+            return ''
+
+        response_sum += int(data[r])
+
+    return response_sum
 
 
 def process_project(project):
@@ -70,8 +89,8 @@ def process_project(project):
         event_id = r['redcap_event_name']
         subj = id2subj.get(record_id)
 
-        #if False and record_id != '6':
-        #    continue
+        if record_id != '6':
+            continue
 
         # Check for converted file
         if not r[file_field]:
@@ -219,7 +238,8 @@ def _transform(filename):
         d['lifedata_notification_no'] = dfs.iloc[0]['Notification No']
 
         if dfs.iloc[0]['Session Instance No']:
-            d['lifedata_session_no'] = str(int(float(dfs.iloc[0]['Session Instance No'])))
+            d['lifedata_session_no'] = str(int(float(
+                dfs.iloc[0]['Session Instance No'])))
 
         if dfs.iloc[0]['Responded'] != '1':
             d['lifedata_responded'] = '0'
@@ -239,6 +259,12 @@ def _transform(filename):
 
             if dfs.iloc[0]['Session Length']:
                 d['lifedata_session_length'] = dfs.iloc[0]['Session Length'].split(':', 1)[1]
+
+            # Calculate sums for this session
+            for k, v in SUMS.items():
+                # Creates a new value for key k in record d which sums
+                # the values from the list of keys k
+                d[k] = sum_responses(d, v)
 
         # Append to our list of records
         data.append(d)
