@@ -12,7 +12,7 @@ logger = logging.getLogger('garjus.automations.lifedata_file2redcap')
 # TODO: get a date from redcap and compare it with data in file
 
 class LifeDataFile2Redcap():
-    # map of redcap event to session number in the filename as saved to BoxDir
+    # map of redcap event to session number in the filename as saved
     event2sess = {
         'baselinemonth_0_arm_2': '1',
         'baselinemonth_0_arm_3': '1',
@@ -27,7 +27,7 @@ class LifeDataFile2Redcap():
     # name of field in redcap where file is to be uploaded
     file_field = 'life_file'
 
-    # initialize the uploader with a pycap project and a box directory
+    # initialize the uploader with a pycap project and a directory
     def __init__(self, rc, boxdir=''):
         self.rc = rc
         self.boxdir = boxdir
@@ -96,7 +96,7 @@ class LifeDataFile2Redcap():
 
         return {
             'result': 'COMPLETE',
-            'type': 'life_box2redcap',
+            'type': 'life_file2redcap',
             'subject': self.id2subj[record_id],
             'session': '',
             'scan': '',
