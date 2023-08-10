@@ -7,6 +7,9 @@ import pandas as pd
 from ...utils_redcap import field2events, download_file
 
 
+logger = logging.getLogger('garjus.automations.etl_lifedata')
+
+
 VARMAP = {
     'lifedata_others': 'Basic Info (2) (2)',
     'lifedata_worthless': 'Dep 1 (2) (2)',
@@ -50,9 +53,6 @@ SUMS = {
 logger = logging.getLogger('garjus.automations.etl_lifedata')
 
 
-# TODO: function to check for correct config of repeating instruments
-
-
 def sum_responses(data, labels):
     response_sum = 0
     for r in labels:
@@ -89,20 +89,20 @@ def process_project(project):
         event_id = r['redcap_event_name']
         subj = id2subj.get(record_id)
 
-        if record_id != '6':
-            continue
+        #if record_id != '3':
+        #    continue
 
         # Check for converted file
         if not r[file_field]:
-            logging.debug(f'no life file:{record_id}:{subj}:{event_id}')
+            logger.debug(f'no life file:{record_id}:{subj}:{event_id}')
             continue
 
         if r[file_field] == 'CONVERT_FAILED.txt':
-            logging.debug(f'found CONVERT_FAILED')
+            logger.debug(f'found CONVERT_FAILED')
             continue
 
         if r[file_field] == 'MISSING_DATA.txt':
-            logging.debug(f'found MISSING_DATA')
+            logger.debug(f'found MISSING_DATA')
             continue
 
         # Do the ETL
@@ -151,7 +151,7 @@ def _process(project, record_id, event_id):
                 csv_file,
                 event_id=event_id)
         except Exception as err:
-            logging.error(f'download failed:{record_id}:{event_id}:{err}')
+            logger.error(f'download failed:{record_id}:{event_id}:{err}')
             return False
 
         # Transform data
@@ -161,28 +161,37 @@ def _process(project, record_id, event_id):
                 d[project.def_field] = record_id
                 d['redcap_event_name'] = event_id
         except Exception as err:
-            logging.error(f'transform failed:{record_id}:{event_id}:{err}')
+            logger.error(f'transform failed:{record_id}:{event_id}:{err}')
             import traceback
             traceback.print_exc()
             return False
 
     if not data:
-        return
-
-    # Load the data back to redcap
-    try:
-        logging.info(f'uploading:{record_id}')
-        _response = project.import_records(data)
-        assert 'count' in _response
-        logging.info(f'uploaded:{record_id}')
-    except (AssertionError, Exception) as err:
-        logging.error(f'uploading:{record_id}:{err}')
         return False
 
-    return True
+    # Also complete the lifedata file form
+    data.append({
+        project.def_field: record_id,
+        'redcap_event_name': event_id,
+        'life_data_complete': '2'
+    })
+
+    # Finally load back to redcap
+    result = _load(project, data)
+
+    return result
 
 
-def _loadfile(filename):
+def _load(project, data):
+    # Load the data back to redcap, data list is dictionaries
+    try:
+        _response = project.import_records(data)
+        assert 'count' in _response
+        return True
+    except (AssertionError, Exception) as err:
+        return False
+
+def _read(filename):
     df = pd.DataFrame()
 
     try:
@@ -208,17 +217,17 @@ def _transform(filename):
     data = []
 
     # Load the data
-    logging.info(f'loading:{filename}')
-    df = _loadfile(filename)
+    logger.info(f'loading:{filename}')
+    df = _read(filename)
 
     if df.empty:
-        logging.debug(f'empty file')
+        logger.debug(f'empty file')
         return []
 
     df = df.fillna('')
 
     if df is None:
-        logging.error('extract failed')
+        logger.error('extract failed')
         return
 
     # make a record per notification
