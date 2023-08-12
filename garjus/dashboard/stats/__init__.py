@@ -49,7 +49,7 @@ def get_graph_content(df, selected_pivot):
         _txt = 'Choose Project(s) then Type(s) to load stats'
         return [dcc.Tab(label='', value='0', children=[html.Div(
             html.P(_txt, style={'text-align': 'center'}),
-            style={'padding':'100px', 'height': '150px', 'width': '500px'})])]
+            style={'padding':'100px', 'height': '100px', 'width': '700px'})])]
 
     # Filter var list to only include those that have data
     var_list = [x for x in df.columns if not pd.isnull(df[x]).all()]
