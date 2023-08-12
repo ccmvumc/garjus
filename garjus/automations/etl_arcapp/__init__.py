@@ -1,6 +1,5 @@
 """ARC app."""
 import logging
-import os
 import tempfile
 
 import pandas as pd
@@ -10,8 +9,6 @@ from ...utils_redcap import field2events, download_file
 
 logger = logging.getLogger('garjus.automations.etl_arcapp')
 
-
-# TODO: function to check for correct config of repeating instruments
 
 def process_project(project):
     '''project is a pycap project for project that contains arcapp data'''
@@ -112,20 +109,32 @@ def _process(project, record_id, event_id):
             return False
 
     if not data:
-        return
+        return False
 
+    # Also complete the file form
+    data.append({
+        project.def_field: record_id,
+        'redcap_event_name': event_id,
+        'arc_app_complete': '2'
+    })
+
+    # Finally load back to redcap
+    result = _load(project, data)
+
+    return result
+
+
+def _load(project, data):
     # Load the data back to redcap
     try:
         _response = project.import_records(data)
         assert 'count' in _response
-        logging.info(f'uploaded:{record_id}')
-    except AssertionError as err:
-        logging.error(f'uploading:{record_id}:{err}')
+        return True
+    except (AssertionError, Exception) as err:
+        logger.error(err)
         return False
 
-    return True
-
-def _loadfile(filename):
+def _read(filename):
     df = pd.DataFrame()
 
     try:
@@ -141,7 +150,7 @@ def _transform(filename):
 
     # Load the data
     logging.info(f'loading:{filename}')
-    df = _loadfile(filename)
+    df = _read(filename)
 
     if df.empty:
         logging.debug(f'empty file')
@@ -216,9 +225,6 @@ def _transform(filename):
 
         if 'gridEd' in r:
             d['arc_grided'] = r['gridEd']
-
-        if 'SubjPercentComplete' in r:
-            d['arc_subjpercentcomplete'] = r['SubjPercentComplete']
 
         data.append(d)
 
