@@ -11,29 +11,9 @@ import dash
 from ..app import app
 from .. import utils
 from . import data
-from ..shared import GWIDTH
 
 
 logger = logging.getLogger('dashboard.analyses')
-
-
-def _plottable(var):
-    try:
-        _ = var.str.strip('%').astype(float)
-        return True
-    except Exception:
-        return False
-
-
-def get_graph_content(df):
-    tabs_content = []
-    tab_value = 0
-  
-    logger.debug('empty data, using empty figure')
-    _txt = 'Analyses'
-    return [dcc.Tab(label='', value='0', children=[html.Div(
-        html.P(_txt, style={'text-align': 'center'}),
-        style={'height': '150px', 'width': f'{GWIDTH}px'})])]
 
 
 def get_content():
@@ -48,6 +28,8 @@ def get_content():
                 {'label': '1 month', 'value': '30day'},
                 {'label': '1 year', 'value': '365day'}],
             value='ALL'),
+        # TODO: status dropdown
+        # TODO: location dropdown
         dcc.Dropdown(
             id='dropdown-analyses-proj', multi=True,
             placeholder='Select Project(s)'),
@@ -61,7 +43,7 @@ def get_content():
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': f'{GWIDTH}px'},
+            },
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
