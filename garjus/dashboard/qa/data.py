@@ -240,13 +240,13 @@ def load_assr_data(garjus, project_filter):
     dfa['STATUS'] = dfa['QCSTATUS'].map(ASSR_STATUS_MAP).fillna('Q')
 
     # Handle failed jobs
-    dfa['STATUS'][dfa.PROCSTATUS == 'JOB_FAILED'] = 'X'
+    dfa.loc[dfa.PROCSTATUS == 'JOB_FAILED', 'STATUS'] = 'X'
 
     # Handle running jobs
-    dfa['STATUS'][dfa.PROCSTATUS == 'JOB_RUNNING'] = 'R'
+    dfa.loc[dfa.PROCSTATUS == 'JOB_RUNNING', 'STATUS'] = 'R'
 
     # Handle NEED INPUTS
-    dfa['STATUS'][dfa.PROCSTATUS == 'NEED_INPUTS'] = 'N'
+    dfa.loc[dfa.PROCSTATUS == 'NEED_INPUTS', 'STATUS'] = 'N'
 
     return dfa
 
