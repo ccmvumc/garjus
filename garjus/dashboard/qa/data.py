@@ -158,11 +158,16 @@ def save_data(df, filename):
 
 
 def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
-    garjus = Garjus()
+    try:
+        garjus = Garjus()
 
-    # Load that data
-    scan_df = load_scan_data(garjus, proj_filter)
-    assr_df = load_assr_data(garjus, proj_filter)
+        # Load that data
+        scan_df = load_scan_data(garjus, proj_filter)
+        assr_df = load_assr_data(garjus, proj_filter)
+
+    except Exception as err:
+        logger.error(err)
+        return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK'])
 
     if hidetypes:
         logger.info('applying filter types')
