@@ -17,6 +17,7 @@ import plotly.subplots
 from dash import dcc, html, dash_table as dt
 from dash.dependencies import Input, Output
 import dash
+import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
@@ -27,7 +28,7 @@ from . import data
 logger = logging.getLogger('dashboard.qa')
 
 
-def _get_graph_content(dfp, selected_groupby='PROJECT'):
+def _get_graph_content(dfp, selected_groupby='PROJECT', darkmode=True):
     tabs_content = []
     tab_value = 0
 
@@ -79,6 +80,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
         dfp_copy,
         id_vars=(
             'SESSION',
+            'SESSIONLINK',
             'PROJECT',
             'DATE',
             'SITE',
@@ -136,7 +138,12 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
     label = 'By {}'.format('TYPE')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
+
+    if darkmode:
+        tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
+    else:
+        tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
+
     tabs_content.append(tab)
     tab_value += 1
 
@@ -177,7 +184,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
     label = 'By {}'.format('PROJECT')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
+    tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
 
@@ -187,7 +194,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
     label = 'By {}'.format('TIME')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
+    tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
 
@@ -349,9 +356,15 @@ def _sessionsbytime_figure(df, selected_groupby):
     return fig
 
 
-def get_content():
+def get_content(darkmode=True):
     '''Get QA page content.'''
     df = data.load_data(hidetypes=True)
+
+    if df.empty:
+        return ''
+
+    if darkmode:
+        return get_content_darkmode()
 
 # The data will be pivoted by session to show a row per session and
 # a column per scan/assessor type,
@@ -363,7 +376,7 @@ def get_content():
 
     dfp = qa_pivot(df)
 
-    qa_graph_content = _get_graph_content(dfp)
+    qa_graph_content = _get_graph_content(dfp, darkmode=False)
 
     # Get the rows and colums for the table
     qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
@@ -374,9 +387,8 @@ def get_content():
         dcc.Loading(id="loading-qa", children=[
             html.Div(dcc.Tabs(
                 id='tabs-qa',
-                value='1',
-                children=qa_graph_content,
-                vertical=True))]),
+                vertical=True,
+                children=qa_graph_content))]),
         html.Button('Refresh Data', id='button-qa-refresh'),
         dcc.Dropdown(
             id='dropdown-qa-time',
@@ -406,6 +418,112 @@ def get_content():
             id='dropdown-qa-sess', multi=True,
             placeholder='Select Session Type(s)'),
         dcc.RadioItems(
+            options=[
+                {'label': 'Hide Unused Types', 'value': 'HIDE'},
+                {'label': 'Show All Types', 'value': 'SHOW'}],
+            value='HIDE',
+            id='radio-qa-hidetypes',
+            labelStyle={'display': 'inline-block'}),
+        dcc.Dropdown(
+            id='dropdown-qa-proc', multi=True,
+            placeholder='Select Processing Type(s)'),
+        dcc.Dropdown(
+            id='dropdown-qa-scan', multi=True,
+            placeholder='Select Scan Type(s)'),
+        dt.DataTable(
+            columns=qa_columns,
+            data=qa_data,
+            filter_action='native',
+            page_action='none',
+            sort_action='native',
+            id='datatable-qa',
+            style_table={
+                'overflowY': 'scroll',
+                'overflowX': 'scroll',
+                'width': f'{GWIDTH}px',
+            },
+            style_cell={
+                'textAlign': 'left',
+                'padding': '5px 5px 0px 5px',
+                'width': '30px',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
+                'height': 'auto',
+                'minWidth': '40',
+                'maxWidth': '60'},
+            style_header={
+                #'width': '80px',
+                'backgroundColor': 'white',
+                'fontWeight': 'bold',
+                'padding': '5px 15px 0px 10px'},
+            fill_width=False,
+            export_format='xlsx',
+            export_headers='names',
+            export_columns='visible'),
+        html.Label('0', id='label-qa-rowcount'),
+        ]
+
+    return qa_content
+
+
+def get_content_darkmode():
+    '''Get QA page content.'''
+    df = data.load_data(hidetypes=True)
+
+    if df.empty:
+        return ''
+
+# The data will be pivoted by session to show a row per session and
+# a column per scan/assessor type,
+# the values in the column a string of characters
+# that represent the status of one scan or assesor,
+# the number of characters is the number of scans or assessors
+# the columns will be the merged
+# status column with harmonized values to be red/yellow/green/blue
+
+    dfp = qa_pivot(df)
+
+    qa_graph_content = _get_graph_content(dfp, darkmode=True)
+
+    # Get the rows and colums for the table
+    qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
+    dfp.reset_index(inplace=True)
+    qa_data = dfp.to_dict('records')
+
+    qa_content = [
+        dbc.Spinner(id="loading-qa", children=[
+            html.Div(dbc.Tabs(
+                id='tabs-qa',
+                children=qa_graph_content))]),
+        html.Button('Refresh Data', id='button-qa-refresh'),
+        dcc.Dropdown(
+            id='dropdown-qa-time',
+            # Change filters to "Today", "this week", "last week",
+            #"this month", "last month", "YTD", "past year", "last year"
+            options=[
+                {'label': 'all time', 'value': 'ALL'},
+                {'label': '1 day', 'value': '1day'},
+                {'label': '1 week', 'value': '7day'},
+                {'label': '1 month', 'value': '30day'},
+                #{'label': 'this week', 'value': 'thisweek'},
+                #{'label': 'this month', 'value': 'thismonth'},
+                {'label': 'last month', 'value': 'lastmonth'},
+                {'label': '1 year', 'value': '365day'}],
+            value='ALL'),
+        dbc.RadioItems(
+            options=[
+                {'label': 'Group by Project', 'value': 'PROJECT'},
+                {'label': 'Group by Site', 'value': 'SITE'}],
+            value='PROJECT',
+            id='radio-qa-groupby',
+            labelStyle={'display': 'inline-block'}),
+        dcc.Dropdown(
+            id='dropdown-qa-proj', multi=True,
+            placeholder='Select Project(s)'),
+        dcc.Dropdown(
+            id='dropdown-qa-sess', multi=True,
+            placeholder='Select Session Type(s)'),
+        dbc.RadioItems(
             options=[
                 {'label': 'Hide Unused Types', 'value': 'HIDE'},
                 {'label': 'Show All Types', 'value': 'SHOW'}],
