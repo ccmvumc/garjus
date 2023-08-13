@@ -255,7 +255,7 @@ def was_triggered(callback_ctx, button_id):
 
 def _subject_pivot(df):
     # Pivot to one row per subject
-    level_cols = ['SESSTYPE', 'PROCTYPE', 'SESSIONLINK']
+    level_cols = ['SESSTYPE', 'PROCTYPE']
     stat_cols = []
     index_cols = ['PROJECT', 'SUBJECT', 'SITE']
 
@@ -267,7 +267,7 @@ def _subject_pivot(df):
         subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
         keep='last')
 
-    df = df.drop(columns=['ASSR', 'SESSION', 'DATE'])
+    df = df.drop(columns=['ASSR', 'SESSION', 'DATE', 'SESSIONLINK'])
 
     stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
 
@@ -399,7 +399,7 @@ def update_stats(
 
     # Format records
     for r in records:
-        if r['SESSION'] and 'SESSIONLINK' in r:
+        if 'SESSION' in r and 'SESSIONLINK' in r:
             _sess = r['SESSION']
             _link = r['SESSIONLINK']
             r['SESSION'] = f'[{_sess}]({_link})'
