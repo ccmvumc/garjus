@@ -22,6 +22,7 @@ HIDECOLS = [
     'PROJECT',
     'SUBJECT',
     'SESSION',
+    'SESSIONLINK',
     'SESSTYPE',
     'SITE',
     'DATE',
@@ -168,8 +169,7 @@ def get_stats_graph(df, var_list, pivot=None):
 
 
 def get_content():
-
-    stats_content = [
+    content = [
         dcc.Loading(id="loading-stats", children=[
             html.Div(dcc.Tabs(
                 id='tabs-stats',
@@ -234,7 +234,7 @@ def get_content():
             export_columns='visible'),
         html.Label('0', id='label-rowcount')]
 
-    return stats_content
+    return content
 
 
 def load_stats(projects=[], refresh=False):
@@ -255,7 +255,7 @@ def was_triggered(callback_ctx, button_id):
 
 def _subject_pivot(df):
     # Pivot to one row per subject
-    level_cols = ['SESSTYPE', 'PROCTYPE']
+    level_cols = ['SESSTYPE', 'PROCTYPE', 'SESSIONLINK']
     stat_cols = []
     index_cols = ['PROJECT', 'SUBJECT', 'SITE']
 
@@ -291,7 +291,7 @@ def _session_pivot(df):
     # Pivot to one row per session
     level_cols = ['PROCTYPE']
     stat_cols = []
-    index_cols = ['PROJECT', 'SUBJECT', 'SITE', 'SESSION']
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE', 'SESSION', 'SESSIONLINK']
 
     # Drop any duplicates found
     df = df.drop_duplicates()
@@ -377,22 +377,40 @@ def update_stats(
     # Get the graph content in tabs (currently only one tab)
     tabs = get_graph_content(df, selected_pivot)
 
+    # format floats so they sort in the table
+    for c in list(df.columns):
+        if _plottable(df[c]):
+            df[c] = df[c].str.strip('%').astype(float)
+
     if selected_pivot == 'subj':
         df = _subject_pivot(df)
-        columns = utils.make_columns(df.columns)
+        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
+        columns = utils.make_columns(_cols)
         records = df.reset_index().to_dict('records')
     elif selected_pivot == 'sess':
         df = _session_pivot(df)
-        selected_cols = df.columns
-        columns = utils.make_columns(selected_cols)
+        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
+        columns = utils.make_columns(_cols)
         records = df.reset_index().to_dict('records')
     else:
-        # Determine columns to be included in the table
-        selected_cols = df.columns
-
-        # Get the table data as one row per assessor
-        columns = utils.make_columns(selected_cols)
+        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
+        columns = utils.make_columns(_cols)
         records = df.reset_index().to_dict('records')
+
+    # Format records
+    for r in records:
+        if r['SESSION'] and 'SESSIONLINK' in r:
+            _sess = r['SESSION']
+            _link = r['SESSIONLINK']
+            r['SESSION'] = f'[{_sess}]({_link})'
+
+    # Format columns
+    for i, c in enumerate(columns):
+        if c['name'] == 'SESSION':
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
+        elif _plottable(df[c['name']]):
+            columns[i]['type'] = 'numeric'
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

@@ -86,6 +86,12 @@ def get_data(projects):
     # Format as string to drop the time portion
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
+    # http link to session in xnat
+    df['SESSIONLINK'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION']
+
     return df
 
 
