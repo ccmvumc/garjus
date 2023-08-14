@@ -1255,7 +1255,6 @@ def _scanqa(scans, scantypes=None):
     include_list = SESSCOLS.copy()
     if scantypes:
         include_list += scantypes
-    print(include_list)
     include_list = [x for x in include_list if x in dfp.columns]
     include_list = list(set(include_list))
     dfp = dfp[include_list]

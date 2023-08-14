@@ -1,6 +1,5 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from dash_bootstrap_templates import load_figure_template
 
 from .app import app
 from . import qa
@@ -122,6 +121,8 @@ app.title = 'DAX Dashboard'
 # Set the content and templates
 darkmode = False  
 if darkmode:
+    from dash_bootstrap_templates import load_figure_template
+
     # not working well yet 8/12/2023 bdb
 
     # Could this to make a switcher, also could use theme color css
