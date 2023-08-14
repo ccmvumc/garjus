@@ -25,6 +25,16 @@ from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
 
 
+LEGEND = '''
+✅Passed ㅤ
+🟩Needs QA ㅤ 
+❌QA Failed ㅤ 
+🩷Job Failed ㅤ 
+🟡Need Inputs ㅤ 
+🔷Job Running ㅤ
+'''
+
+
 logger = logging.getLogger('dashboard.qa')
 
 
@@ -390,46 +400,52 @@ def get_content(darkmode=True):
                 vertical=True,
                 children=qa_graph_content))]),
         html.Button('Refresh Data', id='button-qa-refresh'),
+        html.Div([
+            html.Div(
+                dcc.Dropdown(
+                    id='dropdown-qa-time',
+                    # TODO: Change filters to "Today", "this week", "last week",
+                    # "this month", "last month", "YTD", "past year", "last year"
+                    options=[
+                        {'label': 'all time', 'value': 'ALL'},
+                        {'label': '1 day', 'value': '1day'},
+                        {'label': '1 week', 'value': '7day'},
+                        {'label': '1 month', 'value': '30day'},
+                        #{'label': 'this week', 'value': 'thisweek'},
+                        #{'label': 'this month', 'value': 'thismonth'},
+                        {'label': 'last month', 'value': 'lastmonth'},
+                        {'label': '1 year', 'value': '365day'}],
+                    value='ALL',
+                    style={'width': '100%'}),
+                style={'width': '15%'}
+            ),
+            dcc.RadioItems(
+                options=[
+                    {'label': 'Group by Project', 'value': 'PROJECT'},
+                    {'label': 'Group by Site', 'value': 'SITE'}],
+                value='PROJECT',
+                id='radio-qa-groupby',
+                labelStyle={'display': 'inline-block', "align-items": "center"}, style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
+            dcc.RadioItems(
+                options=[
+                    {'label': 'Hide Unused Types', 'value': 'HIDE'},
+                    {'label': 'Show All Types', 'value': 'SHOW'}],
+                value='HIDE',
+                id='radio-qa-hidetypes',
+                labelStyle={'display': 'inline-block', "align-items": "center"}, style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
+        ], style={"display": "inline-flex", "width": "100%"}),
         dcc.Dropdown(
-            id='dropdown-qa-time',
-            # Change filters to "Today", "this week", "last week",
-            #"this month", "last month", "YTD", "past year", "last year"
-            options=[
-                {'label': 'all time', 'value': 'ALL'},
-                {'label': '1 day', 'value': '1day'},
-                {'label': '1 week', 'value': '7day'},
-                {'label': '1 month', 'value': '30day'},
-                #{'label': 'this week', 'value': 'thisweek'},
-                #{'label': 'this month', 'value': 'thismonth'},
-                {'label': 'last month', 'value': 'lastmonth'},
-                {'label': '1 year', 'value': '365day'}],
-            value='ALL'),
-        dcc.RadioItems(
-            options=[
-                {'label': 'Group by Project', 'value': 'PROJECT'},
-                {'label': 'Group by Site', 'value': 'SITE'}],
-            value='PROJECT',
-            id='radio-qa-groupby',
-            labelStyle={'display': 'inline-block'}),
-        dcc.Dropdown(
-            id='dropdown-qa-proj', multi=True,
-            placeholder='Select Project(s)'),
+            id='dropdown-qa-proj', multi=True, 
+            placeholder='Select Project(s)', style={'width': '80%'}),
         dcc.Dropdown(
             id='dropdown-qa-sess', multi=True,
-            placeholder='Select Session Type(s)'),
-        dcc.RadioItems(
-            options=[
-                {'label': 'Hide Unused Types', 'value': 'HIDE'},
-                {'label': 'Show All Types', 'value': 'SHOW'}],
-            value='HIDE',
-            id='radio-qa-hidetypes',
-            labelStyle={'display': 'inline-block'}),
+            placeholder='Select Session Type(s)', style={'width': '80%'}),
         dcc.Dropdown(
             id='dropdown-qa-proc', multi=True,
-            placeholder='Select Processing Type(s)'),
+            placeholder='Select Processing Type(s)', style={'width': '80%'}),
         dcc.Dropdown(
             id='dropdown-qa-scan', multi=True,
-            placeholder='Select Scan Type(s)'),
+            placeholder='Select Scan Type(s)', style={'width': '80%'}),
         dt.DataTable(
             columns=qa_columns,
             data=qa_data,
@@ -440,27 +456,28 @@ def get_content(darkmode=True):
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': f'{GWIDTH}px',
             },
             style_cell={
-                'textAlign': 'left',
+                'textAlign': 'center',
                 'padding': '5px 5px 0px 5px',
                 'width': '30px',
                 'overflow': 'hidden',
                 'textOverflow': 'ellipsis',
                 'height': 'auto',
                 'minWidth': '40',
-                'maxWidth': '60'},
+                'maxWidth': '70'},
             style_header={
                 #'width': '80px',
                 'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
+            style_cell_conditional=[{'if': {'column_id': 'NOTE'}, 'textAlign': 'left'}],
             fill_width=False,
             export_format='xlsx',
             export_headers='names',
             export_columns='visible'),
         html.Label('0', id='label-qa-rowcount'),
+        html.Div(html.P(LEGEND, style={'marginTop': '15px', 'textAlign': 'center'}), style={'textAlign': 'center'}),
         ]
 
     return qa_content
@@ -523,13 +540,7 @@ def get_content_darkmode():
         dcc.Dropdown(
             id='dropdown-qa-sess', multi=True,
             placeholder='Select Session Type(s)'),
-        dbc.RadioItems(
-            options=[
-                {'label': 'Hide Unused Types', 'value': 'HIDE'},
-                {'label': 'Show All Types', 'value': 'SHOW'}],
-            value='HIDE',
-            id='radio-qa-hidetypes',
-            labelStyle={'display': 'inline-block'}),
+       
         dcc.Dropdown(
             id='dropdown-qa-proc', multi=True,
             placeholder='Select Processing Type(s)'),
@@ -706,7 +717,7 @@ def update_all(
     df = load_data(refresh=refresh, hidetypes=hidetypes)
 
     # Truncate NOTE
-    df['NOTE'] = df['NOTE'].str.slice(0, 30)
+    df['NOTE'] = df['NOTE'].str.slice(0, 70)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
@@ -741,6 +752,31 @@ def update_all(
 
     if selected_scan:
         selected_cols += selected_scan
+
+    # TODO: move this to where status is mapped to letters
+    # P: passed
+    # Q: qa tbd
+    # X: job failed
+    # N: need inputs
+    # R: job running
+    # F: qa failed
+    if selected_proc:
+        for p in selected_proc:
+            dfp[p] = dfp[p].str.replace('P', '✅')
+            dfp[p] = dfp[p].str.replace('X', '🩷')
+            dfp[p] = dfp[p].str.replace('Q', '🟩')
+            dfp[p] = dfp[p].str.replace('N', '🟡')
+            dfp[p] = dfp[p].str.replace('R', '🔷')
+            dfp[p] = dfp[p].str.replace('F', '❌')
+
+    if selected_scan:
+        for s in selected_scan:
+            dfp[s] = dfp[s].str.replace('P', '✅')
+            dfp[s] = dfp[s].str.replace('X', '🩷')
+            dfp[s] = dfp[s].str.replace('Q', '🟩')
+            dfp[s] = dfp[s].str.replace('N', '🟡')
+            dfp[s] = dfp[s].str.replace('R', '🔷')
+            dfp[s] = dfp[s].str.replace('F', '❌')
 
     # Final column is always notes
     selected_cols.append('NOTE')

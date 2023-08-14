@@ -31,6 +31,15 @@ HIDECOLS = [
 
 
 def _plottable(var):
+    if pd.api.types.is_numeric_dtype(var):
+        return True
+
+    try:
+        _ = var.astype(float)
+        return True
+    except Exception:
+        pass
+
     try:
         _ = var.str.strip('%').astype(float)
         return True
@@ -228,6 +237,10 @@ def get_content():
                 'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
+            style_cell_conditional=[{
+                'if': {'column_type': 'numeric'},
+                'textAlign': 'right'
+            }],
             fill_width=False,
             export_format='xlsx',
             export_headers='names',
@@ -382,20 +395,16 @@ def update_stats(
         if _plottable(df[c]):
             df[c] = df[c].str.strip('%').astype(float)
 
+    # Apply pivot
     if selected_pivot == 'subj':
         df = _subject_pivot(df)
-        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
-        columns = utils.make_columns(_cols)
-        records = df.reset_index().to_dict('records')
     elif selected_pivot == 'sess':
         df = _session_pivot(df)
-        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
-        columns = utils.make_columns(_cols)
-        records = df.reset_index().to_dict('records')
-    else:
-        _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
-        columns = utils.make_columns(_cols)
-        records = df.reset_index().to_dict('records')
+
+    # Get the records and columns for DataTable
+    _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
+    columns = utils.make_columns(_cols)
+    records = df.reset_index().to_dict('records')
 
     # Format records
     for r in records:

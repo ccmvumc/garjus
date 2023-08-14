@@ -37,7 +37,7 @@ def get_layout_darkmode():
                 #    label='Analyses', tab_id='6', children=analyses_content),
             ]),
             style={
-                'paddingLeft': '40px',
+                'paddingLeft': '70px',
                 'align-items': 'left',
                 'justify-content': 'left'},
         )
@@ -97,9 +97,10 @@ def get_layout(darkmode=False):
 
     footer_content = [
         html.Hr(),
-        html.H5('F: Failed'),
-        html.H5('P: Passed QA'),
-        html.H5('Q: To be determined')]
+        html.Div(
+            html.P('https://github.com/ccmvumc/garjus'),
+            style={'textAlign': 'center'}),
+    ]
 
     # Make the main app layout
     main_content = html.Div([
