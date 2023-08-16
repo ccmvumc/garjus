@@ -26,11 +26,11 @@ from . import data
 
 
 LEGEND = '''
-✅Passed ㅤ
-🟩Needs QA ㅤ 
+✅QA Passed ㅤ
+🟩QA TBD ㅤ 
 ❌QA Failed ㅤ 
 🩷Job Failed ㅤ 
-🟡Need Inputs ㅤ 
+🟡Needs Inputs ㅤ 
 🔷Job Running ㅤ
 '''
 

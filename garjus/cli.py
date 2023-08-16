@@ -68,6 +68,8 @@ def build(project):
 def subjects(ctx, project):
     click.echo('garjus! subjects')
     g = Garjus()
+    import pandas as pd
+    pd.set_option('display.max_rows', None)
     pprint.pprint(g.subjects(project))
 
 

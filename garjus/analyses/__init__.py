@@ -84,6 +84,7 @@ def _sessions_from_assessors(assessors):
 
 def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
     # Make the folders for this file path
+    print(dst)
     _make_dirs(os.path.dirname(dst))
 
     # Connect to the resource on xnat
@@ -130,9 +131,11 @@ def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assesso
 
         # Apply session type filter
         if s.SESSTYPE not in sess_types:
+            logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
             continue
 
         sess_dir = f'{subj_dir}/{sess}'
+        logger.debug(f'download_session={sess_dir}')
         _download_session(
             garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
 
@@ -145,9 +148,14 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
         assr = a.ASSR
 
         for assr_spec in sess_spec['assessors']:
+            logger.debug(f'assr_spec={assr_spec}')
 
             assr_types = assr_spec['types'].split(',')
+
+            logger.debug(f'assr_types={assr_types}')
+
             if a.PROCTYPE not in assr_types:
+                logger.debug(f'skip assr, no match on type={assr}:{a.PROCTYPE}')
                 continue
 
             for res_spec in assr_spec['resources']:
@@ -217,7 +225,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
 def download_analysis_inputs(garjus, project, analysis_id, download_dir):
     errors = []
 
-    print(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
+    logger.debug(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
 
     # Make the output directory
     _make_dirs(download_dir)
@@ -238,16 +246,23 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
     # Which subjects to include?
     subjects = analysis['analysis_include'].splitlines()
 
+    logger.debug(f'subjects={subjects}')
+
     # What to download for each subject?
     subj_spec = analysis['processor']['inputs']['xnat']['subjects']
 
+    logger.debug(f'subject spec={subj_spec}')
+
     for subj in subjects:
+        logger.debug(f'subject={subj}')
+
         # Make the Subject download folder
         subj_dir = f'{download_dir}/{subj}'
         _make_dirs(subj_dir)
 
         # Download the subject as specified in subj_spec
         try:
+            logger.debug(f'_download_subject={subj}')
             _download_subject(
                 garjus,
                 subj_dir,
@@ -261,6 +276,6 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
             continue
 
     # report what's missing
-    print('errors', errors)
+    logger.debug(f'errors{errors}')
 
-    print('done!')
+    logger.debug('done!')
