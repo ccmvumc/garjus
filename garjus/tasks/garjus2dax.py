@@ -209,3 +209,6 @@ def queue2dax(garjus):
 
         except Exception as err:
             logger.error(err)
+            import traceback
+            traceback.print_exc()
+
