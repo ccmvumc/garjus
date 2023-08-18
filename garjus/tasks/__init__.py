@@ -7,21 +7,24 @@ from .processors import build_processor
 logger = logging.getLogger('garjus.tasks')
 
 
-def update(garjus, projects=None):
+def update(garjus, projects=None, types=None):
     """Update tasks."""
     for p in (projects or garjus.projects()):
         if p in projects:
             logger.debug(f'updating tasks:{p}')
-            _update_project(garjus, p)
+            _update_project(garjus, p, types=types)
 
 
-def _update_project(garjus, project):
+def _update_project(garjus, project, types=None):
     # Get protocol data, download yaml files as needed
     protocols = garjus.processing_protocols(project, download=True)
 
     if len(protocols) == 0:
         logger.info(f'no processing protocols for project:{project}')
         return
+
+    if types:
+        protocols = protocols[protocols.TYPE.isin(types)]
 
     # Get scan/assr/sgp data
     assessors = garjus.assessors(projects=[project])

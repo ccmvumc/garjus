@@ -133,10 +133,11 @@ def d2q():
     required=False,
     nargs=-1)
 @click.option('--project', '-p', 'project', multiple=True)
-def update(choice, project):
+@click.option('--types', '-t', 'types', multiple=True, required=False)
+def update(choice, project, types):
     click.echo('garjus! update')
     g = Garjus()
-    g.update(projects=project, choices=choice)
+    g.update(projects=project, choices=choice, types=types)
     click.echo('ALL DONE!')
 
 

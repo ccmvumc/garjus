@@ -35,6 +35,9 @@ LEGEND = '''
 '''
 
 
+# TODO: refresh QA data if older than 5 mins, 1 hour? should we have a dropdown somewhere to change?
+
+
 logger = logging.getLogger('dashboard.qa')
 
 

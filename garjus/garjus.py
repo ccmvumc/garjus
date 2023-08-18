@@ -228,6 +228,18 @@ class Garjus:
         # Get list of assessors of proctype from project
         assessors = self.assessors(projects=[project], proctypes=[proctype])
 
+        # Delete them
+        for a in sorted(assessors.ASSR.unique()):
+            logger.info(f'deleting assessor:{a}')
+            self.delete_assessor(project, a)
+
+        # Also SGP
+        assessors = self.subject_assessors(
+            projects=[project], proctypes=[proctype])
+
+        if assessors.empty:
+            return
+
         for a in sorted(assessors.ASSR.unique()):
             logger.info(f'deleting assessor:{a}')
             self.delete_assessor(project, a)
@@ -236,10 +248,9 @@ class Garjus:
 
         # Connect to the assessor on xnat
         if is_sgp_assessor(assessor):
-            assr = self.xnat().select_sgp_assessor(
-                project,
-                assessor.split('-x-')[1],
-                assessor)
+            _subj = assessor.split('-x-')[1]
+            assr = self.xnat().select(
+                f'/projects/{project}/subjects/{_subj}/experiment/{assessor}')
         else:
             assr = self.xnat().select_assessor(
                 project,
@@ -1075,7 +1086,7 @@ class Garjus:
         """Return stats library."""
         return STATLIB
 
-    def update(self, projects=None, choices=None):
+    def update(self, projects=None, choices=None, types=None):
         """Update projects."""
         if not projects:
             projects = self._projects
@@ -1115,9 +1126,11 @@ class Garjus:
         if 'tasks' in choices:
             logger.info('updating tasks')
             try:
-                update_tasks(self, projects)
-            except Exception:
+                update_tasks(self, projects, types=types)
+            except Exception as err:
                 logger.info('problem updating tasks, duplicate build')
+                import traceback
+                traceback.print_exc()
 
         if 'analyses' in choices:
             logger.info('updating analyses')
