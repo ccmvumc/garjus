@@ -726,7 +726,7 @@ class Processor_v3_1(Processor_v3):
         # Find list of scans/assessors that match each specified input
         # for i, iv in list(inputs.items()):
         for i, iv in sorted(inputs.items()):
-            if iv['tracer']:
+            if 'tracer' in iv and iv['tracer']:
                 # PET scan
                 for p in petscans:
                     # Match the tracer name
@@ -1388,7 +1388,7 @@ class SgpProcessor_v3_1(Processor_v3_1):
                 artefact_required = artefact_required or r['required']
 
                 self.proc_inputs[name] = {
-                    'tracer': tracer, 
+                    'tracer': tracer,
                     'select': select,
                     'sesstypes': sesstypes,
                     'types': types,
