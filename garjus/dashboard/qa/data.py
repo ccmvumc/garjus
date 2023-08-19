@@ -164,6 +164,7 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
         # Load that data
         scan_df = load_scan_data(garjus, proj_filter)
         assr_df = load_assr_data(garjus, proj_filter)
+        subj_df = load_sgp_data(garjus, proj_filter)
 
     except Exception as err:
         logger.error(err)
@@ -176,15 +177,25 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
     # Make a common column for type
     assr_df['TYPE'] = assr_df['PROCTYPE']
     scan_df['TYPE'] = scan_df['SCANTYPE']
+    subj_df['TYPE'] = subj_df['PROCTYPE']
 
     assr_df['SCANTYPE'] = None
     scan_df['PROCTYPE'] = None
+    subj_df['SCANTYPE'] = None
 
     assr_df['ARTTYPE'] = 'assessor'
     scan_df['ARTTYPE'] = 'scan'
+    subj_df['ARTTYPE'] = 'sgp'
+
+    subj_df['SESSION'] = subj_df['ASSR']
+    subj_df['SITE'] = 'SGP'
+    subj_df['NOTE'] = ''
+    subj_df['XSITYPE'] = '' 
+    subj_df['SESSTYPE'] = 'SGP'
+    subj_df['MODALITY'] = ''
 
     # Concatenate the common cols to a new dataframe
-    df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS]], sort=False)
+    df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS], subj_df[QA_COLS]], sort=False)
 
     # relabel caare, etc
     df.PROJECT = df.PROJECT.replace(['TAYLOR_CAARE'], 'CAARE')
@@ -251,6 +262,37 @@ def load_assr_data(garjus, project_filter):
     return dfa
 
 
+def load_sgp_data(garjus, project_filter):
+    df = garjus.subject_assessors().copy()
+    print('sgp columns=', df.columns)
+
+    # Get subset of columns
+    df = df[[
+        'PROJECT', 'SUBJECT', 'DATE', 'ASSR', 'QCSTATUS',
+        'PROCSTATUS', 'PROCTYPE']]
+
+    df.drop_duplicates(inplace=True)
+
+    # Drop any rows with empty proctype
+    df.dropna(subset=['PROCTYPE'], inplace=True)
+    df = df[df.PROCTYPE != '']
+
+    # Create shorthand status
+    df['STATUS'] = df['QCSTATUS'].map(ASSR_STATUS_MAP).fillna('Q')
+
+    # Handle failed jobs
+    df.loc[df.PROCSTATUS == 'JOB_FAILED', 'STATUS'] = 'X'
+
+    # Handle running jobs
+    df.loc[df.PROCSTATUS == 'JOB_RUNNING', 'STATUS'] = 'R'
+
+    # Handle NEED INPUTS
+    df.loc[df.PROCSTATUS == 'NEED_INPUTS', 'STATUS'] = 'N'
+
+    return df
+
+
+
 def load_scan_data(garjus, project_filter):
     #  Load data
     dfs = garjus.scans()
@@ -288,7 +330,7 @@ def filter_data(df, projects, proctypes, scantypes, timeframe, sesstypes):
     if scantypes:
         logger.debug('filtering by scan types:')
         logger.debug(scantypes)
-        df = df[(df['SCANTYPE'].isin(scantypes)) | (df['ARTTYPE'] == 'assessor')]
+        df = df[(df['SCANTYPE'].isin(scantypes)) | (df['ARTTYPE'] == 'assessor') | (df['ARTTYPE'] == 'sgp')]
 
     # Filter by timeframe
     if timeframe in ['1day', '7day', '30day', '365day']:

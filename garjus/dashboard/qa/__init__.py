@@ -32,6 +32,20 @@ LEGEND = '''
 🩷Job Failed ㅤ 
 🟡Needs Inputs ㅤ 
 🔷Job Running ㅤ
+\n
+🧠 EEG
+🧲 MRI
+☢️ PET
+
+⚠️
+
+⛔
+
+🚫
+
+✴️
+
+🔄
 '''
 
 

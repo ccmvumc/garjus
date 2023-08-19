@@ -286,7 +286,11 @@ class Garjus:
         data = self._load_sgp_data(projects, proctypes)
 
         # Build a dataframe
-        return pd.DataFrame(data, columns=self.column_names('sgp'))
+        df = pd.DataFrame(data, columns=self.column_names('sgp'))
+
+        df['DATE'] = pd.to_datetime(df['DATE'])
+
+        return df
 
     def column_names(self, datatype):
         """Return list of colum names for this data type."""
