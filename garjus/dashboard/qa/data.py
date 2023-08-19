@@ -157,14 +157,15 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
+def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True, hidesgp=True):
     try:
         garjus = Garjus()
 
         # Load that data
         scan_df = load_scan_data(garjus, proj_filter)
         assr_df = load_assr_data(garjus, proj_filter)
-        subj_df = load_sgp_data(garjus, proj_filter)
+        if not hidesgp:
+            subj_df = load_sgp_data(garjus, proj_filter)
 
     except Exception as err:
         logger.error(err)
@@ -177,25 +178,27 @@ def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True):
     # Make a common column for type
     assr_df['TYPE'] = assr_df['PROCTYPE']
     scan_df['TYPE'] = scan_df['SCANTYPE']
-    subj_df['TYPE'] = subj_df['PROCTYPE']
 
     assr_df['SCANTYPE'] = None
     scan_df['PROCTYPE'] = None
-    subj_df['SCANTYPE'] = None
 
     assr_df['ARTTYPE'] = 'assessor'
     scan_df['ARTTYPE'] = 'scan'
-    subj_df['ARTTYPE'] = 'sgp'
-
-    subj_df['SESSION'] = subj_df['ASSR']
-    subj_df['SITE'] = 'SGP'
-    subj_df['NOTE'] = ''
-    subj_df['XSITYPE'] = '' 
-    subj_df['SESSTYPE'] = 'SGP'
-    subj_df['MODALITY'] = ''
 
     # Concatenate the common cols to a new dataframe
-    df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS], subj_df[QA_COLS]], sort=False)
+    df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS]], sort=False)
+
+    if not hidesgp:
+        subj_df['TYPE'] = subj_df['PROCTYPE']
+        subj_df['SCANTYPE'] = None
+        subj_df['ARTTYPE'] = 'sgp'
+        subj_df['SESSION'] = subj_df['ASSR']
+        subj_df['SITE'] = 'SGP'
+        subj_df['NOTE'] = ''
+        subj_df['XSITYPE'] = '' 
+        subj_df['SESSTYPE'] = 'SGP'
+        subj_df['MODALITY'] = ''
+        df = pd.concat([df[QA_COLS], subj_df[QA_COLS]], sort=False)
 
     # relabel caare, etc
     df.PROJECT = df.PROJECT.replace(['TAYLOR_CAARE'], 'CAARE')

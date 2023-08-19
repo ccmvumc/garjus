@@ -11,59 +11,10 @@ from . import analyses
 
 
 
-def get_layout_darkmode():
-    qa_content = qa.get_content(darkmode=True)
-    #activity_content = activity.get_content()
-    #stats_content = stats.get_content()
-    #issues_content = issues.get_content()
-    #queue_content = queue.get_content()
-    #analyses_content = analyses.get_content()
-
-    report_content = [
-        html.Div(
-            dbc.Tabs(id='tabs', children=[
-                dbc.Tab(
-                    label='QA', tab_id='1', children=qa_content),
-                #dbc.Tab(
-                #    label='Activity', tab_id='2', children=activity_content),
-                #dbc.Tab(
-                #    label='Issues', tab_id='3', children=issues_content),
-                #dbc.Tab(
-                #    label='Queue', tab_id='4', children=queue_content),
-                #dbc.Tab(
-                #    label='Stats', tab_id='5', children=stats_content),
-                #dbc.Tab(
-                #    label='Analyses', tab_id='6', children=analyses_content),
-            ]),
-            style={
-                'paddingLeft': '70px',
-                'align-items': 'left',
-                'justify-content': 'left'},
-        )
-    ]
-
-    footer_content = [
-        html.Hr(),
-        html.H5('F: Failed'),
-        html.H5('P: Passed QA'),
-        html.H5('Q: To be determined')]
-
-    # Make the main app layout
-    main_content = html.Div([
-        #html.Div([html.H1('DAX Dashboard')]),
-        html.Div(children=report_content, id='report-content'),
-        html.Div(children=footer_content, id='footer-content')])
-
-    main_content = dbc.Container([main_content], fluid=True, className="dbc")
-
-    return main_content
 
 
-def get_layout(darkmode=False):
-    if darkmode:
-        return get_layout_darkmode()
-
-    qa_content = qa.get_content(darkmode)
+def get_layout():
+    qa_content = qa.get_content()
     activity_content = activity.get_content()
     stats_content = stats.get_content()
     issues_content = issues.get_content()
@@ -119,29 +70,12 @@ app.css.config.serve_locally = False
 app.title = 'DAX Dashboard'
 
 # Set the content and templates
-darkmode = False  
-if darkmode:
-    from dash_bootstrap_templates import load_figure_template
+app.css.append_css({
+    'external_url': dbc.themes.BOOTSTRAP,
+    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+})
 
-    # not working well yet 8/12/2023 bdb
-
-    # Could this to make a switcher, also could use theme color css
-    # https://github.com/AnnMarieW/dash-bootstrap-templates
-
-    load_figure_template('DARKLY')
-    dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.2/dbc.css"
-    app.css.append_css({
-        #'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-        'external_url': dbc_css,
-        'external_url': dbc.themes.DARKLY,
-    })
-else:
-    app.css.append_css({
-        'external_url': dbc.themes.BOOTSTRAP,
-        'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-    })
-
-app.layout = get_layout(darkmode=darkmode)
+app.layout = get_layout()
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0')

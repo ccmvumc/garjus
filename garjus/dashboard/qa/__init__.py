@@ -32,20 +32,8 @@ LEGEND = '''
 🩷Job Failed ㅤ 
 🟡Needs Inputs ㅤ 
 🔷Job Running ㅤ
-\n
-🧠 EEG
-🧲 MRI
+🧠 MRI
 ☢️ PET
-
-⚠️
-
-⛔
-
-🚫
-
-✴️
-
-🔄
 '''
 
 
@@ -55,7 +43,7 @@ LEGEND = '''
 logger = logging.getLogger('dashboard.qa')
 
 
-def _get_graph_content(dfp, selected_groupby='PROJECT', darkmode=True):
+def _get_graph_content(dfp, selected_groupby='PROJECT'):
     tabs_content = []
     tab_value = 0
 
@@ -166,10 +154,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT', darkmode=True):
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
 
-    if darkmode:
-        tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
-    else:
-        tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
+    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
 
     tabs_content.append(tab)
     tab_value += 1
@@ -383,15 +368,12 @@ def _sessionsbytime_figure(df, selected_groupby):
     return fig
 
 
-def get_content(darkmode=True):
+def get_content():
     '''Get QA page content.'''
     df = data.load_data(hidetypes=True)
 
     if df.empty:
         return ''
-
-    if darkmode:
-        return get_content_darkmode()
 
 # The data will be pivoted by session to show a row per session and
 # a column per scan/assessor type,
@@ -403,7 +385,7 @@ def get_content(darkmode=True):
 
     dfp = qa_pivot(df)
 
-    qa_graph_content = _get_graph_content(dfp, darkmode=False)
+    qa_graph_content = _get_graph_content(dfp)
 
     # Get the rows and colums for the table
     qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
@@ -463,6 +445,18 @@ def get_content(darkmode=True):
         dcc.Dropdown(
             id='dropdown-qa-scan', multi=True,
             placeholder='Select Scan Type(s)', style={'width': '80%'}),
+        dcc.RadioItems(
+            options=[
+                {'label': 'Row per Session', 'value': 'sess'},
+                {'label': 'Row per Subject', 'value': 'subj'}],
+            value='sess',
+            id='radio-qa-pivot',
+            labelStyle={'display': 'inline-block'}),
+        dbc.Switch(
+            id='switch-qa-sgp',
+            label='Show SGP',
+            value=False,
+        ),
         dt.DataTable(
             columns=qa_columns,
             data=qa_data,
@@ -488,113 +482,16 @@ def get_content(darkmode=True):
                 'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
-            style_cell_conditional=[{'if': {'column_id': 'NOTE'}, 'textAlign': 'left'}],
+            style_cell_conditional=[
+                {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'}
+            ],
             fill_width=False,
             export_format='xlsx',
             export_headers='names',
             export_columns='visible'),
         html.Label('0', id='label-qa-rowcount'),
         html.Div(html.P(LEGEND, style={'marginTop': '15px', 'textAlign': 'center'}), style={'textAlign': 'center'}),
-        ]
-
-    return qa_content
-
-
-def get_content_darkmode():
-    '''Get QA page content.'''
-    df = data.load_data(hidetypes=True)
-
-    if df.empty:
-        return ''
-
-# The data will be pivoted by session to show a row per session and
-# a column per scan/assessor type,
-# the values in the column a string of characters
-# that represent the status of one scan or assesor,
-# the number of characters is the number of scans or assessors
-# the columns will be the merged
-# status column with harmonized values to be red/yellow/green/blue
-
-    dfp = qa_pivot(df)
-
-    qa_graph_content = _get_graph_content(dfp, darkmode=True)
-
-    # Get the rows and colums for the table
-    qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
-    dfp.reset_index(inplace=True)
-    qa_data = dfp.to_dict('records')
-
-    qa_content = [
-        dbc.Spinner(id="loading-qa", children=[
-            html.Div(dbc.Tabs(
-                id='tabs-qa',
-                children=qa_graph_content))]),
-        html.Button('Refresh Data', id='button-qa-refresh'),
-        dcc.Dropdown(
-            id='dropdown-qa-time',
-            # Change filters to "Today", "this week", "last week",
-            #"this month", "last month", "YTD", "past year", "last year"
-            options=[
-                {'label': 'all time', 'value': 'ALL'},
-                {'label': '1 day', 'value': '1day'},
-                {'label': '1 week', 'value': '7day'},
-                {'label': '1 month', 'value': '30day'},
-                #{'label': 'this week', 'value': 'thisweek'},
-                #{'label': 'this month', 'value': 'thismonth'},
-                {'label': 'last month', 'value': 'lastmonth'},
-                {'label': '1 year', 'value': '365day'}],
-            value='ALL'),
-        dbc.RadioItems(
-            options=[
-                {'label': 'Group by Project', 'value': 'PROJECT'},
-                {'label': 'Group by Site', 'value': 'SITE'}],
-            value='PROJECT',
-            id='radio-qa-groupby',
-            labelStyle={'display': 'inline-block'}),
-        dcc.Dropdown(
-            id='dropdown-qa-proj', multi=True,
-            placeholder='Select Project(s)'),
-        dcc.Dropdown(
-            id='dropdown-qa-sess', multi=True,
-            placeholder='Select Session Type(s)'),
-       
-        dcc.Dropdown(
-            id='dropdown-qa-proc', multi=True,
-            placeholder='Select Processing Type(s)'),
-        dcc.Dropdown(
-            id='dropdown-qa-scan', multi=True,
-            placeholder='Select Scan Type(s)'),
-        dt.DataTable(
-            columns=qa_columns,
-            data=qa_data,
-            filter_action='native',
-            page_action='none',
-            sort_action='native',
-            id='datatable-qa',
-            style_table={
-                'overflowY': 'scroll',
-                'overflowX': 'scroll',
-                'width': f'{GWIDTH}px',
-            },
-            style_cell={
-                'textAlign': 'left',
-                'padding': '5px 5px 0px 5px',
-                'width': '30px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis',
-                'height': 'auto',
-                'minWidth': '40',
-                'maxWidth': '60'},
-            style_header={
-                #'width': '80px',
-                'backgroundColor': 'white',
-                'fontWeight': 'bold',
-                'padding': '5px 15px 0px 10px'},
-            fill_width=False,
-            export_format='xlsx',
-            export_headers='names',
-            export_columns='visible'),
-        html.Label('0', id='label-qa-rowcount'),
         ]
 
     return qa_content
@@ -705,6 +602,8 @@ def was_triggered(callback_ctx, button_id):
      Input('dropdown-qa-time', 'value'),
      Input('radio-qa-groupby', 'value'),
      Input('radio-qa-hidetypes', 'value'),
+     Input('radio-qa-pivot', 'value'),
+     Input('switch-qa-sgp', 'value'),
      Input('button-qa-refresh', 'n_clicks')])
 def update_all(
     selected_proc,
@@ -714,6 +613,8 @@ def update_all(
     selected_time,
     selected_groupby,
     selected_hidetypes,
+    selected_pivot,
+    selected_sgp,
     n_clicks
 ):
     refresh = False
@@ -731,7 +632,7 @@ def update_all(
 
     logger.debug('loading data')
     hidetypes = (selected_hidetypes == 'HIDE')
-    df = load_data(refresh=refresh, hidetypes=hidetypes)
+    df = load_data(refresh=refresh, hidetypes=hidetypes, hidesgp=~selected_sgp)
 
     # Truncate NOTE
     df['NOTE'] = df['NOTE'].str.slice(0, 70)
@@ -760,60 +661,80 @@ def update_all(
 
     tabs = _get_graph_content(dfp, selected_groupby)
 
-    # Get the table data
-    selected_cols = [
-        'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
+    if selected_pivot == 'subj':
+        # subject pivot
+        EMO_MAP = {'EEG': '🤯', 'MR': '🧠',  'PET': '☢️'}
+        dfp = dfp .reset_index()
+        dfp = dfp[dfp.SESSTYPE != 'SGP']
+        dfp = dfp.sort_values('MODALITY')
+        dfp['SESSIONS'] = dfp['MODALITY'].map(EMO_MAP).fillna('?')
 
-    if selected_proc:
-        selected_cols += selected_proc
+        dfp = dfp.pivot_table(
+            index=('SUBJECT', 'PROJECT'),
+            values='SESSIONS',
+            aggfunc=lambda x: ''.join(x))
 
-    if selected_scan:
-        selected_cols += selected_scan
+        # Get the table data
+        selected_cols = ['SUBJECT', 'PROJECT', 'SESSIONS']
 
-    # TODO: move this to where status is mapped to letters
-    # P: passed
-    # Q: qa tbd
-    # X: job failed
-    # N: need inputs
-    # R: job running
-    # F: qa failed
-    if selected_proc:
-        for p in selected_proc:
-            dfp[p] = dfp[p].str.replace('P', '✅')
-            dfp[p] = dfp[p].str.replace('X', '🩷')
-            dfp[p] = dfp[p].str.replace('Q', '🟩')
-            dfp[p] = dfp[p].str.replace('N', '🟡')
-            dfp[p] = dfp[p].str.replace('R', '🔷')
-            dfp[p] = dfp[p].str.replace('F', '❌')
+        # Format as column names and record dictionaries for dash table
+        columns = utils.make_columns(selected_cols)
+        records = dfp.reset_index().to_dict('records')
+    else:
+        # Get the table data
+        selected_cols = [
+            'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
 
-    if selected_scan:
-        for s in selected_scan:
-            dfp[s] = dfp[s].str.replace('P', '✅')
-            dfp[s] = dfp[s].str.replace('X', '🩷')
-            dfp[s] = dfp[s].str.replace('Q', '🟩')
-            dfp[s] = dfp[s].str.replace('N', '🟡')
-            dfp[s] = dfp[s].str.replace('R', '🔷')
-            dfp[s] = dfp[s].str.replace('F', '❌')
+        if selected_proc:
+            selected_cols += selected_proc
 
-    # Final column is always notes
-    selected_cols.append('NOTE')
+        if selected_scan:
+            selected_cols += selected_scan
 
-    # Format as column names and record dictionaries for dash table
-    columns = utils.make_columns(selected_cols)
-    records = dfp.reset_index().to_dict('records')
+        # TODO: move this to where status is mapped to letters
+        # P: passed
+        # Q: qa tbd
+        # X: job failed
+        # N: need inputs
+        # R: job running
+        # F: qa failed
+        if selected_proc:
+            for p in selected_proc:
+                dfp[p] = dfp[p].str.replace('P', '✅')
+                dfp[p] = dfp[p].str.replace('X', '🩷')
+                dfp[p] = dfp[p].str.replace('Q', '🟩')
+                dfp[p] = dfp[p].str.replace('N', '🟡')
+                dfp[p] = dfp[p].str.replace('R', '🔷')
+                dfp[p] = dfp[p].str.replace('F', '❌')
 
-    # Format records
-    for r in records:
-        if r['SESSION'] and 'SESSIONLINK' in r:
-            _sess = r['SESSION']
-            _link = r['SESSIONLINK']
-            r['SESSION'] = f'[{_sess}]({_link})'
+        if selected_scan:
+            for s in selected_scan:
+                dfp[s] = dfp[s].str.replace('P', '✅')
+                dfp[s] = dfp[s].str.replace('X', '🩷')
+                dfp[s] = dfp[s].str.replace('Q', '🟩')
+                dfp[s] = dfp[s].str.replace('N', '🟡')
+                dfp[s] = dfp[s].str.replace('R', '🔷')
+                dfp[s] = dfp[s].str.replace('F', '❌')
 
-    # Format columns
-    for i, c in enumerate(columns):
-        if c['name'] == 'SESSION':
-            columns[i]['type'] = 'text'
-            columns[i]['presentation'] = 'markdown'
+        # Final column is always notes
+        selected_cols.append('NOTE')
+
+        # Format as column names and record dictionaries for dash table
+        columns = utils.make_columns(selected_cols)
+        records = dfp.reset_index().to_dict('records')
+
+        # Format records
+        for r in records:
+            if r['SESSION'] and 'SESSIONLINK' in r:
+                _sess = r['SESSION']
+                _link = r['SESSIONLINK']
+                r['SESSION'] = f'[{_sess}]({_link})'
+
+        # Format columns
+        for i, c in enumerate(columns):
+            if c['name'] == 'SESSION':
+                columns[i]['type'] = 'text'
+                columns[i]['presentation'] = 'markdown'
 
     # TODO: should we only include data for selected columns here,
     # to reduce amount of data sent?
