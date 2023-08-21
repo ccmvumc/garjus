@@ -1452,21 +1452,25 @@ class SgpProcessor_v3_1(Processor_v3_1):
 
             elif iv['artefact_type'] == 'assessor':
                 for cassr in assrs:
+                    # First check for a select
                     if iv['select'] == 'first-mri' and not self.is_first_mr_session(cassr['SESSION'], project_data):                        
                         # Wrong session, not first mri
                         logger.debug('wrong session')
                         continue
 
+                    # Then check session types
                     for typeexp in iv['sesstypes']:
                         regex = re.compile(fnmatch.translate(typeexp))
                         sesstype = cassr.get('SESSTYPE')
-                        proctype = cassr.get('PROCTYPE')
                         if not regex.match(sesstype):
                             logger.debug('wrong sesstype')
                             continue
-                        elif proctype not in iv['types']:
-                            logger.debug('wrong proctype')
-                            continue
+
+                    # still good, then check proc types
+                    proctype = cassr.get('PROCTYPE')
+                    if proctype not in iv['types']:
+                        logger.debug('wrong proctype')
+                        continue
 
                     # Session type and proc type both match
                     logger.debug('found')
