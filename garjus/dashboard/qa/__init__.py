@@ -435,7 +435,7 @@ def get_content():
             ),
             dcc.RadioItems(
                 options=[
-                    {'label': 'Hide Unused Types', 'value': 'HIDE'},
+                    {'label': 'Hide Unused', 'value': 'HIDE'},
                     {'label': 'Show All Types', 'value': 'SHOW'}],
                 value='HIDE',
                 id='radio-qa-hidetypes',
@@ -444,16 +444,16 @@ def get_content():
         ], style={"display": "inline-flex", "width": "100%"}),
         dcc.Dropdown(
             id='dropdown-qa-proj', multi=True, 
-            placeholder='Select Project(s)', style={'width': '80%'}),
+            placeholder='Select Project(s)', style={'width': '70%'}),
         dcc.Dropdown(
             id='dropdown-qa-sess', multi=True,
-            placeholder='Select Session Type(s)', style={'width': '80%'}),
+            placeholder='Select Session Type(s)', style={'width': '70%'}),
         dcc.Dropdown(
             id='dropdown-qa-proc', multi=True,
-            placeholder='Select Processing Type(s)', style={'width': '80%'}),
+            placeholder='Select Processing Type(s)', style={'width': '70%'}),
         dcc.Dropdown(
             id='dropdown-qa-scan', multi=True,
-            placeholder='Select Scan Type(s)', style={'width': '80%'}),
+            placeholder='Select Scan Type(s)', style={'width': '70%'}),
         dcc.RadioItems(
             options=[
                 {'label': 'Row per Session', 'value': 'sess'},
@@ -689,6 +689,7 @@ def update_all(
         if cols:
             cols = [x for x in cols if x in dfp.columns]
 
+            # aggregrate to most common value (mode)
             dfp = dfp.reset_index().pivot_table(
                 index=('PROJECT'),
                 values=cols,
@@ -767,6 +768,7 @@ def update_all(
             cols = [x for x in cols if x in dfp.columns]
 
             # aggregrate to most common value (mode)
+            # TODO: ignore PETs when determining mode for assessors, how?
             dfp = dfp.reset_index().pivot_table(
                 index=('PROJECT', 'SUBJECT'),
                 values=cols,
