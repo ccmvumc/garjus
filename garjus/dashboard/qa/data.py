@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from datetime import datetime, date, timedelta
 
 import pandas as pd
@@ -42,13 +43,13 @@ def get_filename():
     return filename
 
 
-def run_refresh(filename, hidetypes=True):
+def run_refresh(filename, hidetypes=True, hidesgp=True):
     proj_filter = []
     proc_filter = []
     scan_filter = []
 
     # force a requery
-    df = get_data(proj_filter, proc_filter, scan_filter, hidetypes=hidetypes)
+    df = get_data(proj_filter, proc_filter, scan_filter, hidetypes=hidetypes, hidesgp=hidesgp)
 
     save_data(df, filename)
 
@@ -136,15 +137,22 @@ def load_proj_options():
     return sorted(df.PROJECT.unique())
 
 
-def load_data(refresh=False, hidetypes=True):
-    filename = get_filename()
+def file_age(filename):
+    return int((time.time() - os.path.getmtime(filename)) / 60)
 
-    if refresh or not os.path.exists(filename):
-        # TODO: check for old file and refresh too
-        run_refresh(filename, hidetypes)
 
-    logger.info('reading data from file:{}'.format(filename))
-    return read_data(filename)
+def load_data(refresh=False, maxmins=60, hidetypes=True, hidesgp=True):
+    fname = get_filename()
+
+    if not refresh and os.path.exists(fname) and file_age(fname) > maxmins:
+        logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
+        refresh = True
+
+    if refresh or not os.path.exists(fname):
+        run_refresh(fname, hidetypes, hidesgp)
+
+    logger.info('reading data from file:{}'.format(fname))
+    return read_data(fname)
 
 
 def read_data(filename):
@@ -267,7 +275,6 @@ def load_assr_data(garjus, project_filter):
 
 def load_sgp_data(garjus, project_filter):
     df = garjus.subject_assessors().copy()
-    print('sgp columns=', df.columns)
 
     # Get subset of columns
     df = df[[
@@ -315,7 +322,7 @@ def load_scan_data(garjus, project_filter):
     return dfs
 
 
-def filter_data(df, projects, proctypes, scantypes, timeframe, sesstypes):
+def filter_data(df, projects, proctypes, scantypes, starttime, endtime, sesstypes):
 
     # Filter by project
     if projects:
@@ -335,22 +342,12 @@ def filter_data(df, projects, proctypes, scantypes, timeframe, sesstypes):
         logger.debug(scantypes)
         df = df[(df['SCANTYPE'].isin(scantypes)) | (df['ARTTYPE'] == 'assessor') | (df['ARTTYPE'] == 'sgp')]
 
-    # Filter by timeframe
-    if timeframe in ['1day', '7day', '30day', '365day']:
-        logger.debug('filtering by ' + timeframe)
-        then_datetime = datetime.now() - pd.to_timedelta(timeframe)
-        df = df[pd.to_datetime(df.DATE) > then_datetime]
-    elif timeframe == 'lastmonth':
-        logger.debug('filtering by ' + timeframe)
+    if starttime:
+        logger.debug(f'filtering by start time:{starttime}')
+        df = df[pd.to_datetime(df.DATE) >= starttime]
 
-        # Set range to first and last day of previous month
-        _end = date.today().replace(day=1) - timedelta(days=1)
-        _start = date.today().replace(day=1) - timedelta(days=_end.day)
-        df = df[pd.to_datetime(df.DATE).isin(pd.date_range(_start, _end))]
-    else:
-        # ALL
-        logger.debug('not filtering by time')
-        pass
+    if endtime:
+        df = df[pd.to_datetime(df.DATE) <= endtime]
 
     # Filter by sesstype
     if sesstypes:

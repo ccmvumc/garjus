@@ -17,7 +17,6 @@ import plotly.subplots
 from dash import dcc, html, dash_table as dt
 from dash.dependencies import Input, Output
 import dash
-import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
@@ -25,22 +24,24 @@ from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
 
 
-LEGEND = '''
+logger = logging.getLogger('dashboard.qa')
+
+
+LEGEND1 = '''
 ✅QA Passed ㅤ
 🟩QA TBD ㅤ 
 ❌QA Failed ㅤ 
 🩷Job Failed ㅤ 
 🟡Needs Inputs ㅤ 
-🔷Job Running ㅤ
+🔷Job Running
+'''
+
+LEGEND2 = '''
 🧠 MRI
 ☢️ PET
 '''
 
-
-# TODO: refresh QA data if older than 5 mins, 1 hour? should we have a dropdown somewhere to change?
-
-
-logger = logging.getLogger('dashboard.qa')
+MOD2EMO = {'EEG': '🤯', 'MR': '🧠',  'PET': '☢️'}
 
 
 def _get_graph_content(dfp, selected_groupby='PROJECT'):
@@ -196,7 +197,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
     label = 'By {}'.format('PROJECT')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
+    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
 
@@ -206,7 +207,7 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
     label = 'By {}'.format('TIME')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dbc.Tab(label=label, tab_id=str(tab_value), children=[graph])
+    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
 
@@ -396,27 +397,32 @@ def get_content():
         dcc.Loading(id="loading-qa", children=[
             html.Div(dcc.Tabs(
                 id='tabs-qa',
+                value='0',
                 vertical=True,
                 children=qa_graph_content))]),
         html.Button('Refresh Data', id='button-qa-refresh'),
         html.Div([
-            html.Div(
-                dcc.Dropdown(
-                    id='dropdown-qa-time',
-                    # TODO: Change filters to "Today", "this week", "last week",
-                    # "this month", "last month", "YTD", "past year", "last year"
-                    options=[
-                        {'label': 'all time', 'value': 'ALL'},
-                        {'label': '1 day', 'value': '1day'},
-                        {'label': '1 week', 'value': '7day'},
-                        {'label': '1 month', 'value': '30day'},
-                        #{'label': 'this week', 'value': 'thisweek'},
-                        #{'label': 'this month', 'value': 'thismonth'},
-                        {'label': 'last month', 'value': 'lastmonth'},
-                        {'label': '1 year', 'value': '365day'}],
-                    value='ALL',
-                    style={'width': '100%'}),
-                style={'width': '15%'}
+            #html.Div(
+                #dcc.Dropdown(
+                #    id='dropdown-qa-time',
+                #    # TODO: Change filters to "Today", "this week", "last week",
+                #    # "this month", "last month", "YTD", "past year", "last year"
+                #    options=[
+                #        {'label': 'all time', 'value': 'ALL'},
+                #        {'label': '1 day', 'value': '1day'},
+                #        {'label': '1 week', 'value': '7day'},
+                #        {'label': '1 month', 'value': '30day'},
+                #        #{'label': 'this week', 'value': 'thisweek'},
+                #        #{'label': 'this month', 'value': 'thismonth'},
+                #        {'label': 'last month', 'value': 'lastmonth'},
+                #        {'label': '1 year', 'value': '365day'}],
+                #    value='ALL',
+                #    style={'width': '100%'}),
+                #style={'width': '15%'}
+            #),
+            dcc.DatePickerRange(
+                id='dpr-qa-time',
+                clearable=True,
             ),
             dcc.RadioItems(
                 options=[
@@ -424,14 +430,17 @@ def get_content():
                     {'label': 'Group by Site', 'value': 'SITE'}],
                 value='PROJECT',
                 id='radio-qa-groupby',
-                labelStyle={'display': 'inline-block', "align-items": "center"}, style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
+                labelStyle={'display': 'inline-block', "align-items": "center"},
+                style={'width': '0%', 'text-align': 'center', "align-items": "center", 'display': 'none'},
+            ),
             dcc.RadioItems(
                 options=[
                     {'label': 'Hide Unused Types', 'value': 'HIDE'},
                     {'label': 'Show All Types', 'value': 'SHOW'}],
                 value='HIDE',
                 id='radio-qa-hidetypes',
-                labelStyle={'display': 'inline-block', "align-items": "center"}, style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
+                labelStyle={'display': 'inline-block', "align-items": "center"}, 
+                style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
         ], style={"display": "inline-flex", "width": "100%"}),
         dcc.Dropdown(
             id='dropdown-qa-proj', multi=True, 
@@ -448,15 +457,12 @@ def get_content():
         dcc.RadioItems(
             options=[
                 {'label': 'Row per Session', 'value': 'sess'},
-                {'label': 'Row per Subject', 'value': 'subj'}],
+                {'label': 'Row per Subject', 'value': 'subj'},
+                {'label': 'Row per Project', 'value': 'proj'},
+                ],
             value='sess',
             id='radio-qa-pivot',
             labelStyle={'display': 'inline-block'}),
-        dbc.Switch(
-            id='switch-qa-sgp',
-            label='Show SGP',
-            value=False,
-        ),
         dt.DataTable(
             columns=qa_columns,
             data=qa_data,
@@ -491,8 +497,11 @@ def get_content():
             export_headers='names',
             export_columns='visible'),
         html.Label('0', id='label-qa-rowcount'),
-        html.Div(html.P(LEGEND, style={'marginTop': '15px', 'textAlign': 'center'}), style={'textAlign': 'center'}),
-        ]
+        html.Div([
+            html.P(LEGEND1, style={'marginTop': '15px', 'textAlign': 'center'}), 
+            html.P(LEGEND2, style={'textAlign': 'center'})],
+            style={'textAlign': 'center'}),
+    ]
 
     return qa_content
 
@@ -542,8 +551,9 @@ def qa_pivot(df):
 
 
 # This is where the data gets initialized
-def load_data(refresh=False, hidetypes=True):
-    return data.load_data(refresh=refresh, hidetypes=hidetypes)
+def load_data(refresh=False, hidetypes=True, hidesgp=False):
+    return data.load_data(
+        refresh=refresh, hidetypes=hidetypes, hidesgp=hidesgp)
 
 
 def load_proj_options():
@@ -599,22 +609,22 @@ def was_triggered(callback_ctx, button_id):
      Input('dropdown-qa-scan', 'value'),
      Input('dropdown-qa-sess', 'value'),
      Input('dropdown-qa-proj', 'value'),
-     Input('dropdown-qa-time', 'value'),
+     Input('dpr-qa-time', 'start_date'),
+     Input('dpr-qa-time', 'end_date'),
      Input('radio-qa-groupby', 'value'),
      Input('radio-qa-hidetypes', 'value'),
      Input('radio-qa-pivot', 'value'),
-     Input('switch-qa-sgp', 'value'),
      Input('button-qa-refresh', 'n_clicks')])
 def update_all(
     selected_proc,
     selected_scan,
     selected_sess,
     selected_proj,
-    selected_time,
+    selected_starttime,
+    selected_endtime,
     selected_groupby,
     selected_hidetypes,
     selected_pivot,
-    selected_sgp,
     n_clicks
 ):
     refresh = False
@@ -632,7 +642,7 @@ def update_all(
 
     logger.debug('loading data')
     hidetypes = (selected_hidetypes == 'HIDE')
-    df = load_data(refresh=refresh, hidetypes=hidetypes, hidesgp=~selected_sgp)
+    df = load_data(refresh=refresh, hidetypes=hidetypes)
 
     # Truncate NOTE
     df['NOTE'] = df['NOTE'].str.slice(0, 70)
@@ -650,7 +660,8 @@ def update_all(
         selected_proj,
         selected_proc,
         selected_scan,
-        selected_time,
+        selected_starttime,
+        selected_endtime,
         selected_sess)
 
     #if selected_hidetypes == 'HIDE':
@@ -661,21 +672,138 @@ def update_all(
 
     tabs = _get_graph_content(dfp, selected_groupby)
 
-    if selected_pivot == 'subj':
-        # subject pivot
-        EMO_MAP = {'EEG': '🤯', 'MR': '🧠',  'PET': '☢️'}
+    if selected_pivot == 'proj':
+        cols = []
+        selected_cols = ['PROJECT']
+
         dfp = dfp .reset_index()
-        dfp = dfp[dfp.SESSTYPE != 'SGP']
-        dfp = dfp.sort_values('MODALITY')
-        dfp['SESSIONS'] = dfp['MODALITY'].map(EMO_MAP).fillna('?')
 
-        dfp = dfp.pivot_table(
-            index=('SUBJECT', 'PROJECT'),
-            values='SESSIONS',
-            aggfunc=lambda x: ''.join(x))
+        if selected_proc:
+            cols += selected_proc
+            selected_cols += selected_proc
 
-        # Get the table data
-        selected_cols = ['SUBJECT', 'PROJECT', 'SESSIONS']
+        if selected_scan:
+            cols += selected_scan
+            selected_cols += selected_scan
+
+        if cols:
+            cols = [x for x in cols if x in dfp.columns]
+
+            dfp = dfp.reset_index().pivot_table(
+                index=('PROJECT'),
+                values=cols,
+                aggfunc=pd.Series.mode)
+
+            if selected_proc:
+                for p in selected_proc:
+                    if p in dfp.columns:
+                        dfp[p] = dfp[p].str.replace('P', '✅')
+                        dfp[p] = dfp[p].str.replace('X', '🩷')
+                        dfp[p] = dfp[p].str.replace('Q', '🟩')
+                        dfp[p] = dfp[p].str.replace('N', '🟡')
+                        dfp[p] = dfp[p].str.replace('R', '🔷')
+                        dfp[p] = dfp[p].str.replace('F', '❌')
+
+            if selected_scan:
+                for s in selected_scan:
+                    if s in dfp.columns:
+                        dfp[s] = dfp[s].str.replace('P', '✅')
+                        dfp[s] = dfp[s].str.replace('X', '🩷')
+                        dfp[s] = dfp[s].str.replace('Q', '🟩')
+                        dfp[s] = dfp[s].str.replace('N', '🟡')
+                        dfp[s] = dfp[s].str.replace('R', '🔷')
+                        dfp[s] = dfp[s].str.replace('F', '❌')
+
+        else:
+            # No types selected, show sessions concat
+            selected_cols += ['SESSIONS']
+
+            dfp = dfp[dfp.SESSTYPE != 'SGP']
+            dfp = dfp.sort_values('MODALITY')
+            dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
+
+            dfp = dfp[['PROJECT', 'SESSIONS', 'SESSTYPE']].drop_duplicates()
+
+            dfp = dfp.pivot_table(
+                index=('PROJECT'),
+                values='SESSIONS',
+                aggfunc=lambda x: ''.join(x))
+
+        # Format as column names and record dictionaries for dash table
+        columns = utils.make_columns(selected_cols)
+        records = dfp.reset_index().to_dict('records')
+
+        # Format records
+        #for r in records:
+        #    if r['PROJECT'] and 'PROJECTLINK' in r:
+        #        _proj = r['PROJECT']
+        #        _link = r['PROJECTLINK']
+        #        r['PROJECT'] = f'[{_proj}]({_link})'
+
+        # Format columns
+        #for i, c in enumerate(columns):
+        #    if c['name'] == 'PROJECT':
+        #        columns[i]['type'] = 'text'
+        #        columns[i]['presentation'] = 'markdown'
+
+    elif selected_pivot == 'subj':
+        # row per subject
+
+        cols = []
+        selected_cols = ['PROJECT', 'SUBJECT']
+
+        if selected_proc:
+            cols += selected_proc
+            selected_cols += selected_proc
+
+        if selected_scan:
+            cols += selected_scan
+            selected_cols += selected_scan
+
+        if cols:
+            # Show the selected columns
+
+            # only modify columns with data
+            cols = [x for x in cols if x in dfp.columns]
+
+            # aggregrate to most common value (mode)
+            dfp = dfp.reset_index().pivot_table(
+                index=('PROJECT', 'SUBJECT'),
+                values=cols,
+                aggfunc=pd.Series.mode)
+
+            if selected_proc:
+                for p in selected_proc:
+                    if p in dfp.columns:
+                        dfp[p] = dfp[p].str.replace('P', '✅')
+                        dfp[p] = dfp[p].str.replace('X', '🩷')
+                        dfp[p] = dfp[p].str.replace('Q', '🟩')
+                        dfp[p] = dfp[p].str.replace('N', '🟡')
+                        dfp[p] = dfp[p].str.replace('R', '🔷')
+                        dfp[p] = dfp[p].str.replace('F', '❌')
+
+            if selected_scan:
+                for s in selected_scan:
+                    if s in dfp.columns:
+                        dfp[s] = dfp[s].str.replace('P', '✅')
+                        dfp[s] = dfp[s].str.replace('X', '🩷')
+                        dfp[s] = dfp[s].str.replace('Q', '🟩')
+                        dfp[s] = dfp[s].str.replace('N', '🟡')
+                        dfp[s] = dfp[s].str.replace('R', '🔷')
+                        dfp[s] = dfp[s].str.replace('F', '❌')
+        else:
+            dfp = dfp.reset_index()
+            dfp = dfp[dfp.SESSTYPE != 'SGP']
+            dfp = dfp.sort_values('MODALITY')
+            dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
+
+            dfp = dfp.pivot_table(
+                index=('SUBJECT', 'PROJECT'),
+                values='SESSIONS',
+                aggfunc=lambda x: ''.join(x))
+
+            # Get the table data
+            selected_cols = ['SUBJECT', 'PROJECT', 'SESSIONS']
 
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
@@ -692,29 +820,25 @@ def update_all(
             selected_cols += selected_scan
 
         # TODO: move this to where status is mapped to letters
-        # P: passed
-        # Q: qa tbd
-        # X: job failed
-        # N: need inputs
-        # R: job running
-        # F: qa failed
         if selected_proc:
             for p in selected_proc:
-                dfp[p] = dfp[p].str.replace('P', '✅')
-                dfp[p] = dfp[p].str.replace('X', '🩷')
-                dfp[p] = dfp[p].str.replace('Q', '🟩')
-                dfp[p] = dfp[p].str.replace('N', '🟡')
-                dfp[p] = dfp[p].str.replace('R', '🔷')
-                dfp[p] = dfp[p].str.replace('F', '❌')
+                if p in dfp.columns:
+                    dfp[p] = dfp[p].str.replace('P', '✅')
+                    dfp[p] = dfp[p].str.replace('X', '🩷')
+                    dfp[p] = dfp[p].str.replace('Q', '🟩')
+                    dfp[p] = dfp[p].str.replace('N', '🟡')
+                    dfp[p] = dfp[p].str.replace('R', '🔷')
+                    dfp[p] = dfp[p].str.replace('F', '❌')
 
         if selected_scan:
             for s in selected_scan:
-                dfp[s] = dfp[s].str.replace('P', '✅')
-                dfp[s] = dfp[s].str.replace('X', '🩷')
-                dfp[s] = dfp[s].str.replace('Q', '🟩')
-                dfp[s] = dfp[s].str.replace('N', '🟡')
-                dfp[s] = dfp[s].str.replace('R', '🔷')
-                dfp[s] = dfp[s].str.replace('F', '❌')
+                if s in dfp.columns:
+                    dfp[s] = dfp[s].str.replace('P', '✅')
+                    dfp[s] = dfp[s].str.replace('X', '🩷')
+                    dfp[s] = dfp[s].str.replace('Q', '🟩')
+                    dfp[s] = dfp[s].str.replace('N', '🟡')
+                    dfp[s] = dfp[s].str.replace('R', '🔷')
+                    dfp[s] = dfp[s].str.replace('F', '❌')
 
         # Final column is always notes
         selected_cols.append('NOTE')
@@ -735,6 +859,12 @@ def update_all(
             if c['name'] == 'SESSION':
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
+
+
+
+
+        # TODO: link each project to redcap/xnat in project view
+
 
     # TODO: should we only include data for selected columns here,
     # to reduce amount of data sent?
