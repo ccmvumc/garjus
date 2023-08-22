@@ -5,22 +5,6 @@ import os
 import pandas as pd
 
 
-#'inputs': {
-#    'xnat': {
-#       'subjects': {
-#           'sessions': {
-#               'types': 'Baseline',
-#               'assessors': [
-#                   {'name': 'assr_msit', 'types': 'fmri_msit_v3',
-#                       'resources': [
-#                           {'resource': '1stLEVEL', 'fmatch': 'con_0002.nii.gz'},
-#                           {'resource': '1stLEVEL', 'fmatch': 'behavior.txt'}
-# ]}]}}}}]
-
-# OUTPUTS:
-# subject / session / assessor /resource / file
-
-
 logger = logging.getLogger('garjus.analyses')
 
 
@@ -276,6 +260,6 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
             continue
 
     # report what's missing
-    logger.debug(f'errors{errors}')
+    logger.info(f'errors{errors}')
 
     logger.debug('done!')
