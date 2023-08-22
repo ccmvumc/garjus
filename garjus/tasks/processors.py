@@ -1685,7 +1685,10 @@ def build_session_processor(garjus, processor, session, project_data):
                     logger.debug(f'detected duplicate:{labels}')
                     raise AutoProcessorError('duplicate build detected')
             except Exception as err:
-                logger.err(f'could not check for duplicates:{err}')
+                logger.error(f'could not check for duplicates:{err}')
+                import traceback
+                traceback.print_exc()
+                return
 
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(session, inputs, project_data)
