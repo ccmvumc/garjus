@@ -86,7 +86,7 @@ def _get_graph_content(dfp):
     if dfp is None or len(dfp) == 0:
         logger.debug('empty data, using empty figure')
         return [dcc.Tab(label='', value='0', children=[html.Div(
-            html.P('Choose Project(s) to load', style={'text-align': 'center'}),
+            html.H1('Choose Project(s) to load', style={'text-align': 'center'}),
             style={'padding':'150px'})])]
 
     # Make a 1x1 figure
