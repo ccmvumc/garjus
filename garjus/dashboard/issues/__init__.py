@@ -74,7 +74,12 @@ def _get_graph_content(df):
 def get_content():
     ISSUES_SHOW_COLS = ['ID', 'CATEGORY', 'DATETIME', 'PROJECT', 'SUBJECT', 'SESSION', 'EVENT', 'FIELD', 'DESCRIPTION']
 
-    df = load_issues()
+    try:
+        df = load_issues()
+    except Exception as err:
+        logger.error('could not load issues')
+        return None
+
     issues_graph_content = _get_graph_content(df)
 
     # Get the rows and colums for the table

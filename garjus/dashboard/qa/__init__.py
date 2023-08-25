@@ -1,10 +1,32 @@
-"""qa.
+"""qa dashboard tab.
 
 # DESCRIPTION:
 # the table is by session using a pivottable that aggregates the statuses
 # for each scan/assr type. then we have dropdowns to filter by project,
 # processing type, scan type, etc.
 """
+
+# TODO: ignore PETs when determining mode for assessors, how?
+
+# TODO: modify subject view to concat the session type with the proctype before
+# aggregating so we get separate a column for each sesstype_proctype
+
+# TODO: bring back EEG?
+
+# TODO: link each project to redcap/xnat in project view
+
+# TODO: only send data for selected columns to reduce amount of data sent?
+
+# TODO: write a "graph in a tab" function to wrap each figure above
+# in a graph in a tab, b/c DRY
+
+# TODO: if weekly is chosen, show the actual session name instead of a dot
+
+# TODO: try to connect baseline with followup with arc line or something
+# or could have "by subject" choice that has a subject per y value?
+
+# TODO: dropdown to select custom dates or from choices: last week, last month, this month.
+
 
 import logging
 import re
@@ -17,6 +39,7 @@ import plotly.subplots
 from dash import dcc, html, dash_table as dt
 from dash.dependencies import Input, Output
 import dash
+import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
@@ -29,35 +52,46 @@ logger = logging.getLogger('dashboard.qa')
 
 LEGEND1 = '''
 ✅QA Passed ㅤ
-🟩QA TBD ㅤ 
-❌QA Failed ㅤ 
-🩷Job Failed ㅤ 
-🟡Needs Inputs ㅤ 
+🟩QA TBD ㅤ
+❌QA Failed ㅤ
+🩷Job Failed ㅤ
+🟡Needs Inputs ㅤ
 🔷Job Running
 '''
 
 LEGEND2 = '''
-🧠 MRI
+🧠 MR
 ☢️ PET
 '''
 
-MOD2EMO = {'EEG': '🤯', 'MR': '🧠',  'PET': '☢️'}
+MOD2EMO = {'EEG': '🤯', 'MR': '🧠', 'PET': '☢️'}
 
 
-def _get_graph_content(dfp, selected_groupby='PROJECT'):
+# The data will be pivoted by session to show a row per session and
+# a column per scan/assessor type,
+# the values in the column a string of characters
+# that represent the status of one scan or assesor,
+# the number of characters is the number of scans or assessors
+# the columns will be the merged
+# status column with harmonized values to be red/yellow/green/blue
+
+
+def _get_graph_content(dfp):
     tabs_content = []
     tab_value = 0
 
     logger.debug('get_qa_figure')
 
+    # Check for empty data
+    if dfp is None or len(dfp) == 0:
+        logger.debug('empty data, using empty figure')
+        return [dcc.Tab(label='', value='0', children=[html.Div(
+            html.P('Choose Project(s) to load', style={'text-align': 'center'}),
+            style={'padding':'150px'})])]
+
     # Make a 1x1 figure
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
     fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
-
-    # Check for empty data
-    if len(dfp) == 0:
-        logger.debug('empty data, using empty figure')
-        return [fig]
 
     # First we copy the dfp and then replace the values in each
     # scan/proc type column with a metastatus,
@@ -203,16 +237,13 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
 
     # Append the by-time graph (this was added later with separate function)
     dfs = df[['PROJECT', 'DATE', 'SESSION', 'SESSTYPE', 'SITE', 'MODALITY']].drop_duplicates()
-    fig = _sessionsbytime_figure(dfs, selected_groupby)
+    fig = _sessionsbytime_figure(dfs, selected_groupby='PROJECT')
     label = 'By {}'.format('TIME')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
     tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
-
-    # TODO: write a "graph in a tab" function to wrap each figure above
-    # in a graph in a tab, b/c DRY
 
     # Return the tabs
     return tabs_content
@@ -221,13 +252,6 @@ def _get_graph_content(dfp, selected_groupby='PROJECT'):
 def _sessionsbytime_figure(df, selected_groupby):
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
     fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
-
-    # TODO: if weekly is chosen, show the actual session name instead of a dot
-
-    # TODO: use different shapes for PET vs MR
-
-    # TODO: try to connect baseline with followup with arc line or something
-    # or could have "by subject" choice that has a subject per y value
 
     # Customize figure
     # fig['layout'].update(xaxis={'automargin': True}, yaxis={'automargin': True})
@@ -371,101 +395,108 @@ def _sessionsbytime_figure(df, selected_groupby):
 
 def get_content():
     '''Get QA page content.'''
-    df = data.load_data(hidetypes=True)
 
-    if df.empty:
-        return ''
+    graph_content = _get_graph_content(None)
 
-# The data will be pivoted by session to show a row per session and
-# a column per scan/assessor type,
-# the values in the column a string of characters
-# that represent the status of one scan or assesor,
-# the number of characters is the number of scans or assessors
-# the columns will be the merged
-# status column with harmonized values to be red/yellow/green/blue
-
-    dfp = qa_pivot(df)
-
-    qa_graph_content = _get_graph_content(dfp)
-
-    # Get the rows and colums for the table
-    qa_columns = [{"name": i, "id": i} for i in dfp.index.names]
-    dfp.reset_index(inplace=True)
-    qa_data = dfp.to_dict('records')
-
-    qa_content = [
-        dcc.Loading(id="loading-qa", children=[
+    content = [
+        dbc.Spinner(id="loading-qa", children=[
             html.Div(dcc.Tabs(
                 id='tabs-qa',
                 value='0',
                 vertical=True,
-                children=qa_graph_content))]),
-        html.Button('Refresh Data', id='button-qa-refresh'),
-        html.Div([
-            #html.Div(
-                #dcc.Dropdown(
-                #    id='dropdown-qa-time',
-                #    # TODO: Change filters to "Today", "this week", "last week",
-                #    # "this month", "last month", "YTD", "past year", "last year"
-                #    options=[
-                #        {'label': 'all time', 'value': 'ALL'},
-                #        {'label': '1 day', 'value': '1day'},
-                #        {'label': '1 week', 'value': '7day'},
-                #        {'label': '1 month', 'value': '30day'},
-                #        #{'label': 'this week', 'value': 'thisweek'},
-                #        #{'label': 'this month', 'value': 'thismonth'},
-                #        {'label': 'last month', 'value': 'lastmonth'},
-                #        {'label': '1 year', 'value': '365day'}],
-                #    value='ALL',
-                #    style={'width': '100%'}),
-                #style={'width': '15%'}
-            #),
-            dcc.DatePickerRange(
-                id='dpr-qa-time',
-                clearable=True,
+                children=graph_content))]),
+        dbc.Row([
+            dbc.Col(
+                dcc.DatePickerRange(
+                    id='dpr-qa-time',
+                    clearable=True,
+                )
             ),
-            dcc.RadioItems(
-                options=[
-                    {'label': 'Group by Project', 'value': 'PROJECT'},
-                    {'label': 'Group by Site', 'value': 'SITE'}],
-                value='PROJECT',
-                id='radio-qa-groupby',
-                labelStyle={'display': 'inline-block', "align-items": "center"},
-                style={'width': '0%', 'text-align': 'center', "align-items": "center", 'display': 'none'},
+            dbc.Col(
+                dbc.Button('Refresh Data', id='button-qa-refresh'),
             ),
-            dcc.RadioItems(
-                options=[
-                    {'label': 'Hide Unused', 'value': 'HIDE'},
-                    {'label': 'Show All Types', 'value': 'SHOW'}],
-                value='HIDE',
-                id='radio-qa-hidetypes',
-                labelStyle={'display': 'inline-block', "align-items": "center"}, 
-                style={'width': '25%', 'text-align': 'center', "align-items": "center"}),
-        ], style={"display": "inline-flex", "width": "100%"}),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-qa-autofilter',
+                    label='Autofilter',
+                    value=True,
+                ), align="end",
+            ),
+           
+        ], style={'width': '70%'},), 
+        #], style={"display": "inline-flex", "width": "100%"}),
         dcc.Dropdown(
-            id='dropdown-qa-proj', multi=True, 
-            placeholder='Select Project(s)', style={'width': '70%'}),
-        dcc.Dropdown(
-            id='dropdown-qa-sess', multi=True,
-            placeholder='Select Session Type(s)', style={'width': '70%'}),
-        dcc.Dropdown(
-            id='dropdown-qa-proc', multi=True,
-            placeholder='Select Processing Type(s)', style={'width': '70%'}),
+            id='dropdown-qa-proj',
+            multi=True, 
+            placeholder='Select Project(s)',
+            style={'width': '70%'}),
+        dbc.Row([
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-qa-sess',
+                    multi=True,
+                    placeholder='Select Session Type(s)',
+                ),
+            ),
+            dbc.Col(
+                dbc.Checklist(
+                    options=[
+                        {'label': '🧠 MR', 'value': 'MR'},
+                        {'label': '☢️ PET', 'value': 'PET'},
+                        {'label': 'EEG', 'value': 'EEG'},
+                    ],
+                    value=['MR', 'PET'],
+                    id='switches-qa-modality',
+                    inline=True,
+                    switch=True
+                ),
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-qa-proc',
+                    multi=True,
+                    placeholder='Select Processing Type(s)',
+                ),
+            ),
+            dbc.Col(
+                dbc.Checklist(
+                    options=[
+                        {'label': '✅', 'value': 'P'},
+                        {'label': '🟩', 'value': 'Q'},
+                        {'label': '❌', 'value': 'F'},
+                        {'label': '🩷', 'value': 'X'},
+                        {'label': '🟡', 'value': 'N'},
+                        {'label': '🔷', 'value': 'R'},
+                    ],
+                    value=['P', 'Q', 'F', 'X', 'N', 'R'],
+                    id='switches-qa-procstatus',
+                    inline=True,
+                    switch=True
+                ),
+            ),
+        ]),
         dcc.Dropdown(
             id='dropdown-qa-scan', multi=True,
             placeholder='Select Scan Type(s)', style={'width': '70%'}),
-        dcc.RadioItems(
+
+        dbc.RadioItems(
+            className="btn-group",
+            inputClassName="btn-check",
+            labelClassName="btn btn-outline-primary",
+            labelCheckedClassName="active",
             options=[
-                {'label': 'Row per Session', 'value': 'sess'},
-                {'label': 'Row per Subject', 'value': 'subj'},
-                {'label': 'Row per Project', 'value': 'proj'},
+                {'label': 'Sessions', 'value': 'sess'},
+                {'label': 'Subjects', 'value': 'subj'},
+                {'label': 'Projects', 'value': 'proj'},
                 ],
             value='sess',
             id='radio-qa-pivot',
             labelStyle={'display': 'inline-block'}),
         dt.DataTable(
-            columns=qa_columns,
-            data=qa_data,
+            columns=[],
+            data=[],
             filter_action='native',
             page_action='none',
             sort_action='native',
@@ -490,20 +521,30 @@ def get_content():
                 'padding': '5px 15px 0px 10px'},
             style_cell_conditional=[
                 {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
-                {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'}
+                {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
             ],
+            css=[dict(selector= "p", rule= "margin: 0; text-align: center")],
             fill_width=False,
             export_format='xlsx',
             export_headers='names',
             export_columns='visible'),
         html.Label('0', id='label-qa-rowcount'),
         html.Div([
-            html.P(LEGEND1, style={'marginTop': '15px', 'textAlign': 'center'}), 
-            html.P(LEGEND2, style={'textAlign': 'center'})],
+            html.P(
+                LEGEND1,
+                style={'marginTop': '15px', 'textAlign': 'center'}
+            ),
+            html.P(
+                LEGEND2,
+                style={'textAlign': 'center'}
+            )],
             style={'textAlign': 'center'}),
+        
+        
     ]
 
-    return qa_content
+    return content
 
 
 def get_metastatus(status):
@@ -551,26 +592,34 @@ def qa_pivot(df):
 
 
 # This is where the data gets initialized
-def load_data(refresh=False, hidetypes=True, hidesgp=False):
+def load_data(projects=[], refresh=False, hidetypes=True, hidesgp=False):
+    if projects is None:
+        projects = []
+
     return data.load_data(
-        refresh=refresh, hidetypes=hidetypes, hidesgp=hidesgp)
+        projects=projects,
+        refresh=refresh,
+        hidetypes=hidetypes,
+        hidesgp=hidesgp)
 
 
-def load_proj_options():
-    return data.load_proj_options()
+#def load_proj_options(projects):
+#    return data.load_proj_options(projects)
 
 
-def load_sess_options(proj_filter=None):
-    return data.load_sess_options(proj_filter)
+#def load_sess_options(proj_filter=None):
+#    return data.load_sess_options(proj_filter)
 
 
-def load_scan_options(proj_filter=None):
-    return data.load_scan_options(proj_filter)
+#def load_scan_options(proj_filter=None):
+#    return data.load_scan_options(proj_filter)
 
 
-def load_proc_options(proj_filter=None):
-    return data.load_proc_options(proj_filter)
+#def load_proc_options(proj_filter=None):
+#    return data.load_proc_options(proj_filter)
 
+def load_options(projects):
+    return data.load_options(projects)
 
 def was_triggered(callback_ctx, button_id):
     result = (
@@ -611,8 +660,9 @@ def was_triggered(callback_ctx, button_id):
      Input('dropdown-qa-proj', 'value'),
      Input('dpr-qa-time', 'start_date'),
      Input('dpr-qa-time', 'end_date'),
-     Input('radio-qa-groupby', 'value'),
-     Input('radio-qa-hidetypes', 'value'),
+     Input('switch-qa-autofilter', 'value'),
+     Input('switches-qa-procstatus', 'value'),
+     Input('switches-qa-modality', 'value'),
      Input('radio-qa-pivot', 'value'),
      Input('button-qa-refresh', 'n_clicks')])
 def update_all(
@@ -622,17 +672,18 @@ def update_all(
     selected_proj,
     selected_starttime,
     selected_endtime,
-    selected_groupby,
-    selected_hidetypes,
+    selected_autofilter,
+    selected_procstatus,
+    selected_modality,
     selected_pivot,
     n_clicks
 ):
+    tabs = []
     refresh = False
 
     logger.debug('update_all')
 
-    # Load our data
-    # This data will already be merged scans and assessors with
+    # Load. This data will already be merged scans and assessors with
     # a row per scan or assessor
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-qa-refresh'):
@@ -641,18 +692,23 @@ def update_all(
         refresh = True
 
     logger.debug('loading data')
-    hidetypes = (selected_hidetypes == 'HIDE')
-    df = load_data(refresh=refresh, hidetypes=hidetypes)
+    df = load_data(projects=selected_proj, refresh=refresh, hidetypes=selected_autofilter)
+    if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
+        # A new project was selected so we force refresh
+        logger.debug('new project selected, refreshing')
+        df = load_data(selected_proj, refresh=True)
 
     # Truncate NOTE
-    df['NOTE'] = df['NOTE'].str.slice(0, 70)
+    if 'NOTE' in df:
+        df['NOTE'] = df['NOTE'].str.slice(0, 70)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
-    proj = utils.make_options(load_proj_options())
-    scan = utils.make_options(load_scan_options(selected_proj))
-    sess = utils.make_options(load_sess_options(selected_proj))
-    proc = utils.make_options(load_proc_options(selected_proj))
+    proj, sess, proc, scan = load_options(selected_proj)
+    proj = utils.make_options(proj)
+    sess = utils.make_options(sess)
+    proc = utils.make_options(proc)
+    scan = utils.make_options(scan)
 
     # Filter data based on dropdown values
     df = data.filter_data(
@@ -664,19 +720,25 @@ def update_all(
         selected_endtime,
         selected_sess)
 
-    #if selected_hidetypes == 'HIDE':
-    #    df = data.filter_types(df)
+    if not df.empty and selected_modality:
+        df = df[df.MODALITY.isin(selected_modality)]
 
-    # Get the qa pivot from the filtered data
-    dfp = qa_pivot(df)
+    if not df.empty and selected_procstatus:
+        df = df[df.STATUS.isin(selected_procstatus)]
 
-    tabs = _get_graph_content(dfp, selected_groupby)
+    if df.empty:
+         records = []
+         columns = []
+         tabs = _get_graph_content(None)
+    elif selected_pivot == 'proj':
+        # Get the qa pivot from the filtered data
+        dfp = qa_pivot(df)
+        tabs = _get_graph_content(dfp)
 
-    if selected_pivot == 'proj':
         cols = []
         selected_cols = ['PROJECT']
 
-        dfp = dfp .reset_index()
+        dfp = dfp.reset_index()
 
         if selected_proc:
             cols += selected_proc
@@ -750,6 +812,10 @@ def update_all(
     elif selected_pivot == 'subj':
         # row per subject
 
+        # Get the qa pivot from the filtered data
+        dfp = qa_pivot(df)
+        tabs = _get_graph_content(dfp)
+
         cols = []
         selected_cols = ['PROJECT', 'SUBJECT']
 
@@ -768,7 +834,6 @@ def update_all(
             cols = [x for x in cols if x in dfp.columns]
 
             # aggregrate to most common value (mode)
-            # TODO: ignore PETs when determining mode for assessors, how?
             dfp = dfp.reset_index().pivot_table(
                 index=('PROJECT', 'SUBJECT'),
                 values=cols,
@@ -811,6 +876,10 @@ def update_all(
         columns = utils.make_columns(selected_cols)
         records = dfp.reset_index().to_dict('records')
     else:
+        # Get the qa pivot from the filtered data
+        dfp = qa_pivot(df)
+        tabs = _get_graph_content(dfp)
+
         # Get the table data
         selected_cols = [
             'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
@@ -861,15 +930,6 @@ def update_all(
             if c['name'] == 'SESSION':
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
-
-
-
-
-        # TODO: link each project to redcap/xnat in project view
-
-
-    # TODO: should we only include data for selected columns here,
-    # to reduce amount of data sent?
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

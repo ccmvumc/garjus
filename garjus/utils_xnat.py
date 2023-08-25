@@ -568,3 +568,38 @@ def _create_zip(input_dir, output_zip):
 
         for file_path in dir_path.rglob("*.dcm"):
             archive.write(file_path, arcname=file_path.relative_to(dir_path))
+
+
+def get_my_projects(xnat):
+    #id,name,description,secondary_id,pi,project_invs,project_access,
+    #project_access_img,insert_date,insert_user,user_role_6,last_accessed_6,
+    #quarantine_status
+    """Get result of xnat query."""
+    uri = '/data/archive/projects?accessible=true'
+    logger.debug(uri)
+    json_data = json.loads(xnat._exec(uri, 'GET'), strict=False)
+    result = json_data['ResultSet']['Result']
+    _roles = ['Owners', 'Members', 'Collaborators']
+    return [x['id'] for x in result if x['user_role_6'] in _roles]
+
+
+#def get_user_favorites(xnat):
+#    FAV_URI = '/data/archive/projects?favorite=True'
+#    fav_json = get_json(xnat, FAV_URI)
+#    data = [x['id'] for x in fav_json['ResultSet']['Result']]
+
+#    return data
+
+
+#def get_user_projects(xnat, username):
+
+#    uri = '/xapi/users/{}/groups'.format(username)
+
+#    # get from xnat and convert to list
+#    data = get_json(xnat, uri)
+
+    # format of group name is PROJECT_ROLE,
+    # so we split on the underscore
+#    data = sorted([x.rsplit('_', 1)[0] for x in data])
+
+#    return data

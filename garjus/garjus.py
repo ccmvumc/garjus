@@ -35,7 +35,7 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
-from .analyses import update as update_analyses, download_analysis_inputs
+from .analyses import update as update_analyses, download_analysis_inputs, run_analysis
 
 
 logger = logging.getLogger('garjus')
@@ -61,7 +61,13 @@ class Garjus:
     ):
         """Initialize garjus."""
         self._disconnect_xnat = False
-        self._rc = (redcap_project or self._default_redcap())
+
+        try:
+            self._rc = (redcap_project or self._default_redcap())
+        except FileNotFoundError as err:
+            logger.debug(err)
+            logger.info('REDCap disabled, no credentials in ~/.redcap.txt')
+            self._rc = None
 
         if xnat_interface:
             self._xnat = xnat_interface
@@ -111,6 +117,9 @@ class Garjus:
     def _default_redcap():
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
+
+    def redcap_enabled(self):
+        return (self._rc is not None)
 
     def set_yamldir(self, yamldir=None):
         if yamldir:
@@ -598,8 +607,16 @@ class Garjus:
         return self._rc.export_records(records=[project], forms=['sites'])
 
     def _load_project_names(self):
-        _records = self._rc.export_records(fields=[self._rc.def_field])
-        return [x[self._rc.def_field] for x in _records]
+        names = []
+        if self._rc:
+            _records = self._rc.export_records(fields=[self._rc.def_field])
+            names = [x[self._rc.def_field] for x in _records]
+        else:
+            # Load from xnat
+            names = utils_xnat.get_my_projects(self.xnat())
+            logger.debug(f'my xnat projects={names}')
+
+        return names
 
     def _default_column_names(self):
         return COLUMNS
@@ -793,7 +810,11 @@ class Garjus:
         types = []
 
         # Get all processing records across projects
-        rec = self._rc.export_records(forms=['processing'])
+        try:
+            rec = self._rc.export_records(forms=['processing'])
+        except Exception as err:
+            logger.error(err)
+            return []
 
         for r in rec:
             if r['processor_yamlupload']:
@@ -813,7 +834,11 @@ class Garjus:
 
     def scanmap(self, project):
         """Parse scan map stored as string into map."""
-        scanmap = self.project_setting(project, 'scanmap')
+        try:
+            scanmap = self.project_setting(project, 'scanmap')
+        except Exception as err:
+            logger.error(err)
+            return {}
 
         try:
             # Parse multiline string of delimited key value pairs into dictionary
@@ -1972,6 +1997,8 @@ class Garjus:
     def get_analysis_inputs(self, project, analysis_id, download_dir):
         download_analysis_inputs(self, project, analysis_id, download_dir)
 
+    def run_analysis(self, project, analysis_id, output_zip):
+        run_analysis(self, project, analysis_id, output_zip)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

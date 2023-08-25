@@ -178,6 +178,11 @@ def get_stats_graph(df, var_list, pivot=None):
 
 
 def get_content():
+    proj, _ = data.load_options()
+    if not proj:
+        logger.debug('no projects for stats')
+        return None
+
     content = [
         dcc.Loading(id="loading-stats", children=[
             html.Div(dcc.Tabs(

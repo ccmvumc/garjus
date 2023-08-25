@@ -75,7 +75,12 @@ def get_graph_content(df):
 def get_content():
     ACTIVITY_SHOW_COLS = ['ID', 'PROJECT', 'DESCRIPTION']
 
-    df = load_activity()
+    try:
+        df = load_activity()
+    except Exception as err:
+        logger.error(err)
+        return None
+
     activity_graph_content = get_graph_content(df)
 
     # Get the rows and colums for the table

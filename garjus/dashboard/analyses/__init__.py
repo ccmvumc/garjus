@@ -18,6 +18,12 @@ logger = logging.getLogger('dashboard.analyses')
 
 def get_content():
 
+    try:
+        df = load_analyses()
+    except Exception as err:
+        logger.error(err)
+        return None
+
     content = [
         dcc.Dropdown(
             id='dropdown-analyses-time',
@@ -28,8 +34,6 @@ def get_content():
                 {'label': '1 month', 'value': '30day'},
                 {'label': '1 year', 'value': '365day'}],
             value='ALL'),
-        # TODO: status dropdown
-        # TODO: location dropdown
         dcc.Dropdown(
             id='dropdown-analyses-proj', multi=True,
             placeholder='Select Project(s)'),

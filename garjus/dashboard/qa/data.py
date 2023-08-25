@@ -43,116 +43,75 @@ def get_filename():
     return filename
 
 
-def run_refresh(filename, hidetypes=True, hidesgp=True):
-    proj_filter = []
-    proc_filter = []
-    scan_filter = []
+def run_refresh(projects, hidetypes=True, hidesgp=True):
+    filename = get_filename()
 
     # force a requery
-    df = get_data(proj_filter, proc_filter, scan_filter, hidetypes=hidetypes, hidesgp=hidesgp)
+    df = get_data(projects, [], [], hidetypes=hidetypes, hidesgp=hidesgp)
 
     save_data(df, filename)
 
     return df
 
 
-# TODO: combine these load_x_options to only read the file once
-def load_scan_options(project_filter=None):
-    # Read stypes from file and filter by projects
+def load_options(selected_proj=None):
+    garjus = Garjus()
+    projects = garjus.projects()
+    sesstypes = []
+    proctypes = []
+    scantypes = []
 
+    # Read from file and filter
     filename = get_filename()
 
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh()
+    if selected_proj and os.path.exists(filename):
+        logger.debug('reading data from file:{}'.format(filename))
+        df = pd.read_pickle(filename)
 
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
+        # Filter to selected
+        scantypes = df[df.PROJECT.isin(selected_proj)].SCANTYPE.unique()
 
-    if project_filter:
-        scantypes = df[df.PROJECT.isin(project_filter)].SCANTYPE.unique()
-    else:
-        scantypes = df.SCANTYPE.unique()
+        # Remove blanks and sort
+        scantypes = [x for x in scantypes if x]
+        scantypes = sorted(scantypes)
 
-    scantypes = [x for x in scantypes if x]
+        # Now sessions
+        sesstypes = df[df.PROJECT.isin(selected_proj)].SESSTYPE.unique()
 
-    return sorted(scantypes)
+        sesstypes = [x for x in sesstypes if x]
+        sesstypes = sorted(sesstypes)
 
+        # And finally proc
+        proctypes = df[df.PROJECT.isin(selected_proj)].PROCTYPE.unique()
+        proctypes = [x for x in proctypes if x]
+        proctypes = sorted(proctypes)
 
-# TODO: combine these load_x_options to only read the file once
-def load_sess_options(project_filter=None):
-    # Read stypes from file and filter by projects
-
-    filename = get_filename()
-
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh()
-
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
-
-    if project_filter:
-        sesstypes = df[df.PROJECT.isin(project_filter)].SESSTYPE.unique()
-    else:
-        sesstypes = df.SESSTYPE.unique()
-
-    sesstypes = [x for x in sesstypes if x]
-
-    return sorted(sesstypes)
-
-
-def load_proc_options(project_filter=None):
-    # Read ptypes from file and filter by projects
-
-    filename = get_filename()
-
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh()
-
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
-
-    if project_filter:
-        proctypes = df[df.PROJECT.isin(project_filter)].PROCTYPE.unique()
-    else:
-        proctypes = df.PROCTYPE.unique()
-
-    proctypes = [x for x in proctypes if x]
-
-    return sorted(proctypes)
-
-
-def load_proj_options():
-    filename = get_filename()
-
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh()
-
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
-
-    return sorted(df.PROJECT.unique())
+    return projects, sesstypes, proctypes, scantypes
 
 
 def file_age(filename):
     return int((time.time() - os.path.getmtime(filename)) / 60)
 
 
-def load_data(refresh=False, maxmins=60, hidetypes=True, hidesgp=True):
+def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=True):
     fname = get_filename()
 
-    if not refresh and os.path.exists(fname) and file_age(fname) > maxmins:
+    if not os.path.exists(fname):
+        refresh = True
+    elif file_age(fname) > maxmins:
         logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
         refresh = True
 
-    if refresh or not os.path.exists(fname):
-        run_refresh(fname, hidetypes, hidesgp)
+    if refresh:
+        run_refresh(projects, hidetypes, hidesgp)
 
     logger.info('reading data from file:{}'.format(fname))
-    return read_data(fname)
+    df = read_data(fname)
+
+    if 'PROJECT' in df:
+        df = df[df['PROJECT'].isin(projects)]
+
+    return df
 
 
 def read_data(filename):
@@ -165,15 +124,21 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(proj_filter, stype_filter, ptype_filter, hidetypes=True, hidesgp=True):
+def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=True):
+    df = pd.DataFrame()
+
+    if not projects:
+        # No projects selected so we don't query
+        return df
+
     try:
         garjus = Garjus()
 
-        # Load that data
-        scan_df = load_scan_data(garjus, proj_filter)
-        assr_df = load_assr_data(garjus, proj_filter)
+        # Load data
+        scan_df = load_scan_data(garjus, projects)
+        assr_df = load_assr_data(garjus, projects)
         if not hidesgp:
-            subj_df = load_sgp_data(garjus, proj_filter)
+            subj_df = load_sgp_data(garjus, projects)
 
     except Exception as err:
         logger.error(err)
@@ -235,17 +200,26 @@ def filter_types(garjus, scan_df, assr_df):
     scantypes = list(set(scantypes))
     assrtypes = list(set(assrtypes))
 
+    if not scantypes:
+        # Get list of scan types based on assessor inputs
+        scantypes = ['T1']
+
     # Apply filters
-    logger.info(f'filtering by types:{len(scan_df)}:{len(assr_df)}')
-    scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
-    assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
+    if scantypes:
+        logger.info(f'filtering scan by types:{len(scan_df)}')
+        scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
+
+    if assrtypes:
+        logger.info(f'filtering assr by types:{len(assr_df)}')
+        assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
+
     logger.info(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
 
     return scan_df, assr_df
 
 
 def load_assr_data(garjus, project_filter):
-    dfa = garjus.assessors().copy()
+    dfa = garjus.assessors(project_filter).copy()
 
     # Get subset of columns
     dfa = dfa[[
@@ -274,7 +248,8 @@ def load_assr_data(garjus, project_filter):
 
 
 def load_sgp_data(garjus, project_filter):
-    df = garjus.subject_assessors().copy()
+
+    df = garjus.subject_assessors(project_filter).copy()
 
     # Get subset of columns
     df = df[[
@@ -302,10 +277,10 @@ def load_sgp_data(garjus, project_filter):
     return df
 
 
-
 def load_scan_data(garjus, project_filter):
+
     #  Load data
-    dfs = garjus.scans()
+    dfs = garjus.scans(project_filter)
 
     dfs = dfs[[
         'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',

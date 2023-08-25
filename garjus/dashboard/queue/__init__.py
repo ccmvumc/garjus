@@ -74,7 +74,11 @@ def get_graph_content(df):
 def get_content():
     COLS = ['LABEL', 'STATUS', 'WALLTIME', 'MEMREQ', 'JOBID']  #, 'LASTMOD']
 
-    df = load_data()
+    try:
+        df = load_data()
+    except Exception as err:
+        logger.error(err)
+        return None
 
     graph_content = get_graph_content(df)
 

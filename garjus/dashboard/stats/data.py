@@ -19,7 +19,6 @@ def get_filename():
 
 
 def run_refresh(filename, projects):
-
     # force a requery
     df = get_data(projects)
 
@@ -30,9 +29,13 @@ def run_refresh(filename, projects):
 
 def load_options(selected_proj=None):
     garjus = Garjus()
-    proj_options = garjus.projects()
-    proc_options = []
 
+    if not garjus.redcap_enabled():
+        return [], []
+
+    proj_options = garjus.projects()
+
+    proc_options = []
     if selected_proj:
         for p in selected_proj:
             proc_options.extend(garjus.stattypes(p))
