@@ -72,7 +72,7 @@ def filter_data(df, time=None):
         #logger.debug('filtering by project:')
         #logger.debug(projects)
         #df = df[df['PROJECT'].isin(projects)]
-        print('TBD:time filter')
-
+        #print('TBD:time filter')
+        pass
 
     return df

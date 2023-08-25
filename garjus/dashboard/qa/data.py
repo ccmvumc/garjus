@@ -93,7 +93,7 @@ def file_age(filename):
     return int((time.time() - os.path.getmtime(filename)) / 60)
 
 
-def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=True):
+def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=False):
     fname = get_filename()
 
     if not os.path.exists(fname):
@@ -124,7 +124,7 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=True):
+def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False):
     df = pd.DataFrame()
 
     if not projects:
@@ -145,7 +145,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=True)
         return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK'])
 
     if hidetypes:
-        logger.info('applying filter types')
+        logger.debug('applying autofilter to hide unused types')
         scan_df, assr_df = filter_types(garjus, scan_df, assr_df)
 
     # Make a common column for type
@@ -168,9 +168,9 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=True)
         subj_df['SESSION'] = subj_df['ASSR']
         subj_df['SITE'] = 'SGP'
         subj_df['NOTE'] = ''
-        subj_df['XSITYPE'] = '' 
+        #subj_df['XSITYPE'] = 'proc:subjgenprocdata' 
         subj_df['SESSTYPE'] = 'SGP'
-        subj_df['MODALITY'] = ''
+        subj_df['MODALITY'] = 'SGP'
         df = pd.concat([df[QA_COLS], subj_df[QA_COLS]], sort=False)
 
     # relabel caare, etc
@@ -200,9 +200,9 @@ def filter_types(garjus, scan_df, assr_df):
     scantypes = list(set(scantypes))
     assrtypes = list(set(assrtypes))
 
-    if not scantypes:
-        # Get list of scan types based on assessor inputs
-        scantypes = ['T1']
+    #if not scantypes:
+    #    # Get list of scan types based on assessor inputs
+    #    scantypes = ['T1']
 
     # Apply filters
     if scantypes:
@@ -253,7 +253,7 @@ def load_sgp_data(garjus, project_filter):
 
     # Get subset of columns
     df = df[[
-        'PROJECT', 'SUBJECT', 'DATE', 'ASSR', 'QCSTATUS',
+        'PROJECT', 'SUBJECT', 'DATE', 'ASSR', 'QCSTATUS', 'XSITYPE',
         'PROCSTATUS', 'PROCTYPE']]
 
     df.drop_duplicates(inplace=True)

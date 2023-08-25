@@ -868,6 +868,7 @@ class Garjus:
         result = self._get_result(uri)
 
         # Change from one row per resource to one row per scan
+        # TODO: use pandas pivot/melt?
         scans = {}
         for r in result:
             k = (r['project'], r['session_label'], r['xnat:imagescandata/id'])

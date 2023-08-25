@@ -56,6 +56,7 @@ project,\
 subject_label,\
 date,\
 label,\
+xsiType,\
 proc:subjgenprocdata/procstatus,\
 proc:subjgenprocdata/proctype,\
 proc:subjgenprocdata/validation/status,\
@@ -102,6 +103,7 @@ SGP_RENAME = {
     'subject_label': 'SUBJECT',
     'date': 'DATE',
     'label': 'ASSR',
+    'xsiType': 'XSITYPE',
     'proc:subjgenprocdata/procstatus': 'PROCSTATUS',
     'proc:subjgenprocdata/proctype': 'PROCTYPE',
     'proc:subjgenprocdata/validation/status': 'QCSTATUS',

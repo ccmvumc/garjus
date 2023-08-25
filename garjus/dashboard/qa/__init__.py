@@ -62,9 +62,11 @@ LEGEND1 = '''
 LEGEND2 = '''
 🧠 MR
 ☢️ PET
+🤯 EEG
+📊 SGP
 '''
 
-MOD2EMO = {'EEG': '🤯', 'MR': '🧠', 'PET': '☢️'}
+MOD2EMO = {'MR': '🧠', 'PET': '☢️', 'EEG': '🤯', 'SGP': '📊'}
 
 
 # The data will be pivoted by session to show a row per session and
@@ -443,9 +445,11 @@ def get_content():
                     options=[
                         {'label': '🧠 MR', 'value': 'MR'},
                         {'label': '☢️ PET', 'value': 'PET'},
-                        {'label': 'EEG', 'value': 'EEG'},
+                        {'label': '🤯 EEG', 'value': 'EEG'},
+                        {'label': '📊 SGP', 'value': 'SGP'},
+
                     ],
-                    value=['MR', 'PET'],
+                    value=['MR', 'PET', 'EEG', 'SGP'],
                     id='switches-qa-modality',
                     inline=True,
                     switch=True
@@ -469,8 +473,9 @@ def get_content():
                         {'label': '🩷', 'value': 'X'},
                         {'label': '🟡', 'value': 'N'},
                         {'label': '🔷', 'value': 'R'},
+                        {'label': '□', 'value': 'E'},
                     ],
-                    value=['P', 'Q', 'F', 'X', 'N', 'R'],
+                    value=['P', 'Q', 'F', 'X', 'N', 'R', 'E'],
                     id='switches-qa-procstatus',
                     inline=True,
                     switch=True
@@ -579,6 +584,8 @@ def get_metastatus(status):
 
 
 def qa_pivot(df):
+    df.DATE = df.DATE.fillna('')
+
     dfp = df.pivot_table(
         index=(
             'SESSION', 'SESSIONLINK', 'SUBJECT', 'PROJECT',
@@ -586,6 +593,7 @@ def qa_pivot(df):
         columns='TYPE',
         values='STATUS',
         aggfunc=lambda x: ''.join(x))
+
 
     # and return our pivot table
     return dfp
@@ -692,7 +700,11 @@ def update_all(
         refresh = True
 
     logger.debug('loading data')
-    df = load_data(projects=selected_proj, refresh=refresh, hidetypes=selected_autofilter)
+    df = load_data(
+        projects=selected_proj,
+        refresh=refresh,
+        hidetypes=selected_autofilter)
+
     if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
         # A new project was selected so we force refresh
         logger.debug('new project selected, refreshing')
@@ -733,55 +745,59 @@ def update_all(
     elif selected_pivot == 'proj':
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
+
+        # Graph it
         tabs = _get_graph_content(dfp)
 
-        cols = []
+        # Make the table data
         selected_cols = ['PROJECT']
 
         dfp = dfp.reset_index()
 
         if selected_proc:
-            cols += selected_proc
             selected_cols += selected_proc
+            show_proc = [x for x in selected_proc if x in dfp.columns]
+        else:
+            show_proc = []
 
         if selected_scan:
-            cols += selected_scan
             selected_cols += selected_scan
+            show_scan = [x for x in selected_scan if x in dfp.columns]
+        else:
+            show_scan = []
 
-        if cols:
-            cols = [x for x in cols if x in dfp.columns]
-
+        if show_proc or show_scan:
             # aggregrate to most common value (mode)
-            dfp = dfp.reset_index().pivot_table(
+            dfp = dfp.pivot_table(
                 index=('PROJECT'),
-                values=cols,
+                values=show_proc + show_scan,
                 aggfunc=pd.Series.mode)
 
-            if selected_proc:
-                for p in selected_proc:
-                    if p in dfp.columns:
-                        dfp[p] = dfp[p].str.replace('P', '✅')
-                        dfp[p] = dfp[p].str.replace('X', '🩷')
-                        dfp[p] = dfp[p].str.replace('Q', '🟩')
-                        dfp[p] = dfp[p].str.replace('N', '🟡')
-                        dfp[p] = dfp[p].str.replace('R', '🔷')
-                        dfp[p] = dfp[p].str.replace('F', '❌')
+            for p in show_proc:
+                dfp[p] = dfp[p].str.replace('P', '✅')
+                dfp[p] = dfp[p].str.replace('X', '🩷')
+                dfp[p] = dfp[p].str.replace('Q', '🟩')
+                dfp[p] = dfp[p].str.replace('N', '🟡')
+                dfp[p] = dfp[p].str.replace('R', '🔷')
+                dfp[p] = dfp[p].str.replace('F', '❌')
+                if 'E' in selected_procstatus:
+                    dfp[p] = dfp[p].fillna('□')
 
-            if selected_scan:
-                for s in selected_scan:
-                    if s in dfp.columns:
-                        dfp[s] = dfp[s].str.replace('P', '✅')
-                        dfp[s] = dfp[s].str.replace('X', '🩷')
-                        dfp[s] = dfp[s].str.replace('Q', '🟩')
-                        dfp[s] = dfp[s].str.replace('N', '🟡')
-                        dfp[s] = dfp[s].str.replace('R', '🔷')
-                        dfp[s] = dfp[s].str.replace('F', '❌')
+            for s in show_scan:
+                dfp[s] = dfp[s].str.replace('P', '✅')
+                dfp[s] = dfp[s].str.replace('X', '🩷')
+                dfp[s] = dfp[s].str.replace('Q', '🟩')
+                dfp[s] = dfp[s].str.replace('N', '🟡')
+                dfp[s] = dfp[s].str.replace('R', '🔷')
+                dfp[s] = dfp[s].str.replace('F', '❌')
+                if 'E' in selected_procstatus:
+                    dfp[s] = dfp[s].fillna('□')
 
+            # Drop empty rows
+            dfp = dfp.dropna(subset=show_proc + show_scan)
         else:
             # No types selected, show sessions concat
             selected_cols += ['SESSIONS']
-
-            dfp = dfp[dfp.SESSTYPE != 'SGP']
             dfp = dfp.sort_values('MODALITY')
             dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
 
@@ -814,53 +830,58 @@ def update_all(
 
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
+
+        # Graph it
         tabs = _get_graph_content(dfp)
 
-        cols = []
+        # Get the table
+        dfp = dfp.reset_index()
+
         selected_cols = ['PROJECT', 'SUBJECT']
 
         if selected_proc:
-            cols += selected_proc
             selected_cols += selected_proc
+            show_proc = [x for x in selected_proc if x in dfp.columns]
+        else:
+            show_proc = []
 
         if selected_scan:
-            cols += selected_scan
+            #cols += selected_scan
             selected_cols += selected_scan
+            show_scan = [x for x in selected_scan if x in dfp.columns]
+        else:
+            show_scan = []
 
-        if cols:
-            # Show the selected columns
-
-            # only modify columns with data
-            cols = [x for x in cols if x in dfp.columns]
-
+        if show_proc or show_scan:
             # aggregrate to most common value (mode)
-            dfp = dfp.reset_index().pivot_table(
+            dfp = dfp.pivot_table(
                 index=('PROJECT', 'SUBJECT'),
-                values=cols,
+                values=show_proc + show_scan,
                 aggfunc=pd.Series.mode)
 
-            if selected_proc:
-                for p in selected_proc:
-                    if p in dfp.columns:
-                        dfp[p] = dfp[p].str.replace('P', '✅')
-                        dfp[p] = dfp[p].str.replace('X', '🩷')
-                        dfp[p] = dfp[p].str.replace('Q', '🟩')
-                        dfp[p] = dfp[p].str.replace('N', '🟡')
-                        dfp[p] = dfp[p].str.replace('R', '🔷')
-                        dfp[p] = dfp[p].str.replace('F', '❌')
+            for p in show_proc:
+                dfp[p] = dfp[p].str.replace('P', '✅')
+                dfp[p] = dfp[p].str.replace('X', '🩷')
+                dfp[p] = dfp[p].str.replace('Q', '🟩')
+                dfp[p] = dfp[p].str.replace('N', '🟡')
+                dfp[p] = dfp[p].str.replace('R', '🔷')
+                dfp[p] = dfp[p].str.replace('F', '❌')
+                if 'E' in selected_procstatus:
+                    dfp[p] = dfp[p].fillna('□')
 
-            if selected_scan:
-                for s in selected_scan:
-                    if s in dfp.columns:
-                        dfp[s] = dfp[s].str.replace('P', '✅')
-                        dfp[s] = dfp[s].str.replace('X', '🩷')
-                        dfp[s] = dfp[s].str.replace('Q', '🟩')
-                        dfp[s] = dfp[s].str.replace('N', '🟡')
-                        dfp[s] = dfp[s].str.replace('R', '🔷')
-                        dfp[s] = dfp[s].str.replace('F', '❌')
+            for s in show_scan:
+                dfp[s] = dfp[s].str.replace('P', '✅')
+                dfp[s] = dfp[s].str.replace('X', '🩷')
+                dfp[s] = dfp[s].str.replace('Q', '🟩')
+                dfp[s] = dfp[s].str.replace('N', '🟡')
+                dfp[s] = dfp[s].str.replace('R', '🔷')
+                dfp[s] = dfp[s].str.replace('F', '❌')
+                if 'E' in selected_procstatus:
+                    dfp[s] = dfp[s].fillna('□')
+
+            # Drop empty rows
+            dfp = dfp.dropna(subset=show_proc + show_scan)
         else:
-            dfp = dfp.reset_index()
-            dfp = dfp[dfp.SESSTYPE != 'SGP']
             dfp = dfp.sort_values('MODALITY')
             dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
 
@@ -886,30 +907,39 @@ def update_all(
 
         if selected_proc:
             selected_cols += selected_proc
+            show_proc = [x for x in selected_proc if x in dfp.columns]
+        else:
+            show_proc = []
 
         if selected_scan:
             selected_cols += selected_scan
+            show_scan = [x for x in selected_scan if x in dfp.columns]
+        else:
+            show_scan = []
 
-        # TODO: move this to where status is mapped to letters
-        if selected_proc:
-            for p in selected_proc:
-                if p in dfp.columns:
-                    dfp[p] = dfp[p].str.replace('P', '✅')
-                    dfp[p] = dfp[p].str.replace('X', '🩷')
-                    dfp[p] = dfp[p].str.replace('Q', '🟩')
-                    dfp[p] = dfp[p].str.replace('N', '🟡')
-                    dfp[p] = dfp[p].str.replace('R', '🔷')
-                    dfp[p] = dfp[p].str.replace('F', '❌')
+        for p in show_proc:
+            # Replace letters with emojis
+            dfp[p] = dfp[p].str.replace('P', '✅')
+            dfp[p] = dfp[p].str.replace('X', '🩷')
+            dfp[p] = dfp[p].str.replace('Q', '🟩')
+            dfp[p] = dfp[p].str.replace('N', '🟡')
+            dfp[p] = dfp[p].str.replace('R', '🔷')
+            dfp[p] = dfp[p].str.replace('F', '❌')
+            if 'E' in selected_procstatus:
+                dfp[p] = dfp[p].fillna('□')
 
-        if selected_scan:
-            for s in selected_scan:
-                if s in dfp.columns:
-                    dfp[s] = dfp[s].str.replace('P', '✅')
-                    dfp[s] = dfp[s].str.replace('X', '🩷')
-                    dfp[s] = dfp[s].str.replace('Q', '🟩')
-                    dfp[s] = dfp[s].str.replace('N', '🟡')
-                    dfp[s] = dfp[s].str.replace('R', '🔷')
-                    dfp[s] = dfp[s].str.replace('F', '❌')
+        for s in show_scan:
+            dfp[s] = dfp[s].str.replace('P', '✅')
+            dfp[s] = dfp[s].str.replace('X', '🩷')
+            dfp[s] = dfp[s].str.replace('Q', '🟩')
+            dfp[s] = dfp[s].str.replace('N', '🟡')
+            dfp[s] = dfp[s].str.replace('R', '🔷')
+            dfp[s] = dfp[s].str.replace('F', '❌')
+            if 'E' in selected_procstatus:
+                dfp[s] = dfp[s].fillna('□')
+
+        # Drop empty rows
+        dfp = dfp.dropna(subset=show_proc + show_scan)
 
         # Final column is always notes
         selected_cols.append('NOTE')
