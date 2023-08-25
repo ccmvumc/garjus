@@ -1,6 +1,8 @@
 """Analyses."""
 import logging
 import os
+import tempfile
+import subprocess as sb
 
 import pandas as pd
 
@@ -27,6 +29,9 @@ def _update_project(garjus, project):
     for i, row in analyses.iterrows():
         aname = row['NAME']
 
+        # First is output complete, already run, do nothing
+        # continue
+
         logging.info(f'updating analysis:{aname}')
 
         update_analysis(
@@ -42,6 +47,48 @@ def update_analysis(
 ):
     """Update analysis."""
     print('TBD:update_analysis')
+
+    # should we run it?
+
+    # Run it
+
+    # Upload
+    #upload_analysis(garjus, project, analysis_id, upload_dir)
+
+    # Set Analysis color to COMPLETE/Green
+
+
+def run_analysis(garjus, project, analysis_id, output_zip):
+    with tempfile.TemporaryDirectory() as tempdir:
+        download_dir = f'{tempdir}/INPUTS'
+        upload_dir = f'{tempdir}/OUTPUTS'
+   
+        _make_dirs(upload_dir)
+
+        # Download inputs
+        logger.info(f'downloading inputs to {download_dir}')
+        download_analysis_inputs(garjus, project, analysis_id, download_dir)
+
+        # Run steps
+        logger.info('running analysis steps...')
+        # run singularity??? run docker??? make a job? where?
+        # ?????????????????????????????????????????????????????????
+        cmd = SINGULARITY_CMD
+
+
+
+        # Zip output
+        logger.info(f'zipping output {upload_dir} to {output_zip}')
+        sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+        logger.info(f'analysis done!')
+
+
+def upload_analysis(garjus, project, analysis_id, output_zip):
+    # Upload to xnat
+
+    # Set path to xnat zip in REDCap field
+
+    return
 
 
 def _sessions_from_scans(scans):
@@ -260,6 +307,9 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
             continue
 
     # report what's missing
-    logger.info(f'errors{errors}')
+    if errors:
+        logger.info(f'errors{errors}')
+    else:
+        logger.info(f'download complete with no errors!')
 
     logger.debug('done!')
