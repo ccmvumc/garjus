@@ -57,6 +57,7 @@ LEGEND1 = '''
 🩷Job Failed ㅤ
 🟡Needs Inputs ㅤ
 🔷Job Running
+□ None Found
 '''
 
 LEGEND2 = '''
@@ -230,8 +231,10 @@ def _get_graph_content(dfp):
 
     # Build the tab
     label = 'By {}'.format('PROJECT')
-    graph = html.Div(dcc.Graph(figure=fig), style={
-        'width': '100%', 'display': 'inline-block'})
+    graph = html.Div(
+        dcc.Graph(figure=fig),
+        style={'width': '100%', 'display': 'inline-block'}
+    )
     tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
     tabs_content.append(tab)
     tab_value += 1
@@ -246,8 +249,16 @@ def _get_graph_content(dfp):
     tabs_content.append(tab)
     tab_value += 1
 
-    # Return the tabs
-    return tabs_content
+    # Return the tabs wrapped in a spinning loader
+    #return tabs_content
+    return dbc.Spinner(
+        id="loading-qa",
+        children=[
+            html.Div(dcc.Tabs(
+                id='tabs-qa',
+                value='0',
+                vertical=True,
+                children=tabs_content))]),
 
 
 def _sessionsbytime_figure(df, selected_groupby):
@@ -403,12 +414,7 @@ def get_content():
 
     # We use the dbc grid layout with rows and columns, rows are 12 units wide
     content = [
-        dbc.Spinner(id="loading-qa", children=[
-            html.Div(dcc.Tabs(
-                id='tabs-qa',
-                value='0',
-                vertical=True,
-                children=graph_content))]),
+        dbc.Row(html.Div(id='div-qa-graph', children=[])),
         dbc.Row([
             dbc.Col(
                 dcc.DatePickerRange(id='dpr-qa-time', clearable=True),
@@ -427,7 +433,7 @@ def get_content():
                 dbc.Switch(
                     id='switch-qa-graph',
                     label='Graph',
-                    value=True,
+                    value=False,
                 ),
                 align="end",
             ),
@@ -460,7 +466,7 @@ def get_content():
                         {'label': '🤯 EEG', 'value': 'EEG'},
                         {'label': '📊 SGP', 'value': 'SGP'},
                     ],
-                    value=['MR', 'PET', 'EEG', 'SGP'],
+                    value=['MR', 'PET', 'EEG'],
                     id='switches-qa-modality',
                     inline=True,
                     switch=True
@@ -524,7 +530,9 @@ def get_content():
             ),
         ]),
         dbc.Spinner(id="loading-qa-table", children=[
-            dt.DataTable(
+            dbc.Label('Loading table...', id='label-qa-rowcount1'),
+        ]),
+        dt.DataTable(
                 columns=[],
                 data=[],
                 filter_action='native',
@@ -557,9 +565,9 @@ def get_content():
                 fill_width=False,
                 export_format='xlsx',
                 export_headers='names',
-                export_columns='visible'),
-        ]),
-        dbc.Label('0.0', id='label-qa-rowcount'),
+                export_columns='visible'
+            ),
+            dbc.Label('Loading table...', id='label-qa-rowcount2'),
         html.Div([
             html.P(
                 LEGEND1,
@@ -667,8 +675,9 @@ def was_triggered(callback_ctx, button_id):
      Output('dropdown-qa-proj', 'options'),
      Output('datatable-qa', 'data'),
      Output('datatable-qa', 'columns'),
-     Output('tabs-qa', 'children'),
-     Output('label-qa-rowcount', 'children'),
+     Output('div-qa-graph', 'children'),
+     Output('label-qa-rowcount1', 'children'),
+     Output('label-qa-rowcount2', 'children'),
      ],
     [Input('dropdown-qa-proc', 'value'),
      Input('dropdown-qa-scan', 'value'),
@@ -864,13 +873,26 @@ def update_all(
             show_scan = []
 
         if show_proc or show_scan:
+            # append sess type to proctype/scantype columns
+            # before agg so we get a column per sesstype
+            # but only if there are fewer than 10 session types
+            #print('SESSTYPE', dfp.SESSTYPE.unique())
+            #for sesstype in dfp.SESSTYPE.unique():
+            #if len(dfp.SESSTYPE.unique()) < 5:
+            #    show_col = []
+            #    for col in show_proc + show_scan:
+            #        dfp[sess_type+'_'+col] = 
+            #else:       
+            #    show_col = show_proc + show_scan
+            # how do we do this??? do we have to unpivot somehow first?
+
             # aggregrate to most common value (mode)
             dfp = dfp.pivot_table(
                 index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
-                values=show_proc + show_scan,
+                values=show_col,
                 aggfunc=pd.Series.mode)
 
-            for p in show_proc:
+            for p in show_col:
                 dfp[p] = dfp[p].str.replace('P', '✅')
                 dfp[p] = dfp[p].str.replace('X', '🩷')
                 dfp[p] = dfp[p].str.replace('Q', '🟩')
@@ -880,18 +902,8 @@ def update_all(
                 if 'E' in selected_procstatus:
                     dfp[p] = dfp[p].fillna('□')
 
-            for s in show_scan:
-                dfp[s] = dfp[s].str.replace('P', '✅')
-                dfp[s] = dfp[s].str.replace('X', '🩷')
-                dfp[s] = dfp[s].str.replace('Q', '🟩')
-                dfp[s] = dfp[s].str.replace('N', '🟡')
-                dfp[s] = dfp[s].str.replace('R', '🔷')
-                dfp[s] = dfp[s].str.replace('F', '❌')
-                if 'E' in selected_procstatus:
-                    dfp[s] = dfp[s].fillna('□')
-
             # Drop empty rows
-            dfp = dfp.dropna(subset=show_proc + show_scan)
+            dfp = dfp.dropna(subset=show_col)
         else:
             dfp = dfp.sort_values('MODALITY')
             dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
@@ -996,4 +1008,4 @@ def update_all(
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')
-    return [proc, scan, sess, proj, records, columns, tabs, rowcount]
+    return [proc, scan, sess, proj, records, columns, tabs, rowcount, rowcount]

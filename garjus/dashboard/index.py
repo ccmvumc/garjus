@@ -12,12 +12,13 @@ from ..garjus import Garjus
 
 
 def get_layout():
-    tabs = []
     g = Garjus()
 
-    tabs.append(dcc.Tab(label='QA', value='qa', children=qa.get_content()))
-
     if g.redcap_enabled():
+        tabs = []
+
+        tabs.append(dcc.Tab(label='QA', value='qa', children=qa.get_content()))
+
         tabs.append(dcc.Tab(
             label='Activity',
             value='activity',
@@ -43,9 +44,11 @@ def get_layout():
             value='analyses',
             children=analyses.get_content()))
 
-    report_content = [
-        html.Div(dcc.Tabs(
-            id='tabs', value='qa', vertical=False, children=tabs))]
+        report_content = [html.Div(dcc.Tabs(
+                id='tabs', value='qa', vertical=False, children=tabs))]
+    else:
+        # Just QA
+        report_content = qa.get_content()
 
     footer_content = [
         html.Hr(),
