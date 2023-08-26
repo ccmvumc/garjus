@@ -735,10 +735,6 @@ def update_all(
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
     proj, sess, proc, scan = load_options(selected_proj)
-    proj = utils.make_options(proj)
-    sess = utils.make_options(sess)
-    proc = utils.make_options(proc)
-    scan = utils.make_options(scan)
 
     # Remove from selected what is no longer an option
     if selected_sess:
@@ -747,6 +743,12 @@ def update_all(
         selected_proc = [x for x in selected_proc if x in proc]
     if selected_scan:
         selected_scan = [x for x in selected_scan if x in scan]
+
+    # Convert to dash options
+    proj = utils.make_options(proj)
+    sess = utils.make_options(sess)
+    proc = utils.make_options(proc)
+    scan = utils.make_options(scan)
 
     # Filter data based on dropdown values
     df = data.filter_data(
