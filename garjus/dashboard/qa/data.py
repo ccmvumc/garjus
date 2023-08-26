@@ -31,7 +31,8 @@ ASSR_STATUS_MAP = {
 QA_COLS = [
     'SESSION', 'SUBJECT', 'PROJECT',
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
-    'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']
+    'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE',
+    'MODALITY']
 
 
 def get_filename():
@@ -142,7 +143,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
 
     except Exception as err:
         logger.error(err)
-        return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK'])
+        return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK', 'SUBJECTLINK'])
 
     if hidetypes:
         logger.debug('applying autofilter to hide unused types')
@@ -184,32 +185,38 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION']
 
+    df['SUBJECTLINK'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT']
+
     return df
 
 
 def filter_types(garjus, scan_df, assr_df):
-    scantypes = []
-    assrtypes = []
+    scantypes = None
+    assrtypes = None
 
-    # Load types
-    logger.info('loading scan/assr types')
-    scantypes = garjus.all_scantypes()
-    assrtypes = garjus.all_proctypes()
+    if garjus.redcap_enabled():
+        # Load types
+        logger.info('loading scan/assr types')
+        scantypes = garjus.all_scantypes()
+        assrtypes = garjus.all_proctypes()
 
-    # Make the lists unique
-    scantypes = list(set(scantypes))
-    assrtypes = list(set(assrtypes))
+        # Make the lists unique
+        scantypes = list(set(scantypes))
+        assrtypes = list(set(assrtypes))
 
-    #if not scantypes:
-    #    # Get list of scan types based on assessor inputs
-    #    scantypes = ['T1']
+    if not scantypes and not assr_df.empty:
+        # Get list of scan types based on assessor inputs
+        logger.info('loading used scan types')
+        scantypes = garjus.used_scantypes(assr_df)
 
     # Apply filters
-    if scantypes:
+    if scantypes is not None:
         logger.info(f'filtering scan by types:{len(scan_df)}')
         scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
 
-    if assrtypes:
+    if assrtypes is not None:
         logger.info(f'filtering assr by types:{len(assr_df)}')
         assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
 
@@ -223,8 +230,9 @@ def load_assr_data(garjus, project_filter):
 
     # Get subset of columns
     dfa = dfa[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'ASSR', 'QCSTATUS',
-        'PROCSTATUS', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']]
+        'PROJECT', 'SESSION', 'SUBJECT', 'ASSR',
+        'NOTE', 'DATE', 'SITE', 'QCSTATUS', 'PROCSTATUS',
+        'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']]
 
     dfa.drop_duplicates(inplace=True)
 

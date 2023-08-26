@@ -1,5 +1,4 @@
 from dash import dcc, html
-import dash_bootstrap_components as dbc
 
 from .app import app
 from . import qa
@@ -9,38 +8,40 @@ from . import queue
 from . import stats
 from . import analyses
 
+from ..garjus import Garjus
+
 
 def get_layout():
-    qa_content = qa.get_content()
-    activity_content = activity.get_content()
-    stats_content = stats.get_content()
-    issues_content = issues.get_content()
-    queue_content = queue.get_content()
-    analyses_content = analyses.get_content()
-
     tabs = []
+    g = Garjus()
 
-    tabs.append(dcc.Tab(label='QA', value='qa', children=qa_content))
+    tabs.append(dcc.Tab(label='QA', value='qa', children=qa.get_content()))
 
-    if activity_content:
+    if g.redcap_enabled():
         tabs.append(dcc.Tab(
-            label='Activity', value='activity', children=activity_content))
+            label='Activity',
+            value='activity',
+            children=activity.get_content()))
 
-    if issues_content:
         tabs.append(dcc.Tab(
-            label='Issues', value='issues', children=issues_content))
+            label='Issues',
+            value='issues',
+            children=issues.get_content()))
 
-    if queue_content:
         tabs.append(dcc.Tab(
-            label='Queue', value='queue', children=queue_content))
+            label='Queue',
+            value='queue',
+            children=queue.get_content()))
 
-    if stats_content:
         tabs.append(dcc.Tab(
-            label='Stats', value='stats', children=stats_content))
+            label='Stats',
+            value='stats',
+            children= stats.get_content()))
 
-    if analyses_content:
         tabs.append(dcc.Tab(
-            label='Analyses', value='analyses', children=analyses_content))
+            label='Analyses',
+            value='analyses',
+            children=analyses.get_content()))
 
     report_content = [
         html.Div(dcc.Tabs(
@@ -57,7 +58,8 @@ def get_layout():
     # Make the main app layout
     main_content = html.Div([
         html.Div(children=report_content, id='report-content'),
-        html.Div(children=footer_content, id='footer-content')])
+        html.Div(children=footer_content, id='footer-content')],
+    )
 
     return main_content
 
@@ -69,17 +71,6 @@ app.css.config.serve_locally = False
 
 # Set the title to appear on web pages
 app.title = 'DAX Dashboard'
-
-# Set the content and templates
-# more here:
-# https://hellodash.pythonanywhere.com
-app.css.append_css({
-    #'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-    #'external_url': dbc.themes.BOOTSTRAP,
-    #'external_url': dbc.themes.LUMEN,
-    #'external_url': dbc.themes.YETI,
-    'external_url': dbc.themes.FLATLY,
-})
 
 app.layout = get_layout()
 

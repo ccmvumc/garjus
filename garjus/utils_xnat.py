@@ -585,12 +585,11 @@ def get_my_projects(xnat):
     return [x['id'] for x in result if x['user_role_6'] in _roles]
 
 
-#def get_user_favorites(xnat):
-#    FAV_URI = '/data/archive/projects?favorite=True'
-#    fav_json = get_json(xnat, FAV_URI)
-#    data = [x['id'] for x in fav_json['ResultSet']['Result']]
-
-#    return data
+def get_my_favorites(xnat):
+    uri = '/data/archive/projects?favorite=True'
+    fav_json = json.loads(xnat._exec(uri, 'GET'), strict=False)
+    fav = [x['id'] for x in fav_json['ResultSet']['Result']]
+    return fav
 
 
 #def get_user_projects(xnat, username):

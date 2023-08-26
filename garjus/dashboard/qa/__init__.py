@@ -11,8 +11,6 @@
 # TODO: modify subject view to concat the session type with the proctype before
 # aggregating so we get separate a column for each sesstype_proctype
 
-# TODO: bring back EEG?
-
 # TODO: link each project to redcap/xnat in project view
 
 # TODO: only send data for selected columns to reduce amount of data sent?
@@ -25,7 +23,7 @@
 # TODO: try to connect baseline with followup with arc line or something
 # or could have "by subject" choice that has a subject per y value?
 
-# TODO: dropdown to select custom dates or from choices: last week, last month, this month.
+# TODO: dropdown to select from choices: last week, last month, this month.
 
 
 import logging
@@ -45,6 +43,8 @@ from ..app import app
 from .. import utils
 from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
+
+from ...garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.qa')
@@ -120,12 +120,11 @@ def _get_graph_content(dfp):
     # The result will be a table with one row per TYPE (index=TYPE),
     # and we'll have a column for each STATUS (so columns=STATUS),
     # and we'll count how many sessions (values='SESSION') we find for each
-    # cell
-    # get a copy so it's defragmented
+    # cell get a copy so it's defragmented
     dfp_copy = dfp_copy.reset_index().copy()
 
     # don't need subject
-    dfp_copy = dfp_copy.drop(columns=['SUBJECT'])
+    dfp_copy = dfp_copy.drop(columns=['SUBJECT', 'SUBJECTLINK'])
 
     # use pandas melt function to unpivot our pivot table
     df = pd.melt(
@@ -400,6 +399,9 @@ def get_content():
 
     graph_content = _get_graph_content(None)
 
+    favorites = Garjus().favorites()
+
+    # We use the dbc grid layout with rows and columns, rows are 12 units wide
     content = [
         dbc.Spinner(id="loading-qa", children=[
             html.Div(dcc.Tabs(
@@ -409,29 +411,38 @@ def get_content():
                 children=graph_content))]),
         dbc.Row([
             dbc.Col(
-                dcc.DatePickerRange(
-                    id='dpr-qa-time',
-                    clearable=True,
-                )
+                dcc.DatePickerRange(id='dpr-qa-time', clearable=True),
+                width=5,
             ),
-            dbc.Col(
-                dbc.Button('Refresh Data', id='button-qa-refresh'),
-            ),
+            dbc.Col(dbc.Button('Refresh Data', id='button-qa-refresh'),),
             dbc.Col(
                 dbc.Switch(
                     id='switch-qa-autofilter',
                     label='Autofilter',
                     value=True,
-                ), align="end",
+                ), 
+                align="end",
             ),
-           
-        ], style={'width': '70%'},), 
-        #], style={"display": "inline-flex", "width": "100%"}),
-        dcc.Dropdown(
-            id='dropdown-qa-proj',
-            multi=True, 
-            placeholder='Select Project(s)',
-            style={'width': '70%'}),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-qa-graph',
+                    label='Graph',
+                    value=True,
+                ),
+                align="end",
+            ),
+        ]),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-qa-proj',
+                    multi=True,
+                    placeholder='Select Project(s)',
+                    value=favorites,
+                ),
+                width=5,
+            ),
+        ),
         dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
@@ -439,6 +450,7 @@ def get_content():
                     multi=True,
                     placeholder='Select Session Type(s)',
                 ),
+                width=5,
             ),
             dbc.Col(
                 dbc.Checklist(
@@ -447,7 +459,6 @@ def get_content():
                         {'label': '☢️ PET', 'value': 'PET'},
                         {'label': '🤯 EEG', 'value': 'EEG'},
                         {'label': '📊 SGP', 'value': 'SGP'},
-
                     ],
                     value=['MR', 'PET', 'EEG', 'SGP'],
                     id='switches-qa-modality',
@@ -463,6 +474,7 @@ def get_content():
                     multi=True,
                     placeholder='Select Processing Type(s)',
                 ),
+                width=5,
             ),
             dbc.Col(
                 dbc.Checklist(
@@ -482,59 +494,72 @@ def get_content():
                 ),
             ),
         ]),
-        dcc.Dropdown(
-            id='dropdown-qa-scan', multi=True,
-            placeholder='Select Scan Type(s)', style={'width': '70%'}),
-
-        dbc.RadioItems(
-            className="btn-group",
-            inputClassName="btn-check",
-            labelClassName="btn btn-outline-primary",
-            labelCheckedClassName="active",
-            options=[
-                {'label': 'Sessions', 'value': 'sess'},
-                {'label': 'Subjects', 'value': 'subj'},
-                {'label': 'Projects', 'value': 'proj'},
+        dbc.Row([
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-qa-scan',
+                    multi=True,
+                    placeholder='Select Scan Type(s)',
+                ),
+                width=5,
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                dbc.RadioItems(
+                    # Use specific css to make radios look like buttons
+                    className="btn-group",
+                    inputClassName="btn-check",
+                    labelClassName="btn btn-outline-primary",
+                    labelCheckedClassName="active",
+                    options=[
+                        {'label': 'Sessions', 'value': 'sess'},
+                        {'label': 'Subjects', 'value': 'subj'},
+                        {'label': 'Projects', 'value': 'proj'},
+                    ],
+                    value='sess',
+                    id='radio-qa-pivot',
+                    labelStyle={'display': 'inline-block'},
+                ),
+            ),
+        ]),
+        dbc.Spinner(id="loading-qa-table", children=[
+            dt.DataTable(
+                columns=[],
+                data=[],
+                filter_action='native',
+                page_action='none',
+                sort_action='native',
+                id='datatable-qa',
+                style_table={
+                    'overflowY': 'scroll',
+                    'overflowX': 'scroll',
+                },
+                style_cell={
+                    'textAlign': 'center',
+                    'padding': '5px 5px 0px 5px',
+                    'width': '30px',
+                    'overflow': 'hidden',
+                    'textOverflow': 'ellipsis',
+                    'height': 'auto',
+                    'minWidth': '40',
+                    'maxWidth': '70'},
+                style_header={
+                    'backgroundColor': 'white',
+                    'fontWeight': 'bold',
+                    'padding': '5px 15px 0px 10px'},
+                style_cell_conditional=[
+                    {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
+                    {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
+                    {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
                 ],
-            value='sess',
-            id='radio-qa-pivot',
-            labelStyle={'display': 'inline-block'}),
-        dt.DataTable(
-            columns=[],
-            data=[],
-            filter_action='native',
-            page_action='none',
-            sort_action='native',
-            id='datatable-qa',
-            style_table={
-                'overflowY': 'scroll',
-                'overflowX': 'scroll',
-            },
-            style_cell={
-                'textAlign': 'center',
-                'padding': '5px 5px 0px 5px',
-                'width': '30px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis',
-                'height': 'auto',
-                'minWidth': '40',
-                'maxWidth': '70'},
-            style_header={
-                #'width': '80px',
-                'backgroundColor': 'white',
-                'fontWeight': 'bold',
-                'padding': '5px 15px 0px 10px'},
-            style_cell_conditional=[
-                {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
-                {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
-                {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
-            ],
-            css=[dict(selector= "p", rule= "margin: 0; text-align: center")],
-            fill_width=False,
-            export_format='xlsx',
-            export_headers='names',
-            export_columns='visible'),
-        html.Label('0', id='label-qa-rowcount'),
+                css=[dict(selector= "p", rule= "margin: 0; text-align: center")],
+                fill_width=False,
+                export_format='xlsx',
+                export_headers='names',
+                export_columns='visible'),
+        ]),
+        dbc.Label('0.0', id='label-qa-rowcount'),
         html.Div([
             html.P(
                 LEGEND1,
@@ -545,11 +570,9 @@ def get_content():
                 style={'textAlign': 'center'}
             )],
             style={'textAlign': 'center'}),
-        
-        
     ]
 
-    return content
+    return html.Div(content, className='dbc', style={'marginLeft': '10px'})
 
 
 def get_metastatus(status):
@@ -588,7 +611,7 @@ def qa_pivot(df):
 
     dfp = df.pivot_table(
         index=(
-            'SESSION', 'SESSIONLINK', 'SUBJECT', 'PROJECT',
+            'SESSION', 'SESSIONLINK', 'SUBJECT', 'SUBJECTLINK', 'PROJECT',
             'DATE', 'SESSTYPE', 'SITE', 'MODALITY', 'NOTE'),
         columns='TYPE',
         values='STATUS',
@@ -610,21 +633,6 @@ def load_data(projects=[], refresh=False, hidetypes=True, hidesgp=False):
         hidetypes=hidetypes,
         hidesgp=hidesgp)
 
-
-#def load_proj_options(projects):
-#    return data.load_proj_options(projects)
-
-
-#def load_sess_options(proj_filter=None):
-#    return data.load_sess_options(proj_filter)
-
-
-#def load_scan_options(proj_filter=None):
-#    return data.load_scan_options(proj_filter)
-
-
-#def load_proc_options(proj_filter=None):
-#    return data.load_proc_options(proj_filter)
 
 def load_options(projects):
     return data.load_options(projects)
@@ -669,6 +677,7 @@ def was_triggered(callback_ctx, button_id):
      Input('dpr-qa-time', 'start_date'),
      Input('dpr-qa-time', 'end_date'),
      Input('switch-qa-autofilter', 'value'),
+     Input('switch-qa-graph', 'value'),
      Input('switches-qa-procstatus', 'value'),
      Input('switches-qa-modality', 'value'),
      Input('radio-qa-pivot', 'value'),
@@ -681,6 +690,7 @@ def update_all(
     selected_starttime,
     selected_endtime,
     selected_autofilter,
+    selected_graph,
     selected_procstatus,
     selected_modality,
     selected_pivot,
@@ -691,15 +701,14 @@ def update_all(
 
     logger.debug('update_all')
 
-    # Load. This data will already be merged scans and assessors with
-    # a row per scan or assessor
+    # Load. This data will already be merged scans and assessors, row per
     ctx = dash.callback_context
     if was_triggered(ctx, 'button-qa-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('refresh:clicks={}'.format(n_clicks))
         refresh = True
 
-    logger.debug('loading data')
+    logger.info(f'loading data:{selected_proj}')
     df = load_data(
         projects=selected_proj,
         refresh=refresh,
@@ -741,13 +750,14 @@ def update_all(
     if df.empty:
          records = []
          columns = []
-         tabs = _get_graph_content(None)
+         #tabs = _get_graph_content(None)
     elif selected_pivot == 'proj':
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
 
-        # Graph it
-        tabs = _get_graph_content(dfp)
+        if selected_graph:
+            # Graph it
+            tabs = _get_graph_content(dfp)
 
         # Make the table data
         selected_cols = ['PROJECT']
@@ -832,7 +842,8 @@ def update_all(
         dfp = qa_pivot(df)
 
         # Graph it
-        tabs = _get_graph_content(dfp)
+        if selected_graph:
+            tabs = _get_graph_content(dfp)
 
         # Get the table
         dfp = dfp.reset_index()
@@ -855,7 +866,7 @@ def update_all(
         if show_proc or show_scan:
             # aggregrate to most common value (mode)
             dfp = dfp.pivot_table(
-                index=('PROJECT', 'SUBJECT'),
+                index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
                 values=show_proc + show_scan,
                 aggfunc=pd.Series.mode)
 
@@ -886,7 +897,7 @@ def update_all(
             dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
 
             dfp = dfp.pivot_table(
-                index=('SUBJECT', 'PROJECT'),
+                index=('SUBJECT', 'PROJECT', 'SUBJECTLINK'),
                 values='SESSIONS',
                 aggfunc=lambda x: ''.join(x))
 
@@ -896,10 +907,24 @@ def update_all(
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
         records = dfp.reset_index().to_dict('records')
+
+        # Format records
+        for r in records:
+            if r['SUBJECT'] and 'SUBJECTLINK' in r:
+                _subj = r['SUBJECT']
+                _link = r['SUBJECTLINK']
+                r['SUBJECT'] = f'[{_subj}]({_link})'
+
+        # Format columns
+        for i, c in enumerate(columns):
+            if c['name'] in ['SESSION', 'SUBJECT']:
+                columns[i]['type'] = 'text'
+                columns[i]['presentation'] = 'markdown'
     else:
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
-        tabs = _get_graph_content(dfp)
+        if selected_graph:
+            tabs = _get_graph_content(dfp)
 
         # Get the table data
         selected_cols = [
@@ -955,9 +980,14 @@ def update_all(
                 _link = r['SESSIONLINK']
                 r['SESSION'] = f'[{_sess}]({_link})'
 
+            if r['SUBJECT'] and 'SUBJECTLINK' in r:
+                _subj = r['SUBJECT']
+                _link = r['SUBJECTLINK']
+                r['SUBJECT'] = f'[{_subj}]({_link})'
+
         # Format columns
         for i, c in enumerate(columns):
-            if c['name'] == 'SESSION':
+            if c['name'] in ['SESSION', 'SUBJECT']:
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
 

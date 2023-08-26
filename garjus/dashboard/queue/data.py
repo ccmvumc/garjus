@@ -21,7 +21,12 @@ def get_filename():
 
 
 def get_data(proj_filter, hidedone=True):
-    df = Garjus().tasks(hidedone=hidedone)
+    g = Garjus()
+
+    if not g.redcap_enabled():
+        return None
+
+    df = g.tasks(hidedone=hidedone)
 
     df = df[df.STATUS != 'NEED_INPUTS']
 

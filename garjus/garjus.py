@@ -66,7 +66,7 @@ class Garjus:
             self._rc = (redcap_project or self._default_redcap())
         except FileNotFoundError as err:
             logger.debug(err)
-            logger.info('REDCap disabled, no credentials in ~/.redcap.txt')
+            logger.debug('REDCap disabled, no credentials in ~/.redcap.txt')
             self._rc = None
 
         if xnat_interface:
@@ -139,6 +139,10 @@ class Garjus:
     def activity(self, project=None, startdate=None):
         """List of activity records."""
         data = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load activity, redcap not enabled')
+            return None
 
         _fields = [self._dfield()]
         if project:
@@ -226,6 +230,37 @@ class Garjus:
 
         return df
 
+    def favorites(self):
+        return utils_xnat.get_my_favorites(self.xnat())
+
+    def used_scantypes(self, assessors):
+        """List of scantypes that are used as inputs to assessors."""
+        scantypes = []
+        projects = assessors.PROJECT.unique()
+        proctypes = assessors.PROCTYPE.unique()
+
+        assr_data = self._load_assr_data(projects, proctypes)
+        scan_data = self._load_scan_data(projects)
+
+        scanset = set()
+        for d in assr_data:
+            _values = list(d['INPUTS'].values())
+            scanset.update(_values)
+
+        scanlist = list(scanset)
+        scanlist = [x for x in scanlist if '/scans/' in x]
+
+        scan_df = pd.DataFrame({'SCAN': scanlist})
+        scan_df = pd.merge(
+            scan_df,
+            pd.DataFrame(scan_data),
+            how='left',
+            left_on='SCAN',
+            right_on='full_path')
+        scantypes = scan_df.SCANTYPE.unique()
+
+        return scantypes
+
     def assessor_resources(self, project, proctype):
         """Query XNAT and return dict"""
 
@@ -309,6 +344,10 @@ class Garjus:
         """Return the current existing issues data as list of dicts."""
         data = []
 
+        if not self.redcap_enabled():
+            logger.info('cannot load issues, redcap not enabled')
+            return None
+
         # Get the data from redcap
         _fields = [self._dfield()]
         if project:
@@ -341,6 +380,10 @@ class Garjus:
         """List of task records."""
         DONE_LIST = ['COMPLETE', 'JOB_FAILED']
         data = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load tasks, redcap not enabled')
+            return None
 
         if projects:
             rec = self._rc.export_records(
@@ -427,6 +470,10 @@ class Garjus:
 
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot delete issues, redcap not enabled')
+            return None
 
         # Get the data from redcap
         _fields = [self._dfield()]
@@ -604,11 +651,16 @@ class Garjus:
 
     def sites(self, project):
         """List of site records."""
+        if not self.redcap_enabled():
+            logger.info('cannot load sites, redcap not enabled')
+            return None
+        
         return self._rc.export_records(records=[project], forms=['sites'])
 
     def _load_project_names(self):
         names = []
-        if self._rc:
+
+        if self.redcap_enabled():
             _records = self._rc.export_records(fields=[self._rc.def_field])
             names = [x[self._rc.def_field] for x in _records]
         else:
@@ -622,6 +674,10 @@ class Garjus:
         return COLUMNS
 
     def _stats_redcap(self, project):
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+
         if project not in self._project2stats:
             # get the project ID for the stats redcap for this project
             _fields = [self._dfield(), 'project_stats']
@@ -635,6 +691,10 @@ class Garjus:
     def analyses(self, projects, download=True):
         """Return analyses."""
         data = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load analyses, redcap not enabled')
+            return None
 
         logger.debug(f'analyses projects={projects}')
 
@@ -683,6 +743,11 @@ class Garjus:
         persubject=False
     ):
         """Return all stats for project, filtered by proctypes."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+        
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
@@ -742,6 +807,11 @@ class Garjus:
 
     def stats_assessors(self, project, proctypes=None):
         """Get list of assessors already in stats archive."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+
         statsrc = self._stats_redcap(project)
 
         _records = statsrc.export_records(fields=['stats_assr'])
@@ -799,6 +869,10 @@ class Garjus:
         """Get list of scan types."""
         types = []
 
+        if not self.redcap_enabled():
+            logger.info('cannot load scantypes, redcap not enabled')
+            return None
+
         for p in self.projects():
             types.extend(self.scantypes(p))
 
@@ -808,6 +882,10 @@ class Garjus:
     def all_proctypes(self):
         """Get list of project proc types."""
         types = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load proctypes, redcap not enabled')
+            return None
 
         # Get all processing records across projects
         try:
@@ -829,6 +907,10 @@ class Garjus:
 
     def scantypes(self, project):
         # Get the values from the key/value scan map and return unique list
+        if not self.redcap_enabled():
+            logger.info('cannot load scantypes, redcap not enabled')
+            return None
+
         scanmap = self.scanmap(project)
         return list(set([v for k, v in scanmap.items()]))
 
@@ -862,7 +944,7 @@ class Garjus:
         scans = []
         uri = self.scan_uri
 
-        if projects:
+        if projects is not None:
             uri += f'&project={",".join(projects)}'
 
         result = self._get_result(uri)
@@ -901,7 +983,7 @@ class Garjus:
         assessors = []
         uri = self.assr_uri
 
-        if projects:
+        if projects is not None:
             uri += f'&project={",".join(projects)}'
 
         result = self._get_result(uri)
@@ -910,7 +992,7 @@ class Garjus:
             assessors.append(self._assessor_info(r))
 
         # Filter by type
-        if proctypes:
+        if proctypes is not None:
             assessors = [x for x in assessors if x['PROCTYPE'] in proctypes]
 
         return assessors
@@ -1031,6 +1113,11 @@ class Garjus:
 
     def progress_reports(self, projects=None):
         """List of progress records."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load progress reports, redcap not enabled')
+            return None
+
         rec = self._rc.export_records(
             forms=['progress'],
             fields=[self._dfield()])
@@ -1044,6 +1131,11 @@ class Garjus:
 
     def double_reports(self, projects=None):
         """List of progress records."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load double reports, redcap not enabled')
+            return None
+
         rec = self._rc.export_records(
             forms=['double'],
             fields=[self._dfield()])
@@ -1058,6 +1150,10 @@ class Garjus:
     def processing_protocols(self, project, download=False):
         """Return processing protocols."""
         data = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load processing protocols, redcap not enabled')
+            return None
 
         rec = self._rc.export_records(
             records=[project],
@@ -1220,6 +1316,11 @@ class Garjus:
 
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
+        
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+
         _fields = [self._dfield(), 'project_stats']
         rec = self._rc.export_records(fields=_fields)
         return [x[self._dfield()] for x in rec if x['project_stats']]
@@ -1303,6 +1404,10 @@ class Garjus:
 
     def assessor_task_id(self, project, assessor):
         task_id = None
+
+        if not self.redcap_enabled():
+            logger.info('cannot load assessor task id, redcap not enabled')
+            return None
 
         rec = self._rc.export_records(
             forms=['taskqueue'],
@@ -1469,6 +1574,11 @@ class Garjus:
 
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load project setting, redcap not enabled')
+            return None
+
         records = self._rc.export_records(records=[project], forms=['main'])
         if not records:
             return None
@@ -1480,6 +1590,11 @@ class Garjus:
     def etl_automations(self, project):
         """Get ETL automation records."""
         etl_autos = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load etl_automations, redcap not enabled')
+            return None
+
         auto_names = self.etl_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
@@ -1532,6 +1647,12 @@ class Garjus:
     def scan_automations(self, project):
         """Get scanning automation records."""
         scan_autos = []
+
+        if not self.redcap_enabled():
+            logger.info('cannot load scan automations, redcap not enabled')
+            return None
+
+
         auto_names = self.scan_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
@@ -1544,14 +1665,29 @@ class Garjus:
 
     def edat_protocols(self, project):
         """Return list of edat protocol records."""
+        
+        if not self.redcap_enabled():
+            logger.info('cannot load edat protocols, redcap not enabled')
+            return None
+
         return self._rc.export_records(records=[project], forms=['edat'])
 
     def scanning_protocols(self, project):
         """Return list of scanning protocol records."""
+        
+        if not self.redcap_enabled():
+            logger.info('cannot load scanning protocols, redcap not enabled')
+            return None
+
         return self._rc.export_records(records=[project], forms=['scanning'])
 
     def load_analysis(self, project, analysis_id):
         """Return analysis protocol record."""
+        
+        if not self.redcap_enabled():
+            logger.info('cannot load analysis, redcap not enabled')
+            return None
+
         rec = self._rc.export_records(
             fields=[self._dfield()],
             forms=['analyses'],

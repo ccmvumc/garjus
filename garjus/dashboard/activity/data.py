@@ -41,6 +41,10 @@ def get_data(proj_filter):
     startdate = startdate.strftime('%Y-%m-%d')
 
     g = Garjus()
+
+    if not g.redcap_enabled():
+        return None
+
     dfc = g.activity(startdate=startdate)
     dfx = g.assessors()
 
