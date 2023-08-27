@@ -11,9 +11,11 @@ app.config.suppress_callback_exceptions = True
 
 # more here:
 # https://hellodash.pythonanywhere.com
-# 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-# dbc.themes.BOOTSTRAP,
-# dbc.themes.LUMEN,
-# dbc.themes.YETI,
-# dbc.themes.FLATLY,
+# https://codepen.io/chriddyp/pen/bWLwgP.css
+# dbc.themes.DARKLY flatdark
+# dbc.themes.FLATLY flat
+# dbc.themes.LUMEN bright
+# dbc.themes.SLATE dark
+# dbc.themes.SPACELAB buttony
+# dbc.themes.YETI nice
 # "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css",

@@ -19,8 +19,6 @@ def get_filename():
 
 
 def run_refresh(filename, projects):
-
-    # force a requery
     df = get_data(projects)
 
     save_data(df, filename)
@@ -39,7 +37,6 @@ def load_data(projects, refresh=False):
     filename = get_filename()
 
     if refresh or not os.path.exists(filename):
-        # TODO: check for old file and refresh too
         run_refresh(filename, projects)
 
     logger.info('reading data from file:{}'.format(filename))
@@ -67,12 +64,8 @@ def get_data(projects):
 
 
 def filter_data(df, time=None):
-    # Filter by project
+    # Filter
     if time:
-        #logger.debug('filtering by project:')
-        #logger.debug(projects)
-        #df = df[df['PROJECT'].isin(projects)]
-        #print('TBD:time filter')
         pass
 
     return df

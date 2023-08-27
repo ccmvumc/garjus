@@ -142,7 +142,6 @@ def get_content():
                 {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
             ],
             style_header={
-                #'width': '80px',
                 'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
