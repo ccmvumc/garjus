@@ -538,11 +538,12 @@ def get_content():
                     'textOverflow': 'ellipsis',
                     'height': 'auto',
                     'minWidth': '40',
-                    'maxWidth': '70'},
+                    'maxWidth': '70'
+                },
                 style_header={
-                    'backgroundColor': 'white',
                     'fontWeight': 'bold',
-                    'padding': '5px 15px 0px 10px'},
+                    'padding': '5px 15px 0px 10px',
+                },
                 style_cell_conditional=[
                     {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
                     {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
