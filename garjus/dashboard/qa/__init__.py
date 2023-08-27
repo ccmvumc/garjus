@@ -853,7 +853,7 @@ def update_all(
             # before agg so we get a column per sesstype
             # but only if there are fewer than 10 session types
             typecount = len(dfp.SESSTYPE.unique())
-            if typecount < 6:
+            if typecount < 10:
                 # agg to most common value (mode) per sesstype per show_col
                 dfp = dfp.pivot_table(
                     index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
@@ -898,6 +898,9 @@ def update_all(
                 dfp[p] = dfp[p].str.replace('F', '❌')
                 if 'E' in selected_procstatus:
                     dfp[p] = dfp[p].fillna('□')
+
+            # Drop empty rows
+            dfp = dfp.dropna(subset=show_col)
 
             selected_cols = ['PROJECT', 'SUBJECT'] + show_col
         else:
