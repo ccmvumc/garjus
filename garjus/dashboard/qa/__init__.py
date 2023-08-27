@@ -6,21 +6,7 @@
 # processing type, scan type, etc.
 """
 
-# TODO: ignore PETs when determining mode for assessors, how?
-
-# TODO: modify subject view to concat the session type with the proctype before
-# aggregating so we get separate a column for each sesstype_proctype
-
-# TODO: link each project to redcap/xnat in project view
-
-# TODO: only send data for selected columns to reduce amount of data sent?
-
-# TODO: write a "graph in a tab" function to wrap each figure above
-# in a graph in a tab, b/c DRY
-
-# TODO: if weekly is chosen, show the actual session name instead of a dot
-
-# TODO: try to connect baseline with followup with arc line or something
+# TODO: connect sessions from same subject baseline with arc line or something
 # or could have "by subject" choice that has a subject per y value?
 
 # TODO: dropdown to select from choices: last week, last month, this month.
@@ -31,6 +17,7 @@ import re
 import itertools
 
 import pandas as pd
+import numpy as np
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
@@ -43,7 +30,6 @@ from ..app import app
 from .. import utils
 from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
-
 from ...garjus import Garjus
 
 
@@ -250,7 +236,6 @@ def _get_graph_content(dfp):
     tab_value += 1
 
     # Return the tabs wrapped in a spinning loader
-    #return tabs_content
     return dbc.Spinner(
         id="loading-qa",
         children=[
@@ -265,14 +250,9 @@ def _sessionsbytime_figure(df, selected_groupby):
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
     fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
 
-    # Customize figure
-    # fig['layout'].update(xaxis={'automargin': True}, yaxis={'automargin': True})
-
     from itertools import cycle
     import plotly.express as px
     palette = cycle(px.colors.qualitative.Plotly)
-    # palette = cycle(px.colors.qualitative.Vivid)
-    # palette = cycle(px.colors.qualitative.Bold)
 
     for mod, sesstype in itertools.product(df.MODALITY.unique(), df.SESSTYPE.unique()):
 
@@ -290,7 +270,6 @@ def _sessionsbytime_figure(df, selected_groupby):
             pass
 
         elif view == 'all':
-
             # Let's do this for the all time view to see histograms by year
             # or quarter or whatever fits well
 
@@ -420,14 +399,20 @@ def get_content():
                 dcc.DatePickerRange(id='dpr-qa-time', clearable=True),
                 width=5,
             ),
-            dbc.Col(dbc.Button('Refresh Data', id='button-qa-refresh'),),
+            dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-qa-refresh',
+                ),
+                align='end',
+            ),
             dbc.Col(
                 dbc.Switch(
                     id='switch-qa-autofilter',
                     label='Autofilter',
                     value=True,
                 ), 
-                align="end",
+                align='end',
             ),
             dbc.Col(
                 dbc.Switch(
@@ -435,7 +420,7 @@ def get_content():
                     label='Graph',
                     value=False,
                 ),
-                align="end",
+                align='end',
             ),
         ]),
         dbc.Row(
@@ -527,6 +512,8 @@ def get_content():
                     id='radio-qa-pivot',
                     labelStyle={'display': 'inline-block'},
                 ),
+                align='end',
+                width=5,
             ),
         ]),
         dbc.Spinner(id="loading-qa-table", children=[
@@ -588,7 +575,7 @@ def get_metastatus(status):
     if status != status:
         # empty so it's none
         metastatus = 'NONE'
-    elif not status or pd.isnull(status):  # np.isnan(status):
+    elif not status or pd.isnull(status):
         # empty so it's none
         metastatus = 'NONE'
     elif 'P' in status:
@@ -624,7 +611,6 @@ def qa_pivot(df):
         columns='TYPE',
         values='STATUS',
         aggfunc=lambda x: ''.join(x))
-
 
     # and return our pivot table
     return dfp
@@ -769,7 +755,6 @@ def update_all(
     if df.empty:
          records = []
          columns = []
-         #tabs = _get_graph_content(None)
     elif selected_pivot == 'proj':
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
@@ -795,14 +780,16 @@ def update_all(
         else:
             show_scan = []
 
-        if show_proc or show_scan:
+        show_col = show_proc + show_scan
+
+        if show_col:
             # aggregrate to most common value (mode)
             dfp = dfp.pivot_table(
                 index=('PROJECT'),
-                values=show_proc + show_scan,
+                values=show_col,
                 aggfunc=pd.Series.mode)
 
-            for p in show_proc:
+            for p in show_col:
                 dfp[p] = dfp[p].str.replace('P', '✅')
                 dfp[p] = dfp[p].str.replace('X', '🩷')
                 dfp[p] = dfp[p].str.replace('Q', '🟩')
@@ -812,18 +799,8 @@ def update_all(
                 if 'E' in selected_procstatus:
                     dfp[p] = dfp[p].fillna('□')
 
-            for s in show_scan:
-                dfp[s] = dfp[s].str.replace('P', '✅')
-                dfp[s] = dfp[s].str.replace('X', '🩷')
-                dfp[s] = dfp[s].str.replace('Q', '🟩')
-                dfp[s] = dfp[s].str.replace('N', '🟡')
-                dfp[s] = dfp[s].str.replace('R', '🔷')
-                dfp[s] = dfp[s].str.replace('F', '❌')
-                if 'E' in selected_procstatus:
-                    dfp[s] = dfp[s].fillna('□')
-
             # Drop empty rows
-            dfp = dfp.dropna(subset=show_proc + show_scan)
+            dfp = dfp.dropna(subset=show_col)
         else:
             # No types selected, show sessions concat
             selected_cols += ['SESSIONS']
@@ -841,27 +818,14 @@ def update_all(
         columns = utils.make_columns(selected_cols)
         records = dfp.reset_index().to_dict('records')
 
-        # Format records
-        #for r in records:
-        #    if r['PROJECT'] and 'PROJECTLINK' in r:
-        #        _proj = r['PROJECT']
-        #        _link = r['PROJECTLINK']
-        #        r['PROJECT'] = f'[{_proj}]({_link})'
-
-        # Format columns
-        #for i, c in enumerate(columns):
-        #    if c['name'] == 'PROJECT':
-        #        columns[i]['type'] = 'text'
-        #        columns[i]['presentation'] = 'markdown'
-
     elif selected_pivot == 'subj':
         # row per subject
 
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
 
-        # Graph it
         if selected_graph:
+            # Make graphs
             tabs = _get_graph_content(dfp)
 
         # Get the table
@@ -882,25 +846,48 @@ def update_all(
         else:
             show_scan = []
 
-        if show_proc or show_scan:
+        show_col = show_proc + show_scan
+
+        if show_col:
             # append sess type to proctype/scantype columns
             # before agg so we get a column per sesstype
             # but only if there are fewer than 10 session types
-            #print('SESSTYPE', dfp.SESSTYPE.unique())
-            #for sesstype in dfp.SESSTYPE.unique():
-            #if len(dfp.SESSTYPE.unique()) < 5:
-            #    show_col = []
-            #    for col in show_proc + show_scan:
-            #        dfp[sess_type+'_'+col] = 
-            #else:       
-            #    show_col = show_proc + show_scan
-            # how do we do this??? do we have to unpivot somehow first?
+            typecount = len(dfp.SESSTYPE.unique())
+            if typecount < 6:
+                # agg to most common value (mode) per sesstype per show_col
+                dfp = dfp.pivot_table(
+                    index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
+                    columns='SESSTYPE',
+                    values=show_col,
+                    aggfunc=pd.Series.mode,
+                    fill_value='',
+                )
 
-            # aggregrate to most common value (mode)
-            dfp = dfp.pivot_table(
-                index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
-                values=show_col,
-                aggfunc=pd.Series.mode)
+                if typecount > 1:
+                    # Concatenate column levels to get one level with delimiter
+                    dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
+                else:
+                    dfp.columns = [c[0] for c in dfp.columns.values]
+
+                # Drop empty
+                for p in dfp.columns:
+                    dfp[p] = dfp[p].astype(str).str.replace('[]', '', regex=False)
+
+                dfp = dfp.replace(r'^\s*$', np.nan, regex=True)
+                dfp = dfp.dropna(axis=1, how='all')
+
+                # Save the list columns before we reset index
+                show_col = list(dfp.columns)
+
+                # Clear the index so all columns are named
+                dfp = dfp.reset_index()
+            else:
+                # aggregrate to most common value (mode)
+                dfp = dfp.pivot_table(
+                    index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
+                    values=show_col,
+                    aggfunc=pd.Series.mode,
+                )
 
             for p in show_col:
                 dfp[p] = dfp[p].str.replace('P', '✅')
@@ -912,19 +899,26 @@ def update_all(
                 if 'E' in selected_procstatus:
                     dfp[p] = dfp[p].fillna('□')
 
-            # Drop empty rows
-            dfp = dfp.dropna(subset=show_col)
+            selected_cols = ['PROJECT', 'SUBJECT'] + show_col
         else:
-            dfp = dfp.sort_values('MODALITY')
-            dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
+            # No types selected so show session types by modality
 
+            dfp = dfp.sort_values('MODALITY')
+
+            dfp['EMO'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
+
+            # Pivot to column for each session type
+            show_col = list(dfp.SESSTYPE.unique())
+            selected_cols = ['SUBJECT', 'PROJECT'] + show_col
             dfp = dfp.pivot_table(
                 index=('SUBJECT', 'PROJECT', 'SUBJECTLINK'),
-                values='SESSIONS',
+                values='EMO',
+                columns='SESSTYPE',
                 aggfunc=lambda x: ''.join(x))
 
-            # Get the table data
-            selected_cols = ['SUBJECT', 'PROJECT', 'SESSIONS']
+            for p in show_col:
+                if 'E' in selected_procstatus:
+                    dfp[p] = dfp[p].fillna('□')
 
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
@@ -964,7 +958,9 @@ def update_all(
         else:
             show_scan = []
 
-        for p in show_proc:
+        show_col = show_proc + show_scan
+
+        for p in show_col:
             # Replace letters with emojis
             dfp[p] = dfp[p].str.replace('P', '✅')
             dfp[p] = dfp[p].str.replace('X', '🩷')
@@ -975,18 +971,8 @@ def update_all(
             if 'E' in selected_procstatus:
                 dfp[p] = dfp[p].fillna('□')
 
-        for s in show_scan:
-            dfp[s] = dfp[s].str.replace('P', '✅')
-            dfp[s] = dfp[s].str.replace('X', '🩷')
-            dfp[s] = dfp[s].str.replace('Q', '🟩')
-            dfp[s] = dfp[s].str.replace('N', '🟡')
-            dfp[s] = dfp[s].str.replace('R', '🔷')
-            dfp[s] = dfp[s].str.replace('F', '❌')
-            if 'E' in selected_procstatus:
-                dfp[s] = dfp[s].fillna('□')
-
         # Drop empty rows
-        dfp = dfp.dropna(subset=show_proc + show_scan)
+        dfp = dfp.dropna(subset=show_col)
 
         # Final column is always notes
         selected_cols.append('NOTE')

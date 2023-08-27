@@ -257,6 +257,11 @@ def delete(project, proctype):
 @cli.command('dashboard')
 @click.option('--auth', 'auth_file', required=False)
 def dashboard(auth_file=None):
+    # quiet please
+    logging.getLogger().setLevel(logging.ERROR)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('dash').setLevel(logging.ERROR)
+
     from .dashboard import app
     import webbrowser
     url = 'http://localhost:8050'
@@ -273,6 +278,7 @@ def dashboard(auth_file=None):
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)
+  
 
     # start up a dashboard app
     app.run_server(host='0.0.0.0')
