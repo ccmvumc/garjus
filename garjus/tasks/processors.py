@@ -1326,7 +1326,17 @@ class SgpProcessor_v3_1(Processor_v3_1):
             else:
                 sesstypes = []
 
-            tracer = sess.get('tracer', None)
+            if 'tracers' in sess:
+                tracers = [_.strip() for _ in sess['tracers'].split(',')]
+            elif 'tracer' in sess:
+                tracers = [_.strip() for _ in sess['tracer'].split(',')]
+            else:
+                tracers = []
+
+            if 'types' in sess:
+                sesstypes = [_.strip() for _ in sess['types'].split(',')]
+            else:
+                sesstypes = []
 
             # get scans
             scans = sess.get('scans', list())
@@ -1361,7 +1371,7 @@ class SgpProcessor_v3_1(Processor_v3_1):
                 keep_multis = s.get('keep_multis', 'all')
 
                 self.proc_inputs[name] = {
-                    'tracer': tracer,
+                    'tracers': tracers,
                     'select': select,
                     'sesstypes': sesstypes,
                     'types': types,
@@ -1388,7 +1398,6 @@ class SgpProcessor_v3_1(Processor_v3_1):
                 artefact_required = artefact_required or r['required']
 
                 self.proc_inputs[name] = {
-                    'tracer': tracer,
                     'select': select,
                     'sesstypes': sesstypes,
                     'types': types,
@@ -1421,22 +1430,42 @@ class SgpProcessor_v3_1(Processor_v3_1):
                 # Input is a scan, so we iterate subject scans
                 # to look for matches
                 for cscan in scans:
+
+                    # Check selects
                     if iv['select'] == 'first-mri' and not self.is_first_mr_session(cscan['SESSION'], project_data):
                         # Wrong session, not first mri
                         logger.debug('wrong session')
                         continue
-                    elif iv['tracer'] and cscan['TRACER'] != iv['tracer']:
-                        # Wrong tracer
-                        logger.debug('wrong tracer')
-                        continue
 
-                    for typeexp in iv['sesstypes']:
-                        regex = re.compile(fnmatch.translate())
-                        if not regex.match(cscan.get('SESSTYPE')):
-                            # Wrong session type
+                    # Check tracers
+                    if iv['tracers']:
+                        tracer_match = False
+                        for tracer in iv['tracers']:
+                            regex = re.compile(fnmatch.translate(tracer))
+                            if regex.match(cscan['TRACER']):
+                                logger.debug('tracer match')
+                                tracer_match = True
+
+                        if not tracer_match:
+                            # Wrong tracer
+                            logger.debug(f"wrong tracer:{cscan['TRACER']}")
                             continue
 
-                    # All matches, now match scan type
+                    # Check sesstypes
+                    if iv['sesstypes']:
+                        sesstypematch = False
+                        for typeexp in iv['sesstypes']:
+                            regex = re.compile(fnmatch.translate(typeexp))
+                            if regex.match(cscan.get('SESSTYPE')):
+                                sesstypematch = True
+                                logger.debug('session type match')
+                                continue
+
+                        if not sesstypematch:
+                            logger.debug('no session type match')
+                            continue
+
+                    # All matches for session, now match scan type
                     for expression in iv['types']:
                         regex = re.compile(fnmatch.translate(expression))
                         if regex.match(cscan.get('SCANTYPE')):
@@ -1612,17 +1641,6 @@ def load_from_yaml(
     if proc_level == 'subject':
         logger.debug('loading as SGP:{}'.format(filepath))
 
-        #print('open file')
-        #with open(filepath, "r") as f:
-        #    print('load the file')
-        ##    try:
-        #        d = yaml.load(f, Loader=yaml.FullLoader)
-        #        print('loaded')
-        #        print(d)
-        #    except Exception as err:
-        #        print('nope')
-        #        print(err)
-
         try:
             processor = SgpProcessor_v3_1(
                 xnat,
@@ -1693,8 +1711,6 @@ def build_session_processor(garjus, processor, session, project_data):
         # Get(create) assessor with given inputs and proc type
         (assr, info) = processor.get_assessor(session, inputs, project_data)
 
-        # TODO: apply reproc or rerun if needed
-
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             garjus.add_our_assessor(info['ASSR'])
 
@@ -1723,8 +1739,6 @@ def build_subject_processor(garjus, processor, subject, project_data):
         # Get(create) assessor with given inputs and proc type
 
         (assr, info) = processor.get_assessor(subject, inputs, project_data)
-
-        # TODO: apply reproc or rerun if needed
 
         if info['PROCSTATUS'] in [NEED_TO_RUN, NEED_INPUTS]:
             logger.debug('building task')
@@ -1757,8 +1771,6 @@ def build_processor(
     if not processor:
         logger.error(f'loading processor:{filepath}')
         return
-
-    #print('processor=', processor, type(processor))
 
     if isinstance(processor, SgpProcessor_v3_1):
         # Handle subject level processing
