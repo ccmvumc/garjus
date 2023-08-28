@@ -36,11 +36,15 @@ QA_COLS = [
 
 
 def get_filename():
-    datadir = 'DATA'
-    if not os.path.isdir(datadir):
-        os.mkdir(datadir)
+    datadir = f'{Garjus().cachedir()}/DATA'
+
+    try:
+        os.makedirs(datadir)
+    except FileExistsError:
+        pass
 
     filename = f'{datadir}/qadata.pkl'
+
     return filename
 
 

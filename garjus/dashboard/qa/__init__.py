@@ -389,8 +389,6 @@ def get_content():
 
     graph_content = _get_graph_content(None)
 
-    favorites = Garjus().favorites()
-
     # We use the dbc grid layout with rows and columns, rows are 12 units wide
     content = [
         dbc.Row(html.Div(id='div-qa-graph', children=[])),
@@ -429,7 +427,7 @@ def get_content():
                     id='dropdown-qa-proj',
                     multi=True,
                     placeholder='Select Project(s)',
-                    value=favorites,
+                    value=[],
                 ),
                 width=5,
             ),

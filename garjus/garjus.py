@@ -98,6 +98,11 @@ class Garjus:
         self._yamldir = self.set_yamldir()
         self._tempdir = tempfile.mkdtemp()
         self._our_assessors = set()
+        self._cachedir = os.path.expanduser('~/.garjus')
+        try:
+            os.makedirs(self._cachedir)
+        except FileExistsError:
+            pass
 
     def __del__(self):
         """Close connectinons we opened."""
@@ -117,6 +122,9 @@ class Garjus:
     def _default_redcap():
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
+
+    def cachedir(self):
+        return self._cachedir
 
     def redcap_enabled(self):
         return (self._rc is not None)
@@ -845,6 +853,7 @@ class Garjus:
 
     def _get_proctype(self, procfile):
         # Get just the filename without the directory path
+        print(procfile)
         tmp = os.path.basename(procfile)
 
         # Split on periods and grab the 4th value from right,
