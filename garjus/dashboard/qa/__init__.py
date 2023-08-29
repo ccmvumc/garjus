@@ -400,9 +400,13 @@ def get_content():
             dbc.Col(
                 dbc.Button(
                     'Refresh Data',
+                    outline=True,
+                    className="me-1",
                     id='button-qa-refresh',
+                    size='sm',
+                    color='primary',
                 ),
-                align='end',
+                align='center',
             ),
             dbc.Col(
                 dbc.Switch(
@@ -410,7 +414,7 @@ def get_content():
                     label='Autofilter',
                     value=True,
                 ), 
-                align='end',
+                align='center',
             ),
             dbc.Col(
                 dbc.Switch(
@@ -418,10 +422,10 @@ def get_content():
                     label='Graph',
                     value=False,
                 ),
-                align='end',
+                align='center',
             ),
         ]),
-        dbc.Row(
+        dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
                     id='dropdown-qa-proj',
@@ -431,7 +435,18 @@ def get_content():
                 ),
                 width=5,
             ),
-        ),
+            # dbc.Col(
+            #     dbc.Button(
+            #         'Favorites',
+            #         outline=True,
+            #         #className="me-1",
+            #         id='button-qa-favorites',
+            #         size='sm',
+            #         color='primary',
+            #     ),
+            #     align='center',
+            # ),
+        ]),
         dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
@@ -454,6 +469,7 @@ def get_content():
                     inline=True,
                     switch=True
                 ),
+                align='center',
             ),
         ]),
         dbc.Row([
@@ -481,6 +497,7 @@ def get_content():
                     inline=True,
                     switch=True
                 ),
+                align='center',
             ),
         ]),
         dbc.Row([
@@ -515,7 +532,7 @@ def get_content():
             ),
         ]),
         dbc.Spinner(id="loading-qa-table", children=[
-            dbc.Label('Loading table...', id='label-qa-rowcount1'),
+            dbc.Label('Get ready...', id='label-qa-rowcount1'),
         ]),
         dt.DataTable(
                 columns=[],
@@ -553,7 +570,7 @@ def get_content():
                 export_headers='names',
                 export_columns='visible'
             ),
-            dbc.Label('Loading table...', id='label-qa-rowcount2'),
+            dbc.Label('Get ready...', id='label-qa-rowcount2'),
         html.Div([
             html.P(
                 LEGEND1,
@@ -703,15 +720,17 @@ def update_all(
         refresh = True
 
     logger.info(f'loading data:{selected_proj}')
+    hidesgp = ('SGP' not in selected_modality)
     df = load_data(
         projects=selected_proj,
         refresh=refresh,
-        hidetypes=selected_autofilter)
+        hidetypes=selected_autofilter,
+        hidesgp=hidesgp)
 
-    if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
-        # A new project was selected so we force refresh
-        logger.debug('new project selected, refreshing')
-        df = load_data(selected_proj, refresh=True)
+    #if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
+    #    # A new project was selected so we force refresh
+    #    logger.debug('new project selected, refreshing')
+    #    df = load_data(selected_proj, refresh=True)
 
     # Truncate NOTE
     if 'NOTE' in df:
@@ -786,7 +805,9 @@ def update_all(
             dfp = dfp.pivot_table(
                 index=('PROJECT'),
                 values=show_col,
-                aggfunc=pd.Series.mode)
+                aggfunc=lambda x: x.mode().iat[0],
+                #aggfunc=pd.Series.mode,
+            )
 
             for p in show_col:
                 dfp[p] = dfp[p].str.replace('P', '✅')
@@ -854,11 +875,12 @@ def update_all(
             typecount = len(dfp.SESSTYPE.unique())
             if typecount < 10:
                 # agg to most common value (mode) per sesstype per show_col
+                dfp = dfp.fillna('')
                 dfp = dfp.pivot_table(
                     index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
                     columns='SESSTYPE',
                     values=show_col,
-                    aggfunc=pd.Series.mode,
+                    aggfunc=lambda x: x.mode().iat[0],
                     fill_value='',
                 )
 
@@ -885,7 +907,8 @@ def update_all(
                 dfp = dfp.pivot_table(
                     index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
                     values=show_col,
-                    aggfunc=pd.Series.mode,
+                    aggfunc=lambda x: x.mode().iat[0],
+                    #aggfunc=pd.Series.mode,
                 )
 
             for p in show_col:
@@ -1002,7 +1025,11 @@ def update_all(
                 columns[i]['presentation'] = 'markdown'
 
     # Count how many rows are in the table
-    rowcount = '{} rows'.format(len(records))
+    _count = len(records)
+    if _count > 1:
+        rowcount = '{} rows'.format(len(records))
+    else:
+        rowcount = ''
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')

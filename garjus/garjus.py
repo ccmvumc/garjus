@@ -92,7 +92,8 @@ class Garjus:
         self.analyses_rename = ANALYSES_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 64
-        self._projects = self._load_project_names()
+        self._projects = None
+        #self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
         self._yamldir = self.set_yamldir()
@@ -241,31 +242,35 @@ class Garjus:
     def favorites(self):
         return utils_xnat.get_my_favorites(self.xnat())
 
-    def used_scantypes(self, assessors):
+    def used_scantypes(self, assessors, scans):
         """List of scantypes that are used as inputs to assessors."""
         scantypes = []
-        projects = assessors.PROJECT.unique()
-        proctypes = assessors.PROCTYPE.unique()
-
-        assr_data = self._load_assr_data(projects, proctypes)
-        scan_data = self._load_scan_data(projects)
-
         scanset = set()
-        for d in assr_data:
-            _values = list(d['INPUTS'].values())
+
+        # Build set of scans used as inputs
+        for i, a in assessors.iterrows():
+            _values = list(a['INPUTS'].values())
             scanset.update(_values)
 
+        # Convert to list
         scanlist = list(scanset)
+
+        # Extract the scans only, no assessors
         scanlist = [x for x in scanlist if '/scans/' in x]
 
-        scan_df = pd.DataFrame({'SCAN': scanlist})
-        scan_df = pd.merge(
-            scan_df,
-            pd.DataFrame(scan_data),
+        # Make it a dataframe
+        df = pd.DataFrame({'SCAN': scanlist})
+
+        # Merge with scans data
+        df = pd.merge(
+            df,
+            pd.DataFrame(scans),
             how='left',
             left_on='SCAN',
             right_on='full_path')
-        scantypes = scan_df.SCANTYPE.unique()
+
+        # Get list of unique scan types
+        scantypes = df.SCANTYPE.unique()
 
         return scantypes
 
@@ -827,6 +832,9 @@ class Garjus:
 
     def projects(self):
         """Get list of projects."""
+        if self._projects is None:
+            self._projects = self._load_project_names()
+
         return self._projects
 
     def subjects(self, project, include_dob=False):
@@ -853,7 +861,6 @@ class Garjus:
 
     def _get_proctype(self, procfile):
         # Get just the filename without the directory path
-        print(procfile)
         tmp = os.path.basename(procfile)
 
         # Split on periods and grab the 4th value from right,
@@ -1224,7 +1231,7 @@ class Garjus:
     def update(self, projects=None, choices=None, types=None):
         """Update projects."""
         if not projects:
-            projects = self._projects
+            projects = self.projects()
 
         if not choices:
             choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
@@ -1692,7 +1699,6 @@ class Garjus:
 
     def load_analysis(self, project, analysis_id):
         """Return analysis protocol record."""
-        
         if not self.redcap_enabled():
             logger.info('cannot load analysis, redcap not enabled')
             return None
@@ -1709,7 +1715,7 @@ class Garjus:
 
         # Download the yaml file and load it too
         if rec['analysis_processor']:
-            print('loading', rec['analysis_processor'])
+            logger.debug(f'loading:{rec["analysis_processor"]}')
             with tempfile.TemporaryDirectory() as temp_dir:
                 yaml_file = utils_redcap.download_named_file(
                     self._rc,

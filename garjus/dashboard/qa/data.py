@@ -109,6 +109,14 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=Fa
 
     if refresh:
         run_refresh(projects, hidetypes, hidesgp)
+    else:
+        cur_projects = sorted(read_data(fname).PROJECT.unique())
+        #for p in projects:
+        #    if p not in cur_projects:
+        if sorted(projects) != cur_projects:
+            # A new project was selected so we force refresh
+            logger.info('new project selected, refreshing')
+            run_refresh(projects, hidetypes, hidesgp)
 
     logger.info('reading data from file:{}'.format(fname))
     df = read_data(fname)
@@ -130,7 +138,7 @@ def save_data(df, filename):
 
 
 def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False):
-    df = pd.DataFrame()
+    df = pd.DataFrame(columns=QA_COLS)
 
     if not projects:
         # No projects selected so we don't query
@@ -140,9 +148,12 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
         garjus = Garjus()
 
         # Load data
+        logger.info(f'load scan data:{projects}')
         scan_df = load_scan_data(garjus, projects)
+        logger.info(f'load assr data:{projects}')
         assr_df = load_assr_data(garjus, projects)
         if not hidesgp:
+            logger.info(f'load sgp data:{projects}')
             subj_df = load_sgp_data(garjus, projects)
 
     except Exception as err:
@@ -151,7 +162,25 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
 
     if hidetypes:
         logger.debug('applying autofilter to hide unused types')
-        scan_df, assr_df = filter_types(garjus, scan_df, assr_df)
+        scantypes = None
+        assrtypes = None
+
+        if garjus.redcap_enabled():
+            # Load types
+            logger.info('loading scan/assr types')
+            scantypes = garjus.all_scantypes()
+            assrtypes = garjus.all_proctypes()
+
+            # Make the lists unique
+            scantypes = list(set(scantypes))
+            assrtypes = list(set(assrtypes))
+
+        if not scantypes and not assr_df.empty:
+            # Get list of scan types based on assessor inputs
+            logger.info('loading used scan types')
+            scantypes = garjus.used_scantypes(assr_df, scan_df)
+
+        scan_df, assr_df = _filter(scan_df, assr_df, scantypes, assrtypes)
 
     # Make a common column for type
     assr_df['TYPE'] = assr_df['PROCTYPE']
@@ -196,24 +225,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
     return df
 
 
-def filter_types(garjus, scan_df, assr_df):
-    scantypes = None
-    assrtypes = None
-
-    if garjus.redcap_enabled():
-        # Load types
-        logger.info('loading scan/assr types')
-        scantypes = garjus.all_scantypes()
-        assrtypes = garjus.all_proctypes()
-
-        # Make the lists unique
-        scantypes = list(set(scantypes))
-        assrtypes = list(set(assrtypes))
-
-    if not scantypes and not assr_df.empty:
-        # Get list of scan types based on assessor inputs
-        logger.info('loading used scan types')
-        scantypes = garjus.used_scantypes(assr_df)
+def _filter(scan_df, assr_df, scantypes, assrtypes):
 
     # Apply filters
     if scantypes is not None:
@@ -233,12 +245,13 @@ def load_assr_data(garjus, project_filter):
     dfa = garjus.assessors(project_filter).copy()
 
     # Get subset of columns
-    dfa = dfa[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'ASSR',
-        'NOTE', 'DATE', 'SITE', 'QCSTATUS', 'PROCSTATUS',
-        'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY']]
+    #print('subset?')
+    #dfa = dfa[[
+    #    'PROJECT', 'SESSION', 'SUBJECT', 'ASSR',
+    #    'NOTE', 'DATE', 'SITE', 'QCSTATUS', 'PROCSTATUS',
+    #    'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'INPUTS']]
 
-    dfa.drop_duplicates(inplace=True)
+    #dfa.drop_duplicates(inplace=True)
 
     # Drop any rows with empty proctype
     dfa.dropna(subset=['PROCTYPE'], inplace=True)
@@ -296,7 +309,7 @@ def load_scan_data(garjus, project_filter):
 
     dfs = dfs[[
         'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
-        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY']].copy()
+        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'full_path']].copy()
     dfs.drop_duplicates(inplace=True)
 
     # Drop any rows with empty type

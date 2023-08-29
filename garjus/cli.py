@@ -258,10 +258,11 @@ def delete(project, proctype):
 @click.option('--quiet/--no-quiet', default=False)
 @click.option('--auth', 'auth_file', required=False)
 def dashboard(quiet, auth_file=None):
+
     # quiet please
     if quiet:
-        logging.getLogger().setLevel(logging.ERROR)
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
+        logging.getLogger().setLevel(logging.ERROR)
         logging.getLogger('dash').setLevel(logging.ERROR)
 
     from .dashboard import app
