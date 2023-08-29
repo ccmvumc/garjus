@@ -1,3 +1,4 @@
+"""QA Dasboard."""
 import logging
 import os
 import time
@@ -9,6 +10,8 @@ from ...garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.qa.data')
+
+# TODO: checkoxes to hide columns DATE, SESSTYPE, SITE, NOTE: often blank
 
 
 SCAN_STATUS_MAP = {
@@ -98,6 +101,29 @@ def file_age(filename):
     return int((time.time() - os.path.getmtime(filename)) / 60)
 
 
+def update_data(projects, hidetypes, hidesgp):
+    fname = get_filename()
+
+    # Load what we have now
+    df = read_data(fname)
+
+    # Remove projects not selected
+    df = df[df.PROJECT.isin(projects)]
+
+    # Find new projects in selected
+    new_projects = [x for x in projects if x not in df.PROJECT.unique()]
+
+    # Load the new projects
+    for p in new_projects:
+        dfp =  get_data([p], [], [], hidetypes=hidetypes, hidesgp=hidesgp)
+        df = pd.concat([df,dfp])
+
+    # Save it to file
+    save_data(df, fname)
+
+    return df
+
+
 def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=False):
     fname = get_filename()
 
@@ -109,14 +135,10 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=Fa
 
     if refresh:
         run_refresh(projects, hidetypes, hidesgp)
-    else:
-        cur_projects = sorted(read_data(fname).PROJECT.unique())
-        #for p in projects:
-        #    if p not in cur_projects:
-        if sorted(projects) != cur_projects:
-            # A new project was selected so we force refresh
-            logger.info('new project selected, refreshing')
-            run_refresh(projects, hidetypes, hidesgp)
+    elif set(projects) != set(read_data(fname).PROJECT.unique()):
+        logger.debug('updating data')
+        # Different projects selected, update
+        update_data(projects, hidetypes, hidesgp)
 
     logger.info('reading data from file:{}'.format(fname))
     df = read_data(fname)
@@ -152,6 +174,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
         scan_df = load_scan_data(garjus, projects)
         logger.info(f'load assr data:{projects}')
         assr_df = load_assr_data(garjus, projects)
+
         if not hidesgp:
             logger.info(f'load sgp data:{projects}')
             subj_df = load_sgp_data(garjus, projects)

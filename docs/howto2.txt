@@ -1,0 +1,32 @@
+To use the garjus command-line tools or open a local dashboard, you will need to create credential files for REDCAp and XNAT. You will need your XNAT user name and password stored in a .netrc file in your home diredctory. For REDCap, you will just need the Project ID and API Key for the main garjus project as well as each main project you want to access. You will also need separate keys for stats.
+
+
+Configure XNAT credentials for garjus:
+The .netrc file uses the same format as DAX. If you already have credentials for DAX, you can use the same for garjus.
+
+
+Configure XNAT credentials for garjus:
+
+
+Test your credentials by running a garjus command such as garjus quicktest which will test all credentials. You can also open a dashboard in your browser with garjus dashboard. Then you can load and test a specific item of data.
+
+
+
+How to download stats data with garjus:
+*need access for the study project in REDCap, stats project in REDCap, garjus project in redcap and study project in XNAT.
+*open dashboard from command-line run: garjus dashboard to load and view stats
+*export from dashboard or use command-line to get stats .csv
+
+
+How to download analysis inputs with garjus
+
+
+PowerPoint
+1) here's how to download the fmri_msit_v3/fmri_rest_v3
+2) but I already ran it, here's the redcap record showing that and where the output is located on OneDrive
+3) but it is still in progress
+3) eed to check, fix, repeat until all is there, garjus will update new files
+
+
+same data can be loaded in dashboard and exported.
+

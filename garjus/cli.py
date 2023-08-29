@@ -20,6 +20,8 @@ def cli(debug, quiet):
 
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+        logging.getLogger('dash').setLevel(logging.ERROR)
 
 
 @cli.command('copysess')
@@ -255,15 +257,8 @@ def delete(project, proctype):
 
 
 @cli.command('dashboard')
-@click.option('--quiet/--no-quiet', default=False)
 @click.option('--auth', 'auth_file', required=False)
-def dashboard(quiet, auth_file=None):
-
-    # quiet please
-    if quiet:
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
-        logging.getLogger().setLevel(logging.ERROR)
-        logging.getLogger('dash').setLevel(logging.ERROR)
+def dashboard(auth_file=None):
 
     from .dashboard import app
     import webbrowser
