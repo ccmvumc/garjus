@@ -5,7 +5,7 @@ Garjus processes imaging data stored in REDCap and XNAT. All related settings ar
 
 Garjus is the interface to everything that's stored in XNAT/REDCap. It uses
 REDCap to store it's own settings and tracking data. Anytime we want to
-access these REDCap or XNAT in python or CLI, we use Garjus in between.
+access these data in REDCap or XNAT in python or CLI, we use Garjus in between.
 Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
 
 
@@ -14,20 +14,18 @@ all return a Pandas DataFrame:
 
 ```
 activity()
-
+analyses()
 assessors()
-
 automations()
-
 issues()
-
-processing()
-
+phantoms()
+processing_protocols()
 progress()
-
 scans()
-
+subjects()
+subject_assessors()
 stats(project)
+tasks()
 ```
 
 
@@ -46,26 +44,41 @@ These Garjus methods returns names in a list:
 
 ```
 stattypes(project)
-
 scantypes(project)
-
 proctypes(project)
-
 stats_assessors(project)
-
 stats_projects()
-
 ```
 
-Command-line interface:
-
+Command-line interface subcommands:
 ```
-garjus report - creates a summary PDF
-
-garjus dashboard - launches a dax dashboard and opens it in a new tab browser
-
-garjus image03 - manages NDA image03 batches in a shared folder such as OneDrive
-
+activity - display activity
+analyses - display analyses
+build - build a project
+compare - run data entry comparison
+copysess - copy an imaging session from one project to another
+d2q - apply updates from dax queue on local disk to garjus task queue in REDCap
+dashboard - start a dashboard server and browse to it in a new local web browser tab
+delete - delete a proctype from a project
+getinputs - download inputs for an analysis
+image03csv - create an NDA image03 formatted csv file for a project and date range
+image03download - download all images for an NDA image03 csv file
+importdicom - import DICOM into XNAT from local file or remote URL
+issues - display issues
+pdf
+processing
+progress
+q2d - apply updates from garjus REDCap queue to dax local disk queue by writing new batch scripts
+quicktest - test connections
+report - creates a summary PDF
+retry - find jobs that have run once an run them again
+run
+setsesstype
+setsite
+stats
+subjects
+tasks
+update
 ```
 
 ### Scanning Automations:
@@ -177,7 +190,7 @@ pip install git+https://github.com/bud42/garjus.git
 If you encounter an error with scikit learn, you can bypass it with:
 ```
 export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True && \
-pip install git+https://github.com/bud42/garjus.git
+pip install git+https://github.com/ccmvumc/garjus.git
 
 ```
 After garjus is successfully installed, you can launch a dashboard with:
