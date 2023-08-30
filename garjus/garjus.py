@@ -910,6 +910,9 @@ class Garjus:
             logger.error(err)
             return []
 
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
+        rec = [x for x in rec if str(x['processing_complete']) == '2']
+
         for r in rec:
             if r['processor_yamlupload']:
                 dtype = self._get_proctype(r['processor_yamlupload'])
