@@ -159,19 +159,29 @@ pip install git+https://github.com/bud42/garjus.git@v1.0.0
 ## QA Dashboard without REDCap, only XNAT
 
 
-You can open a QA dashboard with only XNAT access. First you need credentials in
+You can open a QA dashboard with only XNAT access. First, you'll need credentials in
 your home directory. The same as dax, you need a .netrc file with machine, user, password.
-Then you install garjus and run it.
-
-
+Then you install garjus and run it. One way is to create a new python 3 environment with:
+```
 python -m venv venv-garjus
-
-
+```
+Then load the new virtual environment with:
+```
 source venv-garjus/bin/activate
+```
+And then install garjus in the venv with:
 
-
+```
 pip install git+https://github.com/bud42/garjus.git
-
-
+```
+If you encounter an error with scikit learn, you can bypass it with:
+```
 export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
+```
+After garjus is successfully installed, you can launch a dashboard with:
+```
+garjus dashboard
+```
 
+Then choose one or more projects from the drop down. You should see all projects
+that are accessible to the account with credentials in your .netrc file.
