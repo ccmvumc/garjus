@@ -838,17 +838,45 @@ def update_all(
             # Drop empty rows
             dfp = dfp.dropna(subset=show_col)
         else:
-            # No types selected, show sessions concat
-            selected_cols += ['SESSIONS']
+            # Exclude SGP
+            dfp = dfp[dfp.MODALITY != 'SGP']
+            dfp = dfp[dfp.SESSTYPE != 'SGP']
+
             dfp = dfp.sort_values('MODALITY')
-            dfp['SESSIONS'] = dfp['MODALITY'].map(MOD2EMO).fillna('?')
 
-            dfp = dfp[['PROJECT', 'SESSIONS', 'SESSTYPE']].drop_duplicates()
+            typecount = len(dfp.SESSTYPE.unique())
+            if typecount < 10:
+                # Get column names
+                selected_cols += ['SESSIONS'] + list(dfp.SESSTYPE.unique())
 
-            dfp = dfp.pivot_table(
-                index=('PROJECT'),
-                values='SESSIONS',
-                aggfunc=lambda x: ''.join(x))
+                dfp2 = dfp[['PROJECT', 'SESSTYPE', 'MODALITY']].copy()
+                dfp2 = dfp2.drop_duplicates()
+                dfp2['SESSIONS'] = dfp2['MODALITY'].map(MOD2EMO).fillna('?')
+                dfp2 = dfp2.pivot_table(
+                    index=('PROJECT'),
+                    values='SESSIONS',
+                    aggfunc=lambda x: ''.join(x))
+
+                dfp = dfp.pivot_table(
+                    index=('PROJECT'),
+                    columns='SESSTYPE',
+                    values='SESSION',
+                    aggfunc='count',
+                    fill_value='',
+                )
+
+                # And smack it together now
+                dfp = dfp.merge(dfp2, left_index=True, right_index=True)
+            else:
+                selected_cols += list(dfp.MODALITY.unique())
+
+                dfp = dfp.pivot_table(
+                    index=('PROJECT'),
+                    columns='MODALITY',
+                    values='SESSION',
+                    aggfunc='count',
+                    fill_value='',
+                )
 
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
