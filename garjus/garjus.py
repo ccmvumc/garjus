@@ -1042,6 +1042,7 @@ class Garjus:
         if projects:
             uri += f'&project={",".join(projects)}'
 
+        logging.debug(f'get_result uri=:{uri}')
         result = self._get_result(uri)
 
         for r in result:
@@ -1110,6 +1111,8 @@ class Garjus:
         # Copy with new var names
         for k, v in self.sgp_rename.items():
             info[v] = record[k]
+
+        info['XSITYPE'] = 'proc:subjgenprocdata'
 
         # Decode inputs into list
         info['INPUTS'] = utils_xnat.decode_inputs(info['INPUTS'])

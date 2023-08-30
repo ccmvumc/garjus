@@ -1,4 +1,4 @@
-"""QA Dasboard."""
+"""QA Dashboard."""
 import logging
 import os
 import time
@@ -11,8 +11,12 @@ from ...garjus import Garjus
 
 logger = logging.getLogger('dashboard.qa.data')
 
-# TODO: checkoxes to hide columns DATE, SESSTYPE, SITE, NOTE: often blank
 
+# TODO: modify save and filter so we save the data before filtering,
+# then we don't have to refresh or really do anything, either filter is on or
+# off. problem is we are filtering before merging scans/assessors so 
+# need to refactor that. for now it will be 2 clicks to change to autofilter
+# including refresh click.
 
 SCAN_STATUS_MAP = {
     'usable': 'P',
@@ -51,57 +55,22 @@ def get_filename():
     return filename
 
 
-def run_refresh(projects, hidetypes=True, hidesgp=True):
+def run_refresh(projects, hidetypes=True):
     filename = get_filename()
 
     # force a requery
-    df = get_data(projects, [], [], hidetypes=hidetypes, hidesgp=hidesgp)
+    df = get_data(projects, hidetypes=hidetypes)
 
     save_data(df, filename)
 
     return df
 
 
-def load_options(selected_proj=None):
-    garjus = Garjus()
-    projects = garjus.projects()
-    sesstypes = []
-    proctypes = []
-    scantypes = []
-
-    # Read from file and filter
-    filename = get_filename()
-
-    if selected_proj and os.path.exists(filename):
-        logger.debug('reading data from file:{}'.format(filename))
-        df = pd.read_pickle(filename)
-
-        # Filter to selected
-        scantypes = df[df.PROJECT.isin(selected_proj)].SCANTYPE.unique()
-
-        # Remove blanks and sort
-        scantypes = [x for x in scantypes if x]
-        scantypes = sorted(scantypes)
-
-        # Now sessions
-        sesstypes = df[df.PROJECT.isin(selected_proj)].SESSTYPE.unique()
-
-        sesstypes = [x for x in sesstypes if x]
-        sesstypes = sorted(sesstypes)
-
-        # And finally proc
-        proctypes = df[df.PROJECT.isin(selected_proj)].PROCTYPE.unique()
-        proctypes = [x for x in proctypes if x]
-        proctypes = sorted(proctypes)
-
-    return projects, sesstypes, proctypes, scantypes
-
-
 def file_age(filename):
     return int((time.time() - os.path.getmtime(filename)) / 60)
 
 
-def update_data(projects, hidetypes, hidesgp):
+def update_data(projects, hidetypes):
     fname = get_filename()
 
     # Load what we have now
@@ -115,7 +84,7 @@ def update_data(projects, hidetypes, hidesgp):
 
     # Load the new projects
     for p in new_projects:
-        dfp =  get_data([p], [], [], hidetypes=hidetypes, hidesgp=hidesgp)
+        dfp =  get_data([p], hidetypes=hidetypes)
         df = pd.concat([df,dfp])
 
     # Save it to file
@@ -124,7 +93,7 @@ def update_data(projects, hidetypes, hidesgp):
     return df
 
 
-def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=False):
+def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
     fname = get_filename()
 
     if not os.path.exists(fname):
@@ -134,17 +103,16 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, hidesgp=Fa
         refresh = True
 
     if refresh:
-        run_refresh(projects, hidetypes, hidesgp)
+        df = run_refresh(projects, hidetypes)
     elif set(projects) != set(read_data(fname).PROJECT.unique()):
         logger.debug('updating data')
         # Different projects selected, update
-        update_data(projects, hidetypes, hidesgp)
-
-    logger.info('reading data from file:{}'.format(fname))
-    df = read_data(fname)
-
-    if 'PROJECT' in df:
+        df = update_data(projects, hidetypes)
+    else:
+        df = read_data(fname)
         df = df[df['PROJECT'].isin(projects)]
+
+
 
     return df
 
@@ -159,7 +127,7 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False):
+def get_data(projects, hidetypes=True):
     df = pd.DataFrame(columns=QA_COLS)
 
     if not projects:
@@ -170,19 +138,19 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
         garjus = Garjus()
 
         # Load data
-        logger.info(f'load scan data:{projects}')
+        logger.info(f'load data:{projects}')
+        logger.debug(f'load scan data:{projects}')
         scan_df = load_scan_data(garjus, projects)
-        logger.info(f'load assr data:{projects}')
+        logger.debug(f'load assr data:{projects}')
         assr_df = load_assr_data(garjus, projects)
-
-        if not hidesgp:
-            logger.info(f'load sgp data:{projects}')
-            subj_df = load_sgp_data(garjus, projects)
+        logger.debug(f'load sgp data:{projects}')
+        subj_df = load_sgp_data(garjus, projects)
 
     except Exception as err:
         logger.error(err)
         return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK', 'SUBJECTLINK'])
 
+    logger.debug(f'merging data:{projects}')
     if hidetypes:
         logger.debug('applying autofilter to hide unused types')
         scantypes = None
@@ -190,7 +158,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
 
         if garjus.redcap_enabled():
             # Load types
-            logger.info('loading scan/assr types')
+            logger.debug('loading scan/assr types')
             scantypes = garjus.all_scantypes()
             assrtypes = garjus.all_proctypes()
 
@@ -200,7 +168,7 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
 
         if not scantypes and not assr_df.empty:
             # Get list of scan types based on assessor inputs
-            logger.info('loading used scan types')
+            logger.debug('loading used scan types')
             scantypes = garjus.used_scantypes(assr_df, scan_df)
 
         scan_df, assr_df = _filter(scan_df, assr_df, scantypes, assrtypes)
@@ -218,21 +186,15 @@ def get_data(projects, stype_filter, ptype_filter, hidetypes=True, hidesgp=False
     # Concatenate the common cols to a new dataframe
     df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS]], sort=False)
 
-    if not hidesgp:
-        subj_df['TYPE'] = subj_df['PROCTYPE']
-        subj_df['SCANTYPE'] = None
-        subj_df['ARTTYPE'] = 'sgp'
-        subj_df['SESSION'] = subj_df['ASSR']
-        subj_df['SITE'] = 'SGP'
-        subj_df['NOTE'] = ''
-        #subj_df['XSITYPE'] = 'proc:subjgenprocdata' 
-        subj_df['SESSTYPE'] = 'SGP'
-        subj_df['MODALITY'] = 'SGP'
-        df = pd.concat([df[QA_COLS], subj_df[QA_COLS]], sort=False)
-
-    # relabel caare, etc
-    df.PROJECT = df.PROJECT.replace(['TAYLOR_CAARE'], 'CAARE')
-    df.PROJECT = df.PROJECT.replace(['TAYLOR_DepMIND'], 'DepMIND1')
+    subj_df['TYPE'] = subj_df['PROCTYPE']
+    subj_df['SCANTYPE'] = None
+    subj_df['ARTTYPE'] = 'sgp'
+    subj_df['SESSION'] = subj_df['ASSR']
+    subj_df['SITE'] = 'SGP'
+    subj_df['NOTE'] = ''
+    subj_df['SESSTYPE'] = 'SGP'
+    subj_df['MODALITY'] = 'SGP'
+    df = pd.concat([df[QA_COLS], subj_df[QA_COLS]], sort=False)
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
@@ -252,14 +214,14 @@ def _filter(scan_df, assr_df, scantypes, assrtypes):
 
     # Apply filters
     if scantypes is not None:
-        logger.info(f'filtering scan by types:{len(scan_df)}')
+        logger.debug(f'filtering scan by types:{len(scan_df)}')
         scan_df = scan_df[scan_df['SCANTYPE'].isin(scantypes)]
 
     if assrtypes is not None:
-        logger.info(f'filtering assr by types:{len(assr_df)}')
+        logger.debug(f'filtering assr by types:{len(assr_df)}')
         assr_df = assr_df[assr_df['PROCTYPE'].isin(assrtypes)]
 
-    logger.info(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
+    logger.debug(f'done filtering by types:{len(scan_df)}:{len(assr_df)}')
 
     return scan_df, assr_df
 

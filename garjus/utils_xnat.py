@@ -50,18 +50,19 @@ last_modified,\
 proc:genprocdata/inputs'
 # Including resource labels takes too long: proc:genprocdata/out/file/label'
 
-SGP_URI = '/REST/experiments?xsiType=proc:subjgenprocdata\
+
+SGP_URI = '/REST/subjects?xsiType=xnat:subjectdata\
 &columns=\
 project,\
-subject_label,\
-date,\
 label,\
-xsiType,\
+proc:subjgenprocdata/label,\
+proc:subjgenprocdata/date,\
 proc:subjgenprocdata/procstatus,\
 proc:subjgenprocdata/proctype,\
 proc:subjgenprocdata/validation/status,\
 proc:subjgenprocdata/inputs,\
 last_modified'
+
 
 SCAN_RENAME = {
     'project': 'PROJECT',
@@ -100,10 +101,9 @@ ASSR_RENAME = {
 
 SGP_RENAME = {
     'project': 'PROJECT',
-    'subject_label': 'SUBJECT',
-    'date': 'DATE',
-    'label': 'ASSR',
-    'xsiType': 'XSITYPE',
+    'label': 'SUBJECT',
+    'proc:subjgenprocdata/date': 'DATE',
+    'proc:subjgenprocdata/label': 'ASSR',
     'proc:subjgenprocdata/procstatus': 'PROCSTATUS',
     'proc:subjgenprocdata/proctype': 'PROCTYPE',
     'proc:subjgenprocdata/validation/status': 'QCSTATUS',

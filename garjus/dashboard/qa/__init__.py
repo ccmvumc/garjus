@@ -11,6 +11,8 @@
 
 # TODO: dropdown to select from choices: last week, last month, this month.
 
+# TODO: checkoxes to hide columns DATE, SESSTYPE, SITE, NOTE: often blank
+
 
 import logging
 import re
@@ -50,10 +52,9 @@ LEGEND2 = '''
 🧠 MR
 ☢️ PET
 🤯 EEG
-📊 SGP
 '''
 
-MOD2EMO = {'MR': '🧠', 'PET': '☢️', 'EEG': '🤯', 'SGP': '📊'}
+MOD2EMO = {'MR': '🧠', 'PET': '☢️', 'EEG': '🤯'}
 
 
 # The data will be pivoted by session to show a row per session and
@@ -462,7 +463,6 @@ def get_content():
                         {'label': '🧠 MR', 'value': 'MR'},
                         {'label': '☢️ PET', 'value': 'PET'},
                         {'label': '🤯 EEG', 'value': 'EEG'},
-                        {'label': '📊 SGP', 'value': 'SGP'},
                     ],
                     value=['MR', 'PET', 'EEG'],
                     id='switches-qa-modality',
@@ -633,19 +633,42 @@ def qa_pivot(df):
 
 
 # This is where the data gets initialized
-def load_data(projects=[], refresh=False, hidetypes=True, hidesgp=False):
+def load_data(projects=[], refresh=False, hidetypes=True):
     if projects is None:
         projects = []
 
     return data.load_data(
         projects=projects,
         refresh=refresh,
-        hidetypes=hidetypes,
-        hidesgp=hidesgp)
+        hidetypes=hidetypes)
 
 
-def load_options(projects):
-    return data.load_options(projects)
+def load_options(df):
+    garjus = Garjus()
+    projects = garjus.projects()
+    sesstypes = []
+    proctypes = []
+    scantypes = []
+
+    # Filter to selected
+    scantypes = df.SCANTYPE.unique()
+
+    # Remove blanks and sort
+    scantypes = [x for x in scantypes if x]
+    scantypes = sorted(scantypes)
+
+    # Now sessions
+    sesstypes = df.SESSTYPE.unique()
+    sesstypes = [x for x in sesstypes if x]
+    sesstypes = sorted(sesstypes)
+
+    # And finally proc
+    proctypes = df.PROCTYPE.unique()
+    proctypes = [x for x in proctypes if x]
+    proctypes = sorted(proctypes)
+
+    return projects, sesstypes, proctypes, scantypes
+
 
 def was_triggered(callback_ctx, button_id):
     result = (
@@ -719,18 +742,11 @@ def update_all(
         logger.debug('refresh:clicks={}'.format(n_clicks))
         refresh = True
 
-    logger.info(f'loading data:{selected_proj}')
-    hidesgp = ('SGP' not in selected_modality)
+    logger.debug(f'loading data:{selected_proj}')
     df = load_data(
         projects=selected_proj,
         refresh=refresh,
-        hidetypes=selected_autofilter,
-        hidesgp=hidesgp)
-
-    #if selected_proj and (df.empty or (sorted(selected_proj) != sorted(df.PROJECT.unique()))):
-    #    # A new project was selected so we force refresh
-    #    logger.debug('new project selected, refreshing')
-    #    df = load_data(selected_proj, refresh=True)
+        hidetypes=selected_autofilter)
 
     # Truncate NOTE
     if 'NOTE' in df:
@@ -738,7 +754,8 @@ def update_all(
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
-    proj, sess, proc, scan = load_options(selected_proj)
+    #proj, sess, proc, scan = load_options(selected_proj)
+    proj, sess, proc, scan = load_options(df)
 
     # Remove from selected what is no longer an option
     if selected_sess:
@@ -765,7 +782,7 @@ def update_all(
         selected_sess)
 
     if not df.empty and selected_modality:
-        df = df[df.MODALITY.isin(selected_modality)]
+        df = df[df.MODALITY.isin(selected_modality + ['SGP'])]
 
     if not df.empty and selected_procstatus:
         df = df[df.STATUS.isin(selected_procstatus)]
@@ -806,7 +823,6 @@ def update_all(
                 index=('PROJECT'),
                 values=show_col,
                 aggfunc=lambda x: x.mode().iat[0],
-                #aggfunc=pd.Series.mode,
             )
 
             for p in show_col:
@@ -908,7 +924,6 @@ def update_all(
                     index=('PROJECT', 'SUBJECT', 'SUBJECTLINK'),
                     values=show_col,
                     aggfunc=lambda x: x.mode().iat[0],
-                    #aggfunc=pd.Series.mode,
                 )
 
             for p in show_col:
@@ -927,6 +942,8 @@ def update_all(
             selected_cols = ['PROJECT', 'SUBJECT'] + show_col
         else:
             # No types selected so show session types by modality
+
+            dfp = dfp[dfp.MODALITY != 'SGP']
 
             dfp = dfp.sort_values('MODALITY')
 
