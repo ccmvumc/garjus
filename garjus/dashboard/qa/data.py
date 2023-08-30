@@ -81,13 +81,26 @@ def update_data(projects, hidetypes):
     # Find new projects in selected
     new_projects = [x for x in projects if x not in df.PROJECT.unique()]
 
-    # Load the new projects
-    for p in new_projects:
-        dfp = get_data([p], hidetypes=hidetypes)
+    if new_projects:
+
+        # Save a file with new projects placeholders (hacky lock)
+        for p in new_projects:
+            _newdf = pd.DataFrame.from_records([{'PROJECT': p}])
+            df = pd.concat([df, _newdf], ignore_index=True)
+
+        save_data(df, fname)
+
+        # Load the new projects
+        dfp = get_data(new_projects, hidetypes=hidetypes)
+
+        # Remove our "lock" rows
+        df = df[~df.PROJECT.isin(new_projects)]
+
+        # Merge our new data with old data
         df = pd.concat([df, dfp])
 
-    # Save it to file
-    save_data(df, fname)
+        # Save it to file
+        save_data(df, fname)
 
     return df
 
@@ -110,6 +123,8 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
     else:
         df = read_data(fname)
         df = df[df['PROJECT'].isin(projects)]
+
+    df = df.dropna(subset=['TYPE'])
 
     return df
 
