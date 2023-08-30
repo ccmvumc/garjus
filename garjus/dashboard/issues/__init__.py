@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
@@ -11,24 +10,19 @@ import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX, GWIDTH
-from ..shared import RGB_RED, RGB_GREEN, RGB_GREY, RGB_BLUE
+from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
 from . import data
 
 
 logger = logging.getLogger('dashboard.issues')
 
 
-STATUS2RGB = {
-    'FAIL': RGB_RED,
-    'COMPLETE': RGB_BLUE,
-    'PASS': RGB_GREEN,
-    'UNKNOWN': RGB_GREY}
+STATUSES = ['FAIL', 'COMPLETE', 'PASS', 'UNKNOWN']
 
 
 def _get_graph_content(df):
     PIVOTS = ['PROJECT', 'CATEGORY']
-    status2rgb = STATUS2RGB
+    status2rgb = {k: STATUS2RGB[k] for k in STATUSES}
     tabs_content = []
 
     # index we are pivoting on to count statuses
@@ -77,7 +71,7 @@ def get_content():
     try:
         df = load_issues()
     except Exception as err:
-        logger.error('could not load issues')
+        logger.error(f'could not load issues:{err}')
         return None
 
     issues_graph_content = _get_graph_content(df)
@@ -87,7 +81,7 @@ def get_content():
     df.reset_index(inplace=True)
     issues_data = df.to_dict('records')
 
-    issues_content = [       
+    issues_content = [
         dbc.Alert('XNAT connection failed', color='danger', id='alert-issues-xnat', is_open=False),
         dbc.Alert('REDCap connection failed', color='danger', id='alert-issues-redcap', is_open=False),
         dcc.Loading(id="loading-issues", children=[

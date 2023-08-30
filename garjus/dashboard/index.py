@@ -37,7 +37,7 @@ def get_layout():
         tabs.append(dcc.Tab(
             label='Stats',
             value='stats',
-            children= stats.get_content()))
+            children=stats.get_content()))
 
         tabs.append(dcc.Tab(
             label='Analyses',
@@ -45,7 +45,7 @@ def get_layout():
             children=analyses.get_content()))
 
         report_content = [html.Div(dcc.Tabs(
-                id='tabs', value='qa', vertical=False, children=tabs))]
+            id='tabs', value='qa', vertical=False, children=tabs))]
     else:
         # Just QA
         report_content = qa.get_content()
@@ -53,8 +53,8 @@ def get_layout():
     footer_content = [
         html.Hr(),
         html.Div(dcc.Link(
-                [html.P('garjus')],
-                href='https://github.com/ccmvumc/garjus'),
+            [html.P('garjus')],
+            href='https://github.com/ccmvumc/garjus'),
             style={'textAlign': 'center'}),
     ]
 

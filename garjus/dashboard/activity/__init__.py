@@ -10,26 +10,26 @@ import dash
 
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX, GWIDTH
-from ..shared import RGB_RED, RGB_GREEN, RGB_YELLOW, RGB_GREY, RGB_BLUE, RGB_LIME
+from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
 from . import data
 
 
 logger = logging.getLogger('dashboard.activity')
 
 
-STATUS2RGB = {
-    'FAIL': RGB_RED,
-    'COMPLETE': RGB_BLUE,
-    'PASS': RGB_GREEN,
-    'UNKNOWN': RGB_GREY,
-    'NQA': RGB_LIME,
-    'NPUT': RGB_YELLOW}
+STATUSES = [
+    'FAIL',
+    'COMPLETE',
+    'PASS',
+    'UNKNOWN',
+    'NQA',
+    'NPUT'
+]
 
 
 def get_graph_content(df):
     PIVOTS = ['PROJECT', 'CATEGORY', 'SOURCE']
-    status2rgb = STATUS2RGB
+    status2rgb = {k: STATUS2RGB[k] for k in STATUSES}
     tabs_content = []
 
     # index we are pivoting on to count statuses

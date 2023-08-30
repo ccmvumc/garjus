@@ -1,12 +1,7 @@
 import logging
 
-import pandas as pd
-import plotly
-import plotly.graph_objs as go
-import plotly.subplots
 from dash import dcc, html, dash_table as dt
 from dash.dependencies import Input, Output
-import dash
 
 from ..app import app
 from .. import utils
@@ -19,7 +14,7 @@ logger = logging.getLogger('dashboard.analyses')
 def get_content():
 
     try:
-        df = load_analyses()
+        _ = load_analyses()
     except Exception as err:
         logger.error(err)
         return None
@@ -104,8 +99,6 @@ def update_analyses(
 ):
 
     logger.debug('update_all')
-
-    ctx = dash.callback_context
 
     # Load selected data with refresh if requested
     df = load_analyses(selected_proj)

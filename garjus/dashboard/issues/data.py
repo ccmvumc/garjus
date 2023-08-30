@@ -8,6 +8,7 @@ from ...garjus import Garjus
 
 logger = logging.getLogger('dashboard.issues.data')
 
+
 # This is where we save our cache of the data
 def get_filename():
     datadir = 'DATA'
@@ -38,8 +39,6 @@ def load_garjus_issues():
 
 
 def run_refresh(filename):
-    proj_filter = []
-
     df = get_data()
 
     if not df.empty:

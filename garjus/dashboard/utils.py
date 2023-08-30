@@ -6,7 +6,6 @@ def make_options(values):
 
 
 def make_columns(values):
-    #return [{'name': x, 'id': x, 'type': 'text', 'presentation': 'markdown'} for x in values]
     return [{'name': x, 'id': x} for x in values]
 
 
@@ -16,5 +15,4 @@ def read_data(filename):
 
 
 def save_data(df, filename):
-    # save to cache
     df.to_pickle(filename)

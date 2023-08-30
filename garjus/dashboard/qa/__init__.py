@@ -75,9 +75,21 @@ def _get_graph_content(dfp):
     # Check for empty data
     if dfp is None or len(dfp) == 0:
         logger.debug('empty data, using empty figure')
-        return [dcc.Tab(label='', value='0', children=[html.Div(
-            html.H1('Choose Project(s) to load', style={'text-align': 'center'}),
-            style={'padding':'150px'})])]
+        return [
+            dcc.Tab(
+                label='',
+                value='0',
+                children=[
+                    html.Div(
+                        html.H1(
+                            'Choose Project(s) to load',
+                            style={'text-align': 'center'},
+                        ),
+                        style={'padding': '150px'},
+                    )
+                ]
+            )
+        ]
 
     # Make a 1x1 figure
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
@@ -264,131 +276,73 @@ def _sessionsbytime_figure(df, selected_groupby):
         if dfs.empty:
             continue
 
-        # Plot base on view
-        view = 'default'
+        # Create boxplot for this var and add to figure
+        # Default to the jittered boxplot with no boxes
 
-        if view == "month":
-            pass
-
-        elif view == 'all':
-            # Let's do this for the all time view to see histograms by year
-            # or quarter or whatever fits well
-
-            # Plot this session type
-            fig.append_trace(
-                go.Histogram(
-                    hovertext=dfs['SESSION'],
-                    name='{} ({})'.format(sesstype, len(dfs)),
-                    x=dfs['DATE'],
-                    y=dfs['PROJECT'],
-                ),
-                _row,
-                _col)
-
-        elif view == 'weekly':
-            # Let's do this only for the weekly view and customize it specifically
-            # for Mon thru Fri and allow you to choose this week and last week
-
-            dfs['ONE'] = 1
-
-            # Plot this session type
-            fig.append_trace(
-                go.Bar(
-                    hovertext=dfs['SESSION'],
-                    name='{} ({})'.format(sesstype, len(dfs)),
-                    x=dfs['DATE'],
-                    y=dfs['ONE'],
-                ),
-                _row,
-                _col)
-
-            fig.update_layout(
-                barmode='stack',
-                width=GWIDTH,
-                bargap=0.1)
+        # markers symbols, see https://plotly.com/python/marker-style/
+        if mod == 'MR':
+            symb = 'circle-dot'
+        elif mod == 'PET':
+            symb = 'diamond-wide-dot'
         else:
-            # Create boxplot for this var and add to figure
-            # Default to the jittered boxplot with no boxes
+            symb = 'diamond-tall-dot'
 
-            # markers symbols, see https://plotly.com/python/marker-style/
-            if mod == 'MR':
-                symb = 'circle-dot'
-            elif mod == 'PET':
-                symb = 'diamond-wide-dot'
-            else:
-                symb = 'diamond-tall-dot'
+        _color = next(palette)
 
-            _color = next(palette)
+        # Convert hex to rgba with alpha of 0.5
+        if _color.startswith('#'):
+            _rgba = 'rgba({},{},{},{})'.format(
+                int(_color[1:3], 16),
+                int(_color[3:5], 16),
+                int(_color[5:7], 16),
+                0.7)
+        else:
+            _r, _g, _b = _color[4:-1].split(',')
+            _a = 0.7
+            _rgba = 'rgba({},{},{},{})'.format(_r, _g, _b, _a)
 
-            # Convert hex to rgba with alpha of 0.5
-            if _color.startswith('#'):
-                _rgba = 'rgba({},{},{},{})'.format(
-                    int(_color[1:3], 16),
-                    int(_color[3:5], 16),
-                    int(_color[5:7], 16),
-                    0.7)
-            else:
-                _r, _g, _b = _color[4:-1].split(',')
-                _a = 0.7
-                _rgba = 'rgba({},{},{},{})'.format(_r, _g, _b, _a)
+        # Plot this session type
+        _row = 1
+        _col = 1
+        fig.append_trace(
+            go.Box(
+                name='{} {} ({})'.format(sesstype, mod, len(dfs)),
+                x=dfs['DATE'],
+                y=dfs[selected_groupby],
+                boxpoints='all',
+                jitter=0.7,
+                text=dfs['SESSION'],
+                pointpos=0.5,
+                orientation='h',
+                marker={
+                    'symbol': symb,
+                    'color': _rgba,
+                    'size': 12,
+                    'line': dict(width=2, color=_color)
+                },
+                line={'color': 'rgba(0,0,0,0)'},
+                fillcolor='rgba(0,0,0,0)',
+                hoveron='points',
+            ),
+            _row,
+            _col)
 
-            # Plot this session type
-            _row = 1
-            _col = 1
-            fig.append_trace(
-                go.Box(
-                    name='{} {} ({})'.format(sesstype, mod, len(dfs)),
-                    x=dfs['DATE'],
-                    y=dfs[selected_groupby],
-                    boxpoints='all',
-                    jitter=0.7,
-                    text=dfs['SESSION'],
-                    pointpos=0.5,
-                    orientation='h',
-                    marker={
-                        'symbol': symb,
-                        'color': _rgba,
-                        'size': 12,
-                        'line': dict(width=2, color=_color)
-                    },
-                    line={'color': 'rgba(0,0,0,0)'},
-                    fillcolor='rgba(0,0,0,0)',
-                    hoveron='points',
-                ),
-                _row,
-                _col)
+        # show lines so we can better distinguish categories
+        fig.update_yaxes(showgrid=True)
 
-            # show lines so we can better distinguish categories
-            fig.update_yaxes(showgrid=True)
+        x_mins = []
+        x_maxs = []
+        for trace_data in fig.data:
+            x_mins.append(min(trace_data.x))
+            x_maxs.append(max(trace_data.x))
 
-            x_mins = []
-            x_maxs = []
-            for trace_data in fig.data:
-                x_mins.append(min(trace_data.x))
-                x_maxs.append(max(trace_data.x))
-
-            x_min = min(x_mins)
-            x_max = max(x_maxs)
-
-            if x_min == '2021-11-01' or x_min == '2021-11-10':
-                fig.update_xaxes(
-                    range=('2021-10-31', '2021-12-01'),
-                    tickvals=[
-                        '2021-11-01',
-                        '2021-11-08',
-                        '2021-11-15',
-                        '2021-11-22',
-                        '2021-11-29'])
-
-            fig.update_layout(width=GWIDTH)
+        fig.update_layout(width=GWIDTH)
 
     return fig
 
 
 def get_content():
     '''Get QA page content.'''
-
-    graph_content = _get_graph_content(None)
 
     # We use the dbc grid layout with rows and columns, rows are 12 units wide
     content = [
@@ -414,7 +368,7 @@ def get_content():
                     id='switch-qa-autofilter',
                     label='Autofilter',
                     value=True,
-                ), 
+                ),
                 align='center',
             ),
             dbc.Col(
@@ -436,17 +390,6 @@ def get_content():
                 ),
                 width=5,
             ),
-            # dbc.Col(
-            #     dbc.Button(
-            #         'Favorites',
-            #         outline=True,
-            #         #className="me-1",
-            #         id='button-qa-favorites',
-            #         size='sm',
-            #         color='primary',
-            #     ),
-            #     align='center',
-            # ),
         ]),
         dbc.Row([
             dbc.Col(
@@ -535,42 +478,42 @@ def get_content():
             dbc.Label('Get ready...', id='label-qa-rowcount1'),
         ]),
         dt.DataTable(
-                columns=[],
-                data=[],
-                filter_action='native',
-                page_action='none',
-                sort_action='native',
-                id='datatable-qa',
-                style_table={
-                    'overflowY': 'scroll',
-                    'overflowX': 'scroll',
-                },
-                style_cell={
-                    'textAlign': 'center',
-                    'padding': '5px 5px 0px 5px',
-                    'width': '30px',
-                    'overflow': 'hidden',
-                    'textOverflow': 'ellipsis',
-                    'height': 'auto',
-                    'minWidth': '40',
-                    'maxWidth': '70'
-                },
-                style_header={
-                    'fontWeight': 'bold',
-                    'padding': '5px 15px 0px 10px',
-                },
-                style_cell_conditional=[
-                    {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
-                    {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
-                    {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
-                ],
-                css=[dict(selector= "p", rule= "margin: 0; text-align: center")],
-                fill_width=False,
-                export_format='xlsx',
-                export_headers='names',
-                export_columns='visible'
-            ),
-            dbc.Label('Get ready...', id='label-qa-rowcount2'),
+            columns=[],
+            data=[],
+            filter_action='native',
+            page_action='none',
+            sort_action='native',
+            id='datatable-qa',
+            style_table={
+                'overflowY': 'scroll',
+                'overflowX': 'scroll',
+            },
+            style_cell={
+                'textAlign': 'center',
+                'padding': '5px 5px 0px 5px',
+                'width': '30px',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
+                'height': 'auto',
+                'minWidth': '40',
+                'maxWidth': '70'
+            },
+            style_header={
+                'fontWeight': 'bold',
+                'padding': '5px 15px 0px 10px',
+            },
+            style_cell_conditional=[
+                {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
+            ],
+            css=[dict(selector="p", rule="margin: 0; text-align: center")],
+            fill_width=False,
+            export_format='xlsx',
+            export_headers='names',
+            export_columns='visible'
+        ),
+        dbc.Label('Get ready...', id='label-qa-rowcount2'),
         html.Div([
             html.P(
                 LEGEND1,
@@ -754,7 +697,6 @@ def update_all(
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
-    #proj, sess, proc, scan = load_options(selected_proj)
     proj, sess, proc, scan = load_options(df)
 
     # Remove from selected what is no longer an option
@@ -788,8 +730,8 @@ def update_all(
         df = df[df.STATUS.isin(selected_procstatus)]
 
     if df.empty:
-         records = []
-         columns = []
+        records = []
+        columns = []
     elif selected_pivot == 'proj':
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
@@ -904,7 +846,6 @@ def update_all(
             show_proc = []
 
         if selected_scan:
-            #cols += selected_scan
             selected_cols += selected_scan
             show_scan = [x for x in selected_scan if x in dfp.columns]
         else:

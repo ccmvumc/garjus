@@ -77,7 +77,7 @@ class Garjus:
                 self._disconnect_xnat = True
             except Exception as err:
                 logger.error('could not connect to XNAT')
-                raise Exception('could not connect to XNAT')
+                raise Exception(f'could not connect to XNAT:{err}')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
@@ -93,7 +93,6 @@ class Garjus:
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 64
         self._projects = None
-        #self._load_project_names()
         self._project2stats = {}
         self._columns = self._default_column_names()
         self._yamldir = self.set_yamldir()
@@ -667,7 +666,7 @@ class Garjus:
         if not self.redcap_enabled():
             logger.info('cannot load sites, redcap not enabled')
             return None
-        
+
         return self._rc.export_records(records=[project], forms=['sites'])
 
     def _load_project_names(self):
@@ -760,7 +759,7 @@ class Garjus:
         if not self.redcap_enabled():
             logger.info('cannot load stats, redcap not enabled')
             return None
-        
+
         try:
             """Get the stats data from REDCap."""
             statsrc = self._stats_redcap(project)
@@ -910,7 +909,7 @@ class Garjus:
             logger.error(err)
             return []
 
-        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
+        rec = [x for x in rec if (('redcap_repeat_instrument' not in x) or (x['redcap_repeat_instrument'] == 'processing'))]
         rec = [x for x in rec if str(x['processing_complete']) == '2']
 
         for r in rec:
@@ -1183,7 +1182,7 @@ class Garjus:
             fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
-    
+
         # Only enabled processing
         rec = [x for x in rec if str(x['processing_complete']) == '2']
 
@@ -1276,7 +1275,7 @@ class Garjus:
             try:
                 update_tasks(self, projects, types=types)
             except Exception as err:
-                logger.info('problem updating tasks, duplicate build')
+                logger.info(f'problem updating tasks, duplicate build:{err}')
                 import traceback
                 traceback.print_exc()
 
@@ -1315,7 +1314,8 @@ class Garjus:
             return
 
         logger.info(f'writing csv file:{csvname}.')
-        make_stats_csv(self, projects, proctypes, sesstypes, csvname, persubject)
+        make_stats_csv(
+            self, projects, proctypes, sesstypes, csvname, persubject)
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
@@ -1338,7 +1338,7 @@ class Garjus:
 
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
-        
+
         if not self.redcap_enabled():
             logger.info('cannot load stats, redcap not enabled')
             return None
@@ -1674,7 +1674,6 @@ class Garjus:
             logger.info('cannot load scan automations, redcap not enabled')
             return None
 
-
         auto_names = self.scan_automation_choices()
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
@@ -1687,7 +1686,7 @@ class Garjus:
 
     def edat_protocols(self, project):
         """Return list of edat protocol records."""
-        
+
         if not self.redcap_enabled():
             logger.info('cannot load edat protocols, redcap not enabled')
             return None
@@ -1696,7 +1695,7 @@ class Garjus:
 
     def scanning_protocols(self, project):
         """Return list of scanning protocol records."""
-        
+
         if not self.redcap_enabled():
             logger.info('cannot load scanning protocols, redcap not enabled')
             return None

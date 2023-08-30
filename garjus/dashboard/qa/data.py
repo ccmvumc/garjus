@@ -2,7 +2,6 @@
 import logging
 import os
 import time
-from datetime import datetime, date, timedelta
 
 import pandas as pd
 
@@ -14,7 +13,7 @@ logger = logging.getLogger('dashboard.qa.data')
 
 # TODO: modify save and filter so we save the data before filtering,
 # then we don't have to refresh or really do anything, either filter is on or
-# off. problem is we are filtering before merging scans/assessors so 
+# off. problem is we are filtering before merging scans/assessors so
 # need to refactor that. for now it will be 2 clicks to change to autofilter
 # including refresh click.
 
@@ -84,8 +83,8 @@ def update_data(projects, hidetypes):
 
     # Load the new projects
     for p in new_projects:
-        dfp =  get_data([p], hidetypes=hidetypes)
-        df = pd.concat([df,dfp])
+        dfp = get_data([p], hidetypes=hidetypes)
+        df = pd.concat([df, dfp])
 
     # Save it to file
     save_data(df, fname)
@@ -111,8 +110,6 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
     else:
         df = read_data(fname)
         df = df[df['PROJECT'].isin(projects)]
-
-
 
     return df
 
@@ -148,7 +145,8 @@ def get_data(projects, hidetypes=True):
 
     except Exception as err:
         logger.error(err)
-        return pd.DataFrame(columns=QA_COLS+['DATE', 'SESSIONLINK', 'SUBJECTLINK'])
+        _cols = QA_COLS + ['DATE', 'SESSIONLINK', 'SUBJECTLINK']
+        return pd.DataFrame(columns=_cols)
 
     logger.debug(f'merging data:{projects}')
     if hidetypes:
@@ -294,7 +292,8 @@ def load_scan_data(garjus, project_filter):
 
     dfs = dfs[[
         'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
-        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'full_path']].copy()
+        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY',
+        'full_path']].copy()
     dfs.drop_duplicates(inplace=True)
 
     # Drop any rows with empty type

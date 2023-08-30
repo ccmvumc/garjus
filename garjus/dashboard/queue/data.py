@@ -49,11 +49,11 @@ def _get_proctype(row):
             tmp = os.path.basename(row['YAMLFILE'])
 
         # Get just the filename without the directory path
-        # Split on periods and grab the 4th value from right, 
+        # Split on periods and grab the 4th value from right,
         # thus allowing periods in the main processor name
         row['PROCTYPE'] = tmp.rsplit('.')[-4]
 
-    except (KeyError, IndexError) as err:
+    except (KeyError, IndexError):
         row['PROCTYPE'] = ''
 
     return row
