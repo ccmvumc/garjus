@@ -176,7 +176,8 @@ pip install git+https://github.com/bud42/garjus.git
 ```
 If you encounter an error with scikit learn, you can bypass it with:
 ```
-export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True && pip install git+https://github.com/bud42/garjus.git
+export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True && \
+pip install git+https://github.com/bud42/garjus.git
 
 ```
 After garjus is successfully installed, you can launch a dashboard with:
