@@ -760,13 +760,26 @@ def update_all(
         show_col = show_proc + show_scan
 
         if show_col:
-            # aggregrate to most common value (mode)
-            dfp = dfp.pivot_table(
-                index=('PROJECT'),
-                values=show_col,
-                aggfunc=lambda x: x.mode().iat[0],
-            )
 
+            # aggregrate to most common value (mode)
+            if 'E' in selected_procstatus:
+                dfp = dfp.fillna('E')
+                dfp = dfp.pivot_table(
+                    index=('PROJECT'),
+                    values=show_col,
+                    aggfunc=lambda x: x.mode().iat[0],
+                    fill_value='E',
+                )
+            else:
+                dfp = dfp.fillna('')
+                dfp = dfp.pivot_table(
+                    index=('PROJECT'),
+                    values=show_col,
+                    aggfunc=lambda x: x.mode().iat[0],
+                    fill_value=np.nan,
+                )
+
+            # Replace chars with emojis
             for p in show_col:
                 dfp[p] = dfp[p].str.replace('P', '✅')
                 dfp[p] = dfp[p].str.replace('X', '🩷')
@@ -774,10 +787,10 @@ def update_all(
                 dfp[p] = dfp[p].str.replace('N', '🟡')
                 dfp[p] = dfp[p].str.replace('R', '🔷')
                 dfp[p] = dfp[p].str.replace('F', '❌')
-                if 'E' in selected_procstatus:
-                    dfp[p] = dfp[p].fillna('□')
+                dfp[p] = dfp[p].str.replace('E', '□')
 
             # Drop empty rows
+            dfp = dfp.replace('', np.nan)
             dfp = dfp.dropna(subset=show_col)
         else:
             # Exclude SGP
@@ -879,7 +892,10 @@ def update_all(
                 for p in dfp.columns:
                     dfp[p] = dfp[p].astype(str).str.replace('[]', '', regex=False)
 
+                # Really drop empty
                 dfp = dfp.replace(r'^\s*$', np.nan, regex=True)
+
+                # For real drop empty
                 dfp = dfp.dropna(axis=1, how='all')
 
                 # Save the list columns before we reset index

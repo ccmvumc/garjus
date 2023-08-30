@@ -93,10 +93,9 @@ def update_data(projects, hidetypes):
         # Load the new projects
         dfp = get_data(new_projects, hidetypes=hidetypes)
 
-        # Remove our "lock" rows
-        df = df[~df.PROJECT.isin(new_projects)]
-
         # Merge our new data with old data
+        df = read_data(fname)
+        df = df[~df.PROJECT.isin(new_projects)]
         df = pd.concat([df, dfp])
 
         # Save it to file
@@ -122,8 +121,8 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
         df = update_data(projects, hidetypes)
     else:
         df = read_data(fname)
-        df = df[df['PROJECT'].isin(projects)]
 
+    df = df[df['PROJECT'].isin(projects)]
     df = df.dropna(subset=['TYPE'])
 
     return df
