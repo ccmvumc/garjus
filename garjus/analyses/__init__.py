@@ -1,6 +1,6 @@
 """Analyses."""
 import logging
-import os
+import os, shutil
 import tempfile
 import subprocess as sb
 
@@ -8,6 +8,28 @@ import pandas as pd
 
 
 logger = logging.getLogger('garjus.analyses')
+
+
+
+def _download_zip(xnat, uri, zipfile):
+    # Build the uri to download
+    _uri = uri + '?format=zip&structure=simplified'
+
+    response = xnat.get(_uri, stream=True)
+    with open(zipfile, 'wb') as f:
+        shutil.copyfileobj(response.raw, f)
+
+    return zipfile
+
+
+def _download_file_stream(xnat, uri, dst):
+
+    response = xnat.get(uri, stream=True)
+
+    with open(dst, 'wb') as f:
+        shutil.copyfileobj(response.raw, f)
+
+    return dst
 
 
 def update(garjus, projects=None):
@@ -115,18 +137,46 @@ def _sessions_from_assessors(assessors):
 
 def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
     # Make the folders for this file path
-    print(dst)
     _make_dirs(os.path.dirname(dst))
 
     # Connect to the resource on xnat
-    res = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+    r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
 
     # TODO: apply regex or wildcards in fmatch
     # res_obj.files()[0].label()).get(fpath)
     # res.files().label()
 
-    res.file(fmatch).get(dst)
+    r.file(fmatch).get(dst)
+
     return dst
+
+
+def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdir):
+    reszip = '{}_{}.zip'.format(assessor, resource)
+    respath = 'data/projects/{}/subjects/{}/experiments/{}/resources/{}/files'
+    respath = respath.format(project, subject, assessor, resource)
+
+    # Download the resource as a zip file
+    download_zip(respath, reszip)
+
+    # Unzip the file to output dir
+    logger.debug(f'unzip file {rezip} to {outdir}')
+    with zipfile.ZipFile(reszip) as z:
+        z.extractall(outdir)
+
+    # TODO: check downloaded files, compare/size/md5 to xnat
+
+    # Delete the zip
+    os.remove(reszip)
+
+
+def _download_sgp_file(garjus, proj, subj, assr, res, fmatch, dst):
+    # Make the folders for this file path
+    _make_dirs(os.path.dirname(dst))
+
+    # Download the file
+    uri = f'data/projects/{proj}/subjects/{subj}/experiments/{assr}/resources/{res}/files/{fmatch}'
+    _download_file_stream(garjus.xnat(), uri, dst)
 
 
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):
@@ -134,10 +184,23 @@ def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     _make_dirs(dst)
 
     # Connect to the resource on xnat
-    res = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+    r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+
+    # Download resource and extract
+    r.get(dst, extract=True)
+
+    return dst
+
+
+def _download_sgp_resource(garjus, proj, subj, assr, res, dst):
+    # Make the folders for destination path
+    _make_dirs(dst)
+
+    # Connect to the resource on xnat
+    r = garjus.xnat().select_sgp_assessor(proj, subj, assr).resource(res)
 
     # Download extracted
-    res.get(dst, extract=True)
+    r.get(dst, extract=True)
 
     return dst
 
@@ -149,9 +212,94 @@ def _make_dirs(dirname):
         pass
 
 
-def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assessors):
+def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
 
-    # TODO: handle any subject-level assessors, sgp
+    sgp = sgp[sgp.SUBJECT == subj]
+
+    for k, a in sgp.iterrows():
+
+        assr = a.ASSR
+
+        for assr_spec in sgp_spec:
+            logger.debug(f'assr_spec={assr_spec}')
+
+            assr_types = assr_spec['types'].split(',')
+
+            logger.debug(f'assr_types={assr_types}')
+
+            if a.PROCTYPE not in assr_types:
+                logger.debug(f'skip assr, no match on type={assr}:{a.PROCTYPE}')
+                continue
+
+            for res_spec in assr_spec['resources']:
+
+                try:
+                    res = res_spec['resource']
+                except (KeyError, ValueError) as err:
+                    logger.error(f'reading resource:{err}')
+                    continue
+
+                if 'fmatch' in res_spec:
+                    # Download files
+                    for fmatch in res_spec['fmatch'].split(','):
+                        # Where shall we save it?
+                        dst = f'{subj_dir}/{assr}/{res}/{fmatch}'
+
+                        # Have we already downloaded it?
+                        if os.path.exists(dst):
+                            logger.debug(f'exists:{dst}')
+                            continue
+
+                        # Download it
+                        logger.info(f'download file:{proj}:{subj}:{assr}:{res}:{fmatch}')
+                        try:
+                            _download_sgp_file(
+                                garjus,
+                                proj,
+                                subj,
+                                assr,
+                                res,
+                                fmatch,
+                                dst
+                            )
+                        except Exception as err:
+                            logger.error(f'{subj}:{assr}:{res}:{fmatch}:{err}')
+                            import traceback
+                            traceback.print_exc()
+                            raise err
+                else:
+                    # Download whole resource
+
+                    # Where shall we save it?
+                    dst = f'{subj_dir}/{assr}'
+
+                    # Have we already downloaded it?
+                    if os.path.exists(os.path.join(dst, res)):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download resource:{proj}:{subj}:{assr}:{res}')
+                    try:
+                        _download_sgp_resource(
+                            garjus,
+                            proj,
+                            subj,
+                            assr,
+                            res,
+                            dst
+                        )
+                    except Exception as err:
+                        logger.error(f'{subj}:{assr}:{res}:{err}')
+                        raise err
+
+
+def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assessors, sgp):
+
+    #  subject-level assessors
+    sgp_spec = subj_spec['assessors']
+    logger.debug(f'download_sgp={subj_dir}')
+    _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp)
 
     # Download the subjects sessions
     sess_spec = subj_spec['sessions']
@@ -210,7 +358,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                             continue
 
                         # Download it
-                        logger.debug(f'download file:{proj}:{subj}:{sess}:{assr}:{res}:{fmatch}')
+                        logger.info(f'download file:{proj}:{subj}:{sess}:{assr}:{res}:{fmatch}')
                         try:
                             _download_file(
                                 garjus,
@@ -237,7 +385,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                         continue
 
                     # Download it
-                    logger.debug(f'download resource:{proj}:{subj}:{sess}:{assr}:{res}')
+                    logger.info(f'download resource:{proj}:{subj}:{sess}:{assr}:{res}')
                     try:
                         _download_resource(
                             garjus,
@@ -267,6 +415,7 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
     logging.info('loading project data')
     assessors = garjus.assessors(projects=[project])
     scans = garjus.scans(projects=[project])
+    sgp = garjus.subject_assessors(projects=[project])
 
     sessions = pd.concat([
         _sessions_from_scans(scans),
@@ -301,8 +450,10 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
                 project,
                 subj,
                 sessions,
-                assessors)
-        except Exception:
+                assessors,
+                sgp)
+        except Exception as err:
+            logger.debug(err)
             errors.append(subj)
             continue
 
