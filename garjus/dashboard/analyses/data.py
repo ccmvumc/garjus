@@ -10,11 +10,14 @@ logger = logging.getLogger('dashboard.analyses.data')
 
 
 def get_filename():
-    datadir = 'DATA'
-    if not os.path.isdir(datadir):
-        os.mkdir(datadir)
-
+    datadir = f'{Garjus().cachedir()}/DATA'
     filename = f'{datadir}/analysesdata.pkl'
+
+    try:
+        os.makedirs(datadir)
+    except FileExistsError:
+        pass
+
     return filename
 
 

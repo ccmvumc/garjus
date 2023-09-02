@@ -12,11 +12,14 @@ logger = logging.getLogger('dashboard.queue.data')
 
 # This is where we save our cache of the data
 def get_filename():
-    datadir = 'DATA'
-    if not os.path.isdir(datadir):
-        os.mkdir(datadir)
-
+    datadir = f'{Garjus().cachedir()}/DATA'
     filename = f'{datadir}/queuedata.pkl'
+
+    try:
+        os.makedirs(datadir)
+    except FileExistsError:
+        pass
+
     return filename
 
 
@@ -42,7 +45,6 @@ def get_data(proj_filter, hidedone=True):
 
 def _get_proctype(row):
     try:
-
         if row['YAMLUPLOAD']:
             tmp = os.path.basename(row['YAMLUPLOAD'])
         else:
@@ -67,37 +69,6 @@ def run_refresh(filename, hidedone=True):
     utils.save_data(df, filename)
 
     return df
-
-
-def load_field_options(fieldname):
-    filename = get_filename()
-
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh(filename)
-
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
-
-    _options = df[fieldname].unique()
-
-    # clean up
-    _options = [str(x) for x in _options]
-    _options = [x for x in _options if x]
-
-    return sorted(_options)
-
-
-def load_proc_options():
-    return load_field_options('PROCTYPE')
-
-
-def load_proj_options():
-    return load_field_options('PROJECT')
-
-
-def load_user_options():
-    return load_field_options('USER')
 
 
 def load_data(refresh=False, hidedone=True):

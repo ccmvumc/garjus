@@ -5,8 +5,8 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
-import dash
+from dash import Input, Output, callback
+import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
@@ -29,102 +29,102 @@ STATUSES = [
 
 
 def get_graph_content(df):
-    PIVOTS = ['USER', 'PROJECT', 'PROCTYPE']
     status2rgb = {k: STATUS2RGB[k] for k in STATUSES}
-    tabs_content = []
 
-    # index we are pivoting on to count statuses
-    for i, pindex in enumerate(PIVOTS):
-        # Make a 1x1 figure
-        fig = plotly.subplots.make_subplots(rows=1, cols=1)
-        fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
+    # Make a 1x1 figure
+    fig = plotly.subplots.make_subplots(rows=1, cols=1)
 
-        # Draw bar for each status, these will be displayed in order
-        dfp = pd.pivot_table(
-            df, index=pindex, values='LABEL', columns=['STATUS'],
-            aggfunc='count', fill_value=0)
+    dfp = pd.pivot_table(
+        df,
+        index='PROCTYPE',
+        values='LABEL',
+        columns=['STATUS'],
+        aggfunc='count',
+        fill_value=0)
 
-        for status, color in status2rgb.items():
-            ydata = sorted(dfp.index)
-            if status not in dfp:
-                xdata = [0] * len(dfp.index)
-            else:
-                xdata = dfp[status]
+    for status, color in status2rgb.items():
+        ydata = sorted(dfp.index)
+        if status not in dfp:
+            xdata = [0] * len(dfp.index)
+        else:
+            xdata = dfp[status]
 
-            fig.append_trace(go.Bar(
-                x=xdata,
-                y=ydata,
-                name='{} ({})'.format(status, sum(xdata)),
-                marker=dict(color=color),
-                opacity=0.9, orientation='h'), 1, 1)
+        fig.append_trace(go.Bar(
+            x=xdata,
+            y=ydata,
+            name='{} ({})'.format(status, sum(xdata)),
+            marker=dict(color=color),
+            opacity=0.9, orientation='h'),
+        1, 1)
 
-        # Customize figure
-        fig['layout'].update(barmode='stack', showlegend=True, width=GWIDTH)
+    fig['layout'].update(barmode='stack', showlegend=True)
 
-        # Build the tab
-        label = 'By {}'.format(pindex)
-        graph = html.Div(dcc.Graph(figure=fig), style={
-            'width': '100%', 'display': 'inline-block'})
-        tab = dcc.Tab(label=label, value=str(i + 1), children=[graph])
+    graph = dcc.Graph(figure=fig)
 
-        # Append the tab
-        tabs_content.append(tab)
-
-    return tabs_content
+    return dbc.Spinner(id="loading-queue-graph", children=[graph])
 
 
 def get_content():
-    COLS = ['LABEL', 'STATUS', 'WALLTIME', 'MEMREQ', 'JOBID']  #, 'LASTMOD']
+    COLS = ['LABEL', 'STATUS', 'WALLTIME', 'MEMREQ']
+    #, 'JOBID']
 
-    try:
-        df = load_data()
-    except Exception as err:
-        logger.error(err)
-        return None
-
-    graph_content = get_graph_content(df)
-
-    # Get the rows and colums for the table
     columns = [{"name": i, "id": i} for i in COLS]
-    records = df.reset_index().to_dict('records')
 
-    queue_content = [
-        dcc.Loading(id="loading-queue", children=[
-            html.Div(dcc.Tabs(
-                id='tabs-queue',
-                value='1',
-                children=graph_content,
-                vertical=True))]),
-        html.Button('Refresh Data', id='button-queue-refresh'),
-        dcc.Dropdown(
-            id='dropdown-queue-proj', multi=True,
-            placeholder='Select Projects'),
-        dcc.Dropdown(
-            id='dropdown-queue-proc', multi=True,
-            placeholder='Select Processing Types'),
-        dcc.Dropdown(
-            id='dropdown-queue-user', multi=True,
-            placeholder='Select Users'),
-        dcc.RadioItems(
-            options=[
-                {'label': 'Hide Done', 'value': 'HIDE'},
-                {'label': 'Show Done', 'value': 'SHOW'}],
-            value='HIDE',
-            id='radio-queue-hidedone',
-            labelStyle={'display': 'inline-block'}),
+    content = [
+        dbc.Row([
+            dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-queue-refresh',
+                    outline=True,
+                    color='primary',
+                    size='sm',
+                ),
+            ),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-queue-graph',
+                    label='Graph',
+                    value=False,
+                ),
+                align='center',
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                [
+                    dbc.Stack([
+                        dcc.Dropdown(
+                            id='dropdown-queue-proj',
+                            multi=True,
+                            placeholder='Select Projects',
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown-queue-proc',
+                            multi=True,
+                            placeholder='Select Processing Types',
+                        ),
+                        dcc.Dropdown(
+                            id='dropdown-queue-user',
+                            multi=True,
+                            placeholder='Select Users',
+                        ),
+                    ]),
+                ],
+                width=3
+            ),
+            dbc.Col(html.Div(id='container-queue-graph', children=[])),
+        ]),
+        dbc.Spinner(id="loading-queue-table", children=[
+            dbc.Label('Loading...', id='label-queue-rowcount1'),
+        ]),
         dt.DataTable(
             cell_selectable=False,
             columns=columns,
-            data=records,
-            filter_action='native',
+            data=[],
             page_action='none',
             sort_action='native',
             id='datatable-queue',
-            style_table={
-                'overflowY': 'scroll',
-                'overflowX': 'scroll',
-                'width': f'{GWIDTH}px',
-            },
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
@@ -136,41 +136,44 @@ def get_content():
                 'maxWidth': '60'},
             style_data_conditional=[
                 {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
-                {'if': {'filter_query': '{STATUS} = "QUEUED"'},  'backgroundColor': STATUS2HEX['WAITING']},
-                {'if': {'filter_query': '{STATUS} = "RUNNING"'},  'backgroundColor': STATUS2HEX['RUNNING']},
-                {'if': {'filter_query': '{STATUS} = "WAITING"'},  'backgroundColor': STATUS2HEX['WAITING']},
-                {'if': {'filter_query': '{STATUS} = "PENDING"'},  'backgroundColor': STATUS2HEX['PENDING']},
-                {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
-                {'if': {'filter_query': '{STATUS} = "FAILED"'},   'backgroundColor': STATUS2HEX['FAILED']},
-                {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
-                {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
+            #    {'if': {'filter_query': '{STATUS} = "QUEUED"'},  'backgroundColor': STATUS2HEX['WAITING']},
+            #    {'if': {'filter_query': '{STATUS} = "RUNNING"'},  'backgroundColor': STATUS2HEX['RUNNING']},
+            #    {'if': {'filter_query': '{STATUS} = "WAITING"'},  'backgroundColor': STATUS2HEX['WAITING']},
+            #    {'if': {'filter_query': '{STATUS} = "PENDING"'},  'backgroundColor': STATUS2HEX['PENDING']},
+            #    {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
+            #    {'if': {'filter_query': '{STATUS} = "FAILED"'},   'backgroundColor': STATUS2HEX['FAILED']},
+            #    {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
+            #    {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
             ],
             style_header={
-                'backgroundColor': 'white',
                 'fontWeight': 'bold',
-                'padding': '5px 15px 0px 10px'},
-            fill_width=False,
+                'padding': '5px 15px 0px 10px',
+            },
             export_format='xlsx',
             export_headers='names',
-            export_columns='visible')]
+            export_columns='visible',
+        ),
+        dbc.Label('Get ready...', id='label-queue-rowcount2'),
+    ]
 
-    return queue_content
+    return content
 
 
 def load_data(refresh=False, hidedone=True):
     return data.load_data(refresh=refresh, hidedone=hidedone)
 
 
-def load_proc_options():
-    return data.load_proc_options()
+def load_options(df):
+    options = {}
 
+    for k in ['PROCTYPE', 'USER', 'PROJECT']:
+        # Get a unique list of strings with blanks removed
+        koptions = df[k].unique()
+        koptions = [str(x) for x in koptions]
+        koptions = [x for x in koptions if x]
+        options[k] = sorted(koptions)
 
-def load_proj_options():
-    return data.load_proj_options()
-
-
-def load_user_options():
-    return data.load_user_options()
+    return options
 
 
 def filter_data(df, selected_proj, selected_proc, selected_user):
@@ -178,52 +181,50 @@ def filter_data(df, selected_proj, selected_proc, selected_user):
         df, selected_proj, selected_proc, selected_user)
 
 
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered and
-        callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
-
-
 @app.callback(
     [Output('dropdown-queue-proc', 'options'),
      Output('dropdown-queue-proj', 'options'),
      Output('dropdown-queue-user', 'options'),
      Output('datatable-queue', 'data'),
-     Output('tabs-queue', 'children')],
-    [Input('dropdown-queue-proc', 'value'),
+     Output('container-queue-graph', 'children'),
+     Output('label-queue-rowcount1', 'children'),
+     Output('label-queue-rowcount2', 'children'),
+    ],
+    [
+     Input('dropdown-queue-proc', 'value'),
      Input('dropdown-queue-proj', 'value'),
      Input('dropdown-queue-user', 'value'),
-     Input('radio-queue-hidedone', 'value'),
-     Input('button-queue-refresh', 'n_clicks')])
+     Input('switch-queue-graph', 'value'),
+     Input('button-queue-refresh', 'n_clicks'),
+    ]
+)
 def update_queue(
     selected_proc,
     selected_proj,
     selected_user,
-    selected_done,
+    selected_graph,
     n_clicks
 ):
     refresh = False
+    graph_content = []
 
     logger.debug('update_queue')
 
     # Load data
-    ctx = dash.callback_context
-    if was_triggered(ctx, 'button-queue-refresh'):
+    if utils.was_triggered('button-queue-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('queue refresh:clicks={}'.format(n_clicks))
         refresh = True
 
     logger.debug('loading data')
-    hidedone = (selected_done == 'HIDE')
-    df = load_data(refresh=refresh, hidedone=hidedone)
+    df = load_data(refresh=refresh)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
-    proj = utils.make_options(load_proj_options())
-    proc = utils.make_options(load_proc_options())
-    user = utils.make_options(load_user_options())
+    options = load_options(df)
+    proj = utils.make_options(options['PROJECT'])
+    proc = utils.make_options(options['PROCTYPE'])
+    user = utils.make_options(options['USER'])
 
     # Filter data based on dropdown values
     df = filter_data(
@@ -232,12 +233,18 @@ def update_queue(
         selected_proc,
         selected_user)
 
-    tabs = get_graph_content(df)
+    if selected_graph:
+        graph_content = get_graph_content(df)
 
     # Get the table data
     records = df.reset_index().to_dict('records')
 
-    # Return table, figure, dropdown options
-    logger.debug('update_queue:returning data')
+    # Count how many rows are in the table
+    if len(records) > 1:
+        rowcount = '{} rows'.format(len(records))
+    else:
+        rowcount = ''
 
-    return [proc, proj, user, records, tabs]
+    print(rowcount)
+
+    return [proc, proj, user, records, graph_content, rowcount, rowcount]
