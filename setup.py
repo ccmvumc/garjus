@@ -26,6 +26,7 @@ setup(
         "pydot",
         "plotly",
         "dash_bootstrap_components",
+        "dash_bootstrap_templates",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
 )
