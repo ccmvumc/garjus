@@ -54,7 +54,6 @@ Command-line interface subcommands:
 ```
 activity - display activity
 analyses - display analyses
-build - build a project
 compare - run data entry comparison
 copysess - copy an imaging session from one project to another
 d2q - apply updates from dax queue on local disk to garjus task queue in REDCap

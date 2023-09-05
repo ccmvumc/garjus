@@ -1306,7 +1306,7 @@ class Garjus:
         logger.info(f'TBD:writing report to file:{pdf_file}.')
         # TODO: make_proc_report(self, project, ptype, pdf_file)
 
-    def export_stats(self, projects, proctypes, sesstypes, csvname, persubject=False):
+    def export_stats(self, projects, proctypes, sesstypes, csvname, persubject=False, analysis=None):
         """Create a csv."""
 
         if os.path.exists(csvname):
@@ -1315,7 +1315,7 @@ class Garjus:
 
         logger.info(f'writing csv file:{csvname}.')
         make_stats_csv(
-            self, projects, proctypes, sesstypes, csvname, persubject)
+            self, projects, proctypes, sesstypes, csvname, persubject, analysis)
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
@@ -1702,7 +1702,7 @@ class Garjus:
 
         return self._rc.export_records(records=[project], forms=['scanning'])
 
-    def load_analysis(self, project, analysis_id):
+    def load_analysis(self, project, analysis_id, download=True):
         """Return analysis protocol record."""
         if not self.redcap_enabled():
             logger.info('cannot load analysis, redcap not enabled')

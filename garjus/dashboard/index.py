@@ -1,6 +1,11 @@
+"""dash index page."""
+import logging
+
 from dash import dcc, html
+import dash_bootstrap_components as dbc
 
 from .app import app
+from . import utils
 from . import qa
 from . import activity
 from . import issues
@@ -8,74 +13,69 @@ from . import queue
 from . import stats
 from . import analyses
 
-from ..garjus import Garjus
+
+logger = logging.getLogger('garjus.dashboard')
 
 
-def get_layout():
-    g = Garjus()
-
-    if g.redcap_enabled():
-        tabs = []
-
-        tabs.append(dcc.Tab(label='QA', value='qa', children=qa.get_content()))
-
-        tabs.append(dcc.Tab(
-            label='Activity',
-            value='activity',
-            children=activity.get_content()))
-
-        tabs.append(dcc.Tab(
-            label='Issues',
-            value='issues',
-            children=issues.get_content()))
-
-        tabs.append(dcc.Tab(
-            label='Queue',
-            value='queue',
-            children=queue.get_content()))
-
-        tabs.append(dcc.Tab(
-            label='Stats',
-            value='stats',
-            children=stats.get_content()))
-
-        tabs.append(dcc.Tab(
-            label='Analyses',
-            value='analyses',
-            children=analyses.get_content()))
-
-        report_content = [html.Div(dcc.Tabs(
-            id='tabs', value='qa', vertical=False, children=tabs))]
-    else:
-        # Just QA
-        report_content = qa.get_content()
-
-    footer_content = [
-        html.Hr(),
-        html.Div(dcc.Link(
+footer_content = [
+    html.Hr(),
+    html.Div(
+        dcc.Link(
             [html.P('garjus')],
-            href='https://github.com/ccmvumc/garjus'),
-            style={'textAlign': 'center'}),
-    ]
+            href='https://github.com/ccmvumc/garjus'
+        ),
+        style={'textAlign': 'center'},
+    ),
+]
 
-    # Make the main app layout
-    main_content = html.Div([
-        html.Div(children=report_content, id='report-content'),
-        html.Div(children=footer_content, id='footer-content')],
-    )
+tabs = dbc.Tabs([
+    dbc.Tab(
+        label='QA',
+        tab_id='tab-qa',
+        children=qa.get_content(),
+    ),
+    dbc.Tab(
+        label='Activity',
+        tab_id='tab-activity',
+        children=activity.get_content(),
+    ),
+    dbc.Tab(
+        label='Issues',
+        tab_id='tab-issues',
+        children=issues.get_content(),
+    ),
+    dbc.Tab(
+        label='Stats',
+        tab_id='tab-stats',
+        children=stats.get_content(),
+    ),
+    dbc.Tab(
+        label='Analyses',
+        tab_id='tab-analyses',
+        children=analyses.get_content(),
+    ),
+    dbc.Tab(
+        label='Queue',
+        tab_id='tab-queue',
+        children=queue.get_content(),
+    ),
+])
 
-    return main_content
-
+app.layout = html.Div(
+    className='dbc',
+    style={'marginLeft': '20px', 'marginRight': '20px'},
+    children=[
+        html.Div(id='report-content', children=[tabs]),
+        html.Div(id='footer-content', children=footer_content)
+    ])
 
 # For gunicorn to work correctly
 server = app.server
 
-app.css.config.serve_locally = False
+#app.css.config.serve_locally = False
 
 # Set the title to appear on web pages
-app.title = 'DAX Dashboard'
-
-app.layout = get_layout()
+app.title = 'dashboard'
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0')

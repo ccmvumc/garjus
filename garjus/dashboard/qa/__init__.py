@@ -9,9 +9,10 @@
 # TODO: connect sessions from same subject baseline with arc line or something
 # or could have "by subject" choice that has a subject per y value?
 
-# TODO: dropdown to select from choices: last week, last month, this month.
+# TODO: time dropdown to select from: last week, last month, this month,
+# could also just be separate buttons beside the date picker
 
-# TODO: checkoxes to hide columns DATE, SESSTYPE, SITE, NOTE: often blank
+# TODO: checkboxes to hide columns DATE, SESSTYPE, SITE, NOTE: often blank
 
 
 import logging
@@ -24,8 +25,7 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
-import dash
+from dash import Input, Output, callback
 import dash_bootstrap_components as dbc
 
 from ..app import app
@@ -68,28 +68,13 @@ MOD2EMO = {'MR': '🧠', 'PET': '☢️', 'EEG': '🤯'}
 
 def _get_graph_content(dfp):
     tabs_content = []
-    tab_value = 0
 
     logger.debug('get_qa_figure')
 
     # Check for empty data
     if dfp is None or len(dfp) == 0:
         logger.debug('empty data, using empty figure')
-        return [
-            dcc.Tab(
-                label='',
-                value='0',
-                children=[
-                    html.Div(
-                        html.H1(
-                            'Choose Project(s) to load',
-                            style={'text-align': 'center'},
-                        ),
-                        style={'padding': '150px'},
-                    )
-                ]
-            )
-        ]
+        return [html.Div(html.H1('Choose Project(s) to load'))]
 
     # Make a 1x1 figure
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
@@ -187,13 +172,8 @@ def _get_graph_content(dfp):
 
     # Build the tab
     label = 'By {}'.format('TYPE')
-    graph = html.Div(dcc.Graph(figure=fig), style={
-        'width': '100%', 'display': 'inline-block'})
-
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
-
-    tabs_content.append(tab)
-    tab_value += 1
+    graph = html.Div(dcc.Graph(figure=fig))
+    tabs_content.append(dbc.Tab(label=label, children=[graph]))
 
     # We also want a tab for By Project, so we can ask e.g. how many
     # sessions for each project, and then ask
@@ -234,9 +214,7 @@ def _get_graph_content(dfp):
         dcc.Graph(figure=fig),
         style={'width': '100%', 'display': 'inline-block'}
     )
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
-    tabs_content.append(tab)
-    tab_value += 1
+    tabs_content.append(dbc.Tab(label=label, children=[graph]))
 
     # Append the by-time graph (this was added later with separate function)
     dfs = df[['PROJECT', 'DATE', 'SESSION', 'SESSTYPE', 'SITE', 'MODALITY']].drop_duplicates()
@@ -244,19 +222,10 @@ def _get_graph_content(dfp):
     label = 'By {}'.format('TIME')
     graph = html.Div(dcc.Graph(figure=fig), style={
         'width': '100%', 'display': 'inline-block'})
-    tab = dcc.Tab(label=label, value=str(tab_value), children=[graph])
-    tabs_content.append(tab)
-    tab_value += 1
+    tabs_content.append(dbc.Tab(label=label, children=[graph]))
 
     # Return the tabs wrapped in a spinning loader
-    return dbc.Spinner(
-        id="loading-qa",
-        children=[
-            html.Div(dcc.Tabs(
-                id='tabs-qa',
-                value='0',
-                vertical=True,
-                children=tabs_content))]),
+    return [dbc.Tabs(id='tabs-qa', children=tabs_content)]
 
 
 def _sessionsbytime_figure(df, selected_groupby):
@@ -380,7 +349,7 @@ def get_content():
                 align='center',
             ),
         ]),
-        dbc.Row([
+        dbc.Row(
             dbc.Col(
                 dcc.Dropdown(
                     id='dropdown-qa-proj',
@@ -390,7 +359,7 @@ def get_content():
                 ),
                 width=5,
             ),
-        ]),
+        ),
         dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
@@ -523,10 +492,11 @@ def get_content():
                 LEGEND2,
                 style={'textAlign': 'center'}
             )],
-            style={'textAlign': 'center'}),
+            style={'textAlign': 'center'},
+        ),
     ]
 
-    return html.Div(content, className='dbc', style={'marginLeft': '10px'})
+    return content
 
 
 def get_metastatus(status):
@@ -613,14 +583,6 @@ def load_options(df):
     return projects, sesstypes, proctypes, scantypes
 
 
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered and
-        callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
-
-
 # Initialize the callbacks for the app
 
 # inputs:
@@ -659,7 +621,7 @@ def was_triggered(callback_ctx, button_id):
      Input('switches-qa-modality', 'value'),
      Input('radio-qa-pivot', 'value'),
      Input('button-qa-refresh', 'n_clicks')])
-def update_all(
+def update_qa(
     selected_proc,
     selected_scan,
     selected_sess,
@@ -673,14 +635,13 @@ def update_all(
     selected_pivot,
     n_clicks
 ):
-    tabs = []
+    graph_content = []
     refresh = False
 
     logger.debug('update_all')
 
     # Load. This data will already be merged scans and assessors, row per
-    ctx = dash.callback_context
-    if was_triggered(ctx, 'button-qa-refresh'):
+    if utils.was_triggered('button-qa-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('refresh:clicks={}'.format(n_clicks))
         refresh = True
@@ -737,8 +698,9 @@ def update_all(
         dfp = qa_pivot(df)
 
         if selected_graph:
+            logger.debug('making graph')
             # Graph it
-            tabs = _get_graph_content(dfp)
+            graph_content = _get_graph_content(dfp)
 
         # Make the table data
         selected_cols = ['PROJECT']
@@ -845,7 +807,7 @@ def update_all(
 
         if selected_graph:
             # Make graphs
-            tabs = _get_graph_content(dfp)
+            graph_content = _get_graph_content(dfp)
 
         # Get the table
         dfp = dfp.reset_index()
@@ -966,8 +928,10 @@ def update_all(
     else:
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
+
+
         if selected_graph:
-            tabs = _get_graph_content(dfp)
+            graph_content = _get_graph_content(dfp)
 
         # Get the table data
         selected_cols = [
@@ -1034,5 +998,7 @@ def update_all(
         rowcount = ''
 
     # Return table, figure, dropdown options
-    logger.debug('update_all:returning data')
-    return [proc, scan, sess, proj, records, columns, tabs, rowcount, rowcount]
+    logger.debug('update_qa:returning data')
+
+    return [proc, scan, sess, proj, records, columns, graph_content, rowcount, rowcount]
+

@@ -11,11 +11,14 @@ logger = logging.getLogger('dashboard.issues.data')
 
 # This is where we save our cache of the data
 def get_filename():
-    datadir = 'DATA'
-    if not os.path.isdir(datadir):
-        os.mkdir(datadir)
-
+    datadir = f'{Garjus().cachedir()}/DATA'
     filename = f'{datadir}/issuesdata.pkl'
+
+    try:
+        os.makedirs(datadir)
+    except FileExistsError:
+        pass
+
     return filename
 
 
@@ -35,6 +38,7 @@ def get_data():
 
 def load_garjus_issues():
     g = Garjus()
+
     return g.issues()
 
 
@@ -43,31 +47,6 @@ def run_refresh(filename):
 
     if not df.empty:
         save_data(df, filename)
-
-
-def load_field_options(fieldname):
-    filename = get_filename()
-
-    if not os.path.exists(filename):
-        logger.debug('refreshing data for file:{}'.format(filename))
-        run_refresh(filename)
-
-    logger.debug('reading data from file:{}'.format(filename))
-    df = pd.read_pickle(filename)
-
-    _options = df[fieldname].unique()
-
-    _options = [x for x in _options if x]
-
-    return sorted(_options)
-
-
-def load_category_options():
-    return load_field_options('CATEGORY')
-
-
-def load_project_options():
-    return load_field_options('PROJECT')
 
 
 def load_data(refresh=False):

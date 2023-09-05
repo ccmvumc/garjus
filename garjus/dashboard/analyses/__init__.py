@@ -1,48 +1,48 @@
 import logging
 
-from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
+from dash import dcc, html, dash_table as dt, Input, Output
+import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
 from . import data
-
+from ...dictionary import COLUMNS
 
 logger = logging.getLogger('dashboard.analyses')
 
 
 def get_content():
+    columns = utils.make_columns(COLUMNS.get('analyses'))
 
-    try:
-        _ = load_analyses()
-    except Exception as err:
-        logger.error(err)
-        return None
+    # Format columns
+    for i, c in enumerate(columns):
+        if c['name'] == 'OUTPUT':
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
+
+    df = load_analyses()
 
     content = [
-        dcc.Dropdown(
-            id='dropdown-analyses-time',
-            options=[
-                {'label': 'all time', 'value': 'ALL'},
-                {'label': '1 day', 'value': '1day'},
-                {'label': '1 week', 'value': '7day'},
-                {'label': '1 month', 'value': '30day'},
-                {'label': '1 year', 'value': '365day'}],
-            value='ALL'),
-        dcc.Dropdown(
-            id='dropdown-analyses-proj', multi=True,
-            placeholder='Select Project(s)'),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-analyses-proj',
+                    multi=True,
+                    placeholder='Select Project(s)',
+                ),
+                width=3,
+            ),
+        ),
         dt.DataTable(
-            columns=[],
+            columns=columns,
             data=[],
-            filter_action='native',
             page_action='none',
             sort_action='native',
             id='datatable-analyses',
-            style_table={
-                'overflowY': 'scroll',
-                'overflowX': 'scroll',
-            },
+        #    style_table={
+        #        'overflowY': 'scroll',
+        #        'overflowX': 'scroll',
+        #    },
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
@@ -53,14 +53,12 @@ def get_content():
                 'minWidth': '40',
                 'maxWidth': '60'},
             style_header={
-                'width': '80px',
-                'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
-            fill_width=False,
             export_format='xlsx',
             export_headers='names',
-            export_columns='visible'),
+            export_columns='visible',
+        ),
         html.Label('0', id='label-analyses-rowcount')]
 
     return content
@@ -74,30 +72,19 @@ def load_analyses(projects=[]):
     return data.load_data(projects, refresh=True)
 
 
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered
-        and callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
-
 
 @app.callback(
     [
     Output('dropdown-analyses-proj', 'options'),
     Output('datatable-analyses', 'data'),
-    Output('datatable-analyses', 'columns'),
     Output('label-analyses-rowcount', 'children'),
     ],
     [
     Input('dropdown-analyses-proj', 'value'),
-    Input('dropdown-analyses-time', 'value'),
     ])
 def update_analyses(
     selected_proj,
-    selected_time,
 ):
-
     logger.debug('update_all')
 
     # Load selected data with refresh if requested
@@ -111,20 +98,15 @@ def update_analyses(
     proj = utils.make_options(proj_options)
 
     # Filter data based on dropdown values
-    df = data.filter_data(df, selected_time)
-
-    # Determine columns to be included in the table
-    selected_cols = df.columns
+    df = data.filter_data(df)
 
     # Get the table data as one row per assessor
-    columns = utils.make_columns(selected_cols)
     records = df.reset_index().to_dict('records')
 
     # Format records
     for r in records:
         if not r['OUTPUT']:
             continue
-
         if 'sharepoint.com' in r['OUTPUT']:
             _link = r['OUTPUT']
             _text = 'OneDrive'
@@ -136,15 +118,7 @@ def update_analyses(
         else:
             r['OUTPUT'] = r['OUTPUT']
 
-    # Format columns
-    for i, c in enumerate(columns):
-        if c['name'] == 'OUTPUT':
-            columns[i]['type'] = 'text'
-            columns[i]['presentation'] = 'markdown'
-
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
 
-    # Return table, figure, dropdown options
-    logger.debug('update_all:returning data')
-    return [proj, records, columns, rowcount]
+    return [proj, records, rowcount]

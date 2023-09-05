@@ -53,7 +53,7 @@ def make_progress(garjus, project, cur_progress, now):
 
 
 def make_stats_csv(
-    garjus, projects, proctypes, sesstypes, csvname, persubject=False
+    garjus, projects, proctypes, sesstypes, csvname, persubject=False, analysis=None
 ):
     """"Make the file."""
     df = pd.DataFrame()
@@ -72,6 +72,30 @@ def make_stats_csv(
         stats = garjus.stats(
             p, proctypes=proctypes, sesstypes=sesstypes, persubject=persubject)
         df = pd.concat([df, stats])
+
+    if analysis:
+        # Get the list of subjects for specified analysis and apply as filter
+        logger.info(f'analysis={analysis}')
+
+        # Get the subject list from the analysis
+        project, analysis_id = analysis.rsplit('_', 1)
+        a = garjus.load_analysis(project, analysis_id)
+        subjects = a['analysis_include'].splitlines()
+        logger.debug(f'applying subject filter to include:{subjects}')
+        df = df[df.SUBJECT.isin(subjects)]
+
+        # Append rows for missing subjects and resort
+        _subj = df.SUBJECT.unique()
+        missing_subjects = [x for x in subjects if x not in _subj]
+        if missing_subjects:
+            logger.info(f'missing_subjects={missing_subjects}')
+            df = pd.concat([
+                df,
+                pd.DataFrame(
+                    missing_subjects,
+                    columns=['SUBJECT']
+                )
+            ]).sort_values('SUBJECT')
 
     # Save file for this type
     logger.info(f'saving csv:{csvname}')

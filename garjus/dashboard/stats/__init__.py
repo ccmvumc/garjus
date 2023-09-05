@@ -5,8 +5,8 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
-import dash
+from dash import Input, Output
+import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
@@ -184,50 +184,85 @@ def get_content():
         return None
 
     content = [
-        dcc.Loading(id="loading-stats", children=[
+        dbc.Button(
+            'Refresh Data',
+            id='button-stats-refresh',
+            outline=True,
+            color='primary',
+            size='sm',
+        ),
+        dbc.Spinner(id="loading-stats", children=[
             html.Div(dcc.Tabs(
                 id='tabs-stats',
                 value='0',
                 children=[],
-                vertical=True))]),
-        html.Button('Refresh Data', id='button-stats-refresh'),
-        dcc.Dropdown(
-            id='dropdown-stats-time',
-            options=[
-                {'label': 'all time', 'value': 'ALL'},
-                {'label': '1 day', 'value': '1day'},
-                {'label': '1 week', 'value': '7day'},
-                {'label': '1 month', 'value': '30day'},
-                {'label': '1 year', 'value': '365day'}],
-            value='ALL'),
-        dcc.Dropdown(
-            id='dropdown-stats-proj', multi=True,
-            placeholder='Select Project(s)'),
-        dcc.Dropdown(
-            id='dropdown-stats-proc', multi=True,
-            placeholder='Select Type(s)'),
-        dcc.Dropdown(
-            id='dropdown-stats-sess', multi=True,
-            placeholder='Select Session Type(s)'),
-        dcc.RadioItems(
-            options=[
-                {'label': 'Row per Assessor', 'value': 'assr'},
-                {'label': 'Row per Session', 'value': 'sess'},
-                {'label': 'Row per Subject', 'value': 'subj'}],
-            value='assr',
-            id='radio-stats-pivot',
-            labelStyle={'display': 'inline-block'}),
+                vertical=True))]
+        ),
+        dbc.Row(
+            dbc.Col(
+                dbc.Stack([
+                    dcc.Dropdown(
+                        id='dropdown-stats-time',
+                        options=[
+                            {'label': 'all time', 'value': 'ALL'},
+                            {'label': '1 day', 'value': '1day'},
+                            {'label': '1 week', 'value': '7day'},
+                            {'label': '1 month', 'value': '30day'},
+                            {'label': '1 year', 'value': '365day'}],
+                        value='ALL'
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown-stats-proj',
+                        multi=True,
+                        placeholder='Select Project(s)'
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown-stats-proc',
+                        multi=True,
+                        placeholder='Select Type(s)'
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown-stats-sess',
+                        multi=True,
+                        placeholder='Select Session Type(s)'
+                    ),
+                ]),
+                width=5,
+            ),
+        ),
+        dbc.Row(
+            dbc.Col(
+                dbc.RadioItems(
+                    # Use specific css to make radios look like buttons
+                    className="btn-group",
+                    inputClassName="btn-check",
+                    labelClassName="btn btn-outline-primary",
+                    labelCheckedClassName="active",
+                    options=[
+                        {'label': 'Assessors', 'value': 'assr'},
+                        {'label': 'Sessions', 'value': 'sess'},
+                        {'label': 'Subjects', 'value': 'subj'}],
+                    value='assr',
+                    id='radio-stats-pivot',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                align='end',
+                width=5,
+            ),
+        ),
+        dbc.Spinner(id="loading-stats-table", children=[
+            dbc.Label('Get ready...', id='label-stats-rowcount1'),
+        ]),
         dt.DataTable(
             columns=[],
             data=[],
-            filter_action='native',
             page_action='none',
             sort_action='native',
             id='datatable-stats',
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': f'{GWIDTH}px'},
+            },
             style_cell={
                 'textAlign': 'left',
                 'padding': '5px 5px 0px 5px',
@@ -238,19 +273,19 @@ def get_content():
                 'minWidth': '40',
                 'maxWidth': '60'},
             style_header={
-                'width': '80px',
-                'backgroundColor': 'white',
+                'textAlign': 'center',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
             style_cell_conditional=[{
                 'if': {'column_type': 'numeric'},
                 'textAlign': 'right'
             }],
-            fill_width=False,
             export_format='xlsx',
             export_headers='names',
-            export_columns='visible'),
-        html.Label('0', id='label-rowcount')]
+            export_columns='visible',
+        ),
+        dbc.Label('Get ready...', id='label-stats-rowcount2'),
+    ]
 
     return content
 
@@ -261,14 +296,6 @@ def load_stats(projects=[], refresh=False):
         projects = []
 
     return data.load_data(projects, refresh=refresh)
-
-
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered
-        and callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
 
 
 def _subject_pivot(df):
@@ -342,13 +369,17 @@ def _session_pivot(df):
      Output('datatable-stats', 'data'),
      Output('datatable-stats', 'columns'),
      Output('tabs-stats', 'children'),
-     Output('label-rowcount', 'children')],
-    [Input('dropdown-stats-proc', 'value'),
+     Output('label-stats-rowcount1', 'children'),
+     Output('label-stats-rowcount2', 'children'),
+    ],
+    [
+     Input('dropdown-stats-proc', 'value'),
      Input('dropdown-stats-proj', 'value'),
      Input('dropdown-stats-sess', 'value'),
      Input('dropdown-stats-time', 'value'),
      Input('radio-stats-pivot', 'value'),
-     Input('button-stats-refresh', 'n_clicks')])
+     Input('button-stats-refresh', 'n_clicks'),
+    ])
 def update_stats(
     selected_proc,
     selected_proj,
@@ -361,8 +392,7 @@ def update_stats(
 
     logger.debug('update_all')
 
-    ctx = dash.callback_context
-    if was_triggered(ctx, 'button-stats-refresh'):
+    if utils.was_triggered('button-stats-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('refresh:clicks={}'.format(n_clicks))
         refresh = True
@@ -431,4 +461,4 @@ def update_stats(
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')
-    return [proc, proj, sess, records, columns, tabs, rowcount]
+    return [proc, proj, sess, records, columns, tabs, rowcount, rowcount]

@@ -57,13 +57,6 @@ def issues(ctx, project):
     pprint.pprint(g.issues(project))
 
 
-@cli.command('build')
-@click.option('--project', '-p', 'project')
-def build(project):
-    click.echo('garjus! build')
-    Garjus().build(project)
-
-
 @cli.command('subjects')
 @click.option('--project', '-p', 'project')
 @click.pass_context
@@ -185,11 +178,18 @@ def report(project, monthly):
 @click.option('--projects', '-p', 'projects', required=True)
 @click.option('--types', '-t', 'proctypes', required=False)
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
+@click.option('--analysis', '-a', 'analysis', required=False)
 @click.option('--persubject', is_flag=True)
 @click.argument('csv', required=True)
-def stats(projects, proctypes, sesstypes, csv, persubject):
+def stats(projects, proctypes, sesstypes, csv, persubject, analysis):
     click.echo('garjus! stats')
-    Garjus().export_stats(projects, proctypes, sesstypes, csv, persubject)
+    Garjus().export_stats(
+        projects,
+        proctypes,
+        sesstypes,
+        csv,
+        persubject,
+        analysis)
 
 
 @cli.command('compare')

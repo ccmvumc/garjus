@@ -5,8 +5,9 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
-import dash
+from dash import Input, Output
+import dash_bootstrap_components as dbc
+
 
 from ..app import app
 from .. import utils
@@ -69,53 +70,86 @@ def get_graph_content(df):
         # Append the tab
         tabs_content.append(tab)
 
-    return tabs_content
+    # Return the tabs wrapped in a spinning loader
+    return dbc.Spinner(
+        id="loading-activity",
+        children=[
+            html.Div(
+                dcc.Tabs(
+                    id='tabs-activity',
+                    value='1',
+                    vertical=True,
+                    children=tabs_content
+    ))])
 
 
 def get_content():
-    ACTIVITY_SHOW_COLS = ['ID', 'PROJECT', 'DESCRIPTION']
+    columns = utils.make_columns(['ID', 'PROJECT', 'DATETIME', 'DESCRIPTION'])
 
-    try:
-        df = load_activity()
-    except Exception as err:
-        logger.error(err)
-        return None
-
-    activity_graph_content = get_graph_content(df)
-
-    # Get the rows and colums for the table
-    activity_columns = [{"name": i, "id": i} for i in ACTIVITY_SHOW_COLS]
-    df.reset_index(inplace=True)
-    activity_data = df.to_dict('records')
-
-    activity_content = [
-        dcc.Loading(id="loading-activity", children=[
-            html.Div(dcc.Tabs(
-                id='tabs-activity',
-                value='1',
-                children=activity_graph_content,
-                vertical=True))]),
-        html.Button('Refresh Data', id='button-activity-refresh'),
-        dcc.Dropdown(
-            id='dropdown-activity-project', multi=True,
-            placeholder='Select Projects'),
-        dcc.Dropdown(
-            id='dropdown-activity-category', multi=True,
-            placeholder='Select Categories'),
-        dcc.Dropdown(
-            id='dropdown-activity-source', multi=True,
-            placeholder='Select Sources'),
+    content = [
+        dbc.Row(html.Div(id='div-activity-graph', children=[])),
+        dbc.Row([
+            dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-activity-refresh',
+                    outline=True,
+                    color='primary',
+                    size='sm',
+                ),
+                align='center',
+                ),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-activity-graph',
+                    label='Graph',
+                    value=False,
+                ),
+                align='center',
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-activity-project', 
+                    multi=True,
+                    placeholder='Select Projects',
+                ),
+                width=4,
+            ),
+        ]),
+        dbc.Row(
+            dbc.Col(
+                 dcc.Dropdown(
+                    id='dropdown-activity-category', 
+                    multi=True,
+                    placeholder='Select Categories',
+                ),
+                width=4,
+            ),
+        ),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-activity-source',
+                    multi=True,
+                    placeholder='Select Sources',
+                ),
+                width=4,
+            ),
+        ),
+        dbc.Spinner(id="loading-activity-table", children=[
+            dbc.Label('Loading...', id='label-activity-rowcount1'),
+        ]),
         dt.DataTable(
-            columns=activity_columns,
-            data=activity_data,
-            filter_action='native',
+            columns=columns,
+            data=[],
             page_action='none',
             sort_action='native',
             id='datatable-activity',
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': f'{GWIDTH}px',
             },
             style_cell={
                 'textAlign': 'left',
@@ -125,45 +159,47 @@ def get_content():
                 'textOverflow': 'ellipsis',
                 'height': 'auto',
                 'minWidth': '40',
-                'maxWidth': '60'},
+                'maxWidth': '70'
+            },
             style_data_conditional=[
                 {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
-                {'if': {'filter_query': '{STATUS} = "PASS"'},  'backgroundColor': STATUS2HEX['RUNNING']},
-                {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['WAITING']},
-                {'if': {'filter_query': '{STATUS} = "NQA"'},  'backgroundColor': STATUS2HEX['PENDING']},
-                {'if': {'filter_query': '{STATUS} = "NPUT"'},  'backgroundColor': STATUS2HEX['PENDING']},
-                {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
-                {'if': {'filter_query': '{STATUS} = "FAIL"'},   'backgroundColor': STATUS2HEX['FAILED']},
-                {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
-                {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
+            #    {'if': {'filter_query': '{STATUS} = "PASS"'},  'backgroundColor': STATUS2HEX['RUNNING']},
+            #    {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['WAITING']},
+            #    {'if': {'filter_query': '{STATUS} = "NQA"'},  'backgroundColor': STATUS2HEX['PENDING']},
+            #    {'if': {'filter_query': '{STATUS} = "NPUT"'},  'backgroundColor': STATUS2HEX['PENDING']},
+            #    {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
+            #    {'if': {'filter_query': '{STATUS} = "FAIL"'},   'backgroundColor': STATUS2HEX['FAILED']},
+            #    {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
+            #    {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
             ],
             style_header={
-                #'width': '80px',
-                'backgroundColor': 'white',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
-            fill_width=False,
             export_format='xlsx',
             export_headers='names',
-            export_columns='visible')]
+            export_columns='visible',
+        ),
+        dbc.Label('Get ready...', id='label-activity-rowcount2'),
+    ]
 
-    return activity_content
+    return content
 
 
 def load_activity(refresh=False):
     return data.load_data(refresh=refresh)
 
 
-def load_category_options():
-    return data.load_category_options()
+def load_options(df):
+    options = {}
 
+    for k in ['CATEGORY', 'SOURCE', 'PROJECT']:
+        # Get a unique list of strings with blanks removed
+        koptions = df[k].unique()
+        koptions = [str(x) for x in koptions]
+        koptions = [x for x in koptions if x]
+        options[k] = sorted(koptions)
 
-def load_project_options():
-    return data.load_project_options()
-
-
-def load_source_options():
-    return data.load_source_options()
+    return options
 
 
 def filter_data(df, selected_project, selected_category, selected_source):
@@ -171,38 +207,37 @@ def filter_data(df, selected_project, selected_category, selected_source):
         df, selected_project, selected_category, selected_source)
 
 
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered and
-        callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
-
-
 @app.callback(
-    [Output('dropdown-activity-category', 'options'),
+    [
+     Output('dropdown-activity-category', 'options'),
      Output('dropdown-activity-project', 'options'),
      Output('dropdown-activity-source', 'options'),
      Output('datatable-activity', 'data'),
-     Output('datatable-activity', 'columns'),
-     Output('tabs-activity', 'children')],
-    [Input('dropdown-activity-category', 'value'),
+     Output('div-activity-graph', 'children'),
+     Output('label-activity-rowcount1', 'children'),
+     Output('label-activity-rowcount2', 'children'),
+    ],
+    [
+     Input('dropdown-activity-category', 'value'),
      Input('dropdown-activity-project', 'value'),
      Input('dropdown-activity-source', 'value'),
-     Input('button-activity-refresh', 'n_clicks')])
+     Input('switch-activity-graph', 'value'),
+     Input('button-activity-refresh', 'n_clicks'),
+    ])
 def update_activity(
     selected_category,
     selected_project,
     selected_source,
+    selected_graph,
     n_clicks
 ):
+    graph_content = []
     refresh = False
 
     logger.debug('update_activity')
 
     # Load activity data
-    ctx = dash.callback_context
-    if was_triggered(ctx, 'button-activity-refresh'):
+    if utils.was_triggered('button-activity-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('activity refresh:clicks={}'.format(n_clicks))
         refresh = True
@@ -212,9 +247,10 @@ def update_activity(
 
     # Update lists of possible options for dropdowns (could have changed),
     # make these lists before we filter what to display
-    projects = utils.make_options(load_project_options())
-    categories = utils.make_options(load_category_options())
-    sources = utils.make_options(load_source_options())
+    options = load_options(df)
+    projects = utils.make_options(options['PROJECT'])
+    categories = utils.make_options(options['CATEGORY'])
+    sources = utils.make_options(options['SOURCE'])
 
     # Filter data based on dropdown values
     df = filter_data(
@@ -223,14 +259,16 @@ def update_activity(
         selected_category,
         selected_source)
 
-    tabs = get_graph_content(df)
+    if selected_graph:
+        graph_content = get_graph_content(df)
 
     # Get the table data
-    selected_cols = ['ID', 'DATETIME', 'DESCRIPTION']
-    columns = utils.make_columns(selected_cols)
     records = df.reset_index().to_dict('records')
 
-    # Return table, figure, dropdown options
-    logger.debug('update_activity:returning data')
+    # Count how many rows are in the table
+    if len(records) > 1:
+        rowcount = '{} rows'.format(len(records))
+    else:
+        rowcount = ''
 
-    return [categories, projects, sources, records, columns, tabs]
+    return [categories, projects, sources, records, graph_content, rowcount, rowcount]

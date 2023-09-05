@@ -4,10 +4,10 @@ import pandas as pd
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash.dependencies import Input, Output
-import dash
+from dash import Input, Output
 import dash_bootstrap_components as dbc
 
+from ...dictionary import COLUMNS
 from ..app import app
 from .. import utils
 from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
@@ -17,11 +17,9 @@ from . import data
 logger = logging.getLogger('dashboard.issues')
 
 
-STATUSES = ['FAIL', 'COMPLETE', 'PASS', 'UNKNOWN']
-
-
 def _get_graph_content(df):
     PIVOTS = ['PROJECT', 'CATEGORY']
+    STATUSES = ['FAIL', 'COMPLETE', 'PASS', 'UNKNOWN']
     status2rgb = {k: STATUS2RGB[k] for k in STATUSES}
     tabs_content = []
 
@@ -33,8 +31,12 @@ def _get_graph_content(df):
 
         # Draw bar for each status, these will be displayed in order
         dfp = pd.pivot_table(
-            df, index=pindex, values='LABEL', columns=['STATUS'],
-            aggfunc='count', fill_value=0)
+            df,
+            index=pindex,
+            values='LABEL',
+            columns=['STATUS'],
+            aggfunc='count',
+            fill_value=0)
 
         for status, color in status2rgb.items():
             ydata = sorted(dfp.index)
@@ -53,61 +55,69 @@ def _get_graph_content(df):
         # Customize figure
         fig['layout'].update(barmode='stack', showlegend=True, width=GWIDTH)
 
-        # Build the tab
+        # Build the graph in a tab
         label = 'By {}'.format(pindex)
-        graph = html.Div(dcc.Graph(figure=fig), style={
-            'width': '100%', 'display': 'inline-block'})
-        tab = dcc.Tab(label=label, value=str(i + 1), children=[graph])
+        graph = dcc.Graph(figure=fig)
+        tab = dbc.Tab(label=label, children=[graph])
 
         # Append the tab
         tabs_content.append(tab)
 
-    return tabs_content
-
-
+    return dbc.Spinner(
+        id="loading-issues",
+        children=dbc.Tabs(id='tabs-issues', children=tabs_content))
+   
+    
 def get_content():
-    ISSUES_SHOW_COLS = ['ID', 'CATEGORY', 'DATETIME', 'PROJECT', 'SUBJECT', 'SESSION', 'EVENT', 'FIELD', 'DESCRIPTION']
+    columns = utils.make_columns(COLUMNS.get('issues'))
 
-    try:
-        df = load_issues()
-    except Exception as err:
-        logger.error(f'could not load issues:{err}')
-        return None
-
-    issues_graph_content = _get_graph_content(df)
-
-    # Get the rows and colums for the table
-    issues_columns = [{"name": i, "id": i} for i in ISSUES_SHOW_COLS]
-    df.reset_index(inplace=True)
-    issues_data = df.to_dict('records')
-
-    issues_content = [
-        dbc.Alert('XNAT connection failed', color='danger', id='alert-issues-xnat', is_open=False),
-        dbc.Alert('REDCap connection failed', color='danger', id='alert-issues-redcap', is_open=False),
-        dcc.Loading(id="loading-issues", children=[
-            html.Div(dcc.Tabs(
-                id='tabs-issues',
-                value='1',
-                children=issues_graph_content,
-                vertical=True))]),
-        html.Button('Refresh Data', id='button-issues-refresh'),
-        dbc.Modal([
-            dbc.ModalHeader('HEADER'),
-            dbc.ModalBody('Body of Modal'),
-            dbc.ModalFooter(dbc.Button('Close', id='button-issues-close', className='ml-auto')),
-            ],
-            id='modal-issues',
+    content = [
+        dbc.Row(html.Div(id='container-issues-graph', children=[])),
+        dbc.Row([
+            dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-issues-refresh',
+                    outline=True,
+                    color='primary',
+                    size='sm',
+                ),
+            ),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-issues-graph',
+                    label='Graph',
+                    value=False,
+                ),
+                align='center',
+            ),
+        ]),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-issues-project', 
+                    multi=True,
+                    placeholder='Select Projects',
+                ),
+                width=4,
+            ),
         ),
-        dcc.ConfirmDialogProvider(children=''),
-        dcc.Dropdown(
-            id='dropdown-issues-project', multi=True,
-            placeholder='Select Projects'),
-        dcc.Dropdown(
-            id='dropdown-issues-category', multi=True,
-            placeholder='Select Categories'),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-issues-category', 
+                    multi=True,
+                    placeholder='Select Categories',
+                ),
+                width=4,
+            ),
+        ),
+        dbc.Spinner(id="loading-issues-table", children=[
+            dbc.Label('Loading...', id='label-issues-rowcount1'),
+        ]),
         dt.DataTable(
-            columns=issues_columns,
-            data=issues_data,
+            columns=columns,
+            data=[],
             filter_action='native',
             page_action='none',
             sort_action='native',
@@ -115,7 +125,6 @@ def get_content():
             style_table={
                 'overflowY': 'scroll',
                 'overflowX': 'scroll',
-                'width': f'{GWIDTH}px',
             },
             style_cell={
                 'textAlign': 'left',
@@ -128,35 +137,36 @@ def get_content():
                 'maxWidth': '60'},
             style_data_conditional=[
                 {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
-                {'if': {'filter_query': '{STATUS} = "PASS"'},  'backgroundColor': STATUS2HEX['RUNNING']},
-                {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['WAITING']},
-                {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
-                {'if': {'filter_query': '{STATUS} = "FAIL"'},   'backgroundColor': STATUS2HEX['FAILED']},
-                {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
-                {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
             ],
             style_header={
-                'backgroundColor': 'white',
                 'fontWeight': 'bold',
-                'padding': '5px 15px 0px 10px'},
-            fill_width=False,
+                'padding': '5px 15px 0px 10px',
+            },
             export_format='xlsx',
             export_headers='names',
-            export_columns='visible')]
+            export_columns='visible',
+        ),
+        dbc.Label('Get ready...', id='label-issues-rowcount2'),
+    ]
 
-    return issues_content
+    return content
+
+
+def load_options(df):
+    options = {}
+
+    for k in ['CATEGORY', 'PROJECT']:
+        # Get a unique list of strings with blanks removed
+        koptions = df[k].unique()
+        koptions = [str(x) for x in koptions]
+        koptions = [x for x in koptions if x]
+        options[k] = sorted(koptions)
+
+    return options
 
 
 def load_issues(refresh=False):
     return data.load_data(refresh=refresh)
-
-
-def load_category_options():
-    return data.load_category_options()
-
-
-def load_project_options():
-    return data.load_project_options()
 
 
 def filter_data(df, selected_project, selected_category):
@@ -164,53 +174,48 @@ def filter_data(df, selected_project, selected_category):
         df, selected_project, selected_category)
 
 
-def was_triggered(callback_ctx, button_id):
-    result = (
-        callback_ctx.triggered and
-        callback_ctx.triggered[0]['prop_id'].split('.')[0] == button_id)
-
-    return result
-
-
+# Issues callback
 @app.callback(
     [
      Output('dropdown-issues-category', 'options'),
      Output('dropdown-issues-project', 'options'),
      Output('datatable-issues', 'data'),
-     Output('datatable-issues', 'columns'),
-     Output('tabs-issues', 'children'),
-     Output('modal-issues', 'is_open'),
+     Output('container-issues-graph', 'children'),
+     Output('label-issues-rowcount1', 'children'),
+     Output('label-issues-rowcount2', 'children'),
     ],
     [
      Input('dropdown-issues-category', 'value'),
      Input('dropdown-issues-project', 'value'),
+     Input('switch-issues-graph', 'value'),
      Input('button-issues-refresh', 'n_clicks'),
      ],
 )
 def update_issues(
     selected_category,
     selected_project,
+    selected_graph,
     n_clicks
 ):
-    is_open = False
     refresh = False
+    graph_content = []
 
     logger.debug('update_issues')
 
     # Load issues data
-    ctx = dash.callback_context
-    if was_triggered(ctx, 'button-issues-refresh'):
+    if utils.was_triggered('button-issues-refresh'):
         # Refresh data if refresh button clicked
         logger.debug(f'issues refresh:clicks={n_clicks}')
         refresh = True
 
-    logger.debug('loading issues data')
+    logger.debug(f'loading issues data:refresh={refresh}')
     df = load_issues(refresh=refresh)
 
     # Update lists of possible options for dropdowns (could have changed)
     # make these lists before we filter what to display
-    projects = utils.make_options(load_project_options())
-    categories = utils.make_options(load_category_options())
+    options = load_options(df)
+    projects = utils.make_options(options['PROJECT'])
+    categories = utils.make_options(options['CATEGORY'])
 
     # Filter data based on dropdown values
     df = filter_data(
@@ -219,14 +224,21 @@ def update_issues(
         selected_category,
     )
 
-    tabs = _get_graph_content(df)
+    logger.debug(f'selected_graph:{selected_graph}')
+    if selected_graph:
+        logger.debug('getting issues graph')
+        graph_content = _get_graph_content(df)
 
     # Get the table data
-    selected_cols = ['ID', 'CATEGORY', 'DATETIME', 'PROJECT', 'SUBJECT', 'SESSION', 'EVENT', 'FIELD', 'DESCRIPTION']
-    columns = utils.make_columns(selected_cols)
     records = df.reset_index().to_dict('records')
 
     # Return table, figure, dropdown options
     logger.debug('update_issues:returning data')
 
-    return [categories, projects, records, columns, tabs, is_open]
+    # Count how many rows are in the table
+    if len(records) > 1:
+        rowcount = '{} rows'.format(len(records))
+    else:
+        rowcount = ''
+
+    return [categories, projects, records, graph_content, rowcount, rowcount]
