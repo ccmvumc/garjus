@@ -261,6 +261,27 @@ def _boring_record(record, compare_fields):
     return True
 
 
+def export_all_records(project, step=100):
+    records = []
+
+    # Get a list of unique IDs
+    _def = project.def_field
+    ids = [r[_def] for r in project.export_records(fields=[_def])]
+    ids = sorted(list(set(ids)))
+
+    # How many?
+    count = len(ids)
+
+    # Load in chunks of step size
+    for i in range(0, count, step):
+        print('loading', i, i + step)
+        r = project.export_records(records=ids[i:i + step])
+        print('merging', len(r))
+        records.extend(r)
+
+    return records
+
+
 def compare_projects(p1, p2):
     # Compares two redcap projects and returns the results
     results = {}
@@ -297,19 +318,19 @@ def compare_projects(p1, p2):
     logging.debug(f'date_fields={date_fields}')
 
     # Get the records from the First project
-    records1 = p1.export_records()
+    records1 = export_all_records(p1)
 
     # Set subject id
     for i, r in enumerate(records1):
         try:
             rid1 = r[def_field]
-            records1[i]['sid'] =  id2subj1[rid1]
+            records1[i]['sid'] = id2subj1[rid1]
         except KeyError as err:
             logging.debug(f'blank subject ID for record:{rid1}:{err}')
-            records1[i]['sid'] =  rid1
+            records1[i]['sid'] = rid1
 
     # Sort by subject
-    records1 = sorted(records1, key=lambda x: x['sid']) 
+    records1 = sorted(records1, key=lambda x: x['sid'])
 
     # Compare each record
     for r1 in records1:
