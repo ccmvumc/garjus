@@ -1,0 +1,6 @@
+This favicon was generated using the following font:
+
+- Font Title: Tsukimi Rounded
+- Font Author: Copyright 2020 The Tsukimi Rounded Project Authors (https://github.com/mt-funa/Tsukimi-Rounded), all rights reserved.
+- Font Source: http://fonts.gstatic.com/s/tsukimirounded/v10/sJoZ3LJNksWZO0LvnZwkF3HtoB7VgVwqN7MT3T9X8g.ttf
+- Font License: SIL Open Font License, 1.1 (http://scripts.sil.org/OFL))
