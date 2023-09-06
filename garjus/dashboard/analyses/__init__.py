@@ -57,7 +57,7 @@ def get_content():
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px',
             },
-            css=[dict(selector="p", rule="margin: 0; text-align: center")],
+            css=[dict(selector="p", rule="margin: 0; text-align: left")],
             export_format='xlsx',
             export_headers='names',
             export_columns='visible',
