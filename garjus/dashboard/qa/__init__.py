@@ -422,27 +422,29 @@ def get_content():
                 width=5,
             ),
         ]),
-        dbc.Row([
-            dbc.Col(
-                dbc.RadioItems(
-                    # Use specific css to make radios look like buttons
-                    className="btn-group",
-                    inputClassName="btn-check",
-                    labelClassName="btn btn-outline-primary",
-                    labelCheckedClassName="active",
-                    options=[
-                        {'label': 'Sessions', 'value': 'sess'},
-                        {'label': 'Subjects', 'value': 'subj'},
-                        {'label': 'Projects', 'value': 'proj'},
-                    ],
-                    value='sess',
-                    id='radio-qa-pivot',
-                    labelStyle={'display': 'inline-block'},
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.RadioItems(
+                        # Use specific css to make radios look like buttons
+                        className="btn-group",
+                        inputClassName="btn-check",
+                        labelClassName="btn btn-outline-primary",
+                        labelCheckedClassName="active",
+                        options=[
+                            {'label': 'Sessions', 'value': 'sess'},
+                            {'label': 'Subjects', 'value': 'subj'},
+                            {'label': 'Projects', 'value': 'proj'},
+                        ],
+                        value='sess',
+                        id='radio-qa-pivot',
+                    ),
+                    align='end',
+                    width=5,
                 ),
-                align='end',
-                width=5,
-            ),
-        ]),
+            ],
+            align='end',
+        ),
         dbc.Spinner(id="loading-qa-table", children=[
             dbc.Label('Get ready...', id='label-qa-rowcount1'),
         ]),
