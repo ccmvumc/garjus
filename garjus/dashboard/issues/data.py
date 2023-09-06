@@ -55,6 +55,10 @@ def get_data():
     for p in df.PROJECT.unique():
         primary = g.primary(p)
 
+        if not primary:
+            logger.debug(f'no primary found:{p}')
+            continue
+
         def_field = primary.def_field
         sec_field = primary.export_project_info()['secondary_unique_field']
         if sec_field:
