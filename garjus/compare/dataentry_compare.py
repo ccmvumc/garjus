@@ -153,7 +153,7 @@ def make_pdf(results, filename):
     pdf.set_font('courier', size=9)
     pdf.cell(w=5, h=.3, txt=dsc, border=0, ln=1)
 
-    pdf.ln(0.5)
+    pdf.ln(0.25)
 
     pdf.set_font('helvetica', size=10)
     _txt = 'The sheets in the excel file are:'
@@ -274,9 +274,7 @@ def export_all_records(project, step=100):
 
     # Load in chunks of step size
     for i in range(0, count, step):
-        print('loading', i, i + step)
         r = project.export_records(records=ids[i:i + step])
-        print('merging', len(r))
         records.extend(r)
 
     return records
