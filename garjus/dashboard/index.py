@@ -35,14 +35,19 @@ tabs = dbc.Tabs([
         children=qa.get_content(),
     ),
     dbc.Tab(
-        label='Activity',
-        tab_id='tab-activity',
-        children=activity.get_content(),
-    ),
-    dbc.Tab(
         label='Issues',
         tab_id='tab-issues',
         children=issues.get_content(),
+    ),
+     dbc.Tab(
+        label='Queue',
+        tab_id='tab-queue',
+        children=queue.get_content(),
+    ),
+    dbc.Tab(
+        label='Activity',
+        tab_id='tab-activity',
+        children=activity.get_content(),
     ),
     dbc.Tab(
         label='Stats',
@@ -54,11 +59,7 @@ tabs = dbc.Tabs([
         tab_id='tab-analyses',
         children=analyses.get_content(),
     ),
-    dbc.Tab(
-        label='Queue',
-        tab_id='tab-queue',
-        children=queue.get_content(),
-    ),
+   
 ])
 
 app.layout = html.Div(

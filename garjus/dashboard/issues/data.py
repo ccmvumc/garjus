@@ -23,23 +23,58 @@ def get_filename():
 
 
 def get_data():
+    g = Garjus()
+
     logger.info('loading issues')
-    df = load_garjus_issues()
+    df = g.issues()
 
     # Sort by date and reset index
     df.sort_values(by=['DATETIME'], inplace=True, ascending=False)
     df.reset_index(inplace=True)
+
     df['ID'] = df.index
     df['STATUS'] = 'FAIL'
     df['LABEL'] = df['ID']
 
+    df['SESSIONLINK'] = g.xnat_host() + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION']
+
+    project2id = {}
+
+    for p in df.PROJECT.unique():
+        project_id = g.project_setting(p, 'primary')
+        project2id[p] = project_id
+
+    df['PROJECTPID'] = df['PROJECT'].map(project2id)
+
+    df['SUBJECTID'] = df['SUBJECT']
+
+    # Load record IDs so we can link to the subject
+    for p in df.PROJECT.unique():
+        primary = g.primary(p)
+
+        def_field = primary.def_field
+        sec_field = primary.export_project_info()['secondary_unique_field']
+        if sec_field:
+            # Handle secondary ID
+            rec = primary.export_records(fields=[def_field, sec_field])
+            subj2id = {x[sec_field]: x[def_field] for x in rec if x[sec_field]}
+            df.loc[df['PROJECT'] == p, 'SUBJECTID'] = df['SUBJECT'].map(subj2id)
+        else:
+            # ID is same as subject number for this project
+            pass
+
+    # TODO: make event link
+    #https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?\
+    #pid=X&page=mri_scan_form&id=Y&event_id=Z
+ 
+    # Make project link
+    df['PROJECTLINK'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/' + \
+        'DataEntry/record_home.php?pid=' + df['PROJECTPID']
+
     return df
-
-
-def load_garjus_issues():
-    g = Garjus()
-
-    return g.issues()
 
 
 def run_refresh(filename):

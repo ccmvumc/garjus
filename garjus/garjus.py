@@ -1849,6 +1849,13 @@ class Garjus:
         """Get the xnat for this garjus."""
         return self._xnat
 
+    def xnat_host(self):
+        return self._xnat.host
+
+    def redcap_host(self):
+        """Get the redcap host for this garjus."""
+        return self._rc.url
+
     def copy_session(
         self,
         src_proj,

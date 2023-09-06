@@ -69,7 +69,19 @@ def _get_graph_content(df):
    
     
 def get_content():
-    columns = utils.make_columns(COLUMNS.get('issues'))
+    
+    #columns = utils.make_columns(COLUMNS.get('issues'))
+    columns = utils.make_columns([
+        'DATETIME', 'CATEGORY', 'PROJECT',  'SUBJECT', 'SESSION',
+        'EVENT', 'DESCRIPTION',
+    ])
+    # removes: SCAN, FIELD, STATUS, ID
+
+    # Format columns
+    for i, c in enumerate(columns):
+        if c['name'] in ['PROJECT']:
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
 
     content = [
         dbc.Row(html.Div(id='container-issues-graph', children=[])),
@@ -136,12 +148,19 @@ def get_content():
                 'minWidth': '40',
                 'maxWidth': '60'},
             style_data_conditional=[
-                {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'CATEGORY'}, 'textAlign': 'center'},
             ],
             style_header={
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px',
             },
+            style_cell_conditional=[
+                {'if': {'column_id': 'DATETIME'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'SUBJECT'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'EVENT'}, 'textAlign': 'center'},
+            ],
+            css=[dict(selector="p", rule="margin: 0; text-align: center")],
             export_format='xlsx',
             export_headers='names',
             export_columns='visible',
@@ -231,6 +250,13 @@ def update_issues(
 
     # Get the table data
     records = df.reset_index().to_dict('records')
+
+    # Format records
+    for r in records:
+        if r['PROJECT'] and 'PROJECTLINK' in r:
+            _proj = r['PROJECT']
+            _link = r['PROJECTLINK']
+            r['PROJECT'] = f'[{_proj}]({_link})'
 
     # Return table, figure, dropdown options
     logger.debug('update_issues:returning data')

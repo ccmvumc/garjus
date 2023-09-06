@@ -240,15 +240,6 @@ def _filter(scan_df, assr_df, scantypes, assrtypes):
 def load_assr_data(garjus, project_filter):
     dfa = garjus.assessors(project_filter).copy()
 
-    # Get subset of columns
-    #print('subset?')
-    #dfa = dfa[[
-    #    'PROJECT', 'SESSION', 'SUBJECT', 'ASSR',
-    #    'NOTE', 'DATE', 'SITE', 'QCSTATUS', 'PROCSTATUS',
-    #    'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'INPUTS']]
-
-    #dfa.drop_duplicates(inplace=True)
-
     # Drop any rows with empty proctype
     dfa.dropna(subset=['PROCTYPE'], inplace=True)
     dfa = dfa[dfa.PROCTYPE != '']

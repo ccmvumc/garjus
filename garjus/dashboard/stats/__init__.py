@@ -276,10 +276,15 @@ def get_content():
                 'textAlign': 'center',
                 'fontWeight': 'bold',
                 'padding': '5px 15px 0px 10px'},
-            style_cell_conditional=[{
-                'if': {'column_type': 'numeric'},
-                'textAlign': 'right'
-            }],
+            style_cell_conditional=[
+                {'if': {'column_type': 'numeric'}, 'textAlign': 'right'},
+                {'if': {'column_id': 'PROJECT'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'SUBJECT'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'PROCTYPE'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'SESSTYPE'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'SITE'}, 'textAlign': 'center'},
+            ],
+            css=[dict(selector="p", rule="margin: 0; text-align: center")],
             export_format='xlsx',
             export_headers='names',
             export_columns='visible',

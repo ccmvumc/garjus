@@ -64,8 +64,9 @@ COLUMNS = {
         'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
         'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
     'issues': [
-        'PROJECT', 'SUBJECT', 'SESSION', 'SCAN ', 'ID', 'DESCRIPTION',
-        'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'STATUS'],
+        'ID', 'DATETIME', 'PROJECT', 'CATEGORY',
+        'SUBJECT', 'SESSION', 'SCAN ', 'DESCRIPTION',
+        'EVENT', 'FIELD', 'STATUS'],
     'scans': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'NOTE', 'DATE', 'SITE',
         'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],

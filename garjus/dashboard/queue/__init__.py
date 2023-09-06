@@ -245,6 +245,4 @@ def update_queue(
     else:
         rowcount = ''
 
-    print(rowcount)
-
     return [proc, proj, user, records, graph_content, rowcount, rowcount]

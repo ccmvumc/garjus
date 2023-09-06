@@ -154,7 +154,7 @@ def progress(project):
         project = project.split(',')
 
     g = Garjus()
-    print(g.progress(projects=project))
+    pprint.pprint(g.progress(projects=project))
 
 
 @cli.command('processing')
