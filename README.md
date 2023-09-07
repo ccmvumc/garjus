@@ -188,7 +188,7 @@ source venv-garjus/bin/activate
 ```
 And then install garjus in the venv with:
 ```
-pip install git+https://github.com/ccmvumc/garjus.git
+pip install garjus
 ```
 If you encounter an error with scikit learn, you can bypass it with:
 ```
