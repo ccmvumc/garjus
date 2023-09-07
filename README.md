@@ -172,8 +172,14 @@ pip install git+https://github.com/bud42/garjus.git@v1.0.0
 
 
 The garjus QA dashboard can be used with only XNAT access. First, you'll need credentials in
-your home directory. The same as dax, you need a .netrc file with machine, user, password.
-Then install garjus and launch the dashboard. One way is to create a new python 3 environment with:
+your home directory. The same as dax, you need a .netrc file in your home directory with machine, login, and password in plain text. This file should only be readable by the owner.
+```
+machine xnat.vanderbilt.edu
+login XNAT_USERNAME
+password XNAT_PASSWORD
+
+```
+Then install garjus and launch the dashboard. To install in a new python 3 environment:
 ```
 python -m venv venv-garjus
 ```
@@ -197,4 +203,5 @@ After garjus is successfully installed, you can launch a dashboard with:
 garjus dashboard
 ```
 
-Then choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
+This should open a new tab in your web browser at the dashboard main page http://localhost:8050 .
+Choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
