@@ -177,7 +177,6 @@ your home directory. The same as dax, you need a .netrc file in your home direct
 machine xnat.vanderbilt.edu
 login XNAT_USERNAME
 password XNAT_PASSWORD
-
 ```
 Then install garjus and launch the dashboard. To install in a new python 3 environment:
 ```
@@ -188,7 +187,6 @@ Then load the new virtual environment with:
 source venv-garjus/bin/activate
 ```
 And then install garjus in the venv with:
-
 ```
 pip install git+https://github.com/ccmvumc/garjus.git
 ```
@@ -196,7 +194,6 @@ If you encounter an error with scikit learn, you can bypass it with:
 ```
 export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True && \
 pip install git+https://github.com/ccmvumc/garjus.git
-
 ```
 After garjus is successfully installed, you can launch a dashboard with:
 ```
@@ -205,3 +202,4 @@ garjus dashboard
 
 This should open a new tab in your web browser at the dashboard main page http://localhost:8050 .
 Choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
+Find a problem? Please report an issue. Got an idea? Open a Discussion. Thanks!
