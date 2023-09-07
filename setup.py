@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="garjus",
-    version="1.0.0",
+    version="1.1.1",
     author="Brian D. Boyd",
     author_email="brian.d.boyd@vumc.org",
     description="Python package for managing imaging data in REDCap and XNAT",
