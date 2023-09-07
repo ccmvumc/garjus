@@ -1691,7 +1691,11 @@ class Garjus:
             logger.info('cannot load edat protocols, redcap not enabled')
             return None
 
-        return self._rc.export_records(records=[project], forms=['edat'])
+        rec = self._rc.export_records(records=[project], forms=['edat'])
+        
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'edat']
+
+        return rec
 
     def scanning_protocols(self, project):
         """Return list of scanning protocol records."""
@@ -1700,7 +1704,12 @@ class Garjus:
             logger.info('cannot load scanning protocols, redcap not enabled')
             return None
 
-        return self._rc.export_records(records=[project], forms=['scanning'])
+        rec = self._rc.export_records(records=[project], forms=['scanning'])
+
+        # this will remove the main record that is sometimes included
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'scanning']
+
+        return rec
 
     def load_analysis(self, project, analysis_id, download=True):
         """Return analysis protocol record."""

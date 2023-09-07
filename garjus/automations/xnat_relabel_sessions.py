@@ -47,11 +47,11 @@ def relabel(xnat, session, relabels, overwrite=False, replace=[]):
     # test each relabel
     for k1, v1, k2, v2 in relabels:
         if k1 not in allowed_k1:
-            print('not allowed', k1)
+            logger.warning(f'not allowed:{k1}')
             continue
 
         if k2 not in allowed_k2:
-            print('not allowed', k2)
+            logger.warning(f'not allowed:{k2}')
             continue
 
         # Try to match
