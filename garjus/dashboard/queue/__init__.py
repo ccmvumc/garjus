@@ -16,6 +16,8 @@ from . import data
 
 logger = logging.getLogger('dashboard.queue')
 
+# STATUS2EMO???
+
 
 STATUSES = [
     'FAILED',
@@ -65,8 +67,15 @@ def get_graph_content(df):
 
 
 def get_content():
-    COLS = ['LABEL', 'STATUS', 'WALLTIME', 'MEMREQ']
-    #, 'JOBID']
+    COLS = [
+        'LABEL',
+        'STATUS',
+        'WALLTIME',
+        'MEMREQ',
+        'PROJECT',
+        'PROCYAML',
+        'USER',
+    ]
 
     columns = [{"name": i, "id": i} for i in COLS]
 
@@ -126,7 +135,7 @@ def get_content():
             sort_action='native',
             id='datatable-queue',
             style_cell={
-                'textAlign': 'left',
+                'textAlign': 'center',
                 'padding': '5px 5px 0px 5px',
                 'width': '30px',
                 'overflow': 'hidden',
@@ -135,7 +144,7 @@ def get_content():
                 'minWidth': '40',
                 'maxWidth': '60'},
             style_data_conditional=[
-                {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
+                {'if': {'column_id': 'LABEL'}, 'textAlign': 'left'},
             #    {'if': {'filter_query': '{STATUS} = "QUEUED"'},  'backgroundColor': STATUS2HEX['WAITING']},
             #    {'if': {'filter_query': '{STATUS} = "RUNNING"'},  'backgroundColor': STATUS2HEX['RUNNING']},
             #    {'if': {'filter_query': '{STATUS} = "WAITING"'},  'backgroundColor': STATUS2HEX['WAITING']},

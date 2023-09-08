@@ -152,7 +152,7 @@ def get_content():
                 'overflowX': 'scroll',
             },
             style_cell={
-                'textAlign': 'left',
+                'textAlign': 'center',
                 'padding': '5px 5px 0px 5px',
                 'width': '30px',
                 'overflow': 'hidden',
@@ -161,16 +161,8 @@ def get_content():
                 'minWidth': '40',
                 'maxWidth': '70'
             },
-            style_data_conditional=[
-                {'if': {'column_id': 'STATUS'}, 'textAlign': 'center'},
-            #    {'if': {'filter_query': '{STATUS} = "PASS"'},  'backgroundColor': STATUS2HEX['RUNNING']},
-            #    {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['WAITING']},
-            #    {'if': {'filter_query': '{STATUS} = "NQA"'},  'backgroundColor': STATUS2HEX['PENDING']},
-            #    {'if': {'filter_query': '{STATUS} = "NPUT"'},  'backgroundColor': STATUS2HEX['PENDING']},
-            #    {'if': {'filter_query': '{STATUS} = "UNKNOWN"'},  'backgroundColor': STATUS2HEX['UNKNOWN']},
-            #    {'if': {'filter_query': '{STATUS} = "FAIL"'},   'backgroundColor': STATUS2HEX['FAILED']},
-            #    {'if': {'filter_query': '{STATUS} = "COMPLETE"'}, 'backgroundColor': STATUS2HEX['COMPLETE']},
-            #    {'if': {'column_id': 'STATUS', 'filter_query': '{STATUS} = ""'}, 'backgroundColor': 'white'}
+            style_cell_conditional=[
+                {'if': {'column_id': 'DESCRIPTION'}, 'textAlign': 'left'},
             ],
             style_header={
                 'fontWeight': 'bold',

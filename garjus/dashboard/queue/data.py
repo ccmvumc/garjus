@@ -54,9 +54,10 @@ def _get_proctype(row):
         # Split on periods and grab the 4th value from right,
         # thus allowing periods in the main processor name
         row['PROCTYPE'] = tmp.rsplit('.')[-4]
-
+        row['PROCYAML'] = tmp
     except (KeyError, IndexError):
         row['PROCTYPE'] = ''
+        row['PROCYAML'] = ''
 
     return row
 

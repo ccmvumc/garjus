@@ -14,7 +14,7 @@ logger = logging.getLogger('dashboard.analyses')
 def get_content():
     columns = utils.make_columns(COLUMNS.get('analyses'))
 
-    # Format columns
+    # Format columns with links as markdown text
     for i, c in enumerate(columns):
         if c['name'] == 'OUTPUT':
             columns[i]['type'] = 'text'
@@ -33,36 +33,30 @@ def get_content():
                 width=3,
             ),
         ),
+        dbc.Spinner(id="loading-analyses-table", children=[
+            dbc.Label('Loading...', id='label-analyses-rowcount1'),
+        ]),
         dt.DataTable(
             columns=columns,
             data=[],
             page_action='none',
             sort_action='native',
             id='datatable-analyses',
-        #    style_table={
-        #        'overflowY': 'scroll',
-        #        'overflowX': 'scroll',
-        #    },
             style_cell={
-                'textAlign': 'left',
-                'padding': '5px 5px 0px 5px',
-                'width': '30px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis',
+                'textAlign': 'center',
+                'padding': '15px 5px 15px 5px',
                 'height': 'auto',
-                'minWidth': '40',
-                'maxWidth': '60',
             },
             style_header={
                 'fontWeight': 'bold',
-                'padding': '5px 15px 0px 10px',
             },
+            style_cell_conditional=[
+                {'if': {'column_id': 'NAME'}, 'textAlign': 'left'},
+            ],
+            # Aligns the markdown in OUTPUT, both vertical and horizontal
             css=[dict(selector="p", rule="margin: 0; text-align: left")],
-            export_format='xlsx',
-            export_headers='names',
-            export_columns='visible',
         ),
-        html.Label('0', id='label-analyses-rowcount')]
+        html.Label('0', id='label-analyses-rowcount2')]
 
     return content
 
@@ -80,7 +74,8 @@ def load_analyses(projects=[]):
     [
     Output('dropdown-analyses-proj', 'options'),
     Output('datatable-analyses', 'data'),
-    Output('label-analyses-rowcount', 'children'),
+    Output('label-analyses-rowcount1', 'children'),
+    Output('label-analyses-rowcount2', 'children'),
     ],
     [
     Input('dropdown-analyses-proj', 'value'),
@@ -124,4 +119,4 @@ def update_analyses(
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
 
-    return [proj, records, rowcount]
+    return [proj, records, rowcount, rowcount]
