@@ -324,12 +324,9 @@ class Processor_v3_1(Processor_v3):
             _val = ''
 
             if _obj == 'subject':
-                _val = assr.parent().attrs.get(_attr)
+                _val = assr.parent().parent().attrs.get(_attr)
             elif _obj == 'session':
                 _val = assr.parent().attrs.get(_attr)
-                _ref = attr_in['ref']
-                _refval = [a.rsplit('/', 1)[1] for a in inputs[_ref]]
-                _val = ','.join([assr.parent().experiment(r).attrs.get(_attr) for r in _refval])
             elif _obj == 'scan':
                 _ref = attr_in['ref']
                 _refval = [a.rsplit('/', 1)[1] for a in inputs[_ref]]
