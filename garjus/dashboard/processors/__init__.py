@@ -8,61 +8,59 @@ from .. import utils
 from . import data
 from ...dictionary import COLUMNS
 
-logger = logging.getLogger('dashboard.analyses')
+logger = logging.getLogger('dashboard.processors')
 
 
 def get_content():
-    columns = utils.make_columns(COLUMNS.get('analyses'))
+    columns = utils.make_columns(COLUMNS.get('processors'))
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):
-        if c['name'] in ['OUTPUT', 'EDIT']:
+        if c['name'] == 'EDIT':
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
-    df = load_analyses()
+    df = load_processors()
 
     content = [
         dbc.Row(
             dbc.Col(
                 dcc.Dropdown(
-                    id='dropdown-analyses-proj',
+                    id='dropdown-processors-proj',
                     multi=True,
                     placeholder='Select Project(s)',
                 ),
                 width=3,
             ),
         ),
-        dbc.Spinner(id="loading-analyses-table", children=[
-            dbc.Label('Loading...', id='label-analyses-rowcount1'),
+        dbc.Spinner(id="loading-processors-table", children=[
+            dbc.Label('Loading...', id='label-processors-rowcount1'),
         ]),
         dt.DataTable(
             columns=columns,
             data=[],
             page_action='none',
-            sort_action='none',
-            id='datatable-analyses',
+            sort_action='native',
+            id='datatable-processors',
             style_cell={
                 'textAlign': 'center',
-                'padding': '15px 5px 15px 5px',
-                'height': 'auto',
             },
             style_header={
                 'fontWeight': 'bold',
             },
             style_cell_conditional=[
-                {'if': {'column_id': 'NAME'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'ARGS'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'FILTER'}, 'textAlign': 'left'},
             ],
-            # Aligns the markdown cells, both vertical and horizontal
-            #css=[dict(selector="p", rule="margin: 0; text-align: left")],
-            css=[dict(selector="p", rule="margin: 0;")],
+            # Aligns the markdown in OUTPUT, both vertical and horizontal
+            css=[dict(selector="p", rule="margin: 0; text-align: center")],
         ),
-        html.Label('0', id='label-analyses-rowcount2')]
+        html.Label('0', id='label-processors-rowcount2')]
 
     return content
 
 
-def load_analyses(projects=[]):
+def load_processors(projects=[]):
 
     if projects is None:
         projects = []
@@ -73,21 +71,21 @@ def load_analyses(projects=[]):
 
 @app.callback(
     [
-    Output('dropdown-analyses-proj', 'options'),
-    Output('datatable-analyses', 'data'),
-    Output('label-analyses-rowcount1', 'children'),
-    Output('label-analyses-rowcount2', 'children'),
+    Output('dropdown-processors-proj', 'options'),
+    Output('datatable-processors', 'data'),
+    Output('label-processors-rowcount1', 'children'),
+    Output('label-processors-rowcount2', 'children'),
     ],
     [
-    Input('dropdown-analyses-proj', 'value'),
+    Input('dropdown-processors-proj', 'value'),
     ])
-def update_analyses(
+def update_processors(
     selected_proj,
 ):
     logger.debug('update_all')
 
     # Load selected data with refresh if requested
-    df = load_analyses(selected_proj)
+    df = load_processors(selected_proj)
 
     # Get options based on selected projects, only show proc for those projects
     proj_options = data.load_options()
@@ -104,22 +102,14 @@ def update_analyses(
 
     # Format records
     for r in records:
-        _link = r['EDIT']
-        _text = 'edit'
-        r['EDIT'] = f'[{_text}]({_link})'
-
-        if not r['OUTPUT']:
+        if not r['EDIT']:
             continue
-        if 'sharepoint.com' in r['OUTPUT']:
-            _link = r['OUTPUT']
-            _text = 'OneDrive'
-            r['OUTPUT'] = f'[{_text}]({_link})'
-        elif 'xnat' in r['OUTPUT']:
-            _link = r['OUTPUT']
-            _text = 'XNAT'
-            r['OUTPUT'] = f'[{_text}]({_link})'
+        if 'redcap' in r['EDIT']:
+            _link = r['EDIT']
+            _text = 'edit'
+            r['EDIT'] = f'[{_text}]({_link})'
         else:
-            r['OUTPUT'] = r['OUTPUT']
+            r['EDIT'] = r['EDIT']
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

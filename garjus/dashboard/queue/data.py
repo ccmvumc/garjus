@@ -54,15 +54,16 @@ def _get_proctype(row):
         # Split on periods and grab the 4th value from right,
         # thus allowing periods in the main processor name
         row['PROCTYPE'] = tmp.rsplit('.')[-4]
-        row['PROCYAML'] = tmp
+        row['PROCESSOR'] = tmp
     except (KeyError, IndexError):
         row['PROCTYPE'] = ''
-        row['PROCYAML'] = ''
+        row['PROCESSOR'] = ''
 
     return row
 
 
-def run_refresh(filename, hidedone=True):
+def run_refresh(hidedone=True):
+    filename = get_filename()
     proj_filter = []
 
     df = get_data(proj_filter, hidedone=hidedone)
@@ -72,14 +73,22 @@ def run_refresh(filename, hidedone=True):
     return df
 
 
-def load_data(refresh=False, hidedone=True):
+def load_data(refresh=False, hidedone=True, maxmins=5):
     filename = get_filename()
 
-    if refresh or not os.path.exists(filename):
-        run_refresh(filename, hidedone)
+    if not os.path.exists(filename):
+        refresh = True
+    elif utils.file_age(filename) > maxmins:
+        logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
+        refresh = True
+
+    if refresh:
+        df = run_refresh(hidedone=hidedone)
+    else:
+        df = utils.read_data(filename)
 
     logger.info('reading data from file:{}'.format(filename))
-    return utils.read_data(filename)
+    return df
 
 
 def filter_data(df, proj, proc, user):

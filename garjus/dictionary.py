@@ -32,6 +32,7 @@ ISSUES_RENAME = {
 }
 
 PROCESSING_RENAME = {
+    'redcap_repeat_instance': 'ID',
     'processor_file': 'FILE',
     'processor_filter': 'FILTER',
     'processor_args': 'ARGS',
@@ -71,14 +72,15 @@ COLUMNS = {
         'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'NOTE', 'DATE', 'SITE',
         'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': [
-        'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD'],
+        'ID', 'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD', 'EDIT'],
     'subjects': [
         'PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
     'tasks': [
         'ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
         'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
         'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 'FAILCOUNT'],
-    'analyses': ['PROJECT', 'ID', 'NAME', 'OUTPUT'],
+    'analyses': ['PROJECT', 'ID', 'NAME', 'EDIT', 'OUTPUT'],
+    'processors': ['ID', 'PROJECT', 'TYPE', 'EDIT', 'FILE', 'FILTER', 'ARGS'],
     'sgp': ['PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE'],
 }
 

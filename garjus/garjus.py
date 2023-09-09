@@ -1220,6 +1220,8 @@ class Garjus:
             d['FILE'] = filepath
             d['TYPE'] = self._get_proctype(d['FILE'])
 
+            d['EDIT'] = 'edit'
+
             # Finally, add to our list
             data.append(d)
 
@@ -1861,9 +1863,17 @@ class Garjus:
     def xnat_host(self):
         return self._xnat.host
 
+    def redcap(self):
+        """Get the redcap project for this garjus."""
+        return self._rc
+
     def redcap_host(self):
         """Get the redcap host for this garjus."""
         return self._rc.url
+
+    def redcap_pid(self):
+        """Get the redcap host for this garjus."""
+        return self._rc.export_project_info().get('project_id')
 
     def copy_session(
         self,

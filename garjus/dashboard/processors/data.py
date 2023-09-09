@@ -6,12 +6,12 @@ import pandas as pd
 from ...garjus import Garjus
 
 
-logger = logging.getLogger('dashboard.analyses.data')
+logger = logging.getLogger('dashboard.processors.data')
 
 
 def get_filename():
     datadir = f'{Garjus().cachedir()}/DATA'
-    filename = f'{datadir}/analysesdata.pkl'
+    filename = f'{datadir}/processorsdata.pkl'
 
     try:
         os.makedirs(datadir)
@@ -60,16 +60,19 @@ def get_data(projects):
     df = pd.DataFrame()
     garjus = Garjus()
 
-    # Get the pid of the main redcap so we can make links
     pid = garjus.redcap_pid()
 
     # Load
-    df = garjus.analyses(projects)
+    df = garjus.processing_protocols(projects)
+
+    df['FILE'] = df['FILE'].apply(os.path.basename)
+
+    df = df.sort_values(['PROJECT', 'FILE'])
 
     # Make edit link
     df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \
         str(pid) + \
-        '&page=analyses&id=' + \
+        '&page=processing&id=' + \
         df['PROJECT'] + \
         '&instance=' + \
         df['ID'].astype(str)
@@ -77,9 +80,7 @@ def get_data(projects):
     return df
 
 
-def filter_data(df, time=None):
-    # Filter
-    if time:
-        pass
+def filter_data(df):
+    # TBD
 
     return df

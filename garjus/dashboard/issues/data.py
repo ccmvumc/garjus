@@ -4,6 +4,7 @@ import os
 import pandas as pd
 
 from ...garjus import Garjus
+from ..utils import file_age
 
 
 logger = logging.getLogger('dashboard.issues.data')
@@ -81,21 +82,32 @@ def get_data():
     return df
 
 
-def run_refresh(filename):
+def run_refresh():
+    filename = get_filename()
+
     df = get_data()
 
     if not df.empty:
         save_data(df, filename)
 
+    return df
 
-def load_data(refresh=False):
+
+def load_data(refresh=False, maxmins=5):
     filename = get_filename()
 
-    if refresh or not os.path.exists(filename):
-        run_refresh(filename)
+    if not os.path.exists(filename):
+        refresh = True
+    elif file_age(filename) > maxmins:
+        logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
+        refresh = True
 
-    logger.info('reading data from file:{}'.format(filename))
-    return read_data(filename)
+    if refresh:
+        df = run_refresh()
+    else:
+        df = read_data(filename)
+
+    return df
 
 
 def read_data(filename):

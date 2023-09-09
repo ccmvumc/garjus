@@ -12,6 +12,7 @@ from . import issues
 from . import queue
 from . import stats
 from . import analyses
+from . import processors
 
 
 logger = logging.getLogger('garjus.dashboard')
@@ -20,10 +21,13 @@ logger = logging.getLogger('garjus.dashboard')
 footer_content = [
     html.Hr(),
     html.Div(
-        dcc.Link(
-            [html.P('garjus')],
-            href='https://github.com/ccmvumc/garjus'
-        ),
+        [
+            html.A(
+                "garjus",
+                href='https://github.com/ccmvumc/garjus',
+                target="_blank",
+            )
+        ],
         style={'textAlign': 'center'},
     ),
 ]
@@ -59,7 +63,11 @@ tabs = dbc.Tabs([
         tab_id='tab-analyses',
         children=analyses.get_content(),
     ),
-   
+    dbc.Tab(
+        label='Processors',
+        tab_id='tab-processors',
+        children=processors.get_content(),
+    )
 ])
 
 app.layout = html.Div(

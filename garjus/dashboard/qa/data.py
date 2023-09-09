@@ -1,11 +1,11 @@
 """QA Dashboard."""
 import logging
 import os
-import time
 
 import pandas as pd
 
 from ...garjus import Garjus
+from ..utils import file_age
 
 
 logger = logging.getLogger('dashboard.qa.data')
@@ -62,10 +62,6 @@ def run_refresh(projects, hidetypes=True):
     save_data(df, filename)
 
     return df
-
-
-def file_age(filename):
-    return int((time.time() - os.path.getmtime(filename)) / 60)
 
 
 def update_data(projects, hidetypes):

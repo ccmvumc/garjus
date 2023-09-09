@@ -1,5 +1,9 @@
+import time
+import os
+
 import pandas as pd
 from dash import callback_context
+
 
 def make_options(values):
     return [{'label': x, 'value': x} for x in values]
@@ -24,3 +28,7 @@ def was_triggered(button_id):
         callback_context.triggered[0]['prop_id'].split('.')[0] == button_id)
 
     return result
+
+
+def file_age(filename):
+    return int((time.time() - os.path.getmtime(filename)) / 60)

@@ -73,7 +73,7 @@ def get_content():
         'WALLTIME',
         'MEMREQ',
         'PROJECT',
-        'PROCYAML',
+        'PROCESSOR',
         'USER',
     ]
 
