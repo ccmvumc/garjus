@@ -54,8 +54,7 @@ def get_content():
                 {'if': {'column_id': 'NAME'}, 'textAlign': 'left'},
             ],
             # Aligns the markdown cells, both vertical and horizontal
-            #css=[dict(selector="p", rule="margin: 0; text-align: left")],
-            css=[dict(selector="p", rule="margin: 0;")],
+            css=[dict(selector="p", rule="margin: 0; text-align: center")],
         ),
         html.Label('0', id='label-analyses-rowcount2')]
 
