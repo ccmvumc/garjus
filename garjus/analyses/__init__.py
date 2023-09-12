@@ -10,7 +10,6 @@ import pandas as pd
 logger = logging.getLogger('garjus.analyses')
 
 
-
 def _download_zip(xnat, uri, zipfile):
     # Build the uri to download
     _uri = uri + '?format=zip&structure=simplified'
@@ -80,11 +79,16 @@ def update_analysis(
     # Set Analysis color to COMPLETE/Green
 
 
-def run_analysis(garjus, project, analysis_id, output_zip):
+def run_analysis(garjus, project, analysis_id, output_zip=None):
+
     with tempfile.TemporaryDirectory() as tempdir:
         download_dir = f'{tempdir}/INPUTS'
         upload_dir = f'{tempdir}/OUTPUTS'
-   
+  
+        if output_zip is None:
+            # add description from redcap???
+            output_zip = f'{tempdir}/{project}_{analysis_id}.zip'
+
         _make_dirs(upload_dir)
 
         # Download inputs
@@ -93,24 +97,48 @@ def run_analysis(garjus, project, analysis_id, output_zip):
 
         # Run steps
         logger.info('running analysis steps...')
-        # run singularity??? run docker??? make a job? where?
-        # ?????????????????????????????????????????????????????????
-        cmd = SINGULARITY_CMD
 
+        analysis = garjus.load_analysis(project, analysis_id)
 
+        container = analysis['processor']['command']['container']
+        for c in analysis['processor']['containers']:
+            if c['name'] == container:
+                container = c['source']
+
+        if container.startswith('docker://'):
+            container = container.split('docker://')[1]
+
+        cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+
+        logger.info(cmd)
+        os.system(cmd)
 
         # Zip output
         logger.info(f'zipping output {upload_dir} to {output_zip}')
         sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+
+        # Upload it
+        logger.info(f'uploading output {output_zip}')
+        upload_analysis(garjus, project, analysis_id, output_zip)
+
+        # That is all
         logger.info(f'analysis done!')
 
 
 def upload_analysis(garjus, project, analysis_id, output_zip):
-    # Upload to xnat
+    # Upload output_zip Project Resource on XNAT named with
+    # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
+    resource = f'{project}_{analysis_id}'
+    res_uri = f'/projects/{project}/resources/{resource}'
 
-    # Set path to xnat zip in REDCap field
+    logger.debug(f'connecting to xnat resource:{res_uri}')
+    res = garjus.xnat().select(res_uri)
 
-    return
+    logger.debug(f'uploading file to xnat resource:{output_zip}')
+    res.file(os.path.basename(output_zip)).put(
+        output_zip,
+        overwrite=True,
+        params={"event_reason": "analysis upload"})
 
 
 def _sessions_from_scans(scans):
@@ -297,26 +325,27 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
 def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assessors, sgp):
 
     #  subject-level assessors
-    sgp_spec = subj_spec['assessors']
-    logger.debug(f'download_sgp={subj_dir}')
-    _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp)
+    sgp_spec = subj_spec.get('assessors', None)
+    if sgp_spec:
+        logger.debug(f'download_sgp={subj_dir}')
+        _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp)
 
     # Download the subjects sessions
-    sess_spec = subj_spec['sessions']
-    sess_types = sess_spec['types'].split(',')
+    for sess_spec in subj_spec.get('sessions', []):
+        sess_types = sess_spec['types'].split(',')
 
-    for i, s in sessions[sessions.SUBJECT == subj].iterrows():
-        sess = s.SESSION
+        for i, s in sessions[sessions.SUBJECT == subj].iterrows():
+            sess = s.SESSION
 
-        # Apply session type filter
-        if s.SESSTYPE not in sess_types:
-            logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
-            continue
+            # Apply session type filter
+            if s.SESSTYPE not in sess_types:
+                logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
+                continue
 
-        sess_dir = f'{subj_dir}/{sess}'
-        logger.debug(f'download_session={sess_dir}')
-        _download_session(
-            garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
+            sess_dir = f'{subj_dir}/{sess}'
+            logger.debug(f'download_session={sess_dir}')
+            _download_session(
+                garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
 
 
 def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
@@ -326,7 +355,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
     for k, a in sess_assessors.iterrows():
         assr = a.ASSR
 
-        for assr_spec in sess_spec['assessors']:
+        for assr_spec in sess_spec.get('assessors', []):
             logger.debug(f'assr_spec={assr_spec}')
 
             assr_types = assr_spec['types'].split(',')
@@ -401,7 +430,7 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                         raise err
 
 
-def download_analysis_inputs(garjus, project, analysis_id, download_dir):
+def download_analysis_inputs(garjus, project, analysis_id, download_dir, analysis=None):
     errors = []
 
     logger.debug(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
@@ -409,8 +438,9 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir):
     # Make the output directory
     _make_dirs(download_dir)
 
-    # Determine what we need to download
-    analysis = garjus.load_analysis(project, analysis_id)
+    if analysis is None:
+        # Determine what we need to download
+        analysis = garjus.load_analysis(project, analysis_id)
 
     logging.info('loading project data')
     assessors = garjus.assessors(projects=[project])
