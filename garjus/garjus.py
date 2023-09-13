@@ -941,7 +941,7 @@ class Garjus:
             return {}
 
         try:
-            # Parse multiline string of delimited key value pairs into dictionary
+            # Parse multiline string of delimited keyvalue pairs into dict
             scanmap = dict(x.strip().split(':', 1) for x in scanmap.split('\n'))
 
             # Remove extra whitespace from keys and values
@@ -1694,7 +1694,7 @@ class Garjus:
             return None
 
         rec = self._rc.export_records(records=[project], forms=['edat'])
-        
+
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'edat']
 
         return rec

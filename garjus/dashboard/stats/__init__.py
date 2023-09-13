@@ -71,7 +71,7 @@ def get_graph_content(df, selected_pivot):
     var_list = [x for x in var_list if not (
         x.endswith('_pctused') or 
         x.endswith('_voltot')) or
-        x.endswith('_volused') 
+        x.endswith('_volused')
     ]
 
     # Filter var list to only stats can be plotted as float

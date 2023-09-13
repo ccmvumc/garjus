@@ -271,8 +271,7 @@ def dashboard(auth_file=None):
         # Load user passwords to use dash's basic authentication
         with open(auth_file, 'rt') as file:
             _data = yaml.load(file, yaml.SafeLoader)
-            auth = dash_auth.BasicAuth(
-                app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
+            dash_auth.BasicAuth(app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)
@@ -290,21 +289,21 @@ def quicktest():
 
     try:
         redcap_project = Garjus._default_redcap()
-    except Exception as err:
+    except Exception:
         print('could not connect to REDCap')
-        return  
+        return
 
     try:
         xnat_interface = Garjus._default_xnat()
-    except Exception as err:
+    except Exception:
         print('could not connect to XNAT')
-        return  
+        return
 
     try:
         g = Garjus(redcap_project, xnat_interface)
-    except Exception as err:
+    except Exception:
         print('something went wrong')
         return
 
-    scans = g.scans()
+    g.scans()
     print('all good!')

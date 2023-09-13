@@ -7,10 +7,9 @@ from dash import dcc, html, dash_table as dt
 from dash import Input, Output
 import dash_bootstrap_components as dbc
 
-from ...dictionary import COLUMNS
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
+from ..shared import GWIDTH, STATUS2RGB
 from . import data
 
 
@@ -66,14 +65,17 @@ def _get_graph_content(df):
     return dbc.Spinner(
         id="loading-issues",
         children=dbc.Tabs(id='tabs-issues', children=tabs_content))
-   
-    
+
+
 def get_content():
-    
-    #columns = utils.make_columns(COLUMNS.get('issues'))
     columns = utils.make_columns([
-        'DATETIME', 'CATEGORY', 'PROJECT',  'SUBJECT', 'SESSION',
-        'EVENT', 'DESCRIPTION',
+        'DATETIME',
+        'CATEGORY',
+        'PROJECT', 
+        'SUBJECT',
+        'SESSION',
+        'EVENT',
+        'DESCRIPTION',
     ])
     # removes: SCAN, FIELD, STATUS, ID
 
@@ -107,7 +109,7 @@ def get_content():
         dbc.Row(
             dbc.Col(
                 dcc.Dropdown(
-                    id='dropdown-issues-project', 
+                    id='dropdown-issues-project',
                     multi=True,
                     placeholder='Select Projects',
                 ),
@@ -117,7 +119,7 @@ def get_content():
         dbc.Row(
             dbc.Col(
                 dcc.Dropdown(
-                    id='dropdown-issues-category', 
+                    id='dropdown-issues-category',
                     multi=True,
                     placeholder='Select Categories',
                 ),
@@ -208,7 +210,7 @@ def filter_data(df, selected_project, selected_category):
      Input('dropdown-issues-project', 'value'),
      Input('switch-issues-graph', 'value'),
      Input('button-issues-refresh', 'n_clicks'),
-     ],
+    ],
 )
 def update_issues(
     selected_category,

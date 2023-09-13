@@ -1,8 +1,6 @@
 import logging
 import os
 
-import pandas as pd
-
 from .. import utils
 from ...garjus import Garjus
 

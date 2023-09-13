@@ -11,7 +11,7 @@ import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
+from ..shared import GWIDTH, STATUS2RGB
 from . import data
 
 
@@ -98,7 +98,7 @@ def get_content():
                     size='sm',
                 ),
                 align='center',
-                ),
+            ),
             dbc.Col(
                 dbc.Switch(
                     id='switch-activity-graph',
@@ -111,7 +111,7 @@ def get_content():
         dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
-                    id='dropdown-activity-project', 
+                    id='dropdown-activity-project',
                     multi=True,
                     placeholder='Select Projects',
                 ),
@@ -120,8 +120,8 @@ def get_content():
         ]),
         dbc.Row(
             dbc.Col(
-                 dcc.Dropdown(
-                    id='dropdown-activity-category', 
+                dcc.Dropdown(
+                    id='dropdown-activity-category',
                     multi=True,
                     placeholder='Select Categories',
                 ),

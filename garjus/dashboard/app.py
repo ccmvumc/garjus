@@ -1,12 +1,15 @@
+import os
 import datetime
+
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 
+
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 
+
 # TODO: fix this to find path more dynamically
-import os
 assets_path = os.path.expanduser('~/git/garjus/garjus/dashboard/assets')
 
 hour = datetime.datetime.now().hour

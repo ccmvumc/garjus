@@ -5,12 +5,12 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash import Input, Output, callback
+from dash import Input, Output
 import dash_bootstrap_components as dbc
 
 from ..app import app
 from .. import utils
-from ..shared import STATUS2HEX, GWIDTH, STATUS2RGB
+from ..shared import STATUS2RGB
 from . import data
 
 
@@ -51,13 +51,16 @@ def get_graph_content(df):
         else:
             xdata = dfp[status]
 
-        fig.append_trace(go.Bar(
-            x=xdata,
-            y=ydata,
-            name='{} ({})'.format(status, sum(xdata)),
-            marker=dict(color=color),
-            opacity=0.9, orientation='h'),
-        1, 1)
+        fig.append_trace(
+            go.Bar(
+                x=xdata,
+                y=ydata,
+                name='{} ({})'.format(status, sum(xdata)),
+                marker=dict(color=color),
+                opacity=0.9, orientation='h'),
+            1,
+            1
+        )
 
     fig['layout'].update(barmode='stack', showlegend=True)
 

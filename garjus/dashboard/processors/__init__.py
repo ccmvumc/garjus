@@ -20,8 +20,6 @@ def get_content():
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
-    df = load_processors()
-
     content = [
         dbc.Row(
             dbc.Col(
@@ -68,16 +66,15 @@ def load_processors(projects=[]):
     return data.load_data(projects, refresh=True)
 
 
-
 @app.callback(
     [
-    Output('dropdown-processors-proj', 'options'),
-    Output('datatable-processors', 'data'),
-    Output('label-processors-rowcount1', 'children'),
-    Output('label-processors-rowcount2', 'children'),
+     Output('dropdown-processors-proj', 'options'),
+     Output('datatable-processors', 'data'),
+     Output('label-processors-rowcount1', 'children'),
+     Output('label-processors-rowcount2', 'children'),
     ],
     [
-    Input('dropdown-processors-proj', 'value'),
+     Input('dropdown-processors-proj', 'value'),
     ])
 def update_processors(
     selected_proj,

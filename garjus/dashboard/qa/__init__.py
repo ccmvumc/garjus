@@ -25,7 +25,7 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash import Input, Output, callback
+from dash import Input, Output
 import dash_bootstrap_components as dbc
 
 from ..app import app
@@ -854,7 +854,8 @@ def update_qa(
 
                 # Drop empty
                 for p in dfp.columns:
-                    dfp[p] = dfp[p].astype(str).str.replace('[]', '', regex=False)
+                    dfp[p] = dfp[p].astype(str).str.replace(
+                        '[]', '', regex=False)
 
                 # Really drop empty
                 dfp = dfp.replace(r'^\s*$', np.nan, regex=True)
@@ -931,7 +932,6 @@ def update_qa(
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
 
-
         if selected_graph:
             graph_content = _get_graph_content(dfp)
 
@@ -1003,4 +1003,3 @@ def update_qa(
     logger.debug('update_qa:returning data')
 
     return [proc, scan, sess, proj, records, columns, graph_content, rowcount, rowcount]
-

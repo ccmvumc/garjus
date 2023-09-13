@@ -1,11 +1,10 @@
 """dash index page."""
 import logging
 
-from dash import dcc, html
+from dash import html
 import dash_bootstrap_components as dbc
 
 from .app import app
-from . import utils
 from . import qa
 from . import activity
 from . import issues
@@ -43,7 +42,7 @@ tabs = dbc.Tabs([
         tab_id='tab-issues',
         children=issues.get_content(),
     ),
-     dbc.Tab(
+    dbc.Tab(
         label='Queue',
         tab_id='tab-queue',
         children=queue.get_content(),
@@ -81,7 +80,8 @@ app.layout = html.Div(
 # For gunicorn to work correctly
 server = app.server
 
-#app.css.config.serve_locally = False
+# Allow external css
+app.css.config.serve_locally = False
 
 # Set the title to appear on web pages
 app.title = 'dashboard'

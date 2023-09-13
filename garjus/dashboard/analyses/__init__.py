@@ -20,8 +20,6 @@ def get_content():
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
-    df = load_analyses()
-
     content = [
         dbc.Row(
             dbc.Col(
@@ -69,16 +67,15 @@ def load_analyses(projects=[]):
     return data.load_data(projects, refresh=True)
 
 
-
 @app.callback(
     [
-    Output('dropdown-analyses-proj', 'options'),
-    Output('datatable-analyses', 'data'),
-    Output('label-analyses-rowcount1', 'children'),
-    Output('label-analyses-rowcount2', 'children'),
+     Output('dropdown-analyses-proj', 'options'),
+     Output('datatable-analyses', 'data'),
+     Output('label-analyses-rowcount1', 'children'),
+     Output('label-analyses-rowcount2', 'children'),
     ],
     [
-    Input('dropdown-analyses-proj', 'value'),
+     Input('dropdown-analyses-proj', 'value'),
     ])
 def update_analyses(
     selected_proj,

@@ -71,10 +71,6 @@ def get_data():
             # ID is same as subject number for this project
             pass
 
-    # TODO: make event link
-    #https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?\
-    #pid=X&page=mri_scan_form&id=Y&event_id=Z
- 
     # Make project link
     df['PROJECTLINK'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/' + \
         'DataEntry/record_home.php?pid=' + df['PROJECTPID']
@@ -115,7 +111,7 @@ def read_data(filename):
     if os.path.exists(filename):
         df = pd.read_pickle(filename)
     else:
-         df = pd.DataFrame(columns=[
+        df = pd.DataFrame(columns=[
             'ID', 'LABEL', 'PROJECT', 'SUBJECT', 'SESSION',
             'EVENT', 'FIELD', 'CATEGORY', 'STATUS',
             'DESCRIPTION', 'DATETIME'
