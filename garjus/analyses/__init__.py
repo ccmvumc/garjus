@@ -50,8 +50,8 @@ def _update_project(garjus, project):
     for i, row in analyses.iterrows():
         aname = row['NAME']
 
-        # First is output complete, already run, do nothing
-        # continue
+        if row['STATUS'] == 'COMPLETE':
+            continue
 
         logging.info(f'updating analysis:{aname}')
 
@@ -87,7 +87,7 @@ def run_analysis(garjus, project, analysis_id, output_zip=None):
   
         if output_zip is None:
             # add description from redcap???
-            output_zip = f'{tempdir}/{project}_{analysis_id}.zip'
+            output_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
 
         _make_dirs(upload_dir)
 
@@ -95,31 +95,40 @@ def run_analysis(garjus, project, analysis_id, output_zip=None):
         logger.info(f'downloading inputs to {download_dir}')
         download_analysis_inputs(garjus, project, analysis_id, download_dir)
 
+        upload_inputs(garjus, project, analysis_id, tempdir)
+
         # Run steps
         logger.info('running analysis steps...')
 
         analysis = garjus.load_analysis(project, analysis_id)
 
-        container = analysis['processor']['command']['container']
-        for c in analysis['processor']['containers']:
-            if c['name'] == container:
-                container = c['source']
+        # Run commmand and upload output
+        command = analysis['processor'].get('command', None)
+        if command:
+            container = analysis['processor']['command']['container']
+            for c in analysis['processor']['containers']:
+                if c['name'] == container:
+                    container = c['source']
 
-        if container.startswith('docker://'):
-            container = container.split('docker://')[1]
+                if 'path' in c:
+                    print(c['path'], 'not yet')
+                    continue
 
-        cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+            if container.startswith('docker://'):
+                container = container.split('docker://')[1]
 
-        logger.info(cmd)
-        os.system(cmd)
+            cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
 
-        # Zip output
-        logger.info(f'zipping output {upload_dir} to {output_zip}')
-        sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+            logger.info(cmd)
+            os.system(cmd)
 
-        # Upload it
-        logger.info(f'uploading output {output_zip}')
-        upload_analysis(garjus, project, analysis_id, output_zip)
+            # Zip output
+            logger.info(f'zipping output {upload_dir} to {output_zip}')
+            sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+
+            # Upload it
+            logger.info(f'uploading output {output_zip}')
+            upload_analysis(garjus, project, analysis_id, output_zip)
 
         # That is all
         logger.info(f'analysis done!')
@@ -137,7 +146,27 @@ def upload_analysis(garjus, project, analysis_id, output_zip):
     logger.debug(f'uploading file to xnat resource:{output_zip}')
     res.file(os.path.basename(output_zip)).put(
         output_zip,
-        overwrite=True,
+        overwrite=False,
+        params={"event_reason": "analysis upload"})
+
+
+def upload_inputs(garjus, project, analysis_id, tempdir):
+    # Upload to Project Resource on XNAT named with
+    # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
+    resource = f'{project}_{analysis_id}'
+    res_uri = f'/projects/{project}/resources/{resource}'
+    inputs_zip = f'{tempdir}/{project}_{analysis_id}_INPUTS.zip'
+
+    logger.info(f'zipping inputs {tempdir} to {inputs_zip}')
+    sb.run(['zip', '-r', inputs_zip, 'INPUTS'], cwd=tempdir)
+
+    logger.debug(f'connecting to xnat resource:{res_uri}')
+    res = garjus.xnat().select(res_uri)
+
+    logger.debug(f'uploading file to xnat resource:{inputs_zip}')
+    res.file(os.path.basename(inputs_zip)).put(
+        inputs_zip,
+        overwrite=False,
         params={"event_reason": "analysis upload"})
 
 
