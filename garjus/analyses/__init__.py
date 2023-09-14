@@ -181,12 +181,26 @@ def _run(garjus, analysis, tempdir):
             print(c['path'], 'not yet')
             continue
 
-    # Remove docker prefix if found
-    if container.startswith('docker://'):
-        container = container.split('docker://')[1]
+    if shutil.which('singularity'):
+        command_mode = 'singularity'
+    elif shutil.which('docker'):
+        command_mode = 'docker'
+    else:
+        logger.error('command mode not found, cannot run container command')
+        return
 
-    # Build the command
-    cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+    logger.debug(f'command mode is {command_mode}')
+
+    if command_mode == 'singularity':
+        # Build the command string
+        cmd = f'singularity run -c -e -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS {container}'
+    elif command_mode == 'docker':
+        if container.startswith('docker://'):
+            # Remove docker prefix
+            container = container.split('docker://')[1]
+
+        # Build the command string
+        cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
 
     # Run it
     logger.info(cmd)
@@ -226,6 +240,12 @@ def upload_outputs(garjus, project, analysis_id, tempdir):
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
+    uri = f'{garjus.xnat_host()}data/{res_uri}/files/{os.path.basename(outputs_zip)}'
+
+    print(uri)
+
+    return uri
+
 
 def upload_inputs(garjus, project, analysis_id, tempdir):
     # Upload to Project Resource on XNAT named with
@@ -248,7 +268,9 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
-    uri = f'{garjus.xnat_host()}/{res_uri}/files/{os.path.basename(inputs_zip)}'
+    uri = f'{garjus.xnat_host()}data/{res_uri}/files/{os.path.basename(inputs_zip)}'
+
+    print(uri)
 
     return uri
 
