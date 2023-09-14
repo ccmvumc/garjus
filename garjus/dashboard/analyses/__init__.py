@@ -120,10 +120,18 @@ def update_analyses(
         _text = 'edit'
         r['EDIT'] = f'[{_text}]({_link})'
 
+        # Make edit a link
+        if not r['INPUT']:
+            pass
+        else:
+            _link = r['INPUT']
+            _text = r['INPUT'].rsplit('/', 1)[1]
+            r['INPUT'] = f'[{_text}]({_link})'
+
         # Make output a link
         if not r['OUTPUT']:
-            continue
-        if 'sharepoint.com' in r['OUTPUT']:
+            pass
+        elif 'sharepoint.com' in r['OUTPUT']:
             _link = r['OUTPUT']
             _text = 'OneDrive'
             r['OUTPUT'] = f'[{_text}]({_link})'

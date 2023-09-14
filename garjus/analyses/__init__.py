@@ -248,7 +248,7 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
-    uri = f'{garjus.xnat_host()}/{res_uri}'
+    uri = f'{garjus.xnat_host()}/{res_uri}/files/{inputs_zip}'
 
     return uri
 
