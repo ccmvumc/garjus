@@ -213,7 +213,7 @@ def upload_outputs(garjus, project, analysis_id, tempdir):
     logger.debug(f'uploading file to xnat resource:{output_zip}')
     res.file(os.path.basename(output_zip)).put(
         output_zip,
-        overwrite=False,
+        overwrite=True,
         params={"event_reason": "analysis upload"})
 
 
@@ -235,7 +235,7 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
     logger.debug(f'uploading file to xnat resource:{inputs_zip}')
     res.file(os.path.basename(inputs_zip)).put(
         inputs_zip,
-        overwrite=False,
+        overwrite=True,
         params={"event_reason": "analysis upload"})
 
 
