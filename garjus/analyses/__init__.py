@@ -58,8 +58,8 @@ def _update_project(garjus, project):
             logger.debug(f'skipping complete not set:{aname}')
             continue
 
-        if a['STATUS'] == 'CLOSED':
-            logger.debug(f'skipping closed{aname}')
+        if a['STATUS'] == 'READY':
+            logger.debug(f'skipping done:{aname}')
             continue
 
         logger.info(f'updating analysis:{aname}')
@@ -147,7 +147,7 @@ def _update(garjus, analysis):
             garjus.set_analysis_status(
                 analysis['PROJECT'],
                 analysis['ID'],
-                'CLOSED')
+                'READY')
 
     # That is all
     logger.info(f'analysis done!')
