@@ -43,7 +43,7 @@ def _update_project(garjus, project):
     analyses = garjus.analyses([project], download=True)
 
     if len(analyses) == 0:
-        logger.info(f'no analyses for project:{project}')
+        logger.debug(f'no open analyses for project:{project}')
         return
 
     # Handle each record
@@ -58,8 +58,8 @@ def _update_project(garjus, project):
             logger.debug(f'skipping complete not set:{aname}')
             continue
 
-        if a['STATUS'] == 'COMPLETE':
-            logger.debug(f'skipping complete{aname}')
+        if a['STATUS'] == 'CLOSED':
+            logger.debug(f'skipping closed{aname}')
             continue
 
         logger.info(f'updating analysis:{aname}')
@@ -147,7 +147,7 @@ def _update(garjus, analysis):
             garjus.set_analysis_status(
                 analysis['PROJECT'],
                 analysis['ID'],
-                'COMPLETE')
+                'CLOSED')
 
     # That is all
     logger.info(f'analysis done!')
