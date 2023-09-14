@@ -50,6 +50,10 @@ def _update_project(garjus, project):
     for i, a in analyses.iterrows():
         aname = a['NAME']
 
+        if not a.get('PROCESSOR', False):
+            logger.debug(f'no processor:{aname}')
+            continue
+
         if a['COMPLETE'] != '2':
             logger.debug(f'skipping complete not set:{aname}')
             continue
