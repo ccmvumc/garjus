@@ -12,6 +12,7 @@ from . import queue
 from . import stats
 from . import analyses
 from . import processors
+from . import reports
 
 
 logger = logging.getLogger('garjus.dashboard')
@@ -58,15 +59,20 @@ tabs = dbc.Tabs([
         children=stats.get_content(),
     ),
     dbc.Tab(
+        label='Processors',
+        tab_id='tab-processors',
+        children=processors.get_content(),
+    ),
+    dbc.Tab(
+        label='Reports',
+        tab_id='tab-reports',
+        children=reports.get_content(),
+    ),
+    dbc.Tab(
         label='Analyses',
         tab_id='tab-analyses',
         children=analyses.get_content(),
     ),
-    dbc.Tab(
-        label='Processors',
-        tab_id='tab-processors',
-        children=processors.get_content(),
-    )
 ])
 
 app.layout = html.Div(

@@ -58,7 +58,25 @@ TASKS_RENAME = {
     'task_yamlupload': 'YAMLUPLOAD',
 }
 
-DISABLE_STATTYPES = ['fmri_rest_v2', 'fmri_roi_v1', 'struct_preproc_noflair_v1', 'fmri_nback_v2', 'Multi_Atlas_v3', 'fmri_roi_v2']
+REPORTS_RENAME = {
+    'progress_name': 'NAME',
+    'progress_datetime': 'DATE',
+    'progress_pdf': 'PDF',
+    'progress_zip': 'DATA',
+    'double_resultspdf': 'PDF',
+    'double_resultsfile': 'DATA',
+    'double_name': ' NAME',
+    'double_datetime': 'DATE',
+}
+
+DISABLE_STATTYPES = [
+    'fmri_rest_v2',
+    'fmri_roi_v1',
+    'struct_preproc_noflair_v1',
+    'fmri_nback_v2',
+    'Multi_Atlas_v3', 
+    'fmri_roi_v2',
+]
 
 COLUMNS = {
     'activity': [
@@ -86,6 +104,7 @@ COLUMNS = {
     'analyses': ['PROJECT', 'ID', 'NAME', 'STATUS', 'COMPLETE', 'EDIT', 'OUTPUT', 'NOTES', 'SUBJECTS', 'PROCESSOR'],
     'processors': ['ID', 'PROJECT', 'TYPE', 'EDIT', 'FILE', 'FILTER', 'ARGS'],
     'sgp': ['PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE'],
+    'reports': ['TYPE', 'PROJECT', 'NAME', 'DATE', 'PDF', 'DATA'],
 }
 
 

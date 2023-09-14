@@ -32,7 +32,7 @@ from .image03 import update as update_image03, download as download_image03
 from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB
-from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME
+from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
 from .analyses import update as update_analyses, download_analysis_inputs, run_analysis
@@ -90,6 +90,7 @@ class Garjus:
         self.processing_rename = PROCESSING_RENAME
         self.tasks_rename = TASKS_RENAME
         self.analyses_rename = ANALYSES_RENAME
+        self.reports_rename = REPORTS_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
         self.max_stats = 64
         self._projects = None
@@ -1194,6 +1195,40 @@ class Garjus:
     def _dfield(self):
         """Name of redcap filed that stores project name."""
         return self._rc.def_field
+
+    def reports(self, projects=None):
+        data = []
+
+        # Load Progress Reports
+        for r in self.progress_reports(projects):
+            d = {
+                'PROJECT': r[self._dfield()],
+                'TYPE': 'Progress'}
+
+            # Get renamed variables
+            for k, v in self.reports_rename.items():
+                print(k,v,r.get(k,'nope'))
+                if v not in d or d[v] == '':
+                    d[v] = r.get(k, '')
+
+            data.append(d)
+
+        # Load Double Reports
+        for r in self.double_reports(projects):
+            d = {
+                'PROJECT': r[self._dfield()],
+                'TYPE': 'Double'}
+
+            # Get renamed variables
+            for k, v in self.reports_rename.items():
+                if v not in d or d[v] == '': 
+                    d[v] = r.get(k, '')
+
+            data.append(d)
+
+        df = pd.DataFrame(data, columns=self.column_names('reports'))
+
+        return df
 
     def progress_reports(self, projects=None):
         """List of progress records."""
