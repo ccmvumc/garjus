@@ -130,11 +130,17 @@ def _update(garjus, analysis):
 
             logger.info(f'uploading analysis inputs zip')
             try:
-                upload_inputs(
+                dst = upload_inputs(
                     garjus,
                     analysis['PROJECT'], 
                     analysis['ID'],
                     tempdir)
+
+                logger.debug(f'set analysis inputs')
+                garjus.set_analysis_inputs(
+                    analysis['PROJECT'],
+                    analysis['ID'],
+                    dst)
             except Exception as err:
                 logger.error(f'upload failed')
                 return
@@ -241,6 +247,10 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
         inputs_zip,
         overwrite=True,
         params={"event_reason": "analysis upload"})
+
+    uri = f'{garjus.xnat_host()}/{res_uri}'
+
+    return uri
 
 
 def _sessions_from_scans(scans):

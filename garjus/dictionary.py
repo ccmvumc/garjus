@@ -16,6 +16,7 @@ ANALYSES_RENAME = {
     'analysis_name': 'NAME',
     'analysis_include': 'SUBJECTS',
     'analysis_processor': 'PROCESSOR',
+    'analysis_input': 'INPUT',
     'analysis_output': 'OUTPUT',
     'analyses_complete': 'COMPLETE',
     'analysis_status': 'STATUS',

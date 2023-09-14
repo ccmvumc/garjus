@@ -1708,6 +1708,21 @@ class Garjus:
         except AssertionError as err:
             logger.error(f'failed to set analysis status:{err}')
 
+    def set_analysis_inputs(self, project, analysis_id, inputs):
+        logger.info(f'setting analysis status:{project}:{analysis_id}:{inputs}')
+        try:
+            record = {
+                self._dfield(): project,
+                'redcap_repeat_instrument': 'analyses',
+                'redcap_repeat_instance': analysis_id,
+                'analysis_input': inputs,
+            }
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logger.debug('analysis record updated')
+        except AssertionError as err:
+            logger.error(f'failed to set analysis status:{err}')
+
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
 
