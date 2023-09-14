@@ -1207,7 +1207,6 @@ class Garjus:
 
             # Get renamed variables
             for k, v in self.reports_rename.items():
-                print(k,v,r.get(k,'nope'))
                 if v not in d or d[v] == '':
                     d[v] = r.get(k, '')
 
