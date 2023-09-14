@@ -12,7 +12,15 @@ logger = logging.getLogger('dashboard.analyses')
 
 
 def get_content():
-    columns = utils.make_columns(COLUMNS.get('analyses'))
+    #columns = utils.make_columns(COLUMNS.get('analyses'))
+    columns = utils.make_columns([
+        'PROJECT',
+        'ID',
+        'NAME',
+        'STATUS',
+        'EDIT',
+        'OUTPUT',
+    ])
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):

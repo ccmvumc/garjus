@@ -14,9 +14,13 @@ ACTIVITY_RENAME = {
 ANALYSES_RENAME = {
     'redcap_repeat_instance': 'ID',
     'analysis_name': 'NAME',
-    'analysis_subjects': 'SUBJECTS',
+    'analysis_include': 'SUBJECTS',
     'analysis_processor': 'PROCESSOR',
     'analysis_output': 'OUTPUT',
+    'analyses_complete': 'COMPLETE',
+    'analysis_status': 'STATUS',
+    'analysis_covars': 'COVARS',
+    'analysis_notes': 'NOTES',
 }
 
 ISSUES_RENAME = {
@@ -79,7 +83,7 @@ COLUMNS = {
         'ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
         'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
         'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 'FAILCOUNT'],
-    'analyses': ['PROJECT', 'ID', 'NAME', 'EDIT', 'OUTPUT'],
+    'analyses': ['PROJECT', 'ID', 'NAME', 'STATUS', 'COMPLETE', 'EDIT', 'OUTPUT', 'NOTES', 'SUBJECTS', 'PROCESSOR'],
     'processors': ['ID', 'PROJECT', 'TYPE', 'EDIT', 'FILE', 'FILTER', 'ARGS'],
     'sgp': ['PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE'],
 }

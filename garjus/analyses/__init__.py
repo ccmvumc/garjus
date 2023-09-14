@@ -35,30 +35,31 @@ def update(garjus, projects=None):
     """Update analyses."""
     for p in (projects or garjus.projects()):
         if p in projects:
-            logging.info(f'updating analyses:{p}')
+            logger.debug(f'updating analyses:{p}')
             _update_project(garjus, p)
 
 
 def _update_project(garjus, project):
-    analyses = garjus.analyses(project, download=True)
+    analyses = garjus.analyses([project], download=True)
 
     if len(analyses) == 0:
-        logging.info(f'no analyses for project:{project}')
+        logger.info(f'no analyses for project:{project}')
         return
 
     # Handle each record
-    for i, row in analyses.iterrows():
-        aname = row['NAME']
+    for i, a in analyses.iterrows():
+        aname = a['NAME']
 
-        if row['STATUS'] == 'COMPLETE':
+        if a['COMPLETE'] != '2':
+            logger.debug(f'skipping complete not set:{aname}')
             continue
 
-        logging.info(f'updating analysis:{aname}')
+        if a['STATUS'] == 'COMPLETE':
+            logger.debug(f'skipping complete{aname}')
+            continue
 
-        update_analysis(
-            garjus,
-            project,
-            row['ID'])
+        logger.info(f'updating analysis:{aname}')
+        _update(garjus, a)
 
 
 def update_analysis(
@@ -67,78 +68,144 @@ def update_analysis(
     analysis_id
 ):
     """Update analysis."""
-    print('TBD:update_analysis')
-
-    # should we run it?
 
     # Run it
-
-    # Upload
-    #upload_analysis(garjus, project, analysis_id, upload_dir)
-
-    # Set Analysis color to COMPLETE/Green
+    _update(garjus, analysis)
 
 
-def run_analysis(garjus, project, analysis_id, output_zip=None):
+def _has_outputs(garjus, analysis):
+    project = analysis['PROJECT']
+    analysis_id = analysis['ID']
+    resource = f'{project}_{analysis_id}'
+    res_uri = f'/projects/{project}/resources/{resource}'
+    output_zip = f'{project}_{analysis_id}_OUTPUTS.zip'
 
+    res = garjus.xnat().select(res_uri)
+
+    file_list = res.files()
+    if output_zip in file_list:
+        logger.info(f'found:{output_zip}')
+        return True
+    else:
+        return False
+
+
+def _has_inputs(garjus, analysis):
+    project = analysis['PROJECT']
+    analysis_id = analysis['ID']
+    resource = f'{project}_{analysis_id}'
+    res_uri = f'/projects/{project}/resources/{resource}'
+    inputs_zip = f'{project}_{analysis_id}_INPUTS.zip'
+
+    res = garjus.xnat().select(res_uri)
+
+    file_list = res.files()
+    if inputs_zip in file_list:
+        logger.info(f'found:{inputs_zip}')
+        return True
+    else:
+        return False
+
+
+def _update(garjus, analysis):
     with tempfile.TemporaryDirectory() as tempdir:
-        download_dir = f'{tempdir}/INPUTS'
-        upload_dir = f'{tempdir}/OUTPUTS'
-  
-        if output_zip is None:
-            # add description from redcap???
-            output_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
+        inputs_dir = f'{tempdir}/INPUTS'
+        outputs_dir = f'{tempdir}/OUTPUTS'
 
-        _make_dirs(upload_dir)
+        if _has_outputs(garjus, analysis):
+            logger.debug(f'outputs exist')
+        elif _has_inputs(garjus, analysis):
+            logger.debug(f'inputs exist')
+        else:
+            _make_dirs(inputs_dir)
+            _make_dirs(outputs_dir)
 
-        # Download inputs
-        logger.info(f'downloading inputs to {download_dir}')
-        download_analysis_inputs(garjus, project, analysis_id, download_dir)
+            # Create new inputs
+            logger.info(f'downloading analysis inputs to {inputs_dir}')
+            _download_inputs(garjus, analysis, inputs_dir)
 
-        upload_inputs(garjus, project, analysis_id, tempdir)
+            logger.info(f'uploading analysis inputs zip')
+            try:
+                upload_inputs(
+                    garjus,
+                    analysis['PROJECT'], 
+                    analysis['ID'],
+                    tempdir)
+            except Exception as err:
+                logger.error(f'upload failed')
+                return
 
-        # Run steps
-        logger.info('running analysis steps...')
+            logger.info(f'running analysis')
+            _run(garjus, analysis, tempdir)
 
-        analysis = garjus.load_analysis(project, analysis_id)
+            # Set STATUS
+            logger.info(f'set analysis status')
+            garjus.set_analysis_status(
+                analysis['PROJECT'],
+                analysis['ID'],
+                'COMPLETE')
 
-        # Run commmand and upload output
-        command = analysis['processor'].get('command', None)
-        if command:
-            container = analysis['processor']['command']['container']
-            for c in analysis['processor']['containers']:
-                if c['name'] == container:
-                    container = c['source']
-
-                if 'path' in c:
-                    print(c['path'], 'not yet')
-                    continue
-
-            if container.startswith('docker://'):
-                container = container.split('docker://')[1]
-
-            cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
-
-            logger.info(cmd)
-            os.system(cmd)
-
-            # Zip output
-            logger.info(f'zipping output {upload_dir} to {output_zip}')
-            sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
-
-            # Upload it
-            logger.info(f'uploading output {output_zip}')
-            upload_analysis(garjus, project, analysis_id, output_zip)
-
-        # That is all
-        logger.info(f'analysis done!')
+    # That is all
+    logger.info(f'analysis done!')
 
 
-def upload_analysis(garjus, project, analysis_id, output_zip):
+def _run(garjus, analysis, tempdir):
+    processor = analysis['PROCESSOR']
+
+    # Run commmand and upload output
+    command = processor.get('command', None)
+    if command is None:
+        logger.debug('no command found')
+        return
+
+    # Run steps
+    logger.info('running analysis steps...')
+
+    # Get the container name or path
+    container = processor['command']['container']
+    for c in processor['containers']:
+        if c['name'] == container:
+            container = c['source']
+
+        if 'path' in c:
+            print(c['path'], 'not yet')
+            continue
+
+    # Remove docker prefix if found
+    if container.startswith('docker://'):
+        container = container.split('docker://')[1]
+
+    # Build the command
+    cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+
+    # Run it
+    logger.info(cmd)
+    os.system(cmd)
+
+    # Upload it
+    logger.info(f'uploading output')
+    upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+
+
+def run_analysis(garjus, project, analysis_id):
+    analysis = garjus.load_analysis(project, analysis_id)
+
+    _run(garjus, analysis)
+
+    # That is all
+    logger.info(f'analysis done!')
+
+
+def upload_outputs(garjus, project, analysis_id, tempdir):
     # Upload output_zip Project Resource on XNAT named with
     # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
     resource = f'{project}_{analysis_id}'
     res_uri = f'/projects/{project}/resources/{resource}'
+    output_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
+
+    # Zip output
+    logger.info(f'zipping output to {output_zip}')
+    sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
 
     logger.debug(f'connecting to xnat resource:{res_uri}')
     res = garjus.xnat().select(res_uri)
@@ -159,6 +226,8 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
 
     logger.info(f'zipping inputs {tempdir} to {inputs_zip}')
     sb.run(['zip', '-r', inputs_zip, 'INPUTS'], cwd=tempdir)
+
+    assert(os.path.isfile(inputs_zip))
 
     logger.debug(f'connecting to xnat resource:{res_uri}')
     res = garjus.xnat().select(res_uri)
@@ -459,19 +528,21 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                         raise err
 
 
-def download_analysis_inputs(garjus, project, analysis_id, download_dir, analysis=None):
-    errors = []
+def download_analysis_inputs(garjus, project, analysis_id, download_dir):
 
     logger.debug(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
 
-    # Make the output directory
-    _make_dirs(download_dir)
+    analysis = garjus.load_analysis(project, analysis_id)
 
-    if analysis is None:
-        # Determine what we need to download
-        analysis = garjus.load_analysis(project, analysis_id)
+    _download_inputs(garjus, analysis, download_dir)
 
-    logging.info('loading project data')
+
+def _download_inputs(garjus, analysis, download_dir):
+    errors = []
+
+    project = analysis['PROJECT']
+
+    logger.info('loading project data')
     assessors = garjus.assessors(projects=[project])
     scans = garjus.scans(projects=[project])
     sgp = garjus.subject_assessors(projects=[project])
@@ -483,12 +554,12 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir, analysi
     sessions = sessions.drop_duplicates()
 
     # Which subjects to include?
-    subjects = analysis['analysis_include'].splitlines()
+    subjects = analysis['SUBJECTS'].splitlines()
 
     logger.debug(f'subjects={subjects}')
 
     # What to download for each subject?
-    subj_spec = analysis['processor']['inputs']['xnat']['subjects']
+    subj_spec = analysis['PROCESSOR']['inputs']['xnat']['subjects']
 
     logger.debug(f'subject spec={subj_spec}')
 

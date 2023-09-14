@@ -729,10 +729,73 @@ class Garjus:
             for k, v in self.analyses_rename.items():
                 d[v] = r.get(k, '')
 
+            # Download the yaml file and load it too
+            if download and d['PROCESSOR']:
+                logger.debug(f'loading:{d["PROCESSOR"]}')
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    yaml_file = utils_redcap.download_named_file(
+                        self._rc,
+                        d['PROJECT'],
+                        'analysis_processor',
+                        temp_dir,
+                        repeat_id=d['ID'],
+                    )
+
+                    # Load yaml contents
+                    try:
+                        with open(yaml_file, "r") as f:
+                            d['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
+                    except yaml.error.YAMLError as err:
+                        logger.error(f'failed to load yaml:{yaml_file}:{err}')
+
             # Finally, add to our list
             data.append(d)
 
         return pd.DataFrame(data, columns=self.column_names('analyses'))
+
+    def load_analysis(self, project, analysis_id, download=True):
+        """Return analysis protocol record."""
+        if not self.redcap_enabled():
+            logger.info('cannot load analysis, redcap not enabled')
+            return None
+
+        data = {
+            'PROJECT': project,
+            'ID': analysis_id,
+        }
+
+        rec = self._rc.export_records(
+            fields=[self._dfield()],
+            forms=['analyses'],
+            records=[project],
+        )
+
+        rec = [x for x in rec if str(x['redcap_repeat_instance']) == analysis_id]
+
+        # Get renamed variables
+        for k, v in self.analyses_rename.items():
+            data[v] = rec[0].get(k, '')
+
+        # Download the yaml file and load it too
+        if data['PROCESSOR']:
+            logger.debug(f'loading:{data["PROCESSOR"]}')
+            with tempfile.TemporaryDirectory() as temp_dir:
+                yaml_file = utils_redcap.download_named_file(
+                    self._rc,
+                    project,
+                    'analysis_processor',
+                    temp_dir,
+                    repeat_id=analysis_id)
+
+                # Load yaml contents
+                try:
+                    with open(yaml_file, "r") as f:
+                        data['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
+                except yaml.error.YAMLError as err:
+                    logger.error(f'failed to load yaml file{yaml_file}:{err}')
+                    return None
+
+        return data
 
     def acols(self):
         return [
@@ -1596,6 +1659,21 @@ class Garjus:
             import time
             time.sleep(60)
 
+    def set_analysis_status(self, project, analysis_id, status):
+        logger.info(f'setting analysis status:{project}:{analysis_id}:{status}')
+        try:
+            record = {
+                self._dfield(): project,
+                'redcap_repeat_instrument': 'analyses',
+                'redcap_repeat_instance': analysis_id,
+                'analysis_status': status,
+            }
+            response = self._rc.import_records([record])
+            assert 'count' in response
+            logger.debug('analysis record updated')
+        except AssertionError as err:
+            logger.error(f'failed to set analysis status:{err}')
+
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
 
@@ -1713,42 +1791,6 @@ class Garjus:
 
         return rec
 
-    def load_analysis(self, project, analysis_id, download=True):
-        """Return analysis protocol record."""
-        if not self.redcap_enabled():
-            logger.info('cannot load analysis, redcap not enabled')
-            return None
-
-        rec = self._rc.export_records(
-            fields=[self._dfield()],
-            forms=['analyses'],
-            records=[project],
-        )
-
-        rec = [x for x in rec if str(x['redcap_repeat_instance']) == analysis_id]
-
-        rec = rec[0]
-
-        # Download the yaml file and load it too
-        if rec['analysis_processor']:
-            logger.debug(f'loading:{rec["analysis_processor"]}')
-            with tempfile.TemporaryDirectory() as temp_dir:
-                yaml_file = utils_redcap.download_named_file(
-                    self._rc,
-                    project,
-                    'analysis_processor',
-                    temp_dir,
-                    repeat_id=analysis_id)
-
-                # Load yaml contents
-                try:
-                    with open(yaml_file, "r") as f:
-                        rec['processor'] = yaml.load(f, Loader=yaml.FullLoader)
-                except yaml.error.YAMLError as err:
-                    logger.error(f'failed to load yaml file{yaml_file}:{err}')
-                    return None
-
-        return rec
 
     def add_issues(self, issues):
         """Add list of issues."""
