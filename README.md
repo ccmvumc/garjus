@@ -186,6 +186,10 @@ Then load the new virtual environment with:
 ```
 source venv-garjus/bin/activate
 ```
+Always good to upgrade pip:
+```
+pip install pip -U
+```
 And then install garjus in the venv with:
 ```
 pip install garjus
