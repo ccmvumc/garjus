@@ -108,6 +108,8 @@ def _has_inputs(garjus, analysis):
         logger.info(f'found:{inputs_zip}')
         return True
     else:
+        logger.info(f'inputs not found:{res_uri}:{inputs_zip}')
+
         return False
 
 
@@ -225,18 +227,18 @@ def upload_outputs(garjus, project, analysis_id, tempdir):
     # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
     resource = f'{project}_{analysis_id}'
     res_uri = f'/projects/{project}/resources/{resource}'
-    output_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
+    outputs_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
 
     # Zip output
-    logger.info(f'zipping output to {output_zip}')
-    sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+    logger.info(f'zipping output to {outputs_zip}')
+    sb.run(['zip', '-r', outputs_zip, 'OUTPUTS'], cwd=tempdir)
 
     logger.debug(f'connecting to xnat resource:{res_uri}')
     res = garjus.xnat().select(res_uri)
 
-    logger.debug(f'uploading file to xnat resource:{output_zip}')
-    res.file(os.path.basename(output_zip)).put(
-        output_zip,
+    logger.debug(f'uploading file to xnat resource:{outputs_zip}')
+    res.file(os.path.basename(outputs_zip)).put(
+        outputs_zip,
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
