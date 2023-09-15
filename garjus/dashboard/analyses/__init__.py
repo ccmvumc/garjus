@@ -20,7 +20,6 @@ def get_content():
         'PROJECT',
         'ID',
         'NAME',
-        'STATUS',
         'COMPLETE',
         'EDIT',
         'INPUT',
@@ -137,11 +136,10 @@ def update_analyses(
             r['OUTPUT'] = f'[{_text}]({_link})'
         elif 'xnat' in r['OUTPUT']:
             _link = r['OUTPUT']
-            _text = 'XNAT'
+            _text = r['OUTPUT'].rsplit('/', 1)[1]
             r['OUTPUT'] = f'[{_text}]({_link})'
         else:
             r['OUTPUT'] = r['OUTPUT']
-
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
