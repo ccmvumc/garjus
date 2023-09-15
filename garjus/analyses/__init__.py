@@ -210,7 +210,8 @@ def _run(garjus, analysis, tempdir):
 
     # Upload it
     logger.info(f'uploading output')
-    upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+    dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+    garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
 def run_analysis(garjus, project, analysis_id):
@@ -242,9 +243,7 @@ def upload_outputs(garjus, project, analysis_id, tempdir):
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
-    uri = f'{garjus.xnat_host()}data/{res_uri}/files/{os.path.basename(outputs_zip)}'
-
-    print(uri)
+    uri = f'{garjus.xnat_host()}/data{res_uri}/files/{os.path.basename(outputs_zip)}'
 
     return uri
 
@@ -270,9 +269,7 @@ def upload_inputs(garjus, project, analysis_id, tempdir):
         overwrite=True,
         params={"event_reason": "analysis upload"})
 
-    uri = f'{garjus.xnat_host()}data/{res_uri}/files/{os.path.basename(inputs_zip)}'
-
-    print(uri)
+    uri = f'{garjus.xnat_host()}/data{res_uri}/files/{os.path.basename(inputs_zip)}'
 
     return uri
 
