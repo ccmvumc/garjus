@@ -578,8 +578,25 @@ def get_my_projects(xnat):
     logger.debug(uri)
     json_data = json.loads(xnat._exec(uri, 'GET'), strict=False)
     result = json_data['ResultSet']['Result']
-    _roles = ['Owners', 'Members', 'Collaborators']
-    return [x['id'] for x in result if x['user_role_6'] in _roles]
+    roles = ['Owners', 'Members', 'Collaborators']
+
+    if len(result) == 0:
+        return []
+
+    user_role_column = None
+    # Search for user role column
+    for k in result[0].keys():
+        if k.startswith('user_role_'):
+            user_role_column = k
+            break
+
+    if user_role_column is None:
+        logger.info(f'could not determine user role column')
+        return []
+
+    logger.debug(f'user role column:{user_role_column}')
+
+    return [x['id'] for x in result if x[user_role_column] in roles]
 
 
 def get_my_favorites(xnat):
