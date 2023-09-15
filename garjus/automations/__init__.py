@@ -92,6 +92,10 @@ def _run_edat_automations(automations, garjus, project):
     convertdir = garjus.project_setting(project, 'convertdir')
     event2sess = {}
 
+    if primary_redcap is None:
+        logger.error(f'primary redcap not found, check keys')
+        return
+
     for p in scanp:
         s = p['scanning_xnatsuffix']
         _events = [x.strip() for x in p['scanning_events'].split(',')]
