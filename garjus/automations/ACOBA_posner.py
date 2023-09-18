@@ -1,6 +1,6 @@
 import io
 import logging
-import os
+import os, sys
 import tempfile
 
 import numpy as np
@@ -21,7 +21,8 @@ FORM_UNVERIFIED = 1
 FORM_COMPLETE = 2
 
 API_URL = 'https://redcap.vanderbilt.edu/api/'
-API_KEY = ''
+API_KEY = sys.argv[1]
+
 
 REDCAP_EVENTS = [
     'screening_arm_1',
@@ -131,10 +132,14 @@ def extract_posner(proj, record_id, event_id, file_field, tmpdir):
 
     df = parse_posner_edat(tab_file)
 
+    # Get subset of only accurate trials
+    df1 = df[(df.acc == 1)]
+
     for condition in [VALID, INVALID, NOCUE, NEUTRAL]:
         data[condition + '_ACC'] = df[(df['trial_type'] == condition)].acc.mean()
         if data[condition + '_ACC'] > 0:
-            data[condition + '_RT_median'] = df[(df['trial_type'] == condition)].rt.median()
+            # Get median from accurate trials
+            data[condition + '_RT_median'] = df1[(df1['trial_type'] == condition)].rt.median()
         else:
             data[condition + '_RT_median'] = np.nan
 
@@ -150,20 +155,20 @@ def load_posner(proj, record_id, event_id, file_field, tmpdir):
         return
 
     # Import the data
-    _data = {}
-    _data[proj.def_field] = record_id
-    _data['redcap_event_name'] = event_id
-    _data['posner_complete'] = FORM_COMPLETE    
+    data = {}
+    data[proj.def_field] = record_id
+    data['redcap_event_name'] = event_id
+    data['posner_complete'] = FORM_COMPLETE    
     for condition in [VALID, INVALID, NOCUE, NEUTRAL]:
-        _data['posner_' + condition.lower() + '_rt_median'] = posner_data[condition + '_RT_median']
-        _data['posner_' + condition.lower() + '_acc'] = posner_data[condition + '_ACC']
+        data['posner_' + condition.lower() + '_rt_median'] = posner_data[condition + '_RT_median']
+        data['posner_' + condition.lower() + '_acc'] = posner_data[condition + '_ACC']
 
     # Append additional RT measures
-    _data['posner_alerting_rt'] = _data['posner_neutral_rt_median'] - _data['posner_nocue_rt_median']
-    _data['posner_reorienting_rt'] = _data['posner_valid_rt_median'] - _data['posner_invalid_rt_median']
+    data['posner_alerting_rt'] = data['posner_neutral_rt_median'] - data['posner_nocue_rt_median']
+    data['posner_reorienting_rt'] = data['posner_valid_rt_median'] - data['posner_invalid_rt_median']
 
     try:
-        response = proj.import_records([_data])
+        response = proj.import_records([data])
         assert 'count' in response
         logger.info(f'uploaded:{record_id}:{event_id}')
     except AssertionError as err:
