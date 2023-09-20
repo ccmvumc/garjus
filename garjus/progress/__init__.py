@@ -53,7 +53,13 @@ def make_progress(garjus, project, cur_progress, now):
 
 
 def make_stats_csv(
-    garjus, projects, proctypes, sesstypes, csvname, persubject=False, analysis=None
+    garjus,
+    projects,
+    proctypes,
+    sesstypes,
+    csvname,
+    persubject=False,
+    analysis=None
 ):
     """"Make the file."""
     df = pd.DataFrame()
@@ -80,7 +86,7 @@ def make_stats_csv(
         # Get the subject list from the analysis
         project, analysis_id = analysis.rsplit('_', 1)
         a = garjus.load_analysis(project, analysis_id)
-        subjects = a['analysis_include'].splitlines()
+        subjects = a['SUBJECTS'].splitlines()
         logger.debug(f'applying subject filter to include:{subjects}')
         df = df[df.SUBJECT.isin(subjects)]
 
