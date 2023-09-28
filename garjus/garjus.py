@@ -531,6 +531,10 @@ class Garjus:
         """Import dicom source to destination."""
         logger.debug(f'uploading from:{src}')
 
+        if dst.count('/') == 3:
+            (proj, subj, sess, scan) = dst.split('/')
+            return _upload_scan()
+
         (proj, subj, sess) = dst.split('/')
         logger.debug(f'uploading to:{proj},{subj},{sess}')
 
@@ -2245,6 +2249,29 @@ class Garjus:
             logger.info(f'uploading scan:{scan}')
             self._upload_scan(p, scan_object)
             logger.info(f'finished uploading scan:{scan}')
+
+    def upload_scan(self, scan_dir, project, subject, session, scan):
+
+        # Check that subject exists
+        subject_object = self._xnat.select_subject(project, subject)
+        if not subject_object.exists():
+            logger.info(f'subject does not exist:{subject}')
+            return
+
+        # Check that session exists
+        session_object = subject_object.experiment(session)
+        if not session_object.exists():
+            logger.info(f'session does not exist')
+            return
+
+        scan_object = session_object.scan(scan)
+        if scan_object.exists():
+            logger.info(f'scan exists, skipping:{scan}')
+            return
+
+        logger.info(f'uploading scan:{scan}')
+        self._upload_scan(scan_dir, scan_object)
+        logger.info(f'finished uploading scan:{scan}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):
 
