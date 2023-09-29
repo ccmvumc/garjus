@@ -533,7 +533,8 @@ class Garjus:
 
         if dst.count('/') == 3:
             (proj, subj, sess, scan) = dst.split('/')
-            return _upload_scan()
+            logger.debug(f'uploading to:{proj},{subj},{sess},{scan}')
+            return self.upload_scan(src, proj, subj, sess, scan)
 
         (proj, subj, sess) = dst.split('/')
         logger.debug(f'uploading to:{proj},{subj},{sess}')
