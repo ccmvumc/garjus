@@ -2311,8 +2311,8 @@ class Garjus:
     def image03download(self, project, image03_csv, download_dir):
         download_image03(self, project, image03_csv, download_dir)
 
-    def get_analysis_inputs(self, project, analysis_id, download_dir):
-        download_analysis_inputs(self, project, analysis_id, download_dir)
+    def get_analysis_inputs(self, project, analysis_id, download_dir, processor):
+        download_analysis_inputs(self, project, analysis_id, download_dir, processor)
 
     def run_analysis(self, project, analysis_id, output_zip):
         run_analysis(self, project, analysis_id, output_zip)

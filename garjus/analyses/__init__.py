@@ -3,8 +3,13 @@ import logging
 import os, shutil
 import tempfile
 import subprocess as sb
+import yaml
+import zipfile
 
 import pandas as pd
+
+
+# TODO: check downloaded files, compare/size/md5 to xnat
 
 
 logger = logging.getLogger('garjus.analyses')
@@ -280,6 +285,7 @@ def _sessions_from_scans(scans):
         'SUBJECT',
         'SESSION',
         'SESSTYPE',
+        'MODALITY',
         'DATE',
         'SITE'
     ]].drop_duplicates()
@@ -317,15 +323,16 @@ def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdi
     respath = 'data/projects/{}/subjects/{}/experiments/{}/resources/{}/files'
     respath = respath.format(project, subject, assessor, resource)
 
+    logger.debug(f'download zip:{respath}:{reszip}')
+
     # Download the resource as a zip file
-    download_zip(respath, reszip)
+    _download_zip(xnat, respath, reszip)
 
     # Unzip the file to output dir
-    logger.debug(f'unzip file {rezip} to {outdir}')
+    logger.debug(f'unzip file {reszip} to {outdir}')
     with zipfile.ZipFile(reszip) as z:
         z.extractall(outdir)
 
-    # TODO: check downloaded files, compare/size/md5 to xnat
 
     # Delete the zip
     os.remove(reszip)
@@ -342,25 +349,15 @@ def _download_sgp_file(garjus, proj, subj, assr, res, fmatch, dst):
 
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     # Make the folders for destination path
+    logger.debug(f'makedirs:{dst}')
     _make_dirs(dst)
 
     # Connect to the resource on xnat
+    logger.debug(f'connecting to resource:{proj}:{subj}:{sess}:{assr}:{res}')
     r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
 
     # Download resource and extract
-    r.get(dst, extract=True)
-
-    return dst
-
-
-def _download_sgp_resource(garjus, proj, subj, assr, res, dst):
-    # Make the folders for destination path
-    _make_dirs(dst)
-
-    # Connect to the resource on xnat
-    r = garjus.xnat().select_sgp_assessor(proj, subj, assr).resource(res)
-
-    # Download extracted
+    logger.debug(f'downloading to:{dst}')
     r.get(dst, extract=True)
 
     return dst
@@ -430,26 +427,24 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                             raise err
                 else:
                     # Download whole resource
-
-                    # Where shall we save it?
-                    dst = f'{subj_dir}/{assr}'
+                    dst = subj_dir
 
                     # Have we already downloaded it?
-                    if os.path.exists(os.path.join(dst, res)):
-                        logger.debug(f'exists:{dst}')
+                    if os.path.exists(os.path.join(dst, assr, res)):
+                        logger.debug(f'exists:{dst}/{assr}/{res}')
                         continue
 
                     # Download it
                     logger.info(f'download resource:{proj}:{subj}:{assr}:{res}')
                     try:
-                        _download_sgp_resource(
-                            garjus,
+                        _download_sgp_resource_zip(
+                            garjus.xnat(),
                             proj,
                             subj,
                             assr,
                             res,
-                            dst
-                        )
+                            dst)
+
                     except Exception as err:
                         logger.error(f'{subj}:{assr}:{res}:{err}')
                         raise err
@@ -465,20 +460,35 @@ def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assesso
 
     # Download the subjects sessions
     for sess_spec in subj_spec.get('sessions', []):
-        sess_types = sess_spec['types'].split(',')
 
-        for i, s in sessions[sessions.SUBJECT == subj].iterrows():
-            sess = s.SESSION
+        if sess_spec.get('select', '') == 'first-mri':
+            subj_mris = sessions[(sessions.SUBJECT == subj) & (sessions.MODALITY == 'MR')]
+            if len(subj_mris) < 1:
+                logger.debug('mri not found')
+                return
 
-            # Apply session type filter
-            if s.SESSTYPE not in sess_types:
-                logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
-                continue
+            sess = subj_mris.SESSION.iloc[0]
 
             sess_dir = f'{subj_dir}/{sess}'
             logger.debug(f'download_session={sess_dir}')
             _download_session(
                 garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
+
+        else:
+            sess_types = sess_spec['types'].split(',')
+
+            for i, s in sessions[sessions.SUBJECT == subj].iterrows():
+                sess = s.SESSION
+
+                # Apply session type filter
+                if s.SESSTYPE not in sess_types:
+                    logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
+                    continue
+
+                sess_dir = f'{subj_dir}/{sess}'
+                logger.debug(f'download_session={sess_dir}')
+                _download_session(
+                    garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
 
 
 def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
@@ -563,11 +573,24 @@ def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
                         raise err
 
 
-def download_analysis_inputs(garjus, project, analysis_id, download_dir):
+def download_analysis_inputs(garjus, project, analysis_id, download_dir, processor=None):
 
     logger.debug(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
 
     analysis = garjus.load_analysis(project, analysis_id)
+
+    if processor:
+        # override processor with specified file
+        try:
+            with open(processor, "r") as f:
+                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
+        except yaml.error.YAMLError as err:
+            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            return None
+
+    if not analysis['PROCESSOR']:
+        logger.error('no processor specified, cannot download')
+        return
 
     _download_inputs(garjus, analysis, download_dir)
 
