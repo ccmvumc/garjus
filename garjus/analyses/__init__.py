@@ -167,6 +167,7 @@ def _update(garjus, analysis):
 
 
 def _run(garjus, analysis, tempdir):
+
     processor = analysis['PROCESSOR']
 
     # Run commmand and upload output
@@ -219,8 +220,21 @@ def _run(garjus, analysis, tempdir):
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
-def run_analysis(garjus, project, analysis_id):
-    analysis = garjus.load_analysis(project, analysis_id)
+def run_analysis(garjus, project, analysis_id, processor):
+    analysis = garjus.load_analysis(project, analysis_id, processor)
+
+    if processor:
+        # override processor with specified file
+        try:
+            with open(processor, "r") as f:
+                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
+        except yaml.error.YAMLError as err:
+            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            return None
+
+    if not analysis['PROCESSOR']:
+        logger.error('no processor specified, cannot run')
+        return
 
     _run(garjus, analysis)
 

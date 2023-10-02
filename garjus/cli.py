@@ -99,10 +99,11 @@ def getinputs(project, analysis_id, download_dir, processor):
 @click.argument('analysis_id', required=True)
 @click.argument('output_zip', required=False)
 @click.option('--project', '-p', 'project', required=True)
-def run(project, analysis_id, output_zip):
+@click.option('--processor', '-y', 'processor', required=False)
+def run(project, analysis_id, output_zip, processor):
     click.echo('garjus! run')
     g = Garjus()
-    g.run_analysis(project, analysis_id, output_zip)
+    g.run_analysis(project, analysis_id, output_zip, processor)
 
 
 @cli.command('tasks')
