@@ -2315,7 +2315,6 @@ class Garjus:
         download_analysis_inputs(self, project, analysis_id, download_dir, processor)
 
     def run_analysis(self, project, analysis_id, output_zip, processor):
-        run_analysis(self, project, analysis_id, output_zip, processor)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

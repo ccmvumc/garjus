@@ -220,8 +220,8 @@ def _run(garjus, analysis, tempdir):
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
-def run_analysis(garjus, project, analysis_id, processor):
-    analysis = garjus.load_analysis(project, analysis_id, processor)
+def run_analysis(garjus, project, analysis_id, output_zip, processor):
+    analysis = garjus.load_analysis(project, analysis_id)
 
     if processor:
         # override processor with specified file
