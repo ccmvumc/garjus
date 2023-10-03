@@ -205,7 +205,7 @@ def _run(garjus, analysis, tempdir):
 
     # Build the command string
     if command_mode == 'singularity':
-        if c['type'] == 'singularity_exec':
+        if processor['command'].get('type', '') == 'singularity_exec':
             cmd = 'singularity exec -c -e'
         else:
             cmd = 'singularity run -c -e'
