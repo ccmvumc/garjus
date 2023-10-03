@@ -199,9 +199,9 @@ def _run(garjus, analysis, tempdir):
 
     logger.debug(f'command mode is {command_mode}')
 
-    extraopts = analysis.get('extraopts', '')
+    extraopts = processor['command'].get('extraopts', '')
 
-    args = analysis.get('args', '')
+    args = processor['command'].get('args', '')
 
     if command_mode == 'singularity':
         # Build the command string
