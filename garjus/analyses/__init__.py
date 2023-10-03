@@ -220,7 +220,7 @@ def _run(garjus, analysis, tempdir):
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
-def run_analysis(garjus, project, analysis_id, output_zip, processor):
+def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
     analysis = garjus.load_analysis(project, analysis_id)
 
     if processor:
@@ -236,7 +236,27 @@ def run_analysis(garjus, project, analysis_id, output_zip, processor):
         logger.error('no processor specified, cannot run')
         return
 
-    _run(garjus, analysis)
+    with tempfile.TemporaryDirectory() as tempdir:
+
+        inputs_dir = f'{tempdir}/INPUTS'
+        outputs_dir = f'{tempdir}/OUTPUTS'
+
+        logger.info(f'creating INPUTS and OUTPUTS in:{tempdir}')
+        _make_dirs(inputs_dir)
+        _make_dirs(outputs_dir)
+
+        # Download inputs
+        logger.info(f'downloading analysis inputs to {inputs_dir}')
+        _download_inputs(garjus, analysis, inputs_dir)
+
+        # Run it
+        logger.info(f'running analysis:{analysis}')
+        _run(garjus, analysis, tempdir)
+
+        if output_zip:
+            # Zip output
+            logger.info(f'zipping output to {outputs_zip}')
+            sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
 
     # That is all
     logger.info(f'analysis done!')
