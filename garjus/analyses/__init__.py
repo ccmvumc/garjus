@@ -203,15 +203,22 @@ def _run(garjus, analysis, tempdir):
 
     args = processor['command'].get('args', '')
 
+    # Build the command string
     if command_mode == 'singularity':
-        # Build the command string
-        cmd = f'singularity run -c -e -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS {extraopts} {container} {args}'
+        if c['type'] == 'singularity_exec':
+            cmd = 'singularity exec -c -e'
+        else:
+            cmd = 'singularity run -c -e'
+
+        cmd += f' -c -e '
+        cmd += f' -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' {extraopts} {container} {args}'
+
     elif command_mode == 'docker':
         if container.startswith('docker://'):
             # Remove docker prefix
             container = container.split('docker://')[1]
 
-        # Build the command string
         cmd = f'docker run --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
 
     # Run it
