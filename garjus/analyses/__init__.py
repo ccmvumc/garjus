@@ -179,16 +179,7 @@ def _run(garjus, analysis, tempdir):
     # Run steps
     logger.info('running analysis steps...')
 
-    # Get the container name or path
-    container = processor['command']['container']
-    for c in processor['containers']:
-        if c['name'] == container:
-            container = c['source']
-
-        if 'path' in c:
-            print(c['path'], 'not yet')
-            continue
-
+    # Determine what container service we are using
     if shutil.which('singularity'):
         command_mode = 'singularity'
     elif shutil.which('docker'):
@@ -197,18 +188,35 @@ def _run(garjus, analysis, tempdir):
         logger.error('command mode not found, cannot run container command')
         return
 
+    # Get the container name or path
+    container = processor['command']['container']
+    for c in processor['containers']:
+        if c['name'] == container:
+            container = c['source']
+
+        if 'path' in c and command_mode == 'singularity':
+            container = c['path']
+
     logger.debug(f'command mode is {command_mode}')
+
+    extraopts = analysis.get('extraopts', '')
+
+    args = analysis.get('args', '')
 
     if command_mode == 'singularity':
         # Build the command string
-        cmd = f'singularity run -c -e -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS {container}'
+        cmd = f'singularity run -c -e -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS {extraopts} {container} {args}'
     elif command_mode == 'docker':
         if container.startswith('docker://'):
             # Remove docker prefix
             container = container.split('docker://')[1]
 
         # Build the command string
-        cmd = f'docker run -it --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+        cmd = f'docker run --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+
+    # Append arguments
+    if 
+
 
     # Run it
     logger.info(cmd)
@@ -255,7 +263,7 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
 
         if output_zip:
             # Zip output
-            logger.info(f'zipping output to {outputs_zip}')
+            logger.info(f'zipping output to {output_zip}')
             sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
 
     # That is all
