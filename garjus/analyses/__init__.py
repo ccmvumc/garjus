@@ -200,7 +200,10 @@ def _run(garjus, analysis, tempdir):
             cmd = 'singularity run -c -e'
 
         cmd += f' -c -e '
-        cmd += f' -B {tempdir}/INPUTS:/INPUTS -B {tempdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' -B {tempdir}/INPUTS:/INPUTS'
+        cmd += f' -B {tempdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' -B {tempdir}:/tmp'
+        cmd += f' -B {tempdir}:/dev/shm'
         cmd += f' {extraopts} {container} {args}'
 
     elif command_mode == 'docker':
