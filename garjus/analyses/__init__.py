@@ -71,17 +71,6 @@ def _update_project(garjus, project):
         _update(garjus, a)
 
 
-def update_analysis(
-    garjus,
-    project,
-    analysis_id
-):
-    """Update analysis."""
-
-    # Run it
-    _update(garjus, analysis)
-
-
 def _has_outputs(garjus, analysis):
     project = analysis['PROJECT']
     analysis_id = analysis['ID']
@@ -192,10 +181,10 @@ def _run(garjus, analysis, tempdir):
     container = processor['command']['container']
     for c in processor['containers']:
         if c['name'] == container:
-            container = c['source']
-
-        if 'path' in c and command_mode == 'singularity':
-            container = c['path']
+            if 'path' in c and command_mode == 'singularity':
+                container = c['path']
+            else:
+                container = c['source']
 
     logger.debug(f'command mode is {command_mode}')
 
