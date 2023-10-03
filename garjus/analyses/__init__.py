@@ -214,10 +214,6 @@ def _run(garjus, analysis, tempdir):
         # Build the command string
         cmd = f'docker run --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
 
-    # Append arguments
-    if 
-
-
     # Run it
     logger.info(cmd)
     os.system(cmd)
