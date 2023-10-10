@@ -192,7 +192,13 @@ def _run(garjus, analysis, tempdir):
     args = command.get('args', '')
     command_type = command.get('type', '')
 
-    _run_command(container, extraopts, args, command_mode, command_type tempdir)
+    _run_command(
+        container,
+        extraopts,
+        args,
+        command_mode,
+        command_type,
+        tempdir)
 
     # Post command
     post = processor.get('post', None)
@@ -212,7 +218,14 @@ def _run(garjus, analysis, tempdir):
         extraopts = post.get('extraopts', '')
         args = post.get('args', '')
         command_type = post.get('type', '')
-        _run_command(container, extraopts, args, command_mode, command_type tempdir)
+
+        _run_command(
+            container,
+            extraopts,
+            args,
+            command_mode,
+            command_type,
+            tempdir)
 
     # Upload it
     logger.info(f'uploading output')
