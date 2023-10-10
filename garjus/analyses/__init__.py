@@ -233,7 +233,7 @@ def _run(garjus, analysis, tempdir):
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
-def _run_command(container, extraopts, args, command_mode, command_type tempdir):
+def _run_command(container, extraopts, args, command_mode, command_type, tempdir):
     cmd = None
 
     # Build the command string
