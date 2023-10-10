@@ -156,17 +156,9 @@ def _update(garjus, analysis):
 
 
 def _run(garjus, analysis, tempdir):
+    # Run commmand and upload output
 
     processor = analysis['PROCESSOR']
-
-    # Run commmand and upload output
-    command = processor.get('command', None)
-    if command is None:
-        logger.debug('no command found')
-        return
-
-    # Run steps
-    logger.info('running analysis steps...')
 
     # Determine what container service we are using
     if shutil.which('singularity'):
@@ -177,8 +169,16 @@ def _run(garjus, analysis, tempdir):
         logger.error('command mode not found, cannot run container command')
         return
 
+    command = processor.get('command', None)
+    if command is None:
+        logger.debug('no command found')
+        return
+
+    # Run steps
+    logger.info('running analysis steps...')
+
     # Get the container name or path
-    container = processor['command']['container']
+    container = command['container']
     for c in processor['containers']:
         if c['name'] == container:
             if 'path' in c and command_mode == 'singularity':
@@ -188,16 +188,49 @@ def _run(garjus, analysis, tempdir):
 
     logger.debug(f'command mode is {command_mode}')
 
-    extraopts = processor['command'].get('extraopts', '')
+    extraopts = command.get('extraopts', '')
+    args = command.get('args', '')
+    command_type = command.get('type', '')
 
-    args = processor['command'].get('args', '')
+    _run_command(container, extraopts, args, command_mode, command_type tempdir)
+
+    # Post command
+    post = processor.get('post', None)
+    if post:
+        # Run steps
+        logger.debug('running analysis post')
+
+        # Get the container name or path
+        container = post['container']
+        for c in processor['containers']:
+            if c['name'] == container:
+                if 'path' in c and command_mode == 'singularity':
+                    container = c['path']
+                else:
+                    container = c['source']
+
+        extraopts = post.get('extraopts', '')
+        args = post.get('args', '')
+        command_type = post.get('type', '')
+        _run_command(container, extraopts, args, command_mode, command_type tempdir)
+
+    # Upload it
+    logger.info(f'uploading output')
+    dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+    garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
+
+
+def _run_command(container, extraopts, args, command_mode, command_type tempdir):
+    cmd = None
 
     # Build the command string
     if command_mode == 'singularity':
-        if processor['command'].get('type', '') == 'singularity_exec':
-            cmd = 'singularity exec -c -e'
+        cmd = 'singularity'
+
+        if command_type == 'singularity_exec':
+            cmd += ' exec'
         else:
-            cmd = 'singularity run -c -e'
+            cmd += ' run'
 
         cmd += f' -c -e '
         cmd += f' -B {tempdir}/INPUTS:/INPUTS'
@@ -211,16 +244,18 @@ def _run(garjus, analysis, tempdir):
             # Remove docker prefix
             container = container.split('docker://')[1]
 
-        cmd = f'docker run --rm -v {tempdir}/INPUTS:/INPUTS -v {tempdir}/OUTPUTS:/OUTPUTS {container}'
+        cmd = f'docker run --rm'
+        cmd += f' -v {tempdir}/INPUTS:/INPUTS'
+        cmd += f' -v {tempdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' {container}'
+
+    if not cmd:
+        logger.debug('invalid command')
+        return
 
     # Run it
     logger.info(cmd)
     os.system(cmd)
-
-    # Upload it
-    logger.info(f'uploading output')
-    dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
-    garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
 def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
