@@ -5,6 +5,7 @@ import tempfile
 import subprocess as sb
 import yaml
 import zipfile
+from datetime import datetime
 
 import pandas as pd
 
@@ -346,9 +347,10 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
 def upload_outputs(garjus, project, analysis_id, tempdir):
     # Upload output_zip Project Resource on XNAT named with
     # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     resource = f'{project}_{analysis_id}'
     res_uri = f'/projects/{project}/resources/{resource}'
-    outputs_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS.zip'
+    outputs_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS_{now}.zip'
 
     # Zip output
     logger.info(f'zipping output to {outputs_zip}')
