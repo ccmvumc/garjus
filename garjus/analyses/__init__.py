@@ -271,6 +271,36 @@ def _run_command(container, extraopts, args, command_mode, command_type, tempdir
     os.system(cmd)
 
 
+def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
+    '''Finish an analysis where inputs are already downloaded'''
+    analysis = garjus.load_analysis(project, analysis_id)
+
+    if processor:
+        # override processor with specified file
+        try:
+            with open(processor, "r") as f:
+                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
+        except yaml.error.YAMLError as err:
+            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            return None
+
+    if not analysis['PROCESSOR']:
+        logger.error('no processor specified, cannot run')
+        return
+
+    inputs_dir = f'{analysis_dir}/INPUTS'
+    outputs_dir = f'{analysis_dir}/OUTPUTS'
+
+    _make_dirs(outputs_dir)
+
+    # Run it
+    logger.info(f'running analysis:{analysis}')
+    _run(garjus, analysis, analysis_dir)
+
+    # That is all
+    logger.info(f'analysis done!')
+
+
 def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
     analysis = garjus.load_analysis(project, analysis_id)
 
@@ -698,6 +728,11 @@ def _download_inputs(garjus, analysis, download_dir):
 
     # Which subjects to include?
     subjects = analysis['SUBJECTS'].splitlines()
+
+    # TODO: include/exclude subjects, default to all
+
+    if not subjects:
+        subjects = list(sessions.SUBJECT.unique())
 
     logger.debug(f'subjects={subjects}')
 
