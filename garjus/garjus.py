@@ -35,7 +35,7 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
-from .analyses import update as update_analyses, download_analysis_inputs, run_analysis
+from .analyses import update as update_analyses, download_analysis_inputs, run_analysis, finish_analysis
 
 
 logger = logging.getLogger('garjus')
@@ -2316,6 +2316,9 @@ class Garjus:
 
     def run_analysis(self, project, analysis_id, output_zip, processor):
         run_analysis(self, project, analysis_id, output_zip, processor)
+
+    def finish_analysis(self, project, analysis_id, analysis_dir, processor):
+        finish_analysis(self, project, analysis_id, analysis_dir, processor)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

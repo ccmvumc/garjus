@@ -106,6 +106,17 @@ def run(project, analysis_id, output_zip, processor):
     g.run_analysis(project, analysis_id, output_zip, processor)
 
 
+@cli.command('finish')
+@click.argument('analysis_id', required=True)
+@click.argument('analysis_dir', required=True)
+@click.option('--project', '-p', 'project', required=True)
+@click.option('--processor', '-y', 'processor', required=False)
+def finish(project, analysis_id, analysis_dir, processor):
+    click.echo('garjus! finish')
+    g = Garjus()
+    g.finish_analysis(project, analysis_id, analysis_dir, processor)
+
+
 @cli.command('tasks')
 def tasks():
     click.echo('garjus! tasks')
