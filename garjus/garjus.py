@@ -564,13 +564,39 @@ class Garjus:
         logger.debug(f'copy to:{dst}')
         (s_proj, s_subj, s_sess) = src.split('/')
         (d_proj, d_subj, d_sess) = dst.split('/')
-        self.copy_session(s_proj, s_subj, s_sess, d_proj, d_subj, d_sess)
+        self._copy_session(s_proj, s_subj, s_sess, d_proj, d_subj, d_sess)
         self.add_activity(
             project=d_proj,
             category='copy_sess',
             description=src,
             subject=d_subj,
             session=d_sess,
+            result='COMPLETE')
+
+    def copy_scan(self, src, dst):
+        """Copy scan source to destination."""
+        logger.debug(f'copy from:{src}')
+        logger.debug(f'copy to:{dst}')
+        (s_proj, s_subj, s_sess, s_scan) = src.split('/')
+        (d_proj, d_subj, d_sess, d_scan) = dst.split('/')
+
+        self._copy_scan(
+            s_proj,
+            s_subj,
+            s_sess,
+            s_scan,
+            d_proj,
+            d_subj,
+            d_sess,
+            d_scan)
+
+        self.add_activity(
+            project=d_proj,
+            category='copy_scan',
+            description=src,
+            subject=d_subj,
+            session=d_sess,
+            scan=d_scan,
             result='COMPLETE')
 
     def set_session_type(self, src, sesstype):
@@ -1986,7 +2012,7 @@ class Garjus:
         """Get the redcap host for this garjus."""
         return self._rc.export_project_info().get('project_id')
 
-    def copy_session(
+    def _copy_session(
         self,
         src_proj,
         src_subj,
@@ -2000,7 +2026,7 @@ class Garjus:
         dst_obj = self._xnat.select_session(dst_proj, dst_subj, dst_sess)
         utils_xnat.copy_session(src_obj, dst_obj)
 
-    def copy_scan(
+    def _copy_scan(
         self,
         src_proj,
         src_subj,

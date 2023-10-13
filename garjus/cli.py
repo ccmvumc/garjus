@@ -32,6 +32,14 @@ def copy_session(src, dst):
     Garjus().copy_sess(src, dst)
 
 
+@cli.command('copyscan')
+@click.argument('src', required=True)
+@click.argument('dst', required=True)
+def copy_scan(src, dst):
+    click.echo('garjus! copy scan')
+    Garjus().copy_scan(src, dst)
+
+
 @cli.command('setsesstype')
 @click.argument('src', required=True)
 @click.argument('sesstype', required=True)
