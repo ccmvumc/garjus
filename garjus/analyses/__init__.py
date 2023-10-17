@@ -653,7 +653,7 @@ def _download_subject(
                     scans)
 
 
-def _download_scan(
+def _download_scans(
     garjus,
     sess_dir,
     sess_spec,
