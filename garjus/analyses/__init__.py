@@ -676,8 +676,8 @@ def _download_scans(
 
             logger.debug(f'scan_types={scan_types}')
 
-            if s.PROCTYPE not in scan_types:
-                logger.debug(f'skip scan, no match={scan}:{s.PROCTYPE}')
+            if s.SCANTYPE not in scan_types:
+                logger.debug(f'skip scan, no match={scan}:{s.SCANTYPE}')
                 continue
 
             for res_spec in scan_spec['resources']:
