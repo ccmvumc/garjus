@@ -667,7 +667,7 @@ def _download_scans(
     sess_scans = scans[scans.SESSION == sess]
 
     for k, s in sess_scans.iterrows():
-        scan = s.SCAN
+        scan = s.SCANID
 
         for scan_spec in sess_spec.get('scans', []):
             logger.debug(f'scan_spec={scan_spec}')
