@@ -1,6 +1,7 @@
 """Analyses."""
 import logging
-import os, shutil
+import os
+import shutil
 import tempfile
 import subprocess as sb
 import yaml
@@ -129,7 +130,7 @@ def _update(garjus, analysis):
             try:
                 dst = upload_inputs(
                     garjus,
-                    analysis['PROJECT'], 
+                    analysis['PROJECT'],
                     analysis['ID'],
                     tempdir)
 
@@ -139,7 +140,7 @@ def _update(garjus, analysis):
                     analysis['ID'],
                     dst)
             except Exception as err:
-                logger.error(f'upload failed')
+                logger.error(f'upload failed:{err}')
                 return
 
             logger.info(f'running analysis')
@@ -282,14 +283,13 @@ def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
             with open(processor, "r") as f:
                 analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
         except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            logger.error(f'failed to load yaml file{processor}:{err}')
             return None
 
     if not analysis['PROCESSOR']:
         logger.error('no processor specified, cannot run')
         return
 
-    inputs_dir = f'{analysis_dir}/INPUTS'
     outputs_dir = f'{analysis_dir}/OUTPUTS'
 
     _make_dirs(outputs_dir)
@@ -311,7 +311,7 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
             with open(processor, "r") as f:
                 analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
         except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            logger.error(f'failed to load yaml file{processor}:{err}')
             return None
 
     if not analysis['PROCESSOR']:
@@ -419,12 +419,12 @@ def _sessions_from_assessors(assessors):
     ]].drop_duplicates()
 
 
-def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
+def _download_scan_file(garjus, proj, subj, sess, scan, res, fmatch, dst):
     # Make the folders for this file path
     _make_dirs(os.path.dirname(dst))
 
     # Connect to the resource on xnat
-    r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+    r = garjus.xnat().select_scan_resource(proj, subj, sess, scan, res)
 
     # TODO: apply regex or wildcards in fmatch
     # res_obj.files()[0].label()).get(fpath)
@@ -450,7 +450,6 @@ def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdi
     with zipfile.ZipFile(reszip) as z:
         z.extractall(outdir)
 
-
     # Delete the zip
     os.remove(reszip)
 
@@ -472,6 +471,22 @@ def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     # Connect to the resource on xnat
     logger.debug(f'connecting to resource:{proj}:{subj}:{sess}:{assr}:{res}')
     r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+
+    # Download resource and extract
+    logger.debug(f'downloading to:{dst}')
+    r.get(dst, extract=True)
+
+    return dst
+
+
+def _download_scan_resource(garjus, proj, subj, sess, scan, res, dst):
+    # Make the folders for destination path
+    logger.debug(f'makedirs:{dst}')
+    _make_dirs(dst)
+
+    # Connect to the resource on xnat
+    logger.debug(f'connecting to resource:{proj}:{subj}:{sess}:{scan}:{res}')
+    r = garjus.xnat().select_scan_resource(proj, subj, sess, scan, res)
 
     # Download resource and extract
     logger.debug(f'downloading to:{dst}')
@@ -503,7 +518,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
             logger.debug(f'assr_types={assr_types}')
 
             if a.PROCTYPE not in assr_types:
-                logger.debug(f'skip assr, no match on type={assr}:{a.PROCTYPE}')
+                logger.debug(f'skip assr, no match={assr}:{a.PROCTYPE}')
                 continue
 
             for res_spec in assr_spec['resources']:
@@ -526,7 +541,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                             continue
 
                         # Download it
-                        logger.info(f'download file:{proj}:{subj}:{assr}:{res}:{fmatch}')
+                        logger.info(f'download file:{assr}:{res}:{fmatch}')
                         try:
                             _download_sgp_file(
                                 garjus,
@@ -552,7 +567,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                         continue
 
                     # Download it
-                    logger.info(f'download resource:{proj}:{subj}:{assr}:{res}')
+                    logger.info(f'download resource:{subj}:{assr}:{res}')
                     try:
                         _download_sgp_resource_zip(
                             garjus.xnat(),
@@ -567,13 +582,29 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                         raise err
 
 
-def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assessors, sgp):
+def _download_subject(
+    garjus,
+    subj_dir,
+    subj_spec,
+    proj,
+    subj,
+    sessions,
+    assessors,
+    sgp,
+    scans
+):
 
     #  subject-level assessors
     sgp_spec = subj_spec.get('assessors', None)
     if sgp_spec:
         logger.debug(f'download_sgp={subj_dir}')
-        _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp)
+        _download_subject_assessors(
+            garjus,
+            subj_dir,
+            sgp_spec,
+            proj,
+            subj,
+            sgp)
 
     # Download the subjects sessions
     for sess_spec in subj_spec.get('sessions', []):
@@ -589,7 +620,14 @@ def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assesso
             sess_dir = f'{subj_dir}/{sess}'
             logger.debug(f'download_session={sess_dir}')
             _download_session(
-                garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
+                garjus,
+                sess_dir,
+                sess_spec,
+                proj,
+                subj,
+                sess,
+                assessors,
+                scans)
 
         else:
             sess_types = sess_spec['types'].split(',')
@@ -599,16 +637,127 @@ def _download_subject(garjus, subj_dir, subj_spec, proj, subj, sessions, assesso
 
                 # Apply session type filter
                 if s.SESSTYPE not in sess_types:
-                    logger.debug(f'skip session, no match on type={sess}:{s.SESSTYPE}')
+                    logger.debug(f'skip session, no match={sess}:{s.SESSTYPE}')
                     continue
 
                 sess_dir = f'{subj_dir}/{sess}'
                 logger.debug(f'download_session={sess_dir}')
                 _download_session(
-                    garjus, sess_dir, sess_spec, proj, subj, sess, assessors)
+                    garjus,
+                    sess_dir,
+                    sess_spec,
+                    proj,
+                    subj,
+                    sess,
+                    assessors,
+                    scans)
 
 
-def _download_session(garjus, sess_dir, sess_spec, proj, subj, sess, assessors):
+def _download_scan(
+    garjus,
+    sess_dir,
+    sess_spec,
+    proj,
+    subj,
+    sess,
+    scans
+):
+
+    # get the scans for this session
+    sess_scans = scans[scans.SESSION == sess]
+
+    for k, s in sess_scans.iterrows():
+        scan = s.SCAN
+
+        for scan_spec in sess_spec.get('scans', []):
+            logger.debug(f'scan_spec={scan_spec}')
+
+            scan_types = scan_spec['types'].split(',')
+
+            logger.debug(f'scan_types={scan_types}')
+
+            if s.PROCTYPE not in scan_types:
+                logger.debug(f'skip scan, no match={scan}:{s.PROCTYPE}')
+                continue
+
+            for res_spec in scan_spec['resources']:
+
+                try:
+                    res = res_spec['resource']
+                except (KeyError, ValueError) as err:
+                    logger.error(f'reading resource:{err}')
+                    continue
+
+                if 'fmatch' in res_spec:
+                    # Download files
+                    for fmatch in res_spec['fmatch'].split(','):
+
+                        # Where shall we save it?
+                        dst = f'{sess_dir}/{scan}/{res}/{fmatch}'
+
+                        # Have we already downloaded it?
+                        if os.path.exists(dst):
+                            logger.debug(f'exists:{dst}')
+                            continue
+
+                        # Download it
+                        logger.info(f'download:{sess}:{scan}:{res}:{fmatch}')
+                        try:
+                            _download_scan_file(
+                                garjus,
+                                proj,
+                                subj,
+                                sess,
+                                scan,
+                                res,
+                                fmatch,
+                                dst
+                            )
+                        except Exception as err:
+                            logger.error(f'{sess}:{scan}:{res}:{fmatch}:{err}')
+                            raise err
+                else:
+                    # Download whole resource
+
+                    # Where shall we save it?
+                    dst = f'{sess_dir}/{scan}'
+
+                    # Have we already downloaded it?
+                    if os.path.exists(os.path.join(dst, res)):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download resource:{sess}:{scan}:{res}')
+                    try:
+                        _download_scan_resource(
+                            garjus,
+                            proj,
+                            subj,
+                            sess,
+                            scan,
+                            res,
+                            dst
+                        )
+                    except Exception as err:
+                        logger.error(f'{subj}:{sess}:{scan}:{res}:{err}')
+                        raise err
+
+
+def _download_session(
+    garjus,
+    sess_dir,
+    sess_spec,
+    proj,
+    subj,
+    sess,
+    assessors,
+    scans
+):
+
+    if 'scans' in sess_spec:
+        _download_scans(garjus, sess_dir, sess_spec, proj, subj, sess, scans)
+
     # get the assessors for this session
     sess_assessors = assessors[assessors.SESSION == sess]
 
@@ -761,7 +910,8 @@ def _download_inputs(garjus, analysis, download_dir):
                 subj,
                 sessions,
                 assessors,
-                sgp)
+                sgp,
+                scans)
         except Exception as err:
             logger.debug(err)
             errors.append(subj)
