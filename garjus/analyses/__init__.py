@@ -435,6 +435,23 @@ def _download_scan_file(garjus, proj, subj, sess, scan, res, fmatch, dst):
     return dst
 
 
+def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
+    # Make the folders for this file path
+    _make_dirs(os.path.dirname(dst))
+
+    # Connect to the resource on xnat
+    r = garjus.xnat().select_assessor_resource(proj, subj, sess, assr, res)
+
+    # TODO: apply regex or wildcards in fmatch
+    # res_obj.files()[0].label()).get(fpath)
+    # res.files().label()
+
+    r.file(fmatch).get(dst)
+
+    return dst
+
+
+
 def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdir):
     reszip = '{}_{}.zip'.format(assessor, resource)
     respath = 'data/projects/{}/subjects/{}/experiments/{}/resources/{}/files'
