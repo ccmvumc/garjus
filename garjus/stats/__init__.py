@@ -151,7 +151,7 @@ def _load_stats_tall(filename):
             (k, v) = r.strip().replace('=', ',').split(',')
             data[k] = v
     except ValueError:
-        logger.error(f'cannot load stats file')
+        logger.error(f'cannot load stats file:{filename}')
         return {}
 
     return data
