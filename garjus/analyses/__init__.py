@@ -702,7 +702,7 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir, process
             with open(processor, "r") as f:
                 analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
         except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{yaml_file}:{err}')
+            logger.error(f'failed to load yaml file{processor}:{err}')
             return None
 
     if not analysis['PROCESSOR']:
