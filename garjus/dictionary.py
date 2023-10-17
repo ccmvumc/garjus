@@ -75,8 +75,9 @@ DISABLE_STATTYPES = [
     'fmri_roi_v1',
     'struct_preproc_noflair_v1',
     'fmri_nback_v2',
-    'Multi_Atlas_v3', 
+    'Multi_Atlas_v3',
     'fmri_roi_v2',
+    'NMQA_v1'
 ]
 
 COLUMNS = {
