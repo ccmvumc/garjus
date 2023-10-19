@@ -2486,8 +2486,9 @@ class Garjus:
 
     def session_assessor_labels(self, project, subject, session):
         """Return list of labels."""
-        uri = f'/REST/projects/{project}/subjects/{subject}/experiments/{session}/assessors?columns=label'
+        uri = f'/REST/projects/{project}/subjects/{subject}/experiments/{session}/assessors?columns=label,xsiType'
         result = self._get_result(uri)
+        result = [x for x in result if x['xsiType'] != 'fs:fsData']
         label_list = [x['label'] for x in result]
         return label_list
 
