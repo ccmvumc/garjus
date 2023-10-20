@@ -1230,6 +1230,7 @@ def make_pdf(info, filename):
         _add_activity_page(pdf, info)
 
     # Directed Graph of processing
+    # TODO: only run if graphviz/dot are installed
     _add_graph_page(pdf, info)
 
     # Settings
