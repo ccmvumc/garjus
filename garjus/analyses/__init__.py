@@ -480,6 +480,27 @@ def _download_sgp_file(garjus, proj, subj, assr, res, fmatch, dst):
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
+def download_resources(garjus, project, download_dir, proctype, resources):
+    logger.info(f'loading data:{project}:{proctype}')
+    assessors = garjus.assessors(projects=[project], proctypes=[proctype])
+    #sgp = garjus.subject_assessors(projects=[project])
+
+    assessors = assessors[assessors.PROCSTATUS == 'COMPLETE']
+
+    for i, a in assessors.iterrows():
+        proj = a.PROJECT
+        subj = a.SUBJECT
+        sess = a.SESSION
+        assr = a.ASSR
+        dst = f'{download_dir}/{assr}'
+        print(dst)
+        for res in resources:
+            # check if it exists
+
+            logger.debug(f'downloading:{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
+            _download_resource(garjus, proj, subj, sess, assr, res, dst)
+
+
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     # Make the folders for destination path
     logger.debug(f'makedirs:{dst}')

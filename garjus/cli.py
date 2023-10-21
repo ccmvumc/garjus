@@ -103,6 +103,17 @@ def getinputs(project, analysis_id, download_dir, processor):
     g.get_analysis_inputs(project, analysis_id, download_dir, processor)
 
 
+@cli.command('download')
+@click.argument('download_dir', required=True)
+@click.option('--type', '-t', 'proctype', multiple=False, required=True)
+@click.option('--resources', '-r', 'resources', multiple=True, required=False)
+@click.option('--project', '-p', 'project', required=True)
+def download(project, proctype, download_dir, resources):
+    click.echo('garjus! download')
+    g = Garjus()
+    g.download_proctype(project, download_dir, proctype, resources)
+
+
 @cli.command('run')
 @click.argument('analysis_id', required=True)
 @click.argument('output_zip', required=False)

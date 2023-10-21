@@ -35,7 +35,7 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
-from .analyses import update as update_analyses, download_analysis_inputs, run_analysis, finish_analysis
+from .analyses import update as update_analyses, download_analysis_inputs, run_analysis, finish_analysis, download_resources
 
 
 logger = logging.getLogger('garjus')
@@ -229,6 +229,8 @@ class Garjus:
         """Query XNAT for all assessors of and return list of dicts."""
         if not projects:
             projects = self.projects()
+
+        logger.debug(f'loading projects={projects}, proctypes={proctypes}')
 
         data = self._load_assr_data(projects, proctypes)
 
@@ -2345,6 +2347,9 @@ class Garjus:
 
     def finish_analysis(self, project, analysis_id, analysis_dir, processor):
         finish_analysis(self, project, analysis_id, analysis_dir, processor)
+
+    def download_proctype(self, project, download_dir, proctype, resources):
+        download_resources(self, project, download_dir, proctype, resources)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):
