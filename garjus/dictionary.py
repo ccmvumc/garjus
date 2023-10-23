@@ -72,6 +72,7 @@ REPORTS_RENAME = {
 
 DISABLE_STATTYPES = [
     'fmri_rest_v2',
+    'fmri_rest_v4',
     'fmri_roi_v1',
     'struct_preproc_noflair_v1',
     'fmri_nback_v2',
@@ -128,13 +129,13 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI parcellated with BrainColor atlas',
         'procurl': 'https://pubmed.ncbi.nlm.nih.gov/32948749/',
     },
-    'FALLYPRIDEQA_v1':{
+    'FALLYPRIDEQA_v2':{
         'short_descrip': 'Fallypride QA with Regional SUVR using whole cerebellum as reference.',
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), Fallypride PET',
         'procurl': 'https://github.com/bud42/FALLYPRIDEQA',
         'stats_subset': ['antcing_suvr', 'compositegm_suvr', 'cblmgm_suvr', 'cblmwm_suvr', 'cblmtot_suvr'],
     },
-    'fmri_bct_v1': {
+    'fmri_bct_v2': {
         'short_descrip': 'Brain Connectivity Toolbox measures.',
         'inputs_descrip': 'Resting MRI processed with fmri_roi_v2',
         'procurl': 'https://github.com/REMBRANDT-study/fmri_bct',
@@ -146,7 +147,7 @@ PROCLIB = {
         'procurl': 'https://github.com/REMBRANDT-study/fmri_msit',
         'stats_subset': ['con_amyg_mean', 'inc_amyg_mean', 'med_pct_outliers', 'con_bnst_mean', 'inc_bnst_mean'],
     },
-    'fmri_rest_v2': {
+    'fmri_rest_v4': {
         'short_descrip': 'fMRI Resting State pre-processing.',
         'inputs_descrip': 'T1w MRI, Resting State fMRI',
         'procurl': 'https://github.com/REMBRANDT-study/fmri_rest',
@@ -202,7 +203,7 @@ PROCLIB = {
 }
 
 STATLIB = {
-    'FALLYPRIDEQA_v1': {
+    'FALLYPRIDEQA_v2': {
         'accumbens_suvr': 'Accumbens regional mean SUVR normalized by Whole Cerebellum',
         'amygdala_suvr': 'Amygdala regional mean SUVR normalized by Whole Cerebellum',
         'antcing_suvr': 'Anterior Cingulate regional mean SUVR normalized by Whole Cerebellum',
@@ -269,7 +270,7 @@ STATLIB = {
         'Volume2': 'White Matter',
         'Volume3': 'CSF',
     },
-    'fmri_bct_v1': {
+    'fmri_bct_v2': {
         'Schaefer400_thr0p1_deg': 'Degree'
     }
 }
