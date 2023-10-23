@@ -9,6 +9,7 @@ from datetime import datetime, date, timedelta
 import tempfile
 import math
 
+import numpy as np
 import pydot
 import pandas as pd
 import plotly
@@ -984,7 +985,7 @@ def plot_qa(dfp):
 
 def _plottable(var):
     try:
-        _ = var.str.strip('%').astype(float)
+        _ = var.replace('', np.nan).dropna().str.strip('%').astype(float)
         return True
     except Exception:
         return False
@@ -1062,7 +1063,7 @@ def plot_stats(df, plot_title=None):
 
         fig.append_trace(
             go.Box(
-                y=df[var].str.strip('%').astype(float),
+                y=df[var].replace('', np.nan).dropna().str.strip('%').astype(float),
                 x=df['SITE'],
                 boxpoints='all',
                 text=df['ASSR'],
@@ -1072,7 +1073,7 @@ def plot_stats(df, plot_title=None):
             _col)
 
         # Plot horizontal line at median
-        _median = df[var].str.strip('%').astype(float).median()
+        _median = df[var].replace('', np.nan).dropna().str.strip('%').astype(float).median()
         fig.add_trace(
             go.Scatter(
                 x=df['SITE'],
