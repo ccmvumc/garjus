@@ -71,7 +71,7 @@ def process_project(
         subj_num = re.sub(r'[^0-9]', '', subj)
 
         # Find files for this subject
-        sess_glob = f'{limbo_dir}/{edat_prefix}-{subj_num}-{sess_num}.edat*'
+        sess_glob = f'{limbo_dir}/{edat_prefix}-{subj_num}-{sess_num}.edat?'
         file_list = sorted(glob.glob(sess_glob))
         file_count = len(file_list)
         if file_count <= 0:
