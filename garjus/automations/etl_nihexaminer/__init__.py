@@ -234,11 +234,11 @@ def _scoring(inputs, tmpdir):
 
     # Run the scoring program with the input file
     rwd = os.path.expanduser(
-        '~/git/garjus/src/automations/etl_nihexaminer/Scoring')
+        '~/git/garjus/garjus/automations/etl_nihexaminer/Scoring')
 
     if not os.path.exists(rwd):
         rwd = os.path.expanduser(
-            '~/garjus/src/automations/etl_nihexaminer/Scoring')
+            '~/garjus/garjus/automations/etl_nihexaminer/Scoring')
 
     script = 'examiner_scoring.R'
     cmd = f'Rscript --vanilla'
