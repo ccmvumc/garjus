@@ -80,7 +80,8 @@ DISABLE_STATTYPES = [
     'NMQA_v1',
     'francois_schaefer200_v1',
     'francois_schaefer400_v1',
-    'dtiQA_synb0_v7'
+    'dtiQA_synb0_v7',
+    'EEG-EGI-wavelet_v1'
 ]
 
 COLUMNS = {
