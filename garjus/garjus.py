@@ -1390,7 +1390,7 @@ class Garjus:
             # stats, such that if the list is empty, nothing will run
             logger.info('updating stats')
             _projects = [x for x in projects if x in self.stats_projects()]
-            update_stats(self, _projects)
+            update_stats(self, _projects, types)
 
         if 'progress' in choices:
             # confirm each project has report for current month with PDF & zip
@@ -1695,6 +1695,10 @@ class Garjus:
 
     def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
+
+        if 'Multi_Atlas_v3' in assessor:
+            data = {k: data.get(k, '') for k in ['ticv_mm3']}
+
         if len(data.keys()) > self.max_stats:
             logger.debug('found too many, specify subset')
             return
@@ -2348,8 +2352,8 @@ class Garjus:
     def finish_analysis(self, project, analysis_id, analysis_dir, processor):
         finish_analysis(self, project, analysis_id, analysis_dir, processor)
 
-    def download_proctype(self, project, download_dir, proctype, resources):
-        download_resources(self, project, download_dir, proctype, resources)
+    def download_proctype(self, project, download_dir, proctype, resources, files):
+        download_resources(self, project, download_dir, proctype, resources, files)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

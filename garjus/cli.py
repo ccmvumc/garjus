@@ -106,12 +106,13 @@ def getinputs(project, analysis_id, download_dir, processor):
 @cli.command('download')
 @click.argument('download_dir', required=True)
 @click.option('--type', '-t', 'proctype', multiple=False, required=True)
-@click.option('--resources', '-r', 'resources', multiple=True, required=False)
+@click.option('--resources', '-r', 'resources', multiple=True, required=True)
+@click.option('--resources', '-f', 'files', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
-def download(project, proctype, download_dir, resources):
+def download(project, proctype, download_dir, resources, files):
     click.echo('garjus! download')
     g = Garjus()
-    g.download_proctype(project, download_dir, proctype, resources)
+    g.download_proctype(project, download_dir, proctype, resources, files)
 
 
 @cli.command('run')

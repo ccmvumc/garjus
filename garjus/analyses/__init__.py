@@ -480,7 +480,16 @@ def _download_sgp_file(garjus, proj, subj, assr, res, fmatch, dst):
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
-def download_resources(garjus, project, download_dir, proctype, resources):
+def _download_sess_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
+    # Make the folders for this file path
+    _make_dirs(os.path.dirname(dst))
+
+    # Download the file
+    uri = f'data/projects/{proj}/subjects/{subj}/experiments/{sess}/assessors/{assr}/resources/{res}/files/{fmatch}'
+    _download_file_stream(garjus.xnat(), uri, dst)
+
+
+def download_resources(garjus, project, download_dir, proctype, resources, files):
     logger.info(f'loading data:{project}:{proctype}')
     assessors = garjus.assessors(projects=[project], proctypes=[proctype])
     #sgp = garjus.subject_assessors(projects=[project])
@@ -493,12 +502,39 @@ def download_resources(garjus, project, download_dir, proctype, resources):
         sess = a.SESSION
         assr = a.ASSR
         dst = f'{download_dir}/{assr}'
-        print(dst)
+
         for res in resources:
             # check if it exists
 
-            logger.debug(f'downloading:{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
-            _download_resource(garjus, proj, subj, sess, assr, res, dst)
+            if files:
+                # Download files
+                for fmatch in files:
+                    # Have we already downloaded it?
+                    if os.path.exists(dst):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download file:{assr}:{res}:{fmatch}')
+                    try:
+                        _download_sess_file(
+                            garjus,
+                            proj,
+                            subj,
+                            sess,
+                            assr,
+                            res,
+                            fmatch,
+                            f'{dst}/{res}/{fmatch}'
+                        )
+                    except Exception as err:
+                        logger.error(f'{subj}:{assr}:{res}:{fmatch}:{err}')
+                        import traceback
+                        traceback.print_exc()
+                        raise err
+            else:
+                logger.debug(f'downloading:{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
+                _download_resource(garjus, proj, subj, sess, assr, res, dst)
 
 
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):

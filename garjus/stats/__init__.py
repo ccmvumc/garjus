@@ -16,10 +16,11 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def update(garjus, projects):
+def update(garjus, projects, proctypes=None):
     """Update project progress."""
     for p in projects:
-        proctypes = garjus.stattypes(p)
+        if not proctypes:
+            proctypes = garjus.stattypes(p)
 
         if not proctypes:
             logger.debug(f'no proctypes for stats project:{p}')
