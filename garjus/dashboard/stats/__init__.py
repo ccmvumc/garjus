@@ -295,12 +295,12 @@ def get_content():
     return content
 
 
-def load_stats(projects=[], refresh=False):
+def load_stats(projects=[], refresh=False, filename=None):
 
     if projects is None:
         projects = []
 
-    return data.load_data(projects, refresh=refresh)
+    return data.load_data(projects, refresh=refresh, filename=filename)
 
 
 def _subject_pivot(df):

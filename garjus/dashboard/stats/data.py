@@ -48,8 +48,9 @@ def load_options(selected_proj=None):
     return proj_options, proc_options
 
 
-def load_data(projects, refresh=False):
-    filename = get_filename()
+def load_data(projects, refresh=False, filename=None):
+    if not filename:
+        filename = get_filename()
 
     if refresh or not os.path.exists(filename):
         # TODO: check for old file and refresh too
