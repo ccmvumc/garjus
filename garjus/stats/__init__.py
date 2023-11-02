@@ -42,7 +42,7 @@ def update_project(garjus, project, proctypes):
         # Get list of assessors already in stats
         existing = garjus.stats_assessors(project, proctypes)
     except Exception:
-        logger.error(f'failed to load existing stats, check key:{project}')
+        logger.debug(f'no stats loaded, check key:{project}')
         return
 
     # Get list of all assessors
