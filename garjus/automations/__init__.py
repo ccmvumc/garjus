@@ -93,7 +93,7 @@ def _run_edat_automations(automations, garjus, project):
     event2sess = {}
 
     if primary_redcap is None:
-        logger.error(f'primary redcap not found, check keys:{project}')
+        logger.debug(f'primary redcap not found, check keys:{project}')
         return
 
     for p in scanp:
