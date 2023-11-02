@@ -162,7 +162,7 @@ def _run_edat_automations(automations, garjus, project):
                     etl_traitadjtask = importlib.import_module(
                         'garjus.automations.etl_traitadjtask')
 
-                    logger.info(f'{project}:ETL Trait Adjective Task')
+                    logger.debug(f'{project}:ETL Trait Adjective Task')
                     results += etl_traitadjtask.process_project(primary_redcap)
                 except ModuleNotFoundError as err:
                     logger.error(f'error loading modules:{err}')
@@ -172,7 +172,7 @@ def _run_edat_automations(automations, garjus, project):
                 try:
                     etl_traitadjrecall = importlib.import_module(
                         'garjus.automations.etl_traitadjrecall')
-                    logger.info(f'{project}:ETL Trait Adjective Recall')
+                    logger.debug(f'{project}:ETL Trait Adjective Recall')
                     results += etl_traitadjrecall.process_project(primary_redcap)
                 except ModuleNotFoundError as err:
                     logger.error(f'error loading modules:{err}')
@@ -565,7 +565,7 @@ def _run_scan_automations(automations, garjus, project):
 
     # MA3 stats 2 vol txt
     if 'xnat_ma3stats2voltxt' in automations:
-        logger.info(f'running ma3stats2voltxt:{project}')
+        logger.debug(f'running ma3stats2voltxt:{project}')
         assessors = garjus.assessors(
             projects=[project], proctypes=['Multi_Atlas_v3'])
         xnat = garjus.xnat()
