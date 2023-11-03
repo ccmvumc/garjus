@@ -11,10 +11,10 @@ logger = logging.getLogger('dax2garjus')
 
 
 # TODO: check status jobs showing as RUNNING but not in queue,
-# check residr for completed/vs failed, and set to Finished-COMPLETE, 
+# check residr for completed/vs failed, and set to Finished-COMPLETE,
 # Finished-JOB_FAILED or something maybe Finished in blue vs. red?
 
-# TODO: complete job information from slurm, for now we just 
+# TODO: complete job information from slurm, for now we just
 # want to know about open jobs
 
 # This is a temporary bridge between garjus and dax.
@@ -247,9 +247,10 @@ def dax2queue(garjus):
 
     # Get updates from XNAT (if no longer in dax queue), complete or failed
     df2 = _get_xnat_changes(gqueue, garjus.assessors())
+    df3 = _get_xnat_changes(gqueue, garjus.subject_assessors())
 
     # Combine dataframes
-    df = pd.concat([df1, df2])
+    df = pd.concat([df1, df2, df3])
 
     # Apply changes
     if df.empty:
