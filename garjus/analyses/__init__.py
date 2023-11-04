@@ -486,6 +486,7 @@ def _download_sess_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
 
     # Download the file
     uri = f'data/projects/{proj}/subjects/{subj}/experiments/{sess}/assessors/{assr}/resources/{res}/files/{fmatch}'
+    logger.debug(uri)
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
