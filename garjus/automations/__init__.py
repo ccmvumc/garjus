@@ -206,6 +206,8 @@ def _run_etl_automation(automation, garjus, project):
 
     if automation == 'etl_nihexaminer':
         results = _run_etl_nihexaminer(project_redcap)
+    elif automation == 'etl_nihtoolbox_drtaylor':
+        results = _run_etl_nihtoolbox_drtaylor(project_redcap)
     else:
         # load the automation
         try:
@@ -226,6 +228,67 @@ def _run_etl_automation(automation, garjus, project):
         r.update({'project': project, 'category': automation})
         r.update({'description': r.get('description', automation)})
         garjus.add_activity(**r)
+
+
+def _run_etl_nihtoolbox_drtaylor(project):
+    data = {}
+    results = []
+    events = []
+    fields = []
+    records = []
+    reg_field = 'toolbox_regdata'
+    score_field = 'toolbox_cogscores'
+    done_field = 'toolbox_pin'
+
+    # load the automation
+    try:
+        toolbox = importlib.import_module(
+            f'garjus.automations.etl_nihtoolbox_drtaylor')
+    except ModuleNotFoundError as err:
+        logger.error(f'error loading module:{err}')
+        return
+
+    events = field2events(project, reg_field)
+
+    fields = [project.def_field, done_field, reg_field, score_field]
+
+    records = project.export_records(fields=fields, events=events)
+
+    for r in records:
+        data = {}
+        record_id = r[project.def_field]
+        event_id = r['redcap_event_name']
+
+        if r[done_field]:
+            logger.debug(f'already ETL:{record_id}:{event_id}')
+            continue
+
+        if not r[score_field]:
+            logger.debug(f'no data file:{record_id}:{event_id}')
+            continue
+
+        logger.debug(f'running ETL:{record_id}:{event_id}')
+        results.append({'subject': record_id, 'event': event_id})
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            reg_file = f'{tmpdir}/regfile.csv'
+            score_file = f'{tmpdir}/scorefile.csv'
+
+            # Download files from redcap
+            logger.debug(f'downloading file:{reg_file}')
+            download_file(
+                project, record_id, reg_field, reg_file, event_id=event_id)
+            logger.debug(f'downloading file:{score_file}')
+            download_file(
+                project, record_id, score_field, score_file, event_id=event_id)
+
+            data = toolbox.process(reg_file, score_file)
+
+        # Load data back to redcap
+        _load(project, record_id, event_id, data)
+        results.append({'subject': record_id, 'event': event_id})
+
+    return results
 
 
 def _run_etl_nihexaminer(project):
