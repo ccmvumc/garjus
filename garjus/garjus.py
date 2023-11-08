@@ -1377,7 +1377,7 @@ class Garjus:
 
         if 'automations' in choices:
             logger.info('updating automations')
-            update_automations(self, projects)
+            update_automations(self, projects, autos_include=types)
 
         if 'issues' in choices:
             logger.info('updating issues')
