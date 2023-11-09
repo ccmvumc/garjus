@@ -107,7 +107,7 @@ def getinputs(project, analysis_id, download_dir, processor):
 @click.argument('download_dir', required=True)
 @click.option('--type', '-t', 'proctype', multiple=False, required=True)
 @click.option('--resources', '-r', 'resources', multiple=True, required=True)
-@click.option('--resources', '-f', 'files', multiple=True, required=False)
+@click.option('--files', '-f', 'files', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
 def download(project, proctype, download_dir, resources, files):
     click.echo('garjus! download')
