@@ -17,6 +17,8 @@ def cli(debug, quiet):
     if debug:
         click.echo('garjus! debug')
         logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+        logging.getLogger('dash').setLevel(logging.DEBUG)
 
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
@@ -291,20 +293,24 @@ def delete(project, proctype):
 
 @cli.command('dashboard')
 @click.option('--auth', 'auth_file', required=False)
-def dashboard(auth_file=None):
-
-    from .dashboard import app
+@click.option('--login', required=False, is_flag=True)
+def dashboard(auth_file=None, login=False):
     import webbrowser
     url = 'http://localhost:8050'
 
-    if auth_file:
-        import yaml
-        import dash_auth
+    if login:
+        from .dashboard.login import app
+    else:  
+        from .dashboard.index import app
 
-        # Load user passwords to use dash's basic authentication
-        with open(auth_file, 'rt') as file:
-            _data = yaml.load(file, yaml.SafeLoader)
-            dash_auth.BasicAuth(app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
+        if auth_file:
+            import yaml
+            import dash_auth
+
+            # Load user passwords to use dash's basic authentication
+            with open(auth_file, 'rt') as file:
+                _data = yaml.load(file, yaml.SafeLoader)
+                dash_auth.BasicAuth(app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)

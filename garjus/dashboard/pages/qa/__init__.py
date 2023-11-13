@@ -25,14 +25,13 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash import Input, Output
+from dash import Input, Output, callback
 import dash_bootstrap_components as dbc
 
-from ..app import app
-from .. import utils
-from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
+from ....garjus import Garjus
+from ... import utils
+from ...shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
-from ...garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.qa')
@@ -600,7 +599,7 @@ def load_options(df):
 # options for the assessor sessions dropdown
 # data for the table
 # content for the graph tabs
-@app.callback(
+@callback(
     [Output('dropdown-qa-proc', 'options'),
      Output('dropdown-qa-scan', 'options'),
      Output('dropdown-qa-sess', 'options'),
@@ -640,6 +639,8 @@ def update_qa(
     graph_content = []
     refresh = False
 
+    print('update_qa()')
+
     logger.debug('update_all')
 
     # Load. This data will already be merged scans and assessors, row per
@@ -649,6 +650,7 @@ def update_qa(
         refresh = True
 
     logger.debug(f'loading data:{selected_proj}')
+
     df = load_data(
         projects=selected_proj,
         refresh=refresh,

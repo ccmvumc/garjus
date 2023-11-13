@@ -5,11 +5,9 @@ import plotly
 import plotly.graph_objs as go
 import plotly.subplots
 from dash import dcc, html, dash_table as dt
-from dash import Input, Output
+from dash import Input, Output, callback
 import dash_bootstrap_components as dbc
 
-
-from ..app import app
 from .. import utils
 from ..shared import GWIDTH, STATUS2RGB
 from . import data
@@ -199,7 +197,7 @@ def filter_data(df, selected_project, selected_category, selected_source):
         df, selected_project, selected_category, selected_source)
 
 
-@app.callback(
+@callback(
     [
      Output('dropdown-activity-category', 'options'),
      Output('dropdown-activity-project', 'options'),

@@ -3,11 +3,9 @@ import logging
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.subplots
-from dash import dcc, html, dash_table as dt
-from dash import Input, Output
+from dash import  Input, Output, callback, dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
 
-from ..app import app
 from .. import utils
 from ..shared import GWIDTH, STATUS2RGB
 from . import data
@@ -196,7 +194,7 @@ def filter_data(df, selected_project, selected_category):
 
 
 # Issues callback
-@app.callback(
+@callback(
     [
      Output('dropdown-issues-category', 'options'),
      Output('dropdown-issues-project', 'options'),

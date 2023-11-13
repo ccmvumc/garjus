@@ -4,8 +4,8 @@ import os
 
 import pandas as pd
 
-from ...garjus import Garjus
-from ..utils import file_age
+from ....garjus import Garjus
+from ...utils import file_age
 
 
 logger = logging.getLogger('dashboard.qa.data')
@@ -41,9 +41,13 @@ QA_COLS = [
     'MODALITY']
 
 
-def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
-    filename = f'{datadir}/qadata.pkl'
+def get_filename(username=None):
+    datadir = f'{Garjus.default_cachedir()}/DATA'
+
+    if username:
+        filename = f'{datadir}/{username}.qadata.pkl'
+    else:
+        filename = f'{datadir}/qadata.pkl'
 
     try:
         os.makedirs(datadir)
@@ -99,8 +103,8 @@ def update_data(projects, hidetypes):
     return df
 
 
-def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
-    fname = get_filename()
+def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, username=None):
+    fname = get_filename(username)
 
     if not os.path.exists(fname):
         refresh = True

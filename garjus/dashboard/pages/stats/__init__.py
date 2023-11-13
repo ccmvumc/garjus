@@ -4,11 +4,9 @@ import pandas as pd
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
-from dash import dcc, html, dash_table as dt
-from dash import Input, Output
+from dash import Input, Output, callback,dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
 
-from ..app import app
 from .. import utils
 from . import data
 from ..shared import GWIDTH

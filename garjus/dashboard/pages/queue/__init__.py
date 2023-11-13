@@ -4,11 +4,9 @@ import pandas as pd
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
-from dash import dcc, html, dash_table as dt
-from dash import Input, Output
+from dash import Input, Output, callback, dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
 
-from ..app import app
 from .. import utils
 from ..shared import STATUS2RGB
 from . import data
@@ -193,7 +191,7 @@ def filter_data(df, selected_proj, selected_proc, selected_user):
         df, selected_proj, selected_proc, selected_user)
 
 
-@app.callback(
+@callback(
     [Output('dropdown-queue-proc', 'options'),
      Output('dropdown-queue-proj', 'options'),
      Output('dropdown-queue-user', 'options'),

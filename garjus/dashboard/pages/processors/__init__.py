@@ -1,9 +1,8 @@
 import logging
 
-from dash import dcc, html, dash_table as dt, Input, Output
+from dash import dcc, html, dash_table as dt, Input, Output, callback
 import dash_bootstrap_components as dbc
 
-from ..app import app
 from .. import utils
 from . import data
 from ...dictionary import COLUMNS
@@ -66,7 +65,7 @@ def load_processors(projects=[]):
     return data.load_data(projects, refresh=True)
 
 
-@app.callback(
+@callback(
     [
      Output('dropdown-processors-proj', 'options'),
      Output('datatable-processors', 'data'),

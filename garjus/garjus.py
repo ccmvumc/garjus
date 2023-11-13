@@ -18,6 +18,7 @@ import pandas as pd
 from redcap import Project, RedcapError
 from pyxnat import Interface
 from requests.exceptions import ConnectionError
+from flask_login import current_user
 
 from .subjects import load_subjects
 from . import utils_redcap
@@ -57,7 +58,7 @@ class Garjus:
     def __init__(
         self,
         redcap_project: Project=None,
-        xnat_interface: Interface=None
+        xnat_interface: Interface=None,
     ):
         """Initialize garjus."""
         self._disconnect_xnat = False
@@ -69,7 +70,11 @@ class Garjus:
             logger.debug('REDCap disabled, no credentials in ~/.redcap.txt')
             self._rc = None
 
-        if xnat_interface:
+        if current_user.is_authenticated:
+            hostname = current_user.hostname
+            username = current_user.id
+            self._xnat = self._alias_xnat(hostname, username)
+        elif xnat_interface:
             self._xnat = xnat_interface
         else:
             try:
@@ -115,14 +120,60 @@ class Garjus:
                 pass
 
     @staticmethod
+    def default_cachedir():
+        return os.path.expanduser('~/.garjus')
+
+    @staticmethod
+    def login(hostname, username, password):
+        from dax.XnatUtils import get_interface
+        
+        xnat = get_interface(host=hostname, user=username, pwd=password)
+    
+        uri = '/data/services/tokens/issue'
+        result = json.loads(xnat._exec(uri, 'GET'), strict=False)
+        print(result)
+
+        alias = result.get('alias')
+        token = result.get('secret')
+
+        # Save the token
+        with open(f'{username}.token.txt', 'w') as f:
+            f.write(f'{alias},{token}')
+
+        return (alias, token)
+
+    @staticmethod
     def _default_xnat():
         from dax.XnatUtils import get_interface
         return get_interface()
 
     @staticmethod
+    def _alias_xnat(hostname, username):
+        alias = None
+        token = None
+        from dax.XnatUtils import get_interface
+
+        try:
+            with open(f'{username}.token.txt') as f:
+                (alias, token) = f.readline().strip().split(',')
+        except Exception:
+            raise Exception('failed to load alias credentials:{username}')
+
+        return get_interface(user=alias, pwd=token)
+
+    @staticmethod
     def _default_redcap():
         from .utils_redcap import get_main_redcap
         return get_main_redcap()
+
+    @staticmethod
+    def redcap_found():
+        from .utils_redcap import get_main_redcap
+        try:
+            get_main_redcap()
+            return True
+        except Exception:
+            return False
 
     def cachedir(self):
         return self._cachedir
