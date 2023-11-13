@@ -104,7 +104,8 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
 )
 
-app.logger.setLevel(logging.DEBUG)
+# Set the title to appear on web pages
+app.title = 'garjus dashboard'
 
 server.config.update(SECRET_KEY=os.urandom(24))
 
