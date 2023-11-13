@@ -105,7 +105,7 @@ app = dash.Dash(
 )
 
 # Set the title to appear on web pages
-app.title = 'garjus dashboard'
+app.title = 'dashboard'
 
 server.config.update(SECRET_KEY=os.urandom(24))
 
