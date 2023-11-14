@@ -68,7 +68,7 @@ def get_data(proj_filter):
 
 
 def load_recent_qa(df, startdate):
-    enddate = datetime.today() + relativedelta(months=1)
+    enddate = datetime.today()
     enddate = enddate.strftime('%Y-%m-%d')
 
     df = df.copy()
@@ -77,7 +77,7 @@ def load_recent_qa(df, startdate):
     df['CATEGORY'] = df['PROCTYPE']
 
     # Filter by qc date
-    df = df[(df.QCDATE >= startdate) & (df.QCDATE < enddate)]
+    df = df[(df.QCDATE >= startdate) & (df.QCDATE <= enddate)]
 
     df['STATUS'] = df['QCSTATUS'].map({
         'Failed': 'FAIL',
