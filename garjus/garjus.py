@@ -2150,10 +2150,8 @@ class Garjus:
 
     def project_exists(self, project):
         """True if this project exists."""
-        #redcap_exists = (project in self.projects())
-
         xnat_exists = self._xnat.select.project(project).exists()
-        return redcap_exists and xnat_exists
+        return  xnat_exists
 
     def close_issues(self, issues):
         """Close specified issues, set to complete in REDCap."""

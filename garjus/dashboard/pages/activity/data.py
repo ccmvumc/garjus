@@ -102,6 +102,9 @@ def load_recent_jobs(df, startdate):
     # Filter by jobstartdate date, include anything with job running
     df = df[(df['JOBDATE'] >= startdate) | (df['PROCSTATUS'] == 'JOB_RUNNING')]
 
+    # Filter by procdate too
+    df = df[df.DATE >= startdate]
+
     df['STATUS'] = df['PROCSTATUS'].map({
         'COMPLETE': 'COMPLETE',
         'JOB_FAILED': 'FAIL',
