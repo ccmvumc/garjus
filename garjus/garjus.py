@@ -779,17 +779,18 @@ class Garjus:
 
         return self._rc.export_records(records=projects, forms=['sites'])
 
-    def _load_project_names(self):
+    def _load_project_names(self, has_redcap=False):
         names = []
 
-        #if self.redcap_enabled():
-        #    _records = self._rc.export_records(fields=[self._rc.def_field])
-        #    names = [x[self._rc.def_field] for x in _records]
-        #    logger.debug(f'my redcap projects={names}')
-        #else:
         # Load from xnat
         names = utils_xnat.get_my_projects(self.xnat())
         logger.debug(f'my xnat projects={names}')
+
+        if has_redcap and self.redcap_enabled():
+            _records = self._rc.export_records(fields=[self._rc.def_field])
+            _names = [x[self._rc.def_field] for x in _records]
+            logger.debug(f'my redcap projects={names}')
+            names = [x for x in names if x in _names]
 
         return names
 
@@ -1003,10 +1004,10 @@ class Garjus:
         _records = statsrc.export_records(fields=['stats_assr'])
         return list(set([x['stats_assr'] for x in _records]))
 
-    def projects(self):
+    def projects(self, has_redcap=False):
         """Get list of projects."""
         if self._projects is None:
-            self._projects = self._load_project_names()
+            self._projects = self._load_project_names(has_redcap=has_redcap)
 
         return self._projects
 
@@ -1461,7 +1462,7 @@ class Garjus:
     def update(self, projects=None, choices=None, types=None):
         """Update projects."""
         if not projects:
-            projects = self.projects()
+            projects = self.projects(has_redcap=True)
 
         if not choices:
             choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
@@ -2148,8 +2149,9 @@ class Garjus:
         return self._xnat.select.project(project).exists()
 
     def project_exists(self, project):
-        """True if this this project exists."""
-        redcap_exists = (project in self.projects())
+        """True if this project exists."""
+        #redcap_exists = (project in self.projects())
+
         xnat_exists = self._xnat.select.project(project).exists()
         return redcap_exists and xnat_exists
 
