@@ -220,15 +220,15 @@ class Garjus:
             logger.info('cannot load activity, redcap not enabled')
             return None
 
-        _fields = [self._dfield()]
         if project:
-            rec = self._rc.export_records(
-                records=[project],
-                forms=['activity'],
-                fields=_fields)
+            projects = [project]
         else:
-            # All activity
-            rec = self._rc.export_records(forms=['activity'], fields=_fields)
+            projects = self.projects()
+
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['activity'],
+            fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'activity']
         for r in rec:
