@@ -3,14 +3,14 @@ import os
 from datetime import datetime
 import pandas as pd
 
-from ...garjus import Garjus
+from ....garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.stats.data')
 
 
 def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
+    datadir = f'{Garjus.userdir()}/DATA'
     filename = f'{datadir}/statsdata.pkl'
 
     try:
@@ -31,21 +31,26 @@ def run_refresh(filename, projects):
 
 
 def load_options(selected_proj=None):
-    garjus = Garjus()
 
-    if not garjus.redcap_enabled():
+    try:
+        garjus = Garjus()
+
+        if not garjus.redcap_enabled():
+            return [], []
+
+        proj_options = garjus.projects()
+
+        proc_options = []
+        if selected_proj:
+            for p in selected_proj:
+                proc_options.extend(garjus.stattypes(p))
+
+        proc_options = sorted(list(set(proc_options)))
+
+        return proj_options, proc_options
+    except Exception as err:
+        logger.debug(err)
         return [], []
-
-    proj_options = garjus.projects()
-
-    proc_options = []
-    if selected_proj:
-        for p in selected_proj:
-            proc_options.extend(garjus.stattypes(p))
-
-    proc_options = sorted(list(set(proc_options)))
-
-    return proj_options, proc_options
 
 
 def load_data(projects, refresh=False, filename=None):

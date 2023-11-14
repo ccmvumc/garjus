@@ -335,7 +335,7 @@ def get_content():
                 dbc.Switch(
                     id='switch-qa-autofilter',
                     label='Autofilter',
-                    value=True,
+                    value=False,
                 ),
                 align='center',
             ),

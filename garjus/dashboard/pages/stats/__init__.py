@@ -365,7 +365,7 @@ def _session_pivot(df):
     return dfp
 
 
-@app.callback(
+@callback(
     [Output('dropdown-stats-proc', 'options'),
      Output('dropdown-stats-proj', 'options'),
      Output('dropdown-stats-sess', 'options'),

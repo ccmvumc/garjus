@@ -70,10 +70,13 @@ class Garjus:
             logger.debug('REDCap disabled, no credentials in ~/.redcap.txt')
             self._rc = None
 
-        if current_user.is_authenticated:
-            hostname = current_user.hostname
-            username = current_user.id
-            self._xnat = self._alias_xnat(hostname, username)
+        if current_user:
+            if current_user.is_authenticated:
+                hostname = current_user.hostname
+                username = current_user.id
+                self._xnat = self._alias_xnat(hostname, username)
+            else:
+                raise Exception('user not authenticated')
         elif xnat_interface:
             self._xnat = xnat_interface
         else:
@@ -120,8 +123,21 @@ class Garjus:
                 pass
 
     @staticmethod
-    def default_cachedir():
-        return os.path.expanduser('~/.garjus')
+    def userdir():
+
+        if current_user.is_authenticated:
+            username = current_user.id
+        else:
+            username = 'UnknownUser'
+
+        userdir = f'{os.path.expanduser("~/.garjus")}/{username}'
+
+        try:
+            os.makedirs(userdir)
+        except FileExistsError:
+            pass
+
+        return userdir
 
     @staticmethod
     def login(hostname, username, password):
@@ -410,22 +426,25 @@ class Garjus:
         """Return the current existing issues data as list of dicts."""
         data = []
 
+        if project:
+            projects = [project]
+        else:
+            # only our projects
+            projects = self.projects()
+
         if not self.redcap_enabled():
             logger.info('cannot load issues, redcap not enabled')
             return None
 
         # Get the data from redcap
         _fields = [self._dfield()]
-        if project:
-            # Only the specified project
-            rec = self._rc.export_records(
-                records=[project],
-                forms=['issues'],
-                fields=_fields,
-            )
-        else:
-            # All issues
-            rec = self._rc.export_records(forms=['issues'], fields=_fields)
+
+        # Only the specified project
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['issues'],
+            fields=_fields,
+        )
 
         # Only unresolved issues
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
@@ -447,19 +466,19 @@ class Garjus:
         DONE_LIST = ['COMPLETE', 'JOB_FAILED']
         data = []
 
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
+
         if not self.redcap_enabled():
             logger.info('cannot load tasks, redcap not enabled')
             return None
 
-        if projects:
-            rec = self._rc.export_records(
-                records=projects,
-                forms=['taskqueue'],
-                fields=[self._dfield()])
-        else:
-            rec = self._rc.export_records(
-                forms=['taskqueue'],
-                fields=[self._dfield()])
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['taskqueue'],
+            fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
 
@@ -541,18 +560,19 @@ class Garjus:
             logger.info('cannot delete issues, redcap not enabled')
             return None
 
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
+
         # Get the data from redcap
         _fields = [self._dfield()]
-        if projects:
-            # Only the specified project
-            rec = self._rc.export_records(
-                records=projects,
-                forms=['issues'],
-                fields=_fields,
-            )
-        else:
-            # All issues
-            rec = self._rc.export_records(forms=['issues'], fields=_fields)
+        # Only the specified project
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['issues'],
+            fields=_fields,
+        )
 
         # Only resolved issues
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'issues']
@@ -752,18 +772,24 @@ class Garjus:
             logger.info('cannot load sites, redcap not enabled')
             return None
 
-        return self._rc.export_records(records=[project], forms=['sites'])
+        if project:
+            projects = [project]
+        else:
+            projects = self.projects()
+
+        return self._rc.export_records(records=projects, forms=['sites'])
 
     def _load_project_names(self):
         names = []
 
-        if self.redcap_enabled():
-            _records = self._rc.export_records(fields=[self._rc.def_field])
-            names = [x[self._rc.def_field] for x in _records]
-        else:
-            # Load from xnat
-            names = utils_xnat.get_my_projects(self.xnat())
-            logger.debug(f'my xnat projects={names}')
+        #if self.redcap_enabled():
+        #    _records = self._rc.export_records(fields=[self._rc.def_field])
+        #    names = [x[self._rc.def_field] for x in _records]
+        #    logger.debug(f'my redcap projects={names}')
+        #else:
+        # Load from xnat
+        names = utils_xnat.get_my_projects(self.xnat())
+        logger.debug(f'my xnat projects={names}')
 
         return names
 
@@ -796,14 +822,14 @@ class Garjus:
         logger.debug(f'analyses projects={projects}')
 
         if projects:
-            rec = self._rc.export_records(
-                records=projects,
-                forms=['analyses'],
-                fields=[self._dfield()])
+            projects = [x for x in projects if x in self.projects()]
         else:
-            rec = self._rc.export_records(
-                forms=['analyses'],
-                fields=[self._dfield()])
+            projects = self.projects()
+
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['analyses'],
+            fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
         for r in rec:
@@ -1094,7 +1120,7 @@ class Garjus:
 
             # Remove extra whitespace from keys and values
             scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
-        except ValueError:
+        except (ValueError, AttributeError):
             scanmap = {}
 
         return scanmap
@@ -1283,6 +1309,9 @@ class Garjus:
     def reports(self, projects=None):
         data = []
 
+        # only our projects
+        projects = [x for x in projects if x in self.projects()]
+
         # Load Progress Reports
         for r in self.progress_reports(projects):
             d = {
@@ -1320,12 +1349,15 @@ class Garjus:
             logger.info('cannot load progress reports, redcap not enabled')
             return None
 
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
+
         rec = self._rc.export_records(
+            records=projects,
             forms=['progress'],
             fields=[self._dfield()])
-
-        if projects:
-            rec = [x for x in rec if x[self._dfield()] in projects]
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'progress']
         rec = [x for x in rec if str(x['progress_complete']) == '2']
@@ -1338,12 +1370,17 @@ class Garjus:
             logger.info('cannot load double reports, redcap not enabled')
             return None
 
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
+
+
         rec = self._rc.export_records(
+            records=projects,
             forms=['double'],
             fields=[self._dfield()])
 
-        if projects:
-            rec = [x for x in rec if x[self._dfield()] in projects]
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'double']
         rec = [x for x in rec if str(x['double_complete']) == '2']
@@ -1357,8 +1394,13 @@ class Garjus:
             logger.info('cannot load processing protocols, redcap not enabled')
             return None
 
+        if project:
+            projects = [project]
+        else:
+            projects = self.projects()
+
         rec = self._rc.export_records(
-            records=[project],
+            records=projects,
             forms=['processing'],
             fields=[self._dfield()])
 

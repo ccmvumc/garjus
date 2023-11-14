@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from ...garjus import Garjus
+from ....garjus import Garjus
 from ..utils import file_age
 
 
@@ -12,7 +12,7 @@ logger = logging.getLogger('dashboard.issues.data')
 
 # This is where we save our cache of the data
 def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
+    datadir = f'{Garjus.userdir()}/DATA'
     filename = f'{datadir}/issuesdata.pkl'
 
     try:

@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 from .. import utils
-from ...garjus import Garjus
+from ....garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.activity.data')
@@ -13,7 +13,7 @@ logger = logging.getLogger('dashboard.activity.data')
 
 # This is where we save our cache of the data
 def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
+    datadir = f'{Garjus.userdir()}/DATA'
     filename = f'{datadir}/activitydata.pkl'
 
     try:

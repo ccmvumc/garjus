@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 
 from .. import utils
 from . import data
-from ...dictionary import COLUMNS
+from ....dictionary import COLUMNS
 
 logger = logging.getLogger('dashboard.processors')
 

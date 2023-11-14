@@ -2,14 +2,14 @@ import logging
 import os
 import pandas as pd
 
-from ...garjus import Garjus
+from ....garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.reports.data')
 
 
 def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
+    datadir = f'{Garjus.userdir()}/DATA'
     filename = f'{datadir}/reportsdata.pkl'
 
     try:

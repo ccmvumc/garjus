@@ -41,13 +41,9 @@ QA_COLS = [
     'MODALITY']
 
 
-def get_filename(username=None):
-    datadir = f'{Garjus.default_cachedir()}/DATA'
-
-    if username:
-        filename = f'{datadir}/{username}.qadata.pkl'
-    else:
-        filename = f'{datadir}/qadata.pkl'
+def get_filename():
+    datadir = f'{Garjus.userdir()}/DATA'
+    filename = f'{datadir}/qadata.pkl'
 
     try:
         os.makedirs(datadir)
@@ -103,8 +99,8 @@ def update_data(projects, hidetypes):
     return df
 
 
-def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True, username=None):
-    fname = get_filename(username)
+def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
+    fname = get_filename()
 
     if not os.path.exists(fname):
         refresh = True

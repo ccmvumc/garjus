@@ -2,7 +2,7 @@ import logging
 import os
 
 from .. import utils
-from ...garjus import Garjus
+from ....garjus import Garjus
 
 
 logger = logging.getLogger('dashboard.queue.data')
@@ -10,7 +10,7 @@ logger = logging.getLogger('dashboard.queue.data')
 
 # This is where we save our cache of the data
 def get_filename():
-    datadir = f'{Garjus().cachedir()}/DATA'
+    datadir = f'{Garjus.userdir()}/DATA'
     filename = f'{datadir}/queuedata.pkl'
 
     try:
