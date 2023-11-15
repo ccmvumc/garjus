@@ -78,7 +78,7 @@ def _load_dax_queue():
         df['PROCTYPE'] = df['LABEL'].str.split('-x-', n=4, expand=True)[3]
 
         # Add some text to avoid blanks in the table
-        df['JOBID'].fillna('not in queue', inplace=True)
+        df['JOBID'].astype(str).fillna('not in queue', inplace=True)
 
         # create a concatenated status that maps to full status
         df['psST'] = df['procstatus'].fillna('NONE') + df['ST'].fillna('NONE')
