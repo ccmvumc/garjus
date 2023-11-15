@@ -149,11 +149,20 @@ footer_content = [
     html.Hr(),
     html.Div(
         [
-            html.A(
-                "garjus",
-                href='https://github.com/ccmvumc/garjus',
-                target="_blank",
-            )
+            dbc.Row([
+                dbc.Col(
+                    html.A(
+                        "garjus",
+                        href='https://github.com/ccmvumc/garjus',
+                        target="_blank",
+                )),
+                dbc.Col(
+                    html.A('xnat', href='https://xnat.vanderbilt.edu/xnat'),
+                ),
+                dbc.Col(
+                    html.A('logout', href='../logout'),
+                ),
+            ]),
         ],
         style={'textAlign': 'center'},
     ),
