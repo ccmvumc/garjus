@@ -134,6 +134,7 @@ def _d2n(dicomdir, scan_object):
     niftis = utils_dcm2nii.dicom2nifti(dicomdir)
     if not niftis:
         logger.info(f'nothing converted:{dicomdir}')
+        scan_object.attrs.set('quality': 'unusable')
         return None
 
     # upload the converted files, NIFTI/JSON/BVAL/BVEC
