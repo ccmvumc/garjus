@@ -48,7 +48,7 @@ def process(project, datadir):
     file_field = 'arc_testfile'
     results = []
     def_field = project.def_field
-    fields = [def_field, file_field, 'arc_response_date','arc_day_index', 'arc_order_index']
+    fields = [def_field, file_field, 'arc_response_date','arc_day_index', 'arc_order_index', 'vitals_date']
     subj2id = {}
     subjects = []
     file_glob = f'{datadir}/device_*_test_*.json'
@@ -135,6 +135,8 @@ def process(project, datadir):
                     elif abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
                         continue
+                    elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 30:
+                        continue
                     else:
                         same_event = r['redcap_event_name']
                         break
@@ -159,14 +161,19 @@ def process(project, datadir):
                 # no match found, make a new one, but first determine event
                 logger.debug(f'no record yet:{subj}:{arc_response_date}:{arc_day_index}:{arc_order_index}:{base_file}')
 
+                event_id = None
+
                 if same_event:
                     event_id = same_event
-                else:
-                    event_id = None
-                    if 'month_8_arm_3' in subj_events:
-                        event_id = 'month_8_arm_3'
-                    elif 'baselinemonth_0_arm_3' in subj_events:
-                        event_id = 'baselinemonth_0_arm_3'
+                #else:
+                #    if 'month_24_arm_3' in subj_events:
+                #        event_id = 'month_24_arm_3'
+                #    elif 'month_16_arm_3' in subj_events:
+                #        event_id = 'month_16_arm_3'
+                #    elif 'month_8_arm_3' in subj_events:
+                #        event_id = 'month_8_arm_3'
+                #    elif 'baselinemonth_0_arm_3' in subj_events:
+                #        event_id = 'baselinemonth_0_arm_3'
 
                 if not event_id:
                     # no event found, cannot upload
