@@ -79,7 +79,8 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         logging.debug(f'running automation:{project}:{a}')
         _run_etl_automation(a, garjus, project)
 
-    _run_edat_automations(edat_autos, garjus, project)
+    if edat_autos:
+        _run_edat_automations(edat_autos, garjus, project)
 
 
 def _run_edat_automations(automations, garjus, project):
@@ -204,7 +205,10 @@ def _run_etl_automation(automation, garjus, project):
         logger.debug(f'primary redcap not found:{project}')
         return
 
-    if automation == 'etl_gaitrite':
+    if automation == 'etl_arcdata':
+        arc_dir = garjus.project_setting(project, 'arcdatadir')
+        results = _run_etl_arcdata(project_redcap, arc_dir)
+    elif automation == 'etl_gaitrite':
         results = _run_etl_gaitrite(project_redcap)
     elif automation == 'etl_nihexaminer':
         results = _run_etl_nihexaminer(project_redcap)
@@ -291,6 +295,18 @@ def _run_etl_nihtoolbox_drtaylor(project):
         results.append({'subject': record_id, 'event': event_id})
 
     return results
+
+
+def _run_etl_arcdata(project, datadir):
+
+    # load the automation
+    try:
+        mod = importlib.import_module(f'garjus.automations.etl_arcdata')
+    except ModuleNotFoundError as err:
+        logger.error(f'error loading module:{err}')
+        return
+
+    return mod.process(project, datadir)
 
 
 def _run_etl_gaitrite(project):
