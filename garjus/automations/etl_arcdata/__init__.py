@@ -111,13 +111,16 @@ def _process(project, record_id, event_id, repeat_id):
 
 def _process_context_survey(data):
 
-    return {
-        'arc_context1': data['questions'][0]['text_value'],
-        'arc_context2': data['questions'][1]['text_value'],
-        'arc_context3': str(data['questions'][2]['value']),
-        'arc_context4': str(data['questions'][3]['value']),
-        'arc_context5': data['questions'][4]['text_value'],
-    }
+    try: 
+        return {
+            'arc_context1': data['questions'][0]['text_value'],
+            'arc_context2': data['questions'][1]['text_value'],
+            'arc_context3': str(data['questions'][2]['value']),
+            'arc_context4': str(data['questions'][3]['value']),
+            'arc_context5': data['questions'][4]['text_value'],
+        }
+    except KeyError:
+        return {}
 
 
 def _process_price_test(data):
