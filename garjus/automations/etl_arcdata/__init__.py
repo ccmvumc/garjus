@@ -111,7 +111,7 @@ def _process(project, record_id, event_id, repeat_id):
 
 def _process_context_survey(data):
 
-    try: 
+    try:
         return {
             'arc_context1': data['questions'][0]['text_value'],
             'arc_context2': data['questions'][1]['text_value'],
@@ -119,7 +119,7 @@ def _process_context_survey(data):
             'arc_context4': str(data['questions'][3]['value']),
             'arc_context5': data['questions'][4]['text_value'],
         }
-    except KeyError:
+    except (KeyError, IndexError):
         return {}
 
 
