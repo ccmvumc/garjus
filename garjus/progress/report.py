@@ -450,6 +450,23 @@ def _add_graph_page(pdf, info):
         else:
             graph.add_node(pydot.Node(scan, color='orange'))
 
+    if 'NMQA_v1' in proctypes:
+        graph.add_node(pydot.Node('NMQA_v1', color='lightblue'))
+        graph.add_edge(pydot.Edge('NM', 'NMQA_v1'))
+        graph.add_edge(pydot.Edge('T1', 'NMQA_v1'))
+
+    if 'fMRI_EEfRT1' in scantypes:
+        graph.add_node(pydot.Node('EEfRT', color='violet'))
+        graph.add_node(pydot.Node('fmriqa_v4', color='lightgreen'))
+        graph.add_edge(pydot.Edge('fMRI_EEfRT1', 'fmriqa_v4'))
+        graph.add_edge(pydot.Edge('fMRI_EEfRT2', 'fmriqa_v4'))
+        graph.add_edge(pydot.Edge('fMRI_EEfRT3', 'fmriqa_v4'))
+
+    if 'fMRI_MIDT1' in scantypes:
+        graph.add_node(pydot.Node('MIDT', color='violet'))
+        graph.add_edge(pydot.Edge('fMRI_MIDT1', 'fmriqa_v4'))
+        graph.add_edge(pydot.Edge('fMRI_MIDT2', 'fmriqa_v4'))
+
     # Default proctypes
     graph.add_node(pydot.Node('FS7_v1', color='lightgreen'))
     graph.add_node(pydot.Node('FS7HPCAMG_v1', color='lightgreen'))
@@ -470,16 +487,16 @@ def _add_graph_page(pdf, info):
         graph.add_node(pydot.Node('fmri_msit_v2', color='lightgreen'))
         graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
 
-    if 'fmri_bct_v1' in proctypes:
+    if 'fmri_bct_v2' in proctypes:
         graph.add_node(pydot.Node('struct_preproc_v1', color='lightgreen'))
         graph.add_edge(pydot.Edge('T1', 'struct_preproc_v1'))
         graph.add_edge(pydot.Edge('FLAIR', 'struct_preproc_v1'))
-        graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v2'))
-        graph.add_edge(pydot.Edge('fMRI_REST1', 'fmri_rest_v2'))
-        graph.add_edge(pydot.Edge('fMRI_REST2', 'fmri_rest_v2'))
-        graph.add_edge(pydot.Edge('fmri_rest_v2', 'fmri_roi_v1'))
-        graph.add_edge(pydot.Edge('fmri_roi_v1', 'fmri_bct_v1'))
-        graph.add_node(pydot.Node('fmri_bct_v1', color='lightgreen'))
+        graph.add_edge(pydot.Edge('struct_preproc_v1', 'fmri_rest_v4'))
+        graph.add_edge(pydot.Edge('fMRI_REST1', 'fmri_rest_v4'))
+        graph.add_edge(pydot.Edge('fMRI_REST2', 'fmri_rest_v4'))
+        graph.add_edge(pydot.Edge('fmri_rest_v4', 'fmri_roi_v2'))
+        graph.add_edge(pydot.Edge('fmri_roi_v2', 'fmri_bct_v2'))
+        graph.add_node(pydot.Node('fmri_bct_v2', color='lightgreen'))
 
     if 'struct_preproc_noflair_v1' in proctypes:
         graph.add_edge(pydot.Edge(
@@ -506,8 +523,10 @@ def _add_graph_page(pdf, info):
         graph.add_node(pydot.Node('AMYVIDQA_v2', color='lightgreen'))
 
     if 'BrainAgeGap_v2' in proctypes:
+        graph.add_node(pydot.Node('Multi_Atlas_v3', color='lightgreen'))
         graph.add_node(pydot.Node('BrainAgeGap_v2', color='lightgreen'))
-        graph.add_edge(pydot.Edge('T1', 'BrainAgeGap_v2'))
+        graph.add_edge(pydot.Edge('T1', 'Multi_Atlas_v3'))
+        graph.add_edge(pydot.Edge('Multi_Atlas_v3', 'BrainAgeGap_v2'))
 
     # Make the graph, draw to pdf
     image = Image.open(io.BytesIO(graph.create_png()))
@@ -628,7 +647,7 @@ def _add_stats_fmriqa(pdf, stats, info):
         left_on='ASSR',
         right_on='ASSR')
 
-    for t in df.SCANTYPE.unique():
+    for t in sorted(df.SCANTYPE.unique()):
         if t in ['fMRI_rest', 'fMRI_REST_FSA']:
             continue
 
@@ -1232,6 +1251,9 @@ def make_pdf(info, filename):
 
     # Directed Graph of processing
     # TODO: only run if graphviz/dot are installed
+    # TODO: build the graph dynamically using same logic as dashboard autofilter
+    # to find used scan types, then list unused to the side with counts
+    # and then do the for proc types based on enabled in processing or not
     _add_graph_page(pdf, info)
 
     # Settings
