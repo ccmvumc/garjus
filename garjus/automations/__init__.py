@@ -628,7 +628,7 @@ def _run_etl_nihexaminer(project):
 def _run_scan_automations(automations, garjus, project):
     results = []
     proj_scanmap = garjus.project_setting(project, 'scanmap')
-    sess_replace = garjus.project_setting(project, 'relabelreplace')
+    sess_replace = garjus.project_setting(project, 'relabelreplace').split(',')
     scan_data = garjus.scanning_protocols(project)
     site_data = garjus.sites(project)
     protocols = garjus.scanning_protocols(project)
