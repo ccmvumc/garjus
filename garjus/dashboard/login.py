@@ -9,7 +9,17 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 
-# This file serves the same purpose as index.py but wrapped in a flask app 
+from .pages import qa
+from .pages import activity
+from .pages import issues
+from .pages import queue
+from .pages import stats
+from .pages import analyses
+from .pages import processors
+from .pages import reports
+
+
+# This file serves the same purpose as index.py but wrapped in a flask app
 # with user/password authentication. garjus will return this app when
 # login option is requested.
 
@@ -28,14 +38,14 @@ def check_login():
             return
         if current_user:
             if current_user.is_authenticated:
-                print(current_user.id)
+                logger.debug(f'user is authenticated:{current_user.id}')
                 return
         return redirect(url_for('login'))
     else:
         if current_user:
             if request.path == '/login' or current_user.is_authenticated:
                 return
-        return jsonify({'status':'401', 'statusText':'unauthorized access'})
+        return jsonify({'status': '401', 'statusText': 'unauthorized access'})
 
 
 @server.route('/login', methods=['POST', 'GET'])
@@ -65,7 +75,7 @@ def login(message=""):
                     return redirect(url)
                 else:
                     # redirect to home
-                    return redirect('/') 
+                    return redirect('/')
             else:
                 # Invalid so set the return message to display
                 message = 'invalid username and/or password'
@@ -124,25 +134,13 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(username):
-    """This function loads the user by user id. Typically this looks up the user from a user database.
-    We won't be registering or looking up users in this example, since we'll just login using LDAP server.
-    So we'll simply return a User object with the passed in username.
-    """
+    """This function loads the user by user id."""
     return User(username)
+
 
 def redcap_found():
     from ..garjus import Garjus
     return Garjus.redcap_found
-
-
-from .pages import qa
-from .pages import activity
-from .pages import issues
-from .pages import queue
-from .pages import stats
-from .pages import analyses
-from .pages import processors
-from .pages import reports
 
 
 footer_content = [
@@ -155,7 +153,8 @@ footer_content = [
                         "garjus",
                         href='https://github.com/ccmvumc/garjus',
                         target="_blank",
-                )),
+                    ),
+                ),
                 dbc.Col(
                     html.A('xnat', href='https://xnat.vanderbilt.edu/xnat'),
                 ),
@@ -175,7 +174,7 @@ if redcap_found():
             tab_id='tab-qa',
             children=qa.get_content(),
         ),
-         dbc.Tab(
+        dbc.Tab(
             label='Issues',
             tab_id='tab-issues',
             children=issues.get_content(),
