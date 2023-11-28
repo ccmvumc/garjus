@@ -224,7 +224,7 @@ def _get_graph_content(dfp):
     tabs_content.append(dbc.Tab(label=label, children=[graph]))
 
     # Return the tabs wrapped in a spinning loader
-    return [dbc.Tabs(id='tabs-qa', children=tabs_content)]
+    return [dbc.Tabs(id='tabs-qa', children=tabs_content, active_tab="tab-0")]
 
 
 def _sessionsbytime_figure(df, selected_groupby):
@@ -638,8 +638,6 @@ def update_qa(
 ):
     graph_content = []
     refresh = False
-
-    print('update_qa()')
 
     logger.debug('update_all')
 
