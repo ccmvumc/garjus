@@ -53,18 +53,18 @@ def get_filename():
     return filename
 
 
-def run_refresh(projects, hidetypes=True):
+def run_refresh(projects):
     filename = get_filename()
 
     # force a requery
-    df = get_data(projects, hidetypes=hidetypes)
+    df = get_data(projects)
 
     save_data(df, filename)
 
     return df
 
 
-def update_data(projects, hidetypes):
+def update_data(projects):
     fname = get_filename()
 
     # Load what we have now
@@ -86,7 +86,7 @@ def update_data(projects, hidetypes):
         save_data(df, fname)
 
         # Load the new projects
-        dfp = get_data(new_projects, hidetypes=hidetypes)
+        dfp = get_data(new_projects)
 
         # Merge our new data with old data
         df = read_data(fname)
@@ -109,13 +109,48 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
         refresh = True
 
     if refresh:
-        df = run_refresh(projects, hidetypes)
+        df = run_refresh(projects)
     elif set(projects) != set(read_data(fname).PROJECT.unique()):
         logger.debug('updating data')
         # Different projects selected, update
-        df = update_data(projects, hidetypes)
+        df = update_data(projects)
     else:
         df = read_data(fname)
+
+    if hidetypes:
+        logger.debug('applying autofilter to hide unused types')
+        scantypes = None
+        assrtypes = None
+
+        garjus = Garjus()
+
+        if garjus.redcap_enabled():
+            # Load types
+            logger.debug('loading scan/assr types')
+            scantypes = garjus.all_scantypes()
+            assrtypes = garjus.all_proctypes()
+
+            # Make the lists unique
+            scantypes = list(set(scantypes))
+            assrtypes = list(set(assrtypes))
+
+        if not scantypes and not assr_df.empty:
+            # Get list of scan types based on assessor inputs
+            logger.debug('loading used scan types')
+            scantypes = garjus.used_scantypes(
+                df[df.TYPE == 'ASSR'],
+                df[df.TYPE == 'SCAN']
+            )
+
+        # Apply filter
+        alltypes = scantypes + assrtypes
+
+        if alltypes is not None:
+            logger.debug(f'filtering by types:{len(df)}')
+            df = df[df.TYPE.isin(alltypes)]
+
+    logger.debug(f'done filtering by types:{len(df)}')
+
 
     df = df[df['PROJECT'].isin(projects)]
     df = df.dropna(subset=['TYPE'])
@@ -133,7 +168,7 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(projects, hidetypes=True):
+def get_data(projects):
     df = pd.DataFrame(columns=QA_COLS)
 
     if not projects:
@@ -158,27 +193,6 @@ def get_data(projects, hidetypes=True):
         return pd.DataFrame(columns=_cols)
 
     logger.debug(f'merging data:{projects}')
-    if hidetypes:
-        logger.debug('applying autofilter to hide unused types')
-        scantypes = None
-        assrtypes = None
-
-        if garjus.redcap_enabled():
-            # Load types
-            logger.debug('loading scan/assr types')
-            scantypes = garjus.all_scantypes()
-            assrtypes = garjus.all_proctypes()
-
-            # Make the lists unique
-            scantypes = list(set(scantypes))
-            assrtypes = list(set(assrtypes))
-
-        if not scantypes and not assr_df.empty:
-            # Get list of scan types based on assessor inputs
-            logger.debug('loading used scan types')
-            scantypes = garjus.used_scantypes(assr_df, scan_df)
-
-        scan_df, assr_df = _filter(scan_df, assr_df, scantypes, assrtypes)
 
     # Make a common column for type
     assr_df['TYPE'] = assr_df['PROCTYPE']
