@@ -97,8 +97,11 @@ def logout():
 # Prep the configs for the app
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 assets_path = os.path.expanduser('~/git/garjus/garjus/dashboard/assets')
-hour = datetime.datetime.now().hour
-if hour < 9 or hour > 17:
+darkmode = True
+
+#hour = datetime.datetime.now().hour
+#if hour < 9 or hour > 17:
+if darkmode:
     stylesheets = [dbc.themes.DARKLY, dbc_css]
     load_figure_template("darkly")
 else:
