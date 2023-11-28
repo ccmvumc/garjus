@@ -64,7 +64,7 @@ def process(project, datadir):
                 'field': file_field})
 
     logger.debug('summary')
-    results = summary.process(project)
+    results = results + summary.process(project)
 
     return results
 
