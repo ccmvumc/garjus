@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime
 
 
@@ -21,7 +20,7 @@ def process(project):
     results = []
     def_field = project.def_field
     fields = [def_field, 'arcapp_numcomplete', 'arc_finishedsession', 'arc_response_date']
-    id2subj = {}
+    subj2id = {}
     subjects = []
 
     # Handle secondary ID
@@ -78,11 +77,12 @@ def process(project):
                 def_field: subj_id,
                 'redcap_event_name': event_id,
                 'arcapp_numcomplete': str(count_finished),
+                'arc_app_complete': '2',
             }
             logger.debug(f'loading numcomplete:{subj_id}:{event_id}')
- 
+
             _load(project, [data])
- 
+
             results.append({
                 'result': 'COMPLETE',
                 'description': 'arc_summary',
