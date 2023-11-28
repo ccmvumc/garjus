@@ -194,7 +194,9 @@ PROCLIB = {
         'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/Samseg',
     },
     'fmriqa_v4': {
+        'inputs_descrip': 'T1w MRI processed with SLANT, fMRI',
         'short_descrip': 'Functional MRI QA',
+        'procurl': 'https://github.com/baxpr/fmriqa',
         'stats_subset': ['dvars_mean', 'fd_mean'],
     },
     'fmri_emostroop_v2': {
@@ -265,8 +267,8 @@ STATLIB = {
         'wml_volume': 'White Matter Lesion Volume',
     },
     'fmriqa_v4': {
-        'dvars_mean': 'DVARS, framewise signal',
-        'fd_mean': 'Framewise Displacement',
+        'dvars_mean': 'Derivative of Variance of voxels (measure of signal consistency)',
+        'fd_mean': 'Framewise Displacement (measure of motion between adjacent volumes)',
     },
     'struct_preproc_v1': {
         'Volume1': 'Gray Matter',
