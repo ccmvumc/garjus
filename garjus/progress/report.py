@@ -17,6 +17,7 @@ import plotly.graph_objs as go
 import plotly.subplots
 import plotly.express as px
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 from PIL import Image
 
 
@@ -125,9 +126,9 @@ class MYPDF(FPDF):
         self.set_text_color(100, 100, 100)
         self.set_draw_color(100, 100, 100)
         self.line(x1=0.2, y1=10.55, x2=8.3, y2=10.55)
-        self.cell(w=1, txt=self.date)
-        self.cell(w=5, align='C', txt=self.title)
-        self.cell(w=2.5, align='C', txt=str(self.page_no()))
+        self.cell(w=1, text=self.date)
+        self.cell(w=5, align='C', text=self.title)
+        self.cell(w=2.5, align='C', text=str(self.page_no()))
 
 
 def blank_letter():
@@ -173,7 +174,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
 
     # Draw heading
     pdf.set_font('helvetica', size=14)
-    pdf.cell(w=7.5, h=0.5, txt=_txt, align='C', border=0, ln=1)
+    pdf.cell(w=7.5, h=0.5, text=_txt, align='C', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # Header Formatting
     pdf.cell(w=1.0)
@@ -184,7 +185,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
     # Column header for each session type
     pdf.cell(indent_width)
     for cur_type in type_list:
-        pdf.cell(**_kwargs, txt=cur_type)
+        pdf.cell(**_kwargs, text=cur_type)
 
     # Got to next line
     pdf.ln()
@@ -208,19 +209,19 @@ def _draw_counts(pdf, sessions, rangetype=None):
         if len(_txt) > 9:
             pdf.set_font('helvetica', size=11)
 
-        pdf.cell(**_kwargs_s, txt=_txt)
+        pdf.cell(**_kwargs_s, text=_txt)
 
         pdf.set_font('helvetica', size=18)
 
         # Count each type for this site
         for cur_type in type_list:
             cur_count = str(len(dfs[dfs.SESSTYPE == cur_type]))
-            pdf.cell(**_kwargs, txt=cur_count)
+            pdf.cell(**_kwargs, text=cur_count)
 
         if len(type_list) > 1:
             # Total for site
             cur_count = str(len(dfs))
-            pdf.cell(**_kwargs_t, txt=cur_count, ln=1)
+            pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     if len(site_list) > 1:
         # TOTALS row
@@ -229,10 +230,10 @@ def _draw_counts(pdf, sessions, rangetype=None):
         for cur_type in type_list:
             pdf.set_font('helvetica', size=18)
             cur_count = str(len(df[df.SESSTYPE == cur_type]))
-            pdf.cell(**_kwargs, txt=cur_count)
+            pdf.cell(**_kwargs, text=cur_count)
 
         # Grandtotal
-        pdf.cell(**_kwargs_t, txt=str(len(df)))
+        pdf.cell(**_kwargs_t, text=str(len(df)))
 
     # End by going to next line
     pdf.ln()
@@ -371,13 +372,13 @@ def _add_count_pages(pdf, sessions, disable_monthly=False):
     # Start the page with titles
     pdf.add_page()
     pdf.set_font('helvetica', size=22)
-    pdf.cell(w=7.5, h=0.4, align='C', txt=pdf.title, ln=1)
-    pdf.cell(w=7.5, h=0.4, align='C', txt=pdf.subtitle, ln=1, border='B')
+    pdf.cell(w=7.5, h=0.4, align='C', text=pdf.title, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(w=7.5, h=0.4, align='C', text=pdf.subtitle, border='B', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(0.25)
 
     # Show all MRI session counts
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, h=0.4, align='C', txt='MRI')
+    pdf.cell(w=7.5, h=0.4, align='C', text='MRI')
     pdf.ln(0.25)
     _draw_counts(pdf, mr_sessions)
     pdf.ln(1)
@@ -388,7 +389,7 @@ def _add_count_pages(pdf, sessions, disable_monthly=False):
             pdf.add_page()
 
         # Show MRI session counts in date range
-        pdf.cell(w=7.5, h=0.4, align='C', txt='MRI')
+        pdf.cell(w=7.5, h=0.4, align='C', text='MRI')
         pdf.ln(0.25)
         _draw_counts(pdf, mr_sessions, rangetype='lastmonth')
         pdf.ln(1)
@@ -406,28 +407,28 @@ def _add_graph_page(pdf, info):
 
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, align='C', txt='Processing Graph', ln=1)
+    pdf.cell(w=7.5, align='C', text='Processing Graph', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font('helvetica', size=9)
 
     # MR Scan are orange
     pdf.set_fill_color(255, 166, 0)
-    pdf.cell(h=0.3, txt='MR Scan', fill=True, ln=1)
+    pdf.cell(h=0.3, text='MR Scan', fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # PET Scan are chocolate
     pdf.set_fill_color(210, 105, 30)
-    pdf.cell(h=0.3, txt='PET Scan', fill=True, ln=1)
+    pdf.cell(h=0.3, text='PET Scan', fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # EDAT are pink
     pdf.set_fill_color(238, 130, 238)
-    pdf.cell(h=0.3, txt='EDAT', fill=True, ln=1)
+    pdf.cell(h=0.3, text='EDAT', fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # Processing with stats are green
     pdf.set_fill_color(144, 238, 144)
-    pdf.cell(h=0.3, txt='Processing with stats', fill=True, ln=1)
+    pdf.cell(h=0.3, text='Processing with stats', fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # Processing without stats are blue
     pdf.set_fill_color(173, 216, 230)
-    pdf.cell(h=0.3, txt='Processing without stats', fill=True, ln=1)
+    pdf.cell(h=0.3, text='Processing without stats', fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.ln(0.5)
 
@@ -545,14 +546,14 @@ def _add_others(pdf, sessions, disable_monthly=False):
 
     # Show all session counts
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, h=0.4, align='C', txt='Other Modalities')
+    pdf.cell(w=7.5, h=0.4, align='C', text='Other Modalities')
     pdf.ln(0.25)
     _draw_counts(pdf, other_sessions)
     pdf.ln(1)
 
     if not disable_monthly:
         # Show session counts in date range
-        pdf.cell(w=7.5, h=0.4, align='C', txt='Other Modalities')
+        pdf.cell(w=7.5, h=0.4, align='C', text='Other Modalities')
         pdf.ln(0.25)
         _draw_counts(pdf, other_sessions, rangetype='lastmonth')
         pdf.ln(1)
@@ -583,7 +584,7 @@ def _add_wml_page(pdf, info):
     df = pd.merge(lst_data, sam_data, left_on='SESSION', right_on='SESSION')
 
     pdf.add_page()
-    pdf.cell(txt='LST vs SAMSEG', ln=1, align='C')
+    pdf.cell(text='LST vs SAMSEG', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     fig = plotly.subplots.make_subplots(rows=1, cols=1)
 
@@ -697,14 +698,14 @@ def _add_qa_page(pdf, scandata, assrdata, sesstype):
     pdf.add_page()
     pdf.set_font('helvetica', size=18)
     pdf.ln(0.5)
-    pdf.cell(w=5, align='C', txt='Scans by Type ({} Only)'.format(sesstype))
+    pdf.cell(w=5, align='C', text='Scans by Type ({} Only)'.format(sesstype))
 
     if scan_image:
         pdf.image(scan_image, x=0.5, y=1.3, w=7.5)
         pdf.ln(4.7)
 
     if assr_image:
-        pdf.cell(w=5, align='C', txt=f'Assessors by Type ({sesstype} Only)')
+        pdf.cell(w=5, align='C', text=f'Assessors by Type ({sesstype} Only)')
         pdf.image(assr_image, x=0.5, y=6, w=7.5)
 
     return pdf
@@ -723,7 +724,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
     if not disable_monthly:
         _txt += ' (all)'
 
-    pdf.cell(w=7.5, align='C', txt=_txt)
+    pdf.cell(w=7.5, align='C', text=_txt)
     image = plot_timeline(df)
     pdf.image(image, x=0.5, y=0.75, w=7.5)
     pdf.ln(5)
@@ -737,7 +738,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
         lastmonth = startdate.strftime("%B")
         _txt = 'Sessions Timeline ({})'.format(lastmonth)
         image = plot_timeline(df, startdate=startdate, enddate=enddate)
-        pdf.cell(w=7.5, align='C', txt=_txt)
+        pdf.cell(w=7.5, align='C', text=_txt)
         pdf.image(image, x=0.5, y=5.75, w=7.5)
         pdf.ln()
         pdf.add_page()
@@ -748,7 +749,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
 def _add_nda_page(pdf, info):
     pdf.add_page()
 
-    pdf.cell(txt='NDA', ln=1)
+    pdf.cell(text='NDA', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.ln(1)
 
@@ -759,63 +760,63 @@ def _add_settings_page(pdf, info):
     pdf.add_page()
 
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, align='C', txt='Project Settings', ln=1)
+    pdf.cell(w=7.5, align='C', text='Project Settings', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # Add some space
     pdf.ln(0.5)
 
     # Main Settings
     pdf.set_font('helvetica', size=14, style='B')
-    pdf.cell(txt='REDCap Projects:', ln=1)
+    pdf.cell(text='REDCap Projects:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font('helvetica', size=10)
-    pdf.cell(h=0.2, txt=f'Primary PID:{info["primary_redcap"]}', ln=1)
-    pdf.cell(h=0.2, txt=f'Secondary PID:{info["secondary_redcap"]}', ln=1)
-    pdf.cell(h=0.2, txt=f'Stats PID:{info["stats_redcap"]}', ln=1)
+    pdf.cell(h=0.2, text=f'Primary PID:{info["primary_redcap"]}', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(h=0.2, text=f'Secondary PID:{info["secondary_redcap"]}', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(h=0.2, text=f'Stats PID:{info["stats_redcap"]}', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(0.3)
 
     if info.get('xnat_scanmap', False):
         # Scan Map
         pdf.set_font('helvetica', size=14, style='B')
-        pdf.cell(txt='XNAT Scan Map', ln=1)
+        pdf.cell(text='XNAT Scan Map', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font('helvetica', size=10)
         _txt = _transform_scanmap(info['xnat_scanmap'])
-        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.multi_cell(w=5.0, h=0.2, text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.3)
 
     if info.get('nda_scanmap', False):
         # NDA Scan Map
         pdf.set_font('helvetica', size=14, style='B')
-        pdf.cell(txt='NDA Scan Map', ln=1)
+        pdf.cell(text='NDA Scan Map', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font('helvetica', size=11)
         _txt = info['nda_scanmap']
-        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.multi_cell(w=5.0, h=0.2, text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.3)
 
     if info.get('nda_expmap', False):
         # NDA Experiment Map
         pdf.set_font('helvetica', size=14, style='B')
-        pdf.cell(txt='NDA Experiment Map', ln=1)
+        pdf.cell(text='NDA Experiment Map', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font('helvetica', size=11)
         _txt = info['nda_expmap']
-        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.multi_cell(w=5.0, h=0.2, text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.3)
 
     if info.get('scan_protocols', False):
         # Scanning Protocols
         pdf.set_font('helvetica', size=14, style='B')
-        pdf.cell(txt='Scanning Protocols', ln=1)
+        pdf.cell(text='Scanning Protocols', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font('helvetica', size=11)
         _txt = '\n'.join([x['scanning_eventname'] for x in info['scan_protocols']])
-        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.multi_cell(w=5.0, h=0.2, text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.3)
 
     if info.get('edat_protocols', False):
         # EDAT Protocols
         pdf.set_font('helvetica', size=14, style='B')
-        pdf.cell(txt='EDAT Protocols', ln=1)
+        pdf.cell(text='EDAT Protocols', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font('helvetica', size=11)
         _txt = '\n'.join([x['edat_name'] for x in info['edat_protocols']])
-        pdf.multi_cell(w=5.0, h=0.2, txt=_txt, ln=1)
+        pdf.multi_cell(w=5.0, h=0.2, text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.2)
 
     return pdf
@@ -832,7 +833,7 @@ def _add_proclib_page(pdf, info):
     for k, v in proclib.items():
         # Show the proctype
         pdf.set_font('helvetica', size=16)
-        pdf.cell(txt=k, ln=1)
+        pdf.cell(text=k, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         # Build the description
         _text = v.get('short_descrip', '') + '\n'
@@ -845,7 +846,7 @@ def _add_proclib_page(pdf, info):
 
         # Show the description
         pdf.set_font('helvetica', size=12)
-        pdf.multi_cell(0, 0.3, _text, border='LBTR', align="L", ln=0)
+        pdf.multi_cell(0, 0.3, _text, border='LBTR', align="L", new_x=XPos.RIGHT, new_y=YPos.NEXT)
 
         # Add some space between proc types
         pdf.ln(0.2)
@@ -860,7 +861,7 @@ def _add_phantoms(pdf, info, disable_monthly=False):
     # Draw all timeline
     _txt = 'Phantoms (all)'
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, align='C', txt=_txt, ln=1)
+    pdf.cell(w=7.5, align='C', text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     image = plot_timeline(df)
     pdf.image(image, x=0.5, w=7.5)
     pdf.ln(5)
@@ -875,7 +876,7 @@ def _add_phantoms(pdf, info, disable_monthly=False):
 
         _txt = 'Phantoms ({})'.format(lastmonth)
         image = plot_timeline(df, startdate=startdate, enddate=enddate)
-        pdf.cell(w=7.5, align='C', txt=_txt)
+        pdf.cell(w=7.5, align='C', text=_txt)
         pdf.image(image, x=0.5, y=5.75, w=7.5)
         pdf.ln()
 
@@ -891,21 +892,21 @@ def _add_activity_page(pdf, info):
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=0.2, h=3.3)
     pdf.ln(0.5)
-    pdf.multi_cell(1.5, 0.3, txt='Jobs\n')
+    pdf.multi_cell(1.5, 0.3, text='Jobs\n')
 
     # middle third is activity section
     df = info['activity'].copy()
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=3.5, h=3.3)
     pdf.ln(3)
-    pdf.multi_cell(1.5, 0.3, txt='Autos')
+    pdf.multi_cell(1.5, 0.3, text='Autos')
 
     # bottom third is issues
     df = info['issues'].copy()
     image = plot_activity(df, 'CATEGORY')
     pdf.image(image, x=1.6, y=7.0, h=3.3)
     pdf.ln(3)
-    pdf.multi_cell(1.5, 0.3, txt='Issues\n')
+    pdf.multi_cell(1.5, 0.3, text='Issues\n')
 
     return pdf
 
@@ -1159,7 +1160,7 @@ def _add_stats_pages(pdf, info):
         # Now make the page
         pdf.add_page()
         pdf.set_font('helvetica', size=14)
-        pdf.cell(txt=proctype, ln=1)
+        pdf.cell(text=proctype, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         if proctype == 'fmriqa_v4':
             # stats by scan type using inputs field to map to scan
@@ -1177,12 +1178,12 @@ def _add_stats_pages(pdf, info):
 
         # Show the descriptions
         pdf.set_font('helvetica', size=12)
-        pdf.multi_cell(0, 0.25, _text, border='LBTR', align="L", ln=0)
+        pdf.multi_cell(0, 0.25, _text, border='LBTR', align="L", new_x=XPos.RIGHT, new_y=YPos.NEXT)
 
         _url = proc_info.get('procurl', '')
         if _url:
             pdf.set_font('helvetica', size=10)
-            pdf.cell(txt=_url, link=_url)
+            pdf.cell(text=_url, link=_url)
 
 
 def make_pdf(info, filename):
