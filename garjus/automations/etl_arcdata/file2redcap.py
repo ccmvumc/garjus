@@ -1,5 +1,4 @@
 import glob
-import re
 import logging
 import json
 import os
@@ -8,7 +7,7 @@ from datetime import datetime
 from ...utils_redcap import upload_file
 
 
-logger = logging.getLogger('garjus.automations.arc_file2redcap')
+logger = logging.getLogger('garjus.automations.etl_arcdata.file2redcap')
 
 
 # first load file to determine participant_id, session, day, session_date
@@ -36,7 +35,7 @@ def _subject_files(subject, files):
     subj_files = []
 
     for testfile in files:
-        #logger.debug(f'loading testfile:{testfile}')
+        logger.debug(f'loading testfile:{testfile}')
         d = _load_testfile(testfile)
         if d['participant_id'][1:] == subject:
             subj_files.append(testfile)
