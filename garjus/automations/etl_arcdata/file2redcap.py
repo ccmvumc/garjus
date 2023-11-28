@@ -35,7 +35,7 @@ def _subject_files(subject, files):
     subj_files = []
 
     for testfile in files:
-        logger.debug(f'loading testfile:{testfile}')
+        logger.trace(f'loading testfile:{testfile}')
         d = _load_testfile(testfile)
         if d['participant_id'][1:] == subject:
             subj_files.append(testfile)
