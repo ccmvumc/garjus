@@ -61,6 +61,8 @@ def process(project, datadir):
                 'event': event_id,
                 'field': file_field})
 
+    logger.debug('summary')
+    results = summary.process(project)
 
     return results
 
