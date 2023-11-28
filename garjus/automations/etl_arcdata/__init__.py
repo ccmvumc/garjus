@@ -9,6 +9,8 @@ import pandas as pd
 
 from ...utils_redcap import download_named_file
 from . import file2redcap
+from . import summary
+
 
 logger = logging.getLogger('garjus.automations.etl_arcdata')
 
