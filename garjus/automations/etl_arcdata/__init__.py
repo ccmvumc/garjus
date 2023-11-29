@@ -117,6 +117,7 @@ def _process(project, record_id, event_id, repeat_id):
 
     return result
 
+
 def _process_context_survey(data):
 
     try:
