@@ -46,7 +46,7 @@ def process(project, datadir):
     file_field = 'arc_testfile'
     results = []
     def_field = project.def_field
-    fields = [def_field, file_field, 'arc_response_date','arc_day_index', 'arc_order_index', 'vitals_date', 'date_devices_given']
+    fields = [def_field, file_field, 'arc_response_date', 'arc_day_index', 'arc_order_index', 'vitals_date', 'date_devices_given']
     subj2id = {}
     subjects = []
     file_glob = f'{datadir}/device_*_test_*.json'
@@ -133,8 +133,14 @@ def process(project, datadir):
                     elif abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
                         continue
-                    elif r['date_devices_given'] and abs((datetime.strptime(r['date_devices_given'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 30:
-                        continue
+                    elif r['date_devices_given']:
+                        print(r['date_devices_given'], arc_response_date)
+                        date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
+                        session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
+                        diff_days = abs((date_devices_given - session_date).days)
+                        if diff_days > 30:
+                            print(diff_days)
+                            continue
                     elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 30:
                         continue
                     else:
