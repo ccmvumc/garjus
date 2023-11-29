@@ -46,6 +46,10 @@ def process(project, datadir):
         event_id = r['redcap_event_name']
         repeat_id = r['redcap_repeat_instance']
 
+        if event_id == 'unscheduledad_hoc_arm_3':
+            logger.debug(f'skipping:{record_id}:{event_id}:{repeat_id}')
+            continue
+
         if r['arc_missedsession']:
             logger.debug(f'already extracted:{record_id}:{event_id}:{repeat_id}')
             continue
@@ -215,6 +219,7 @@ def _load(project, data):
         logger.error(err)
         return False
 
+
 def _transform(filename):
     data = {}
     file_data = _load_testfile(filename)
@@ -245,7 +250,7 @@ def _transform(filename):
 
     if test_data.get('context_survey', False):
         data.update(_process_context_survey(test_data['context_survey']))
-        
+
     if test_data.get('symbol_test', False):
         data.update(_process_symbol_test(test_data['symbol_test']))
 
