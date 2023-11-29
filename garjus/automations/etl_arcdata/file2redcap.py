@@ -50,6 +50,7 @@ def process(project, datadir):
     subj2id = {}
     subjects = []
     file_glob = f'{datadir}/device_*_test_*.json'
+    uploaded_count = 0
 
     # Handle secondary ID
     sec_field = project.export_project_info()['secondary_unique_field']
@@ -88,6 +89,7 @@ def process(project, datadir):
         subj_events = list(set([x['redcap_event_name'] for x in all_records if x[def_field] == subj_id]))
         subj_records = [x for x in arc_records if x[def_field] == subj_id]
         subj_uploaded = list(set([x[file_field] for x in subj_records if x[file_field]]))
+        uploaded_count += len(subj_uploaded)
 
         for subj_file in subj_files:
             base_file = os.path.basename(subj_file)
@@ -232,5 +234,7 @@ def process(project, datadir):
                 'event': event_id,
                 'repeat': repeat_id,
                 'field': file_field})
+
+    logger.info(f'total number uploaded={uploaded_count}')
 
     return results
