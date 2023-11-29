@@ -3,6 +3,7 @@ ACTIVITY_RENAME = {
     'activity_description': 'DESCRIPTION',
     'activity_datetime': 'DATETIME',
     'activity_event': 'EVENT',
+    'activity_repeat': 'REPEAT',
     'activity_field': 'FIELD',
     'activity_result': 'RESULT',
     'activity_scan': 'SCAN',

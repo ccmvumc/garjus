@@ -90,12 +90,12 @@ def get_content():
         'ID',
         'PROJECT',
         'CATEGORY',
-        'SUBJECT',
         'DATETIME',
-        'DESCRIPTION',
-        'SOURCE',
-        'FIELD',
+        'SUBJECT',
         'EVENT',
+        'REPEAT',
+        'FIELD',
+        'DESCRIPTION',
     ])
 
     content = [

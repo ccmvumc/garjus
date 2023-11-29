@@ -230,6 +230,7 @@ def process(project, datadir):
                 'category': 'arc_file2redcap',
                 'subject': subj,
                 'event': event_id,
+                'repeat': repeat_id,
                 'field': file_field})
 
     return results

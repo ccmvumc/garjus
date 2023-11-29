@@ -65,6 +65,7 @@ def process(project, datadir):
                 'description': 'etl_arcdata',
                 'subject': id2subj[record_id],
                 'event': event_id,
+                'repeat': repeat_id,
                 'field': file_field})
 
     logger.debug('summary')
