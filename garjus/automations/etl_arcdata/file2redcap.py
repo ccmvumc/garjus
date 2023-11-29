@@ -132,12 +132,18 @@ def process(project, datadir):
                     if r[def_field] != subj_id:
                         continue
 
-                    print(subj_id, r['redcap_event_name'], r['arc_response_date'])
-                    if r['arc_response_date'] and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
+                    print(subj_id, r['redcap_event_name'], arc_response_date)
+
+                    if not (r.get('arc_response_date', False) or r.get('date_devices_given', False) or r.get('vitals_date', False)):
+                        print('nothing to match')
+                        continue
+
+                    if r.get('arc_response_date', False) and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
                         print('wrong date', r['arc_response_date'])
                         continue
-                    elif r['date_devices_given']:
+
+                    if r.get('date_devices_given', False):
                         print(r['date_devices_given'], arc_response_date)
                         date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
                         session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
@@ -145,12 +151,13 @@ def process(project, datadir):
                         if diff_days > 14:
                             print(diff_days)
                             continue
-                    elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 14:
+
+                    if r.get('vitals_date', False) and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 14:
                         print(r['vitals_date'])
                         continue
                     else:
-                        print('same_event', same_event)
                         same_event = r['redcap_event_name']
+                        print('same_event', same_event)
                         break
 
                 # now match event instead of date
