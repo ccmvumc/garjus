@@ -127,7 +127,11 @@ def process(project, datadir):
             if not test_record:
                 print('trying to match date on other records')
                 # try to match with similar records date
-                for r in subj_records:
+                for r in all_records:
+
+                    if r[def_field] != subj_id:
+                        continue
+
                     print(subj_id, r['redcap_event_name'], r['arc_response_date'])
                     if r['arc_response_date'] and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
