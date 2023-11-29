@@ -247,18 +247,19 @@ def _transform(filename):
         data['arc_starttime'] = datetime.fromtimestamp(
             file_data['start_time']).strftime('%H:%M')
 
-    test_data = file_data['tests'][0]
+    if len(file_data.get('tests', 0)) > 0:
+        test_data = file_data['tests'][0]
 
-    if test_data.get('context_survey', False):
-        data.update(_process_context_survey(test_data['context_survey']))
+        if test_data.get('context_survey', False):
+            data.update(_process_context_survey(test_data['context_survey']))
 
-    if test_data.get('symbol_test', False):
-        data.update(_process_symbol_test(test_data['symbol_test']))
+        if test_data.get('symbol_test', False):
+            data.update(_process_symbol_test(test_data['symbol_test']))
 
-    if test_data.get('price_test', False):
-        data.update(_process_price_test(test_data['price_test']))
+        if test_data.get('price_test', False):
+            data.update(_process_price_test(test_data['price_test']))
 
-    if test_data.get('grid_test', False):
-        data.update(_process_grid_test(test_data['grid_test']))
+        if test_data.get('grid_test', False):
+            data.update(_process_grid_test(test_data['grid_test']))
 
     return data
