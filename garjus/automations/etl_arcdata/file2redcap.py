@@ -125,13 +125,15 @@ def process(project, datadir):
                     break
 
             if not test_record:
+                print('trying to match date on other records')
                 # try to match with similar records date
                 for r in subj_records:
                     if r['arc_response_date'] and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
+                        print('wrong date', r['arc_response_date'])
                         continue
                     elif r['date_devices_given']:
-                        print(r['date_devices_given'], arc_response_date)
+                        logger(r['date_devices_given'], arc_response_date)
                         date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
                         session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
                         diff_days = abs((date_devices_given - session_date).days)
@@ -139,8 +141,10 @@ def process(project, datadir):
                             print(diff_days)
                             continue
                     elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 14:
+                        print(r['vitals_date'])
                         continue
                     else:
+                        print('same_event', same_event)
                         same_event = r['redcap_event_name']
                         break
 
