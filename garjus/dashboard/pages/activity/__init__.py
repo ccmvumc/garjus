@@ -78,11 +78,25 @@ def get_graph_content(df):
                     value='1',
                     vertical=True,
                     children=tabs_content
-    ))])
+                )
+            )
+        ]
+    )
 
 
 def get_content():
-    columns = utils.make_columns(['ID', 'PROJECT', 'DATETIME', 'DESCRIPTION'])
+
+    columns = utils.make_columns([
+        'ID',
+        'PROJECT',
+        'CATEGORY',
+        'SUBJECT',
+        'DATETIME',
+        'DESCRIPTION',
+        'SOURCE',
+        'FIELD',
+        'EVENT',
+    ])
 
     content = [
         dbc.Row(html.Div(id='div-activity-graph', children=[])),
