@@ -127,10 +127,7 @@ def process(project, datadir):
             if not test_record:
                 # try to match with similar records date
                 for r in subj_records:
-                    if not r['arc_response_date']:
-                        # no date cannot use
-                        continue
-                    elif abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
+                    if r['arc_response_date'] and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
                         continue
                     elif r['date_devices_given']:
