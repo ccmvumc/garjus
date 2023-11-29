@@ -133,7 +133,7 @@ def process(project, datadir):
                         print('wrong date', r['arc_response_date'])
                         continue
                     elif r['date_devices_given']:
-                        logger(r['date_devices_given'], arc_response_date)
+                        print(r['date_devices_given'], arc_response_date)
                         date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
                         session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
                         diff_days = abs((date_devices_given - session_date).days)
