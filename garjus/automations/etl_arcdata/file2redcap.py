@@ -135,10 +135,10 @@ def process(project, datadir):
                         date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
                         session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
                         diff_days = abs((date_devices_given - session_date).days)
-                        if diff_days > 30:
+                        if diff_days > 14:
                             print(diff_days)
                             continue
-                    elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 30:
+                    elif r['vitals_date'] and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 14:
                         continue
                     else:
                         same_event = r['redcap_event_name']
