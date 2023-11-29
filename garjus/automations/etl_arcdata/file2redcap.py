@@ -125,39 +125,31 @@ def process(project, datadir):
                     break
 
             if not test_record:
-                print('trying to match date on other records')
                 # try to match with similar records date
                 for r in all_records:
 
                     if r[def_field] != subj_id:
                         continue
 
-                    print(subj_id, r['redcap_event_name'], arc_response_date)
 
                     if not (r.get('arc_response_date', False) or r.get('date_devices_given', False) or r.get('vitals_date', False)):
-                        print('nothing to match')
                         continue
 
                     if r.get('arc_response_date', False) and abs((datetime.strptime(r['arc_response_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 4:
                         # wrong date
-                        print('wrong date', r['arc_response_date'])
                         continue
 
                     if r.get('date_devices_given', False):
-                        print(r['date_devices_given'], arc_response_date)
                         date_devices_given = datetime.strptime(r['date_devices_given'], '%Y-%m-%d')
                         session_date = datetime.strptime(arc_response_date, '%Y-%m-%d')
                         diff_days = abs((date_devices_given - session_date).days)
                         if diff_days > 14:
-                            print(diff_days)
                             continue
 
                     if r.get('vitals_date', False) and abs((datetime.strptime(r['vitals_date'], '%Y-%m-%d') - datetime.strptime(arc_response_date, '%Y-%m-%d')).days) > 14:
-                        print(r['vitals_date'])
                         continue
                     else:
                         same_event = r['redcap_event_name']
-                        print('same_event', same_event)
                         break
 
                 # now match event instead of date
