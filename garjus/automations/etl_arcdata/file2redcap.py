@@ -67,6 +67,8 @@ def process(project, datadir):
     all_records = project.export_records(fields=fields)
     arc_records = [x for x in all_records if x['redcap_repeat_instance']]
 
+    all_uploaded = list(set([x[file_field] for x in all_records if x[file_field]]))
+
     # Get the file list
     files = sorted(glob.glob(file_glob))
 
@@ -100,7 +102,7 @@ def process(project, datadir):
                 print(subj_uploaded)
 
 
-            if base_file in subj_uploaded:
+            if base_file in all_uploaded:
                 logger.debug(f'already uploaded:{subj}:{base_file}')
                 continue
 
