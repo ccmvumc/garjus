@@ -96,13 +96,13 @@ def process(project, datadir):
             test_record = None
             same_event = None
 
-            if base_file in subj_uploaded:
-                logger.debug(f'already uploaded:{subj}:{base_file}')
-                continue
-
             if base_file == 'device_081d2484-5f8a-4e48-bc44-71f191453189_test_2021-12-08-10-57-42.json':
                 print(subj_uploaded)
 
+
+            if base_file in subj_uploaded:
+                logger.debug(f'already uploaded:{subj}:{base_file}')
+                continue
 
             # Load file data
             data = _load_testfile(subj_file)
