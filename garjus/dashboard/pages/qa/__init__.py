@@ -929,6 +929,12 @@ def update_qa(
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
     else:
+        # Default is row per session
+
+        # Exclude SGP
+        df = df[df.MODALITY != 'SGP']
+        df = df[df.SESSTYPE != 'SGP']
+
         # Get the qa pivot from the filtered data
         dfp = qa_pivot(df)
 
