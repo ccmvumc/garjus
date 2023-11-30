@@ -26,6 +26,8 @@ def process(project, datadir):
     logger.debug('file2redcap')
     results = file2redcap.process(project, datadir)
 
+    logger.debug('process')
+
     # Handle secondary ID
     sec_field = project.export_project_info()['secondary_unique_field']
     if sec_field:
@@ -36,9 +38,12 @@ def process(project, datadir):
         id2subj = {x[def_field]: x[def_field] for x in rec if x[def_field]}
 
     # Get file records
+    logger.debug('getting arc testfile records')
     records = project.export_records(fields=fields)
     records = [x for x in records if x['redcap_repeat_instance']]
     records = [x for x in records if x[file_field]]
+
+    logger.debug('processing arc testfile records')
 
     for r in records:
 
