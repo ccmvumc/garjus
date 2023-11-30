@@ -34,9 +34,14 @@ def _load_testfile(testfile):
 def _subject_files(subject, files):
     subj_files = []
 
+    if subject.startswith('3REM'):
+        subject_code = '003' + subject[4:]
+    else:
+        subject_code = subject
+
     for testfile in files:
         d = _load_testfile(testfile)
-        if d['participant_id'][1:] == subject:
+        if d['participant_id'][1:] == subject_code:
             subj_files.append(testfile)
 
     return sorted(subj_files)
