@@ -13,13 +13,21 @@ logger = logging.getLogger('dashboard.analyses')
 COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
 
 # command line examples for interacting with analyses
-HINTS = [
-    html.P('Hints for analysis:'),
-    html.P('To download all input files for analysis number ANALYSISNUM to folder INPUTS for project PROJECT:'),
-    html.P('garjus getinputs NUMBER FOLDER -p NAME'),
-    html.P('For example to download analyis 1 from ProjectA to a local folder named INPUTS:'),
-    html.P('garjus getinputs 1 ./INPUTS -p ProjectA'),
-]
+HINTS_MARKDOWN = '''
+
+    ### Analyses Hints:
+
+    To download all input files for analysis number ID to folder INPUTS for project NAME, at command-line enter:
+
+    `garjus getinputs ID INPUTS -p NAME`
+
+
+
+    For example to download analyis 1 from ProjectA to a local folder named INPUTS, enter:
+
+    `garjus getinputs 1 ./INPUTS -p ProjectA`
+
+'''
 
 
 def get_content():
@@ -75,7 +83,7 @@ def get_content():
             css=[dict(selector="p", rule="margin: 0; text-align: center")],
         ),
         html.Label('0', id='label-analyses-rowcount2'),
-        html.Div(HINTS)
+        dcc.Markdown(HINTS_MARKDOWN)
     ]
 
     return content
