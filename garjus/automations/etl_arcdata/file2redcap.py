@@ -208,6 +208,10 @@ def process(project, datadir):
                     'arc_testfile': '',
                 }
 
+            if event_id.startswith('unscheduledad_hoc_arm_3') or event_id.startswith('screening'):
+                logger.debug(f'skipping:{record_id}:{event_id}:{repeat_id}')
+                continue
+
             record_id = test_record[def_field]
             event_id = test_record['redcap_event_name']
             repeat_id = test_record['redcap_repeat_instance']
