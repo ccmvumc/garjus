@@ -39,6 +39,8 @@ def _subject_files(subject, files):
     else:
         subject_code = subject
 
+    print(subject, subject_code)
+
     for testfile in files:
         d = _load_testfile(testfile)
         if d['participant_id'][1:] == subject_code:
