@@ -98,13 +98,13 @@ def process(project, datadir):
             test_record = None
             same_event = None
 
-            if base_file == 'device_081d2484-5f8a-4e48-bc44-71f191453189_test_2021-12-08-10-57-42.json':
-                print(subj_uploaded)
-
-
             if base_file in all_uploaded:
                 logger.debug(f'already uploaded:{subj}:{base_file}')
                 continue
+
+
+            if base_file == 'device_081d2484-5f8a-4e48-bc44-71f191453189_test_2021-12-08-10-57-42.json':
+                print(subj_uploaded)
 
             # Load file data
             data = _load_testfile(subj_file)
@@ -213,6 +213,20 @@ def process(project, datadir):
             instrument = test_record['redcap_repeat_instrument']
 
             logger.debug(f'uploading:{record_id}:{event_id}:{instrument}:{repeat_id}:{base_file}')
+
+
+            logger.debug(f'sanity check:{record_id}:{event_id}:{instrument}:{repeat_id}:{base_file}')
+            found = False
+            for x in all_records:
+                if x[def_field] != subj_id or x['redcap_event_name'] != event_id or x['redcap_repeat_instrument'] != 'arc_data' or x['redcap_repeat_instance'] != repeat_id:
+                    continue
+
+                if x[file_field]:
+                    logger.debug(f'found:{record_id}:{event_id}:{instrument}:{repeat_id}:{base_file}')
+                    found = True
+
+            if found:
+                continue
 
             # Upload file to redcap
             try:
