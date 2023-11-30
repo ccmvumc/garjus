@@ -51,7 +51,7 @@ def process(project, datadir):
         event_id = r['redcap_event_name']
         repeat_id = r['redcap_repeat_instance']
 
-        if event_id == 'unscheduledad_hoc_arm_3':
+        if event_id.startswith('unscheduledad_hoc_arm_3') or event_id.startswith('screening'):
             logger.debug(f'skipping:{record_id}:{event_id}:{repeat_id}')
             continue
 
