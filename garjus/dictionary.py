@@ -88,7 +88,7 @@ DISABLE_STATTYPES = [
 COLUMNS = {
     'activity': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SCAN', 'ID', 'DESCRIPTION',
-        'DATETIME', 'EVENT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
+        'DATETIME', 'EVENT', 'REPEAT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
     'assessors': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'NOTE', 'DATE', 'SITE',
         'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
