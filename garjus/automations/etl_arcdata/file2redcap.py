@@ -100,6 +100,10 @@ def process(project, datadir):
                 logger.debug(f'already uploaded:{subj}:{base_file}')
                 continue
 
+            if base_file == 'device_081d2484-5f8a-4e48-bc44-71f191453189_test_2021-12-08-10-57-42.json':
+                print(subj_uploaded)
+
+
             # Load file data
             data = _load_testfile(subj_file)
 
