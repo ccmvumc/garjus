@@ -190,7 +190,7 @@ def _process_grid_test(data):
             # Keep running sum of Mininum ED for each choice
             ed_sec.append(min(cur_ed))
         else:
-            print('WARNING:empty choices')
+            logger.debug('empty choices')
 
     if not ed_sec:
         return {}
