@@ -35,7 +35,7 @@ def _subject_files(subject, files):
     subj_files = []
 
     if subject.startswith('3REM'):
-        subject_code = '003' + subject[4:]
+        subject_code = '03' + subject[4:]
     else:
         subject_code = subject
 
