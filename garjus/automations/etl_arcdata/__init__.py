@@ -60,7 +60,7 @@ def process(project, datadir):
             continue
 
         # Process record
-        logger.debug(f'process:{r[file_field]}:{record_id}:{event_id}:{repeat_id}')
+        logger.info(f'process:{r[file_field]}:{record_id}:{event_id}:{repeat_id}')
         result = _process(project, record_id, event_id, repeat_id)
 
         if result:
