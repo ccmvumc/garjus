@@ -20,12 +20,12 @@ def update(garjus, projects=None):
 
 def update_project(garjus, project):
     """Update project double entry."""
-    double_reports = garjus.double_reports(project)
+    double_reports = garjus.double_reports([project])
 
     # what time is it? use this for naming
     now = datetime.now()
 
-    # determine curxrent month and year to get current monthly repot id
+    # determine current month and year to get current monthly repot id
     cur_double = now.strftime("%B%Y")
 
     # check that each project has report for current month
