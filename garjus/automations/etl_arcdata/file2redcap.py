@@ -262,6 +262,6 @@ def process(project, datadir):
                 'repeat': repeat_id,
                 'field': file_field})
 
-    logger.info(f'total number uploaded={uploaded_count}')
+    logger.debug(f'total number uploaded={uploaded_count}')
 
     return results
