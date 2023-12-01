@@ -1,6 +1,7 @@
 import logging
 import os
 import pandas as pd
+from datetime import datetime
 
 from ....garjus import Garjus
 
@@ -28,21 +29,42 @@ def run_refresh(filename, projects):
     return df
 
 
-def load_options():
+def load_options(df):
+    projects = []
+    types = []
+    times = ['All', 'Current']
+
+    # Projects
     garjus = Garjus()
-    proj_options = garjus.projects()
+    projects = garjus.projects()
 
-    return proj_options
+    # Selected types
+    types = df.TYPE.unique()
+
+    # Remove blanks and sort
+    types = [x for x in types if x]
+    types = sorted(types)
+
+    return projects, types, times
 
 
-def load_data(projects, refresh=False):
+def load_data(projects, types, timeframe, refresh=False):
     filename = get_filename()
 
     if refresh or not os.path.exists(filename):
         run_refresh(filename, projects)
 
     logger.info('reading data from file:{}'.format(filename))
-    return read_data(filename)
+    df = read_data(filename)
+
+    if types:
+        df = df[df.TYPE.isin(types)]
+
+    if timeframe == 'Current':
+        cur_double = datetime.now().strftime("%B%Y")
+        df = df[df.NAME == cur_double]
+
+    return df
 
 
 def read_data(filename):
@@ -58,8 +80,18 @@ def save_data(df, filename):
 def get_data(projects):
     garjus = Garjus()
 
+    # Get the pid of the main redcap so we can make links
+    pid = garjus.redcap_pid()
+
     # Load
     df = garjus.reports(projects)
+
+    # Make pdf link
+    df['VIEW'] = 'https://redcap.vanderbilt.edu/redcap_v14.0.0/DataEntry/index.php?' + \
+    'pid=' + str(pid) + \
+    '&page=' + df.TYPE.str.lower() + \
+    '&id=' + df['PROJECT'] + \
+    '&instance=' + df['ID'].astype(str)
 
     return df
 

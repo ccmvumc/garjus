@@ -152,7 +152,7 @@ class Garjus:
         token = result.get('secret')
 
         # Save the token
-        with open(f'{username}.token.txt', 'w') as f:
+        with open(f'{username}.token', 'w') as f:
             f.write(f'{alias},{token}')
 
         return (alias, token)
@@ -169,7 +169,7 @@ class Garjus:
         from dax.XnatUtils import get_interface
 
         try:
-            with open(f'{username}.token.txt') as f:
+            with open(f'{username}.token') as f:
                 (alias, token) = f.readline().strip().split(',')
         except Exception:
             raise Exception('failed to load alias credentials:{username}')

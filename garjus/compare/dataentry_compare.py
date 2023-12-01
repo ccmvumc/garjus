@@ -300,14 +300,14 @@ def compare_projects(p1, p2):
         rec = p1.export_records(fields=[def_field, sec_field])
         id2subj1 = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
 
-        # Create index of subject ID to record ID in p2
+        # Create index of subject ID mapped to record ID in p2
         rec = p2.export_records(fields=[def_field2, sec_field2])
         subj2id2 = {x[sec_field2]: x[def_field2] for x in rec if x[sec_field2]}
     else:
         rec = p1.export_records(fields=[def_field])
         id2subj1 = {x[def_field]: x[def_field] for x in rec if x[def_field]}
         rec = p2.export_records(fields=[def_field2])
-        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x[def_field2]}
+        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x[sec_field2]}
 
     # Determine which fields to compare
     fields = get_fields(p1, p2)

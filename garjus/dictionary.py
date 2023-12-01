@@ -61,13 +61,14 @@ TASKS_RENAME = {
 }
 
 REPORTS_RENAME = {
+    'redcap_repeat_instance': 'ID',
     'progress_name': 'NAME',
     'progress_datetime': 'DATE',
     'progress_pdf': 'PDF',
     'progress_zip': 'DATA',
     'double_resultspdf': 'PDF',
     'double_resultsfile': 'DATA',
-    'double_name': ' NAME',
+    'double_name': 'NAME',
     'double_datetime': 'DATE',
 }
 
@@ -111,7 +112,7 @@ COLUMNS = {
     'analyses': ['PROJECT', 'ID', 'NAME', 'STATUS', 'COMPLETE', 'EDIT', 'INPUT', 'OUTPUT', 'NOTES', 'SUBJECTS', 'PROCESSOR'],
     'processors': ['ID', 'PROJECT', 'TYPE', 'EDIT', 'FILE', 'FILTER', 'ARGS'],
     'sgp': ['PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE'],
-    'reports': ['TYPE', 'PROJECT', 'NAME', 'DATE', 'PDF', 'DATA'],
+    'reports': ['PROJECT', 'TYPE', 'ID', 'VIEW', 'NAME', 'DATE', 'PDF', 'DATA'],
 }
 
 
