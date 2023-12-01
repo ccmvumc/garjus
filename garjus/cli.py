@@ -318,31 +318,28 @@ def dashboard(auth_file=None, login=False):
     # start up a dashboard app
     app.run_server(host='0.0.0.0')
 
-    print('dashboard app closed!')
-
 
 @cli.command('quicktest')
 def quicktest():
-    print('hi')
     click.echo('garjus!')
 
     try:
         redcap_project = Garjus._default_redcap()
     except Exception:
-        print('could not connect to REDCap')
+        click.echo('could not connect to REDCap')
         return
 
     try:
         xnat_interface = Garjus._default_xnat()
     except Exception:
-        print('could not connect to XNAT')
+        click.echo('could not connect to XNAT')
         return
 
     try:
         g = Garjus(redcap_project, xnat_interface)
     except Exception:
-        print('something went wrong')
+        click.echo('something went wrong')
         return
 
     g.scans()
-    print('all good!')
+    click.echo('all good!')

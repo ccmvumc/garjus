@@ -230,4 +230,3 @@ if __name__ == "__main__":
         datefmt='%Y-%m-%d %H:%M:%S')
 
     process_project(get_redcap('', api_key=''))
-    print('Done!')

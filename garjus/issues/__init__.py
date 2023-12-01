@@ -362,7 +362,6 @@ def _dschol_scan_table(data):
             d['dst_subject'] = 'DSCHOL' + d['dst_subject']
             d['dst_session'] = 'DSCHOL' + d['dst_session']
 
-    print(data)
     return data
 
 

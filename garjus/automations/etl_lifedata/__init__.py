@@ -205,7 +205,7 @@ def _read(filename):
 
 def get_response(df, label):
     if len(df[df['Prompt Label'] == label]) > 1:
-        print('duplicates!')
+        logger.debug('duplicates!')
     elif len(df[df['Prompt Label'] == label]) == 0:
         logger.debug(f'missing:{label}')
         return ''

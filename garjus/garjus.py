@@ -147,7 +147,6 @@ class Garjus:
     
         uri = '/data/services/tokens/issue'
         result = json.loads(xnat._exec(uri, 'GET'), strict=False)
-        print(result)
 
         alias = result.get('alias')
         token = result.get('secret')
