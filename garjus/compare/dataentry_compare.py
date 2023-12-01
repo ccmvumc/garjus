@@ -347,19 +347,19 @@ def compare_projects(p1, p2):
         # Check that we already found as missing
         if sid in missing_subjects:
             # Skip this subject, already missing
-            logging.info(f'subject already missing:{sid}')
+            logging.debug(f'subject already missing:{sid}')
             continue
 
         if (sid, eid) in missing_events:
             # Skip this event, already missing
-            logging.info(f'event already missing:{sid},{eid}')
+            logging.debug(f'event already missing:{sid},{eid}')
             continue
 
         # Get id in the secondary redcap project
         try:
             rid2 = subj2id2[sid]
         except KeyError as err:
-            logging.info(f'missing subject:{rid1}:{err}')
+            logging.debug(f'missing subject:{rid1}:{err}')
             missing_subjects.append(sid)
             continue
 
@@ -389,7 +389,7 @@ def compare_projects(p1, p2):
                 # First check specific identifiers
                 if r1.get('vasf_timepoint', False):
                     if r1['vasf_timepoint'] == e2['vasf_timepoint']:
-                        logging.info(f'vasf_timepoint match:{sid}:{eid}:{name1}:{num1}:{name2}:{num2}')
+                        logging.debug(f'vasf_timepoint match:{sid}:{eid}:{name1}:{num1}:{name2}:{num2}')
                         r2 = e2
                         break
                     else:
@@ -400,7 +400,7 @@ def compare_projects(p1, p2):
                     # Does 1st have a value and does it match 2nd
                     if r1[cur_field] and r1[cur_field] == e2[cur_field]:
                         # This is the record
-                        logging.info(f'date match:{sid}:{eid}:{name1}:{num1}:{cur_field}:{name2}:{num2}')
+                        logging.debug(f'date match:{sid}:{eid}:{name1}:{num1}:{cur_field}:{name2}:{num2}')
                         r2 = e2
                         break
 
@@ -413,20 +413,20 @@ def compare_projects(p1, p2):
                     num2 = str(e2.get('redcap_repeat_instance', ''))
 
                     if name1 == name2 and num1 == num2:
-                        logging.info(f'{sid}:{eid}:instance match:{name1}:{num1}:{num2}')
+                        logging.debug(f'{sid}:{eid}:instance match:{name1}:{num1}:{num2}')
                         r2 = e2
                         break
 
             if r2 is None:
-                logging.info(f'NO MATCH:{sid}:{eid}:{name1}:{num1}')
+                logging.debug(f'NO MATCH:{sid}:{eid}:{name1}:{num1}')
 
         # Check for conflicts in best matching record 2
         if (name1 != name2) or (not name1 and (num1 != num2)):
-            logging.info(f'skipping, name conflict:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
+            logging.debug(f'skipping, name conflict:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
             r2 = None
 
         if r2:
-            logging.info(f'compare_records:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
+            logging.debug(f'compare_records:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
             (mism, misv, _m) = compare_records(r1, r2, compare_fields)
             mismatches += mism
             missing_values += misv
@@ -440,7 +440,7 @@ def compare_projects(p1, p2):
             if num1:
                 _eid = f'{_eid}:{num1}'
 
-            logging.info(f'No record in double/second:{sid}:{_eid}')
+            logging.debug(f'No record in double/second:{sid}:{_eid}')
             missing_events.append((sid, _eid))
 
     # Count results
