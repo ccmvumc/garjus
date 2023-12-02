@@ -32,6 +32,15 @@ def get_content():
     content = [
         dbc.Row([
             dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-reports-refresh',
+                    outline=True,
+                    color='primary',
+                    size='sm',
+                ),
+            ),
+            dbc.Col(
                 dcc.Dropdown(
                     id='dropdown-reports-proj',
                     multi=True,
@@ -85,15 +94,8 @@ def get_content():
     return content
 
 
-def load_reports(projects=[], types=[], timeframe=None):
-
-    if projects is None:
-        projects = []
-
-    if types is None:
-        types = []
-
-    return data.load_data(projects, types, timeframe, refresh=True)
+def load_reports(refresh=False):
+    return data.load_data(refresh)
 
 
 @callback(
@@ -109,18 +111,27 @@ def load_reports(projects=[], types=[], timeframe=None):
      Input('dropdown-reports-proj', 'value'),
      Input('dropdown-reports-type', 'value'),
      Input('dropdown-reports-time', 'value'),
+     Input('button-reports-refresh', 'n_clicks'),
     ])
 def update_reports(
     selected_proj,
     selected_type,
     selected_time,
+    n_clicks
 ):
+    refresh = False
+
     logger.debug('update_all')
 
     # Load selected data with refresh if requested
-    df = load_reports(selected_proj, selected_type, selected_time)
 
-    # Get options based on selected projects, only show proc for those projects
+    if utils.was_triggered('button-reports-refresh'):
+        logger.debug(f'reports refresh:clicks={n_clicks}')
+        refresh = True
+
+    df = load_reports(refresh)
+
+    # Get options
     projects, types, times = data.load_options(df)
     projects = utils.make_options(projects)
     types = utils.make_options(types)
@@ -129,6 +140,9 @@ def update_reports(
     logger.debug(f'loaded options:{projects}')
     logger.debug(f'loaded options:{types}')
     logger.debug(f'loaded options:{times}')
+
+    # Apply filters
+    df = data.filter_data(df, selected_proj, selected_type, selected_time)
 
     # Get the table data as one row per assessor
     records = df.reset_index().to_dict('records')
