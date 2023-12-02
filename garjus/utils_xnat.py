@@ -12,7 +12,9 @@ import dax
 
 logger = logging.getLogger('garjus.utils_xnat')
 
-
+# The scan URI is a hacky way to get a row for each resource of a every
+# scan including all modalities. Things go awry when we try to add any
+# other columns.
 SCAN_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
@@ -28,10 +30,12 @@ xnat:imagescandata/id,\
 xnat:imagescandata/type,\
 xnat:imagescandata/quality,\
 xnat:imagescandata/frames,\
-xnat:imagescandata/file/label,\
-xnat:mrscandata/parameters/orientation,\
-xnat:mrscandata/parameters/tr'
+xnat:imagescandata/file/label'
 
+
+# The scan URI is a hacky way to get a row for each assessor. We do
+# not try to get a row per resource because that query takes too long.
+# The column name is: proc:genprocdata/out/file/label
 ASSR_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
@@ -51,7 +55,6 @@ proc:genprocdata/validation/validated_by,\
 proc:genprocdata/jobstartdate,\
 last_modified,\
 proc:genprocdata/inputs'
-# Including resource labels takes too long: proc:genprocdata/out/file/label'
 
 
 SGP_URI = '/REST/subjects?xsiType=xnat:subjectdata\
@@ -82,8 +85,6 @@ SCAN_RENAME = {
     'xsiType': 'XSITYPE',
     'xnat:imagescandata/file/label': 'RESOURCES',
     'xnat:imagescandata/frames': 'FRAMES',
-    'xnat:mrscandata/parameters/orientation': 'ORIENT',
-    'xnat:mrscandata/parameters/tr': 'TR',
 }
 
 ASSR_RENAME = {

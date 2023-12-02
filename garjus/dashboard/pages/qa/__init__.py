@@ -934,7 +934,7 @@ def update_qa(
         # Drop non scans
         df = df.dropna(subset='SCANTYPE')
 
-        selected_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SCANTYPE', 'TR', 'ORIENT', 'FRAMES', 'SESSTYPE', 'SITE', 'STATUS', 'MODALITY', 'NOTE']
+        selected_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SCANTYPE', 'FRAMES', 'SESSTYPE', 'SITE', 'STATUS', 'MODALITY', 'NOTE']
 
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)

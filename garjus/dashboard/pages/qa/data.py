@@ -38,7 +38,7 @@ QA_COLS = [
     'SESSION', 'SUBJECT', 'PROJECT',
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
     'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE',
-    'MODALITY', 'FRAMES', 'TR', 'ORIENT']
+    'MODALITY', 'FRAMES']
 
 
 def get_filename():
@@ -199,8 +199,6 @@ def get_data(projects):
     scan_df['TYPE'] = scan_df['SCANTYPE']
 
     assr_df['SCANTYPE'] = None
-    assr_df['TR'] = None
-    assr_df['ORIENT'] =  None
     assr_df['FRAMES'] = None
     scan_df['PROCTYPE'] = None
 
@@ -212,8 +210,6 @@ def get_data(projects):
 
     subj_df['TYPE'] = subj_df['PROCTYPE']
     subj_df['SCANTYPE'] = None
-    subj_df['TR'] = None
-    subj_df['ORIENT'] =  None
     subj_df['FRAMES'] = None
     subj_df['ARTTYPE'] = 'sgp'
     subj_df['SESSION'] = subj_df['ASSR']
@@ -311,14 +307,13 @@ def load_scan_data(garjus, project_filter):
     dfs = garjus.scans(project_filter)
 
     dfs = dfs[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID', 'FRAMES', 'TR', 'ORIENT',
-        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY',
+        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
+        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'FRAMES',
         'full_path']].copy()
     dfs.drop_duplicates(inplace=True)
 
     # Drop any rows with empty type
     dfs.dropna(subset=['SCANTYPE'], inplace=True)
-    dfs = dfs[dfs.SCANTYPE != '']
 
     # Create shorthand status
     dfs['STATUS'] = dfs['QUALITY'].map(SCAN_STATUS_MAP).fillna('U')
