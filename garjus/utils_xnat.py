@@ -27,7 +27,10 @@ xnat:imagesessiondata/label,\
 xnat:imagescandata/id,\
 xnat:imagescandata/type,\
 xnat:imagescandata/quality,\
-xnat:imagescandata/file/label'
+xnat:imagescandata/frames,\
+xnat:imagescandata/file/label,\
+xnat:mrscandata/parameters/orientation,\
+xnat:mrscandata/parameters/tr'
 
 ASSR_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
@@ -77,7 +80,10 @@ SCAN_RENAME = {
     'xnat:imagescandata/type': 'SCANTYPE',
     'xnat:imagescandata/quality': 'QUALITY',
     'xsiType': 'XSITYPE',
-    'xnat:imagescandata/file/label': 'RESOURCES'
+    'xnat:imagescandata/file/label': 'RESOURCES',
+    'xnat:imagescandata/frames': 'FRAMES',
+    'xnat:mrscandata/parameters/orientation': 'ORIENT',
+    'xnat:mrscandata/parameters/tr': 'TR',
 }
 
 ASSR_RENAME = {

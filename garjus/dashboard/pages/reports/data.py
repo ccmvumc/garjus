@@ -21,8 +21,8 @@ def get_filename():
     return filename
 
 
-def run_refresh(filename, projects):
-    df = get_data(projects)
+def run_refresh(filename):
+    df = get_data()
 
     save_data(df, filename)
 
@@ -48,14 +48,22 @@ def load_options(df):
     return projects, types, times
 
 
-def load_data(projects, types, timeframe, refresh=False):
+def load_data(refresh=False):
     filename = get_filename()
 
     if refresh or not os.path.exists(filename):
-        run_refresh(filename, projects)
+        run_refresh(filename)
 
     logger.info('reading data from file:{}'.format(filename))
     df = read_data(filename)
+
+    return df
+
+
+def filter_data(df, projects, types, timeframe):
+
+    if projects:
+        df = df[df.PROJECT.isin(projects)]
 
     if types:
         df = df[df.TYPE.isin(types)]
@@ -65,7 +73,6 @@ def load_data(projects, types, timeframe, refresh=False):
         df = df[df.NAME == cur_double]
 
     return df
-
 
 def read_data(filename):
     df = pd.read_pickle(filename)
@@ -77,14 +84,14 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(projects):
+def get_data():
     garjus = Garjus()
 
     # Get the pid of the main redcap so we can make links
     pid = garjus.redcap_pid()
 
     # Load
-    df = garjus.reports(projects)
+    df = garjus.reports()
 
     # Make pdf link
     df['VIEW'] = 'https://redcap.vanderbilt.edu/redcap_v14.0.0/DataEntry/index.php?' + \
@@ -92,13 +99,5 @@ def get_data(projects):
     '&page=' + df.TYPE.str.lower() + \
     '&id=' + df['PROJECT'] + \
     '&instance=' + df['ID'].astype(str)
-
-    return df
-
-
-def filter_data(df, time=None):
-    # Filter
-    if time:
-        pass
 
     return df

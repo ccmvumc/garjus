@@ -38,7 +38,7 @@ QA_COLS = [
     'SESSION', 'SUBJECT', 'PROJECT',
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
     'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE',
-    'MODALITY']
+    'MODALITY', 'FRAMES', 'TR', 'ORIENT']
 
 
 def get_filename():
@@ -134,7 +134,7 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
             scantypes = list(set(scantypes))
             assrtypes = list(set(assrtypes))
 
-        if not scantypes and not assr_df.empty:
+        if not scantypes and not df.empty:
             # Get list of scan types based on assessor inputs
             logger.debug('loading used scan types')
             scantypes = garjus.used_scantypes(
@@ -199,6 +199,9 @@ def get_data(projects):
     scan_df['TYPE'] = scan_df['SCANTYPE']
 
     assr_df['SCANTYPE'] = None
+    assr_df['TR'] = None
+    assr_df['ORIENT'] =  None
+    assr_df['FRAMES'] = None
     scan_df['PROCTYPE'] = None
 
     assr_df['ARTTYPE'] = 'assessor'
@@ -209,6 +212,9 @@ def get_data(projects):
 
     subj_df['TYPE'] = subj_df['PROCTYPE']
     subj_df['SCANTYPE'] = None
+    subj_df['TR'] = None
+    subj_df['ORIENT'] =  None
+    subj_df['FRAMES'] = None
     subj_df['ARTTYPE'] = 'sgp'
     subj_df['SESSION'] = subj_df['ASSR']
     subj_df['SITE'] = 'SGP'
@@ -305,7 +311,7 @@ def load_scan_data(garjus, project_filter):
     dfs = garjus.scans(project_filter)
 
     dfs = dfs[[
-        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
+        'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID', 'FRAMES', 'TR', 'ORIENT',
         'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY',
         'full_path']].copy()
     dfs.drop_duplicates(inplace=True)

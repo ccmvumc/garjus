@@ -1312,7 +1312,10 @@ class Garjus:
         data = []
 
         # only our projects
-        projects = [x for x in projects if x in self.projects()]
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
 
         # Load Progress Reports
         for r in self.progress_reports(projects):

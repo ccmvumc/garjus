@@ -335,7 +335,7 @@ def get_content():
                 dbc.Switch(
                     id='switch-qa-autofilter',
                     label='Autofilter',
-                    value=False,
+                    value=True,
                 ),
                 align='center',
             ),
@@ -431,6 +431,7 @@ def get_content():
                         labelClassName="btn btn-outline-primary",
                         labelCheckedClassName="active",
                         options=[
+                            {'label': 'Scans', 'value': 'scan'},
                             {'label': 'Sessions', 'value': 'sess'},
                             {'label': 'Subjects', 'value': 'subj'},
                             {'label': 'Projects', 'value': 'proj'},
@@ -918,6 +919,35 @@ def update_qa(
 
         # Format records
         for r in records:
+            if r['SUBJECT'] and 'SUBJECTLINK' in r:
+                _subj = r['SUBJECT']
+                _link = r['SUBJECTLINK']
+                r['SUBJECT'] = f'[{_subj}]({_link})'
+
+        # Format columns
+        for i, c in enumerate(columns):
+            if c['name'] in ['SESSION', 'SUBJECT']:
+                columns[i]['type'] = 'text'
+                columns[i]['presentation'] = 'markdown'
+
+    elif selected_pivot == 'scan':
+        # Drop non scans
+        df = df.dropna(subset='SCANTYPE')
+
+        selected_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SCANTYPE', 'TR', 'ORIENT', 'FRAMES', 'SESSTYPE', 'SITE', 'STATUS', 'MODALITY', 'NOTE']
+
+        # Format as column names and record dictionaries for dash table
+        columns = utils.make_columns(selected_cols)
+        records = df.reset_index().to_dict('records')
+
+        # Format records
+        for r in records:
+
+            if r['SESSION'] and 'SESSIONLINK' in r:
+                _sess = r['SESSION']
+                _link = r['SESSIONLINK']
+                r['SESSION'] = f'[{_sess}]({_link})'
+
             if r['SUBJECT'] and 'SUBJECTLINK' in r:
                 _subj = r['SUBJECT']
                 _link = r['SUBJECTLINK']
