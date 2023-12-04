@@ -649,11 +649,14 @@ def update_qa(
         refresh = True
 
     logger.debug(f'loading data:{selected_proj}')
-
-    df = load_data(
-        projects=selected_proj,
-        refresh=refresh,
-        hidetypes=selected_autofilter)
+    try:
+        df = load_data(
+            projects=selected_proj,
+            refresh=refresh,
+            hidetypes=selected_autofilter)
+    except Exception as err:
+        logger.debug(f'failed to load data:{err}')
+        return [[], [], [], [], [], [], 'No data', 'Credentials Expired', 'Refresh to Login']
 
     # Truncate NOTE
     if 'NOTE' in df:

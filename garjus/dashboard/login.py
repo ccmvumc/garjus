@@ -9,6 +9,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 
+from ..garjus import Garjus
 from .pages import qa
 from .pages import activity
 from .pages import issues
@@ -35,17 +36,25 @@ def check_login():
     # TODO: use dash pages module to return pages based on user access level
     if request.method == 'GET':
         if request.path in ['/login', '/logout']:
+            # nothing to check here
             return
-        if current_user:
-            if current_user.is_authenticated:
-                logger.debug(f'user is authenticated:{current_user.id}')
-                return
+        if is_authenticated():
+            logger.debug(f'user is authenticated:{current_user.id}')
+            return
+
+        # nothing to check so user must log in
         return redirect(url_for('login'))
     else:
         if current_user:
-            if request.path == '/login' or current_user.is_authenticated:
+            if request.path == '/login' or is_authenticated():
                 return
-        return jsonify({'status': '401', 'statusText': 'unauthorized access'})
+
+        logout_user()
+        return
+
+
+def is_authenticated():
+    return current_user and current_user.is_authenticated and Garjus.is_authenticated()
 
 
 @server.route('/login', methods=['POST', 'GET'])
@@ -56,14 +65,11 @@ def login(message=""):
             username = request.form['username']
             password = request.form['password']
 
-            # Get the xnat alias token
-            from ..garjus import Garjus
-            Garjus.login(hostname, username, password)
+            try:
+                # Get the xnat alias token
+                from ..garjus import Garjus
+                Garjus.login(hostname, username, password)
 
-            # TODO: check that valid token was acquired, otherwise cannot login
-            is_valid = True
-
-            if is_valid:
                 login_user(User(username, hostname))
 
                 # What page do we send?
@@ -76,13 +82,17 @@ def login(message=""):
                 else:
                     # redirect to home
                     return redirect('/')
-            else:
-                # Invalid so set the return message to display
-                message = 'invalid username and/or password'
+            except Exception as err:
+                logger.debug(f'login failed:{err}')
+                message = 'login failed, try again'
     else:
         if current_user:
             if current_user.is_authenticated:
-                return redirect('/')
+                try:
+                    return redirect('/')
+                except Exception as err:
+                    logger.debug(f'cannot log in, try again:{err}')
+                    message = 'login failed, try again'
 
     return render_template('login.html', message=message)
 
@@ -142,8 +152,7 @@ def load_user(username):
 
 
 def redcap_found():
-    from ..garjus import Garjus
-    return Garjus.redcap_found
+    return Garjus.redcap_found()
 
 
 footer_content = [

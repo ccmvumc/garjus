@@ -19,6 +19,7 @@ from redcap import Project, RedcapError
 from pyxnat import Interface
 from requests.exceptions import ConnectionError
 from flask_login import current_user
+from dax.XnatUtils import get_interface
 
 from .subjects import load_subjects
 from . import utils_redcap
@@ -141,10 +142,9 @@ class Garjus:
 
     @staticmethod
     def login(hostname, username, password):
-        from dax.XnatUtils import get_interface
-        
+
         xnat = get_interface(host=hostname, user=username, pwd=password)
-    
+
         uri = '/data/services/tokens/issue'
         result = json.loads(xnat._exec(uri, 'GET'), strict=False)
 
@@ -159,14 +159,12 @@ class Garjus:
 
     @staticmethod
     def _default_xnat():
-        from dax.XnatUtils import get_interface
         return get_interface()
 
     @staticmethod
     def _alias_xnat(hostname, username):
         alias = None
         token = None
-        from dax.XnatUtils import get_interface
 
         try:
             with open(f'{username}.token') as f:
@@ -188,6 +186,20 @@ class Garjus:
             get_main_redcap()
             return True
         except Exception:
+            return False
+
+    @staticmethod
+    def is_authenticated():
+        username = current_user.id
+        try:
+            with open(f'{username}.token') as f:
+                (alias, token) = f.readline().strip().split(',')
+                get_interface(user=alias, pwd=token)
+
+            return True
+
+        except Exception as err:
+            logger.debug(f'could not load credentials:{username}:{err}')
             return False
 
     def cachedir(self):
@@ -1064,11 +1076,36 @@ class Garjus:
             logger.info('cannot load scantypes, redcap not enabled')
             return None
 
-        for p in self.projects():
-            types.extend(self.scantypes(p))
+        projects = self.projects()
+
+        logger.debug(f'getting scantypes:{projects}')
+
+        records = self._rc.export_records(
+            records=projects,
+            fields=['project_scanmap'])
+
+        for r in records:
+            scanmap = r['project_scanmap']
+            scanmap = self._parse_scanmap(scanmap)
+            proj_types = list(set([v for k, v in scanmap.items()]))
+            logger.debug(f'scantypes:{r[self._rc.def_field]}:{proj_types}')
+            types.extend(proj_types)
 
         # Make the list unique
         return list(set(types))
+
+    def _parse_scanmap(self, scanmap):
+        try:
+            # Parse multiline string of delimited keyvalue pairs into dict
+            scanmap = dict(
+                x.strip().split(':', 1) for x in scanmap.split('\n'))
+
+            # Remove extra whitespace from keys and values
+            scanmap = {k.strip(): v.strip() for k, v in scanmap.items()}
+        except (ValueError, AttributeError):
+            scanmap = {}
+
+        return scanmap
 
     def all_proctypes(self):
         """Get list of project proc types."""
@@ -1989,7 +2026,6 @@ class Garjus:
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'scanning']
 
         return rec
-
 
     def add_issues(self, issues):
         """Add list of issues."""

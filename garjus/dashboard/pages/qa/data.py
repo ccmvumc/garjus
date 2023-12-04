@@ -160,6 +160,10 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
 
 def read_data(filename):
     df = pd.read_pickle(filename)
+
+    if df is None or len(df) == 0:
+        df = pd.DataFrame(columns=['PROJECT'])
+
     return df
 
 
