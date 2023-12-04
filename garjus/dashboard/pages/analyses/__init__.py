@@ -13,9 +13,9 @@ logger = logging.getLogger('dashboard.analyses')
 COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
 
 # command line examples for interacting with analyses
-HINTS_MARKDOWN = '''
+TIPS_MARKDOWN = '''
 
-    ### Analyses Hints:
+    ### Analyses Tips:
 
     To download all input files for analysis number ID to folder INPUTS for project NAME, at command-line enter:
 
@@ -83,7 +83,7 @@ def get_content():
             css=[dict(selector="p", rule="margin: 0; text-align: center")],
         ),
         html.Label('0', id='label-analyses-rowcount2'),
-        dcc.Markdown(HINTS_MARKDOWN)
+        dcc.Markdown(TIPS_MARKDOWN)
     ]
 
     return content
