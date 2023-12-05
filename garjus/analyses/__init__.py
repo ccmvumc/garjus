@@ -538,6 +538,57 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
                 _download_resource(garjus, proj, subj, sess, assr, res, dst)
 
 
+def download_scan_resources(garjus, project, download_dir, scantype, resources, files):
+    logger.info(f'loading data:{project}:{scantype}')
+    scans = garjus.scans(projects=[project], scantypes=[scantype])
+
+    scans = scans[scans.QUALITY != 'unusable']
+
+    for i, s in scans.iterrows():
+        proj = s.PROJECT
+        subj = s.SUBJECT
+        sess = s.SESSION
+        scan = s.SCANID
+        dst = f'{download_dir}/{proj}/{sess}/{scan}'
+
+        for res in resources:
+
+            # check if it exists
+            if res not in s.RESOURCES.split(','):
+                logger.debug(f'no resource:{proj}:{subj}:{sess}:{scan}:{res}')
+                continue
+
+            if files:
+                # Download files
+                for fmatch in files:
+                    # Have we already downloaded it?
+                    if os.path.exists(dst):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download file:{scan}:{res}:{fmatch}')
+                    try:
+                        _download_scan_file(
+                            garjus,
+                            proj,
+                            subj,
+                            sess,
+                            scan,
+                            res,
+                            fmatch,
+                            f'{dst}/{res}/{fmatch}'
+                        )
+                    except Exception as err:
+                        logger.error(f'{subj}:{sess}:{scan}:{res}:{fmatch}:{err}')
+                        import traceback
+                        traceback.print_exc()
+                        raise err
+            else:
+                logger.debug(f'downloading:{proj}:{subj}:{sess}:{scan}:{res}:{dst}')
+                _download_scan_resource(garjus, proj, subj, sess, scan, res, dst)
+
+
 def _download_resource(garjus, proj, subj, sess, assr, res, dst):
     # Make the folders for destination path
     logger.debug(f'makedirs:{dst}')

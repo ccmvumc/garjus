@@ -111,10 +111,15 @@ def getinputs(project, analysis_id, download_dir, processor):
 @click.option('--resources', '-r', 'resources', multiple=True, required=True)
 @click.option('--files', '-f', 'files', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
-def download(project, proctype, download_dir, resources, files):
+@click.option("--scan", is_flag=True, default=False, help="scans, instead of assessors.")
+def download(project, proctype, download_dir, resources, files, scan):
     click.echo('garjus! download')
     g = Garjus()
-    g.download_proctype(project, download_dir, proctype, resources, files)
+    print('scan=', scan)
+    if scan:
+        g.download_scantype(project, download_dir, proctype, resources, files)
+    else:
+        g.download_proctype(project, download_dir, proctype, resources, files)
 
 
 @cli.command('run')
