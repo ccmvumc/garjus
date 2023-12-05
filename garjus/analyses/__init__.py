@@ -549,7 +549,7 @@ def download_scan_resources(garjus, project, download_dir, scantype, resources, 
         subj = s.SUBJECT
         sess = s.SESSION
         scan = s.SCANID
-        dst = f'{download_dir}/{proj}/{sess}/{scan}'
+        dst = f'{download_dir}/{proj}/{subj}/{sess}/{scan}'
 
         for res in resources:
 
