@@ -115,7 +115,6 @@ def getinputs(project, analysis_id, download_dir, processor):
 def download(project, proctype, download_dir, resources, files, scan):
     click.echo('garjus! download')
     g = Garjus()
-    print('scan=', scan)
     if scan:
         g.download_scantype(project, download_dir, proctype, resources, files)
     else:
