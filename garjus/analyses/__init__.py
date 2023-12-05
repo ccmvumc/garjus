@@ -491,7 +491,7 @@ def _download_sess_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
 
 
 def download_resources(garjus, project, download_dir, proctype, resources, files):
-    logger.info(f'loading data:{project}:{proctype}')
+    logger.debug(f'loading data:{project}:{proctype}')
     assessors = garjus.assessors(projects=[project], proctypes=[proctype])
     #sgp = garjus.subject_assessors(projects=[project])
 
@@ -539,7 +539,7 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
 
 
 def download_scan_resources(garjus, project, download_dir, scantype, resources, files):
-    logger.info(f'loading data:{project}:{scantype}')
+    logger.debug(f'loading data:{project}:{scantype}')
     scans = garjus.scans(projects=[project], scantypes=[scantype])
 
     scans = scans[scans.QUALITY != 'unusable']
