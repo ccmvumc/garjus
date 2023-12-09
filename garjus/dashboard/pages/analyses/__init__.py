@@ -19,13 +19,25 @@ TIPS_MARKDOWN = '''
 
     To download all input files for analysis number ID to folder INPUTS for project NAME, at command-line enter:
 
-    `garjus getinputs ID INPUTS -p NAME`
+    `garjus getinputs NUM INPUTS -p NAME`
 
 
 
-    For example to download analyis 1 from ProjectA to a local folder named INPUTS, enter:
+    For example, to download analyis 1 from ProjectA to a local folder named INPUTS, enter:
 
     `garjus getinputs 1 ./INPUTS -p ProjectA`
+
+
+
+    To run an analysis by downloading the inputs locally and saving the outputs locally:
+
+    `garjus run -p NAME NUM OUTPUTS.zip`
+
+
+
+    For example, to run analysis 3 for project ProjectA and save outputs to zip:
+
+    `garjus run -p ProjectA 3 ProjectA_3_OUTPUTS.zip`
 
 '''
 

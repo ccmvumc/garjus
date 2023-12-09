@@ -123,12 +123,15 @@ def download(project, proctype, download_dir, resources, files, scan):
 
 @cli.command('run')
 @click.argument('analysis_id', required=True)
-@click.argument('output_zip', required=False)
+@click.argument('output_zip', type=click.Path(), required=False)
 @click.option('--project', '-p', 'project', required=True)
 @click.option('--processor', '-y', 'processor', required=False)
 def run(project, analysis_id, output_zip, processor):
     click.echo('garjus! run')
     g = Garjus()
+
+
+
     g.run_analysis(project, analysis_id, output_zip, processor)
 
 

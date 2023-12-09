@@ -185,8 +185,10 @@ def _run(garjus, analysis, tempdir):
         if c['name'] == container:
             if 'path' in c and command_mode == 'singularity':
                 container = c['path']
-            else:
+            elif 'source' in c:
                 container = c['source']
+            else:
+                raise Exception('processor cannot be run in this environment.')
 
     logger.debug(f'command mode is {command_mode}')
 
