@@ -17,7 +17,7 @@ TIPS_MARKDOWN = '''
 
     ### Analyses Tips:
 
-    To download all input files for analysis number ID to folder INPUTS for project NAME, at command-line enter:
+    To download all input files for analysis number NUM to folder INPUTS for project NAME, at command-line enter:
 
     `garjus getinputs NUM INPUTS -p NAME`
 
@@ -38,6 +38,15 @@ TIPS_MARKDOWN = '''
     For example, to run analysis 3 for project ProjectA and save outputs to zip:
 
     `garjus run -p ProjectA 3 ProjectA_3_OUTPUTS.zip`
+
+
+    To update analyses NUM for project NAME, enter:
+
+    `garjus update analyses NUM -p NAME`
+
+    This will update the inputs by either downloading the existing zip or createing it and uploading it,
+    then it will run the anlaysis to create the outputs and upload it back to the analysis record.
+
 
 '''
 
