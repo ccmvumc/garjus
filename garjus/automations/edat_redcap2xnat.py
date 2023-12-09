@@ -57,7 +57,7 @@ def process_project(
         try:
             session = subj + event2sess[event]
         except KeyError:
-            logger.error(f'{subj}:{event}:event not in event session map')
+            logger.debug(f'{subj}:{event}:event not in event session map')
             continue
 
         # Filter scans for this session
