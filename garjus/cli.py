@@ -128,10 +128,8 @@ def download(project, proctype, download_dir, resources, files, scan):
 @click.option('--processor', '-y', 'processor', required=False)
 def run(project, analysis_id, output_zip, processor):
     click.echo('garjus! run')
+    output_zip = os.path.abspath(output_zip)
     g = Garjus()
-
-
-
     g.run_analysis(project, analysis_id, output_zip, processor)
 
 
