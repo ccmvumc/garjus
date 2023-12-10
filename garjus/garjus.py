@@ -37,7 +37,7 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
-from .analyses import update as update_analyses, download_analysis_inputs, run_analysis, finish_analysis, download_resources, download_scan_resources
+from .analyses import update as update_analyses, download_analysis_inputs, download_analysis_outputs, run_analysis, finish_analysis, download_resources, download_scan_resources
 
 
 logger = logging.getLogger('garjus')
@@ -305,7 +305,7 @@ class Garjus:
         except (ValueError, RedcapError, AssertionError) as err:
             logger.error(f'error uploading:{err}')
 
-    def assessors(self, projects=None, proctypes=None):
+    def assessors(self, projects=None, proctypes=None, sesstypes=None):
         """Query XNAT for all assessors of and return list of dicts."""
         if not projects:
             projects = self.projects()
@@ -316,6 +316,9 @@ class Garjus:
 
         # Build a dataframe
         df = pd.DataFrame(data, columns=self.column_names('assessors'))
+
+        if sesstypes:
+            df = df[df.SESSTYPE.isin(sesstypes)]
 
         df['DATE'] = pd.to_datetime(df['DATE'])
 
@@ -726,7 +729,8 @@ class Garjus:
         modalities=None,
         sites=None,
         startdate=None,
-        enddate=None
+        enddate=None,
+        sesstypes=None,
     ):
         """Query XNAT for all scans and return a dictionary of scan info."""
         if not projects:
@@ -735,6 +739,9 @@ class Garjus:
         data = self._load_scan_data(projects, scantypes, modalities, sites)
 
         df = pd.DataFrame(data, columns=self.column_names('scans'))
+
+        if sesstypes:
+            df = df[df.SESSTYPE.isin(sesstypes)]
 
         # Format as datetime
         df['DATE'] = pd.to_datetime(df['DATE'])
@@ -2479,17 +2486,20 @@ class Garjus:
     def get_analysis_inputs(self, project, analysis_id, download_dir, processor):
         download_analysis_inputs(self, project, analysis_id, download_dir, processor)
 
+    def get_analysis_outputs(self, project, analysis_id, download_dir):
+        download_analysis_outputs(self, project, analysis_id, download_dir)
+
     def run_analysis(self, project, analysis_id, output_zip, processor):
         run_analysis(self, project, analysis_id, output_zip, processor)
 
     def finish_analysis(self, project, analysis_id, analysis_dir, processor):
         finish_analysis(self, project, analysis_id, analysis_dir, processor)
 
-    def download_proctype(self, project, download_dir, proctype, resources, files):
-        download_resources(self, project, download_dir, proctype, resources, files)
+    def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None):
+        download_resources(self, project, download_dir, proctype, resources, files, sesstypes)
 
-    def download_scantype(self, project, download_dir, scantype, resources, files):
-        download_scan_resources(self, project, download_dir, scantype, resources, files)
+    def download_scantype(self, project, download_dir, scantype, resources, files, sesstypes=None):
+        download_scan_resources(self, project, download_dir, scantype, resources, files, sesstypes)
 
     # Pass tasks from garjus to dax by writing files to DISKQ
     def queue2dax(self):

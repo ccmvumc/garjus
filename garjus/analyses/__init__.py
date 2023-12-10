@@ -492,9 +492,9 @@ def _download_sess_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
-def download_resources(garjus, project, download_dir, proctype, resources, files):
+def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes):
     logger.debug(f'loading data:{project}:{proctype}')
-    assessors = garjus.assessors(projects=[project], proctypes=[proctype])
+    assessors = garjus.assessors(projects=[project], proctypes=[proctype], sesstypes=sesstypes)
     #sgp = garjus.subject_assessors(projects=[project])
 
     assessors = assessors[assessors.PROCSTATUS == 'COMPLETE']
@@ -540,9 +540,9 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
                 _download_resource(garjus, proj, subj, sess, assr, res, dst)
 
 
-def download_scan_resources(garjus, project, download_dir, scantype, resources, files):
+def download_scan_resources(garjus, project, download_dir, scantype, resources, files, sesstypes):
     logger.debug(f'loading data:{project}:{scantype}')
-    scans = garjus.scans(projects=[project], scantypes=[scantype])
+    scans = garjus.scans(projects=[project], scantypes=[scantype], sesstypes=sesstypes)
 
     scans = scans[scans.QUALITY != 'unusable']
 
@@ -989,6 +989,16 @@ def download_analysis_inputs(garjus, project, analysis_id, download_dir, process
     _download_inputs(garjus, analysis, download_dir)
 
 
+def download_analysis_outputs(garjus, project, analysis_id, download_dir):
+
+    logger.debug(f'download_analysis_outputs:{project}:{analysis_id}:{download_dir}')
+
+    analysis = garjus.load_analysis(project, analysis_id)
+
+    _download_outputs(garjus, analysis, download_dir)
+
+
+
 def _download_inputs(garjus, analysis, download_dir):
     errors = []
 
@@ -1052,3 +1062,24 @@ def _download_inputs(garjus, analysis, download_dir):
         logger.info(f'download complete with no errors!')
 
     logger.debug('done!')
+
+
+def _download_outputs(garjus, analysis, download_dir):
+    project = analysis['PROJECT']
+    analysis_id = analysis['ID']
+    resource = f'{project}_{analysis_id}'
+    res_uri = f'/projects/{project}/resources/{resource}'
+
+    res = garjus.xnat().select(res_uri)
+
+    file_list = res.files().get()
+    file_list = [x for x in file_list if 'OUTPUTS' in x]
+    file_list = sorted(file_list)
+
+    if len(file_list) < 1:
+        raise Exception('no outputs found')
+
+    uri = f'/data/{res_uri}/files/{file_list[0]}'
+    dst = f'{download_dir}/{file_list[0]}'
+    _make_dirs(download_dir)
+    _download_file_stream(garjus.xnat(), uri, dst)

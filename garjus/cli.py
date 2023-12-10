@@ -106,20 +106,31 @@ def getinputs(project, analysis_id, download_dir, processor):
     g.get_analysis_inputs(project, analysis_id, download_dir, processor)
 
 
+@cli.command('getoutputs')
+@click.argument('analysis_id', required=True)
+@click.argument('download_dir', required=True)
+@click.option('--project', '-p', 'project', required=True)
+def getoutputs(project, analysis_id, download_dir):
+    click.echo('garjus! getoutputs')
+    g = Garjus()
+    g.get_analysis_outputs(project, analysis_id, download_dir)
+
+
 @cli.command('download')
 @click.argument('download_dir', required=True)
 @click.option('--type', '-t', 'proctype', multiple=False, required=True)
 @click.option('--resources', '-r', 'resources', multiple=True, required=True)
 @click.option('--files', '-f', 'files', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
+@click.option('--sesstypes', '-s', 'sesstypes', multiple=True, required=False)
 @click.option("--scan", is_flag=True, default=False, help="scans, instead of assessors.")
-def download(project, proctype, download_dir, resources, files, scan):
+def download(project, proctype, download_dir, resources, files, scan, sesstypes):
     click.echo('garjus! download')
     g = Garjus()
     if scan:
-        g.download_scantype(project, download_dir, proctype, resources, files)
+        g.download_scantype(project, download_dir, proctype, resources, files, sesstypes)
     else:
-        g.download_proctype(project, download_dir, proctype, resources, files)
+        g.download_proctype(project, download_dir, proctype, resources, files, sesstypes)
 
 
 @cli.command('run')
