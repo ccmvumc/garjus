@@ -317,7 +317,7 @@ def dashboard(auth_file=None, login=False):
 
     if login:
         from .dashboard.login import app
-    else:  
+    else:
         from .dashboard.index import app
 
         if auth_file:

@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 
 from .. import utils
 from . import data
-from ....dictionary import COLUMNS
 
 logger = logging.getLogger('dashboard.analyses')
 
@@ -14,45 +13,49 @@ COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
 
 # command line examples for interacting with analyses
 TIPS_MARKDOWN = '''
+    &nbsp;
 
     ### Analyses Tips:
 
-    To download all input files for analysis number NUM to folder INPUTS for project NAME, at command-line enter:
+    &nbsp;
 
-    `garjus getinputs NUM INPUTS -p NAME`
+    To download all input files for analysis number NUM to folder INPUTS for project NAME, at command-line enter:  
+    `garjus getinputs -p NAME NUM INPUTS`
 
+    For example, to download inputs for analysis 1 from ProjectA to a local folder named INPUTS, enter:  
+    `garjus getinputs -p ProjectA 1 ./INPUTS`
 
+    &nbsp;
 
-    For example, to download analyis 1 from ProjectA to a local folder named INPUTS, enter:
+    To download the output zip for analysis number NUM to folder OUTPUTS for project NAME, at command-line enter:  
+    `garjus getoutputs -p NAME NUM OUTPUTS`
 
-    `garjus getinputs 1 ./INPUTS -p ProjectA`
+    For example, to download outputs for analysis 1 from ProjectA to a local folder named OUTPUTS, enter:  
+    `garjus getoutputs -p ProjectA 1 ./OUTPUTS`
 
+    &nbsp;
 
-
-    To run an analysis by downloading the inputs locally and saving the outputs locally:
-
+    To run an analysis by downloading the inputs locally and saving the outputs locally:  
     `garjus run -p NAME NUM OUTPUTS.zip`
 
-
-
-    For example, to run analysis 3 for project ProjectA and save outputs to zip:
-
+    For example, to run analysis 3 for project ProjectA and save outputs to zip:  
     `garjus run -p ProjectA 3 ProjectA_3_OUTPUTS.zip`
 
+    &nbsp;
 
-    To update analyses NUM for project NAME, enter:
+    To update analyses for a project, enter:  
+    `garjus update analyses -p ProjectA`
 
-    `garjus update analyses NUM -p NAME`
+    This will update each analyses by creating the inputs if already done,
+    and if outputs does not exist, then it will run the analysis to create the outputs,
+    upload a zip to project resources on XNAT, and finally create a link in the analysis record.  
 
-    This will update the inputs by either downloading the existing zip or createing it and uploading it,
-    then it will run the anlaysis to create the outputs and upload it back to the analysis record.
-
+    &nbsp;
 
 '''
 
 
 def get_content():
-    #columns = utils.make_columns(COLUMNS.get('analyses'))
     columns = utils.make_columns([
         'PROJECT',
         'ID',
@@ -171,7 +174,7 @@ def update_analyses(
             pass
         elif 'sharepoint.com' in r['OUTPUT']:
             _link = r['OUTPUT']
-            _text = 'OneDrive'
+            _text = r['OUTPUT'].rsplit('/', 1)[1]
             r['OUTPUT'] = f'[{_text}]({_link})'
         elif 'xnat' in r['OUTPUT']:
             _link = r['OUTPUT']

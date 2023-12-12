@@ -55,6 +55,34 @@ LEGEND2 = '''
 
 MOD2EMO = {'MR': '🧠', 'PET': '☢️', 'EEG': '🤯'}
 
+# command line examples
+TIPS_MARKDOWN = '''
+    &nbsp;
+
+    ### QA Tips:
+
+    To download assessor outputs, at command-line enter:  
+    `garjus download -p NAME -t TYPE -r RESOURCE`
+
+    For example, to download the DATA resource from FS7_v1 for ProjectA, enter:  
+    `garjus download -p ProjectA -t FS7_v1 -r DATA`
+
+    To download a specific file from each resource, enter:  
+    `garjus download -p ProjectA -t FS7_v1 -r SUBJ -f mri/orig.mgz`
+
+    Use the session type to limit to the Baseline sessions, enter:  
+    `garjus download -p ProjectA -t FS7_v1 -r SUBJ -f mri/orig.mgz -s Baseline`
+
+    The same options can be used to download scans instead of assessors by including
+    the scan flag.  
+
+    To download the DICOM resource T1 scans from the Baseline sessions, at command-line enter:  
+    `garjus download --scan -p ProjectA -t T1 -r DICOM -s Baseline`
+
+    &nbsp;
+
+'''
+
 
 # The data will be pivoted by session to show a row per session and
 # a column per scan/assessor type,
@@ -485,6 +513,7 @@ def get_content():
             export_columns='visible'
         ),
         dbc.Label('Get ready...', id='label-qa-rowcount2'),
+        dcc.Markdown(TIPS_MARKDOWN),
         html.Div([
             html.P(
                 LEGEND1,
