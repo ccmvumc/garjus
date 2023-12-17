@@ -123,14 +123,37 @@ def getoutputs(project, analysis_id, download_dir):
 @click.option('--files', '-f', 'files', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
 @click.option('--sesstypes', '-s', 'sesstypes', multiple=True, required=False)
-@click.option("--scan", is_flag=True, default=False, help="scans, instead of assessors.")
-def download(project, proctype, download_dir, resources, files, scan, sesstypes):
+@click.option(
+    "--scan", is_flag=True, default=False, help="scans, instead of assessors.")
+def download(
+    project,
+    proctype,
+    download_dir,
+    resources,
+    files,
+    scan,
+    sesstypes
+):
     click.echo('garjus! download')
     g = Garjus()
     if scan:
-        g.download_scantype(project, download_dir, proctype, resources, files, sesstypes)
+        g.download_scantype(
+            project,
+            download_dir,
+            proctype,
+            resources,
+            files,
+            sesstypes
+        )
     else:
-        g.download_proctype(project, download_dir, proctype, resources, files, sesstypes)
+        g.download_proctype(
+            project,
+            download_dir,
+            proctype,
+            resources,
+            files,
+            sesstypes
+        )
 
 
 @cli.command('run')
@@ -328,7 +351,10 @@ def dashboard(auth_file=None, login=False):
             # Load user passwords to use dash's basic authentication
             with open(auth_file, 'rt') as file:
                 _data = yaml.load(file, yaml.SafeLoader)
-                dash_auth.BasicAuth(app, _data['VALID_USERNAME_PASSWORD_PAIRS'])
+                dash_auth.BasicAuth(
+                    app,
+                    _data['VALID_USERNAME_PASSWORD_PAIRS']
+                )
 
     # Open URL in a new tab, if a browser window is already open.
     webbrowser.open_new_tab(url)
