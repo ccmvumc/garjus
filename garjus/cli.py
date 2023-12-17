@@ -185,7 +185,8 @@ def d2q():
         'automations',
         'compare',
         'tasks',
-        'analyses'
+        'analyses',
+        'scans'
     ]),
     required=False,
     nargs=-1)

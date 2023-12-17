@@ -92,7 +92,6 @@ TIPS_MARKDOWN = '''
 # the columns will be the merged
 # status column with harmonized values to be red/yellow/green/blue
 
-
 def _get_graph_content(dfp):
     tabs_content = []
 
@@ -384,7 +383,7 @@ def get_content():
                     placeholder='Select Project(s)',
                     value=[],
                 ),
-                width=5,
+                width=3,
             ),
         ),
         dbc.Row([
@@ -394,7 +393,7 @@ def get_content():
                     multi=True,
                     placeholder='Select Session Type(s)',
                 ),
-                width=5,
+                width=3,
             ),
             dbc.Col(
                 dbc.Checklist(
@@ -418,7 +417,7 @@ def get_content():
                     multi=True,
                     placeholder='Select Processing Type(s)',
                 ),
-                width=5,
+                width=3,
             ),
             dbc.Col(
                 dbc.Checklist(
@@ -446,7 +445,7 @@ def get_content():
                     multi=True,
                     placeholder='Select Scan Type(s)',
                 ),
-                width=5,
+                width=3,
             ),
         ]),
         dbc.Row(
@@ -460,6 +459,7 @@ def get_content():
                         labelCheckedClassName="active",
                         options=[
                             {'label': 'Scans', 'value': 'scan'},
+                            {'label': 'Assessors', 'value': 'assr'},
                             {'label': 'Sessions', 'value': 'sess'},
                             {'label': 'Subjects', 'value': 'subj'},
                             {'label': 'Projects', 'value': 'proj'},
@@ -480,6 +480,9 @@ def get_content():
             columns=[],
             data=[],
             filter_action='native',
+            #page_current=0,
+            #page_size=1000,
+            #page_action='custom',
             page_action='none',
             sort_action='native',
             id='datatable-qa',
@@ -504,6 +507,8 @@ def get_content():
             style_cell_conditional=[
                 {'if': {'column_id': 'NOTE'}, 'textAlign': 'left'},
                 {'if': {'column_id': 'SESSIONS'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'ASSR'}, 'textAlign': 'left'},
+                {'if': {'column_id': 'DURATION'}, 'textAlign': 'right'},
                 {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
             ],
             css=[dict(selector="p", rule="margin: 0; text-align: center")],
@@ -966,7 +971,25 @@ def update_qa(
         # Drop non scans
         df = df.dropna(subset='SCANTYPE')
 
-        selected_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SCANTYPE', 'FRAMES', 'SESSTYPE', 'SITE', 'STATUS', 'MODALITY', 'NOTE']
+        # Order matters here for display of columns
+        selected_cols = [
+            'PROJECT',
+            'SUBJECT',
+            'SESSION',
+            'SCANID',
+            'SCANTYPE',
+            'DATE',
+            'MODALITY',
+            'DURATION',
+            'TR',
+            'THICK',
+            'SENSE',
+            'MB',
+            'FRAMES',
+            'NIFTI',
+            'JSON',
+            'EDAT',
+        ]
 
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
@@ -985,9 +1008,77 @@ def update_qa(
                 _link = r['SUBJECTLINK']
                 r['SUBJECT'] = f'[{_subj}]({_link})'
 
+            if r['NIFTI']:
+                _link = r['NIFTI']
+                r['NIFTI'] = f'[⬇️]({_link})'
+
+            if r['EDAT']:
+                _link = r['EDAT']
+                r['EDAT'] = f'[⬇️]({_link})'
+
+            if r['JSON']:
+                _link = r['JSON']
+                r['JSON'] = f'[⬇️]({_link})'
+
         # Format columns
         for i, c in enumerate(columns):
-            if c['name'] in ['SESSION', 'SUBJECT']:
+            if c['name'] in ['SESSION', 'SUBJECT', 'NIFTI', 'JSON', 'EDAT']:
+                columns[i]['type'] = 'text'
+                columns[i]['presentation'] = 'markdown'
+
+    elif selected_pivot == 'assr':
+        # Drop non-assessors
+        df = df.dropna(subset='PROCTYPE')
+
+        df['STATUS'] = df['STATUS'].replace({
+            'P': '✅',
+            'X': '🩷',
+            'Q': '🟩',
+            'N': '🟡',
+            'R': '🔷',
+            'F': '❌',
+        })
+
+        selected_cols = [
+            'PROJECT',
+            'SUBJECT',
+            'SESSION',
+            'ASSR',
+            'DATE',
+            'PROCTYPE',
+            'STATUS',
+            'PDF',
+            'LOG',
+        ]
+
+        # Format as column names and record dictionaries for dash table
+        columns = utils.make_columns(selected_cols)
+        records = df.reset_index().to_dict('records')
+
+        # Format records
+        for r in records:
+
+            if r['SESSION'] and 'SESSIONLINK' in r:
+                _sess = r['SESSION']
+                _link = r['SESSIONLINK']
+                r['SESSION'] = f'[{_sess}]({_link})'
+
+            if r['SUBJECT'] and 'SUBJECTLINK' in r:
+                _subj = r['SUBJECT']
+                _link = r['SUBJECTLINK']
+                r['SUBJECT'] = f'[{_subj}]({_link})'
+
+            if r['PDF']:
+                _link = r['PDF']
+                r['PDF'] = f'[📊]({_link})'
+
+            if r['LOG']:
+                _link = r['LOG']
+                r['LOG'] = f'[📄]({_link})'
+
+        # Format columns
+        for i, c in enumerate(columns):
+            if c['name'] in ['SESSION', 'SUBJECT', 'PDF', 'LOG']:
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
     else:

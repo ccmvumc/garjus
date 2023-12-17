@@ -2,6 +2,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 from ....garjus import Garjus
@@ -35,10 +36,11 @@ ASSR_STATUS_MAP = {
 
 
 QA_COLS = [
-    'SESSION', 'SUBJECT', 'PROJECT',
+    'SESSION', 'SUBJECT', 'PROJECT', 'SCANID', 'ASSR',
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
-    'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE',
-    'MODALITY', 'FRAMES']
+    'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY',
+    'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB', 'RESOURCES'
+]
 
 
 def get_filename():
@@ -201,29 +203,33 @@ def get_data(projects):
     # Make a common column for type
     assr_df['TYPE'] = assr_df['PROCTYPE']
     scan_df['TYPE'] = scan_df['SCANTYPE']
-
-    assr_df['SCANTYPE'] = None
-    assr_df['FRAMES'] = None
-    scan_df['PROCTYPE'] = None
-
+    subj_df['TYPE'] = subj_df['PROCTYPE']
     assr_df['ARTTYPE'] = 'assessor'
     scan_df['ARTTYPE'] = 'scan'
+    subj_df['ARTTYPE'] = 'sgp'
+
+    for x in ['SESSION', 'SITE', 'NOTE', 'SESSTYPE', 'MODALITY']:
+        subj_df[x] = 'SGP'
+ 
+    for x in ['SCANID', 'SCANTYPE', 'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB']:
+        assr_df[x] = None
+        subj_df[x] = None
+
+    assr_df['RESOURCES'] = ''
+    subj_df['RESOURCES'] = ''
+
+    for x in ['PROCTYPE', 'ASSR']:
+        scan_df[x] = None
 
     # Concatenate the common cols to a new dataframe
     df = pd.concat([assr_df[QA_COLS], scan_df[QA_COLS]], sort=False)
-
-    subj_df['TYPE'] = subj_df['PROCTYPE']
-    subj_df['SCANTYPE'] = None
-    subj_df['FRAMES'] = None
-    subj_df['ARTTYPE'] = 'sgp'
-    subj_df['SESSION'] = subj_df['ASSR']
-    subj_df['SITE'] = 'SGP'
-    subj_df['NOTE'] = ''
-    subj_df['SESSTYPE'] = 'SGP'
-    subj_df['MODALITY'] = 'SGP'
     df = pd.concat([df[QA_COLS], subj_df[QA_COLS]], sort=False)
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
+
+    # Convert duration from string of total seconds to formatted string HH:MM:SS
+    df['DURATION'] = df['DURATION'].fillna(np.nan).replace('', np.nan).replace('None', np.nan)
+    df['DURATION'] = pd.to_datetime(df.DURATION.astype(float), unit='s', errors='coerce').dt.strftime("%-M:%S")
 
     df['SESSIONLINK'] = garjus.xnat().host + \
         '/data/projects/' + df['PROJECT'] + \
@@ -233,6 +239,47 @@ def get_data(projects):
     df['SUBJECTLINK'] = garjus.xnat().host + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT']
+
+    df['PDF'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION'] + \
+        '/assessors/' + df['ASSR'] + \
+        '/out/resources/PDF/files/' + \
+        'report_' + df['ASSR'] + '.pdf'
+
+    df['LOG'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION'] + \
+        '/assessors/' + df['ASSR'] + \
+        '/out/resources/OUTLOG/files/' + \
+        df['ASSR'] + '.txt'
+
+    df['NIFTI'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION'] + \
+        '/scans/' + df['SCANID'] + \
+        '/resources/NIFTI/files?format=zip'
+
+    df['JSON'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION'] + \
+        '/scans/' + df['SCANID'] + \
+        '/resources/JSON/files?format=zip'
+
+    df['EDAT'] = garjus.xnat().host + \
+        '/data/projects/' + df['PROJECT'] + \
+        '/subjects/' + df['SUBJECT'] + \
+        '/experiments/' + df['SESSION'] + \
+        '/scans/' + df['SCANID'] + \
+        '/resources/EDAT/files?format=zip'
+
+    df.loc[df.RESOURCES.str.contains('EDAT') == False, 'EDAT'] = ''
+    df.loc[df.RESOURCES.str.contains('JSON') == False, 'JSON'] = ''
+    df.loc[df.RESOURCES.str.contains('NIFTI') == False, 'NIFTI'] = ''
 
     return df
 
@@ -312,8 +359,10 @@ def load_scan_data(garjus, project_filter):
 
     dfs = dfs[[
         'PROJECT', 'SESSION', 'SUBJECT', 'NOTE', 'DATE', 'SITE', 'SCANID',
-        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY', 'FRAMES',
+        'SCANTYPE', 'QUALITY', 'XSITYPE', 'SESSTYPE', 'MODALITY',
+        'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB', 'RESOURCES',
         'full_path']].copy()
+
     dfs.drop_duplicates(inplace=True)
 
     # Drop any rows with empty type

@@ -99,7 +99,8 @@ COLUMNS = {
         'SUBJECT', 'SESSION', 'SCAN ', 'DESCRIPTION',
         'EVENT', 'FIELD', 'STATUS'],
     'scans': [
-        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'NOTE', 'DATE', 'SITE', 'FRAMES',
+        'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'TRACER', 'NOTE', 'DATE', 'SITE',
+        'DURATION', 'FRAMES', 'TR', 'THICK', 'SENSE', 'MB',
         'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': [
         'ID', 'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD', 'EDIT'],
