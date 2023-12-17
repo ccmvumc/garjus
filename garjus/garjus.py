@@ -38,6 +38,7 @@ from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPOR
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
 from .analyses import update as update_analyses, download_analysis_inputs, download_analysis_outputs, run_analysis, finish_analysis, download_resources, download_scan_resources
+from .scans import update as update_scans
 
 
 logger = logging.getLogger('garjus')
@@ -754,6 +755,24 @@ class Garjus:
             # Filter end
             df = df[df.DATE <= enddate]
 
+        # Merge in auxiliary scan data
+        dfp = pd.DataFrame()
+        for p in projects:
+            dfp = pd.concat([dfp, self._load_scan_stats(p)])
+
+        index_cols = ['SUBJECT', 'SESSION', 'SCANID']
+
+        drop_cols = [x for x in dfp.columns if x in df.columns and x not in index_cols]
+
+        df = df.drop(columns=drop_cols)
+
+        df = pd.merge(
+            df,
+            dfp,
+            how='left',
+            on=index_cols,
+        )
+
         # Return as dataframe
         df = df.sort_values('full_path')
         return df
@@ -1023,6 +1042,75 @@ class Garjus:
 
         _records = statsrc.export_records(fields=['stats_assr'])
         return list(set([x['stats_assr'] for x in _records]))
+
+
+    def stats_scans(self, project, scantypes=None):
+        """Get list of scans already in stats archive."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+
+        records = self._stats_redcap(project).export_records(
+            fields=['subject_id', 'scan_session', 'scan_id'])
+
+        records = [x for x in records if x['redcap_repeat_instrument'] == 'scan']
+
+        return records
+
+    def _load_scan_stats(
+        self,
+        project,
+    ):
+        """Return all stats for project, filtered."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load stats, redcap not enabled')
+            return None
+
+        try:
+            """Get the stats data from REDCap."""
+            logger.debug(f'loading scan stats from REDCap:{project}')
+            records = self._stats_redcap(project).export_records(forms=['scan'])
+            records = [x for x in records if x['redcap_repeat_instrument'] == 'scan']
+        except:
+            records = []
+
+        if len(records) == 0:
+            df = pd.DataFrame(columns=[
+                'SUBJECT',
+                'SESSION',
+                'SCANID',
+                'DURATION',
+                'TR',
+                'SENSE',
+                'MB',
+                'THICK',
+            ])
+        else:
+            logger.debug(f'prepping scan stats:{project}')
+
+            # Make a dataframe
+            df = pd.DataFrame(records)
+            df = df.drop(columns=[
+                'scan_complete',
+                'redcap_repeat_instrument',
+                'redcap_repeat_instance'])
+
+            df = df.rename(columns={
+                'subject_id': 'SUBJECT',
+                'scan_id': 'SCANID',
+                'scan_session': 'SESSION',
+                'scan_duration': 'DURATION',
+                'scan_tr': 'TR',
+                'scan_prfip': 'SENSE',
+                'scan_proop': 'MB',
+                'scan_slicethickness':'THICK',
+            })
+
+            df = df.drop_duplicates(subset=['SESSION', 'SCANID'])
+
+        return df
 
     def projects(self, has_redcap=False):
         """Get list of projects."""
@@ -1557,6 +1645,10 @@ class Garjus:
             logger.info('updating analyses')
             update_analyses(self, projects)
 
+        if 'scans' in choices:
+            logger.info('updating scans')
+            update_scans(self, projects)
+
     def report(self, project, monthly=False):
         """Create a PDF report."""
         pdf_file = f'{project}_report.pdf'
@@ -1835,6 +1927,35 @@ class Garjus:
 
         return f'{stats_dir}/STATS'
 
+    def get_scan_stats(self, project, subject, session, scan):
+        """Read from BIDS file."""
+        stats = {}
+        resource = 'JSON'
+
+        xnat_resource = self._xnat.select_scan_resource(
+            project,
+            subject,
+            session,
+            scan,
+            resource)
+
+        # Get list of files in JSON resource
+        files = xnat_resource.files().get()
+        if len(files) == 0:
+            logging.debug(f'no JSON files found')
+        elif len(files) > 1:
+            logging.debug(f'too many JSON files found')
+        else:
+            # Download and load the first file
+            src = files[0]
+            print(project, subject, session, scan, src)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                dst = os.path.join(tmpdir, src)
+                xnat_resource.file(src).get(dst)
+                stats.update(self._load_bids_data(dst))
+
+        return stats
+
     def set_stats(self, project, subject, session, assessor, data):
         """Upload stats to redcap."""
 
@@ -1864,6 +1985,38 @@ class Garjus:
             response = statsrc.import_records(rec)
             assert 'count' in response
             logger.debug('stats record created')
+        except AssertionError as err:
+            logger.error(f'upload failed:{err}')
+        except ConnectionError as err:
+            logger.error(err)
+            logger.info('wait a minute')
+            import time
+            time.sleep(60)
+
+    def set_scan_stats(self, project, subject, session, scan, data):
+        """Upload to redcap."""
+
+        rec = {
+            'subject_id': subject,
+            'scan_session': session,
+            'scan_id': scan,
+            'redcap_repeat_instrument': 'scan',
+            'redcap_repeat_instance': 'new',
+            'scan_complete': '2',
+            'scan_duration': data['duration'],
+            'scan_tr': data['tr'],
+            'scan_prfip': data['prfip'],
+            'scan_proop': data['proop'],
+            'scan_slicethickness':data['thickness']
+        }
+
+        # Now upload
+        try:
+            logger.debug('uploading to redcap')
+            print(rec)
+            response = self._stats_redcap(project).import_records([rec])
+            assert 'count' in response
+            logger.debug('scan record uploaded')
         except AssertionError as err:
             logger.error(f'upload failed:{err}')
         except ConnectionError as err:
@@ -2256,6 +2409,26 @@ class Garjus:
             'date': data.get('AcquisitionDateTime', None),
             'tracer': data.get('Radiopharmaceutical', None),
             'ProcedureStepDescription': data.get('ProcedureStepDescription', None),
+        }
+
+    def _load_bids_data(self, jsonfile):
+        with open(jsonfile) as f:
+            data = json.load(f, strict=False)
+
+        return {
+            'modality': data.get('Modality', ''),
+            'date': data.get('AcquisitionDateTime', ''),
+            'tracer': data.get('Radiopharmaceutical', ''),
+            'ProcedureStepDescription': data.get('ProcedureStepDescription', ''),
+            'duration': str(data.get('AcquisitionDuration', '')),
+            'thickness': str(data.get('SliceThickness', '')),
+            'tr': str(data.get('RepetitionTime', '')),
+            'te': str(data.get('EchoTime', '')), 
+            'flip': str(data.get('FlipAngle', '')),
+            'prfip': str(data.get('ParallelReductionFactorInPlane', '')),
+            'proop': str(data.get('ParallelReductionOutOfPlane', data.get('ParallelReductionFactorOutOfPlane', ''))),
+            'manufact': str(data.get('Manufacturer', '')),
+            'dcm2niix': str(data.get('ConversionSoftwareVersion', '')),
         }
 
     def _upload_scan(self, dicomdir, scan_object):
