@@ -1,5 +1,4 @@
 import os
-import datetime
 import logging
 
 from flask import Flask, request, redirect, session, jsonify, url_for, render_template
@@ -109,8 +108,6 @@ dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.mi
 assets_path = os.path.expanduser('~/git/garjus/garjus/dashboard/assets')
 darkmode = True
 
-#hour = datetime.datetime.now().hour
-#if hour < 9 or hour > 17:
 if darkmode:
     stylesheets = [dbc.themes.DARKLY, dbc_css]
     load_figure_template("darkly")
@@ -151,10 +148,6 @@ def load_user(username):
     return User(username)
 
 
-def redcap_found():
-    return Garjus.redcap_found()
-
-
 footer_content = [
     html.Hr(),
     html.Div(
@@ -179,7 +172,7 @@ footer_content = [
     ),
 ]
 
-if redcap_found():
+if Garjus.redcap_found():
     tabs = dbc.Tabs([
         dbc.Tab(
             label='QA',
@@ -225,6 +218,7 @@ if redcap_found():
 else:
     tabs = html.Div(qa.get_content())
 
+# Wrap in a Div with margins
 app.layout = html.Div(
     className='dbc',
     style={'marginLeft': '20px', 'marginRight': '20px'},

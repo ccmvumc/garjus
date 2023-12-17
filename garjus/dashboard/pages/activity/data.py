@@ -50,16 +50,19 @@ def get_data(proj_filter):
 
     logger.info(f'loading activity:startdate={startdate}')
     dfc = g.activity(startdate=startdate)
-    dfx = g.assessors()
 
-    dfq = load_recent_qa(dfx, startdate=startdate)
-    logger.info('loaded {} qa records'.format(len(dfq)))
+    if g.xnat_enabled():
+        print('xnat enabled')
+        dfx = g.assessors()
+        dfq = load_recent_qa(dfx, startdate=startdate)
+        logger.info('loaded {} qa records'.format(len(dfq)))
 
-    dfj = load_recent_jobs(dfx, startdate=startdate)
-    logger.info('loaded {} job records'.format(len(dfj)))
+        dfj = load_recent_jobs(dfx, startdate=startdate)
+        logger.info('loaded {} job records'.format(len(dfj)))
 
     # Concatentate all the dataframes into one
     df = pd.concat([dfc, dfq, dfj], ignore_index=True)
+
     df.sort_values(by=['DATETIME'], inplace=True, ascending=False)
     df.reset_index(inplace=True)
     df['ID'] = df.index

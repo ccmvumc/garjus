@@ -64,30 +64,33 @@ class Garjus:
     ):
         """Initialize garjus."""
         self._disconnect_xnat = False
+        self._xnat = None
+        self._rc = None
 
         try:
             self._rc = (redcap_project or self._default_redcap())
         except FileNotFoundError as err:
             logger.debug(err)
             logger.debug('REDCap disabled, no credentials in ~/.redcap.txt')
-            self._rc = None
 
-        if current_user:
+        try:
             if current_user.is_authenticated:
                 hostname = current_user.hostname
                 username = current_user.id
                 self._xnat = self._alias_xnat(hostname, username)
             else:
                 raise Exception('user not authenticated')
-        elif xnat_interface:
-            self._xnat = xnat_interface
-        else:
-            try:
-                self._xnat = self._default_xnat()
-                self._disconnect_xnat = True
-            except Exception as err:
-                logger.error('could not connect to XNAT')
-                raise Exception(f'could not connect to XNAT:{err}')
+        except Exception as err:
+            logger.debug(err)
+
+            if xnat_interface:
+                self._xnat = xnat_interface
+            else:
+                try:
+                    self._xnat = self._default_xnat()
+                    self._disconnect_xnat = True
+                except Exception as err2:
+                    logger.debug(f'could not connect to XNAT:{err2}')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
@@ -126,11 +129,13 @@ class Garjus:
 
     @staticmethod
     def userdir():
+        username = 'UnknownUser'
 
-        if current_user.is_authenticated:
-            username = current_user.id
-        else:
-            username = 'UnknownUser'
+        try:
+            if current_user.is_authenticated:
+                username = current_user.id
+        except Exception as err:
+            logger.debug(err)
 
         userdir = f'{os.path.expanduser("~/.garjus")}/{username}'
 
@@ -190,6 +195,14 @@ class Garjus:
             return False
 
     @staticmethod
+    def xnat_found():
+        try:
+            get_interface()
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
     def is_authenticated():
         username = current_user.id
         try:
@@ -208,6 +221,10 @@ class Garjus:
 
     def redcap_enabled(self):
         return (self._rc is not None)
+
+    def xnat_enabled(self):
+        logger.debug('xnat_enabled()')
+        return (self._xnat is not None)
 
     def set_yamldir(self, yamldir=None):
         if yamldir:
@@ -691,6 +708,9 @@ class Garjus:
 
     def set_session_type(self, src, sesstype):
         """Set Session Type in XNAT."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         (s_proj, s_subj, s_sess) = src.split('/')
 
         logger.debug(f'{s_proj}:{s_sess}:setting session type:{sesstype}')
@@ -708,6 +728,9 @@ class Garjus:
 
     def set_session_site(self, src, site):
         """Set site in XNAT."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         (s_proj, s_subj, s_sess) = src.split('/')
 
         logger.debug(f'{s_proj}:{s_sess}:setting site:{site}')
@@ -821,9 +844,10 @@ class Garjus:
     def _load_project_names(self, has_redcap=False):
         names = []
 
-        # Load from xnat
-        names = utils_xnat.get_my_projects(self.xnat())
-        logger.debug(f'my xnat projects={names}')
+        if self.xnat_enabled():
+            # Load from xnat
+            names = utils_xnat.get_my_projects(self.xnat())
+            logger.debug(f'my xnat projects={names}')
 
         if has_redcap and self.redcap_enabled():
             _records = self._rc.export_records(fields=[self._rc.def_field])
@@ -1105,7 +1129,7 @@ class Garjus:
                 'scan_tr': 'TR',
                 'scan_prfip': 'SENSE',
                 'scan_proop': 'MB',
-                'scan_slicethickness':'THICK',
+                'scan_slicethickness': 'THICK',
             })
 
             df = df.drop_duplicates(subset=['SESSION', 'SCANID'])
@@ -1366,6 +1390,9 @@ class Garjus:
 
     def _get_result(self, uri):
         """Get result of xnat query."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         logger.debug(uri)
         json_data = json.loads(self._xnat._exec(uri, 'GET'), strict=False)
         result = json_data['ResultSet']['Result']
@@ -1914,6 +1941,9 @@ class Garjus:
 
     def get_source_stats(self, project, subject, session, assessor, stats_dir):
         """Download stats files to directory."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         resource = 'STATS'
 
         xnat_resource = self._xnat.select_assessor_resource(
@@ -1929,6 +1959,9 @@ class Garjus:
 
     def get_scan_stats(self, project, subject, session, scan):
         """Read from BIDS file."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         stats = {}
         resource = 'JSON'
 
@@ -2298,7 +2331,10 @@ class Garjus:
         return self._xnat
 
     def xnat_host(self):
-        return self._xnat.host
+        if self.xnat_enabled():
+            return self._xnat.host
+        else:
+            return ''
 
     def redcap(self):
         """Get the redcap project for this garjus."""
@@ -2322,6 +2358,9 @@ class Garjus:
         dst_sess
     ):
         """Copy scanning/imaging session from source to destination."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         src_obj = self._xnat.select_session(src_proj, src_subj, src_sess)
         dst_obj = self._xnat.select_session(dst_proj, dst_subj, dst_sess)
         utils_xnat.copy_session(src_obj, dst_obj)
@@ -2338,6 +2377,9 @@ class Garjus:
         dst_scan,
     ):
         """Copy scanning/imaging scan from source to destination."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         src_obj = self._xnat.select_scan(
             src_proj, src_subj, src_sess, src_scan)
         dst_obj = self._xnat.select_scan(
@@ -2346,12 +2388,18 @@ class Garjus:
 
     def source_project_exists(self, project):
         """True if this project exist in the source projects."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         return self._xnat.select.project(project).exists()
 
     def project_exists(self, project):
         """True if this project exists."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
         xnat_exists = self._xnat.select.project(project).exists()
-        return  xnat_exists
+        return xnat_exists
 
     def close_issues(self, issues):
         """Close specified issues, set to complete in REDCap."""
@@ -2555,6 +2603,8 @@ class Garjus:
     def upload_session(self, session_dir, project, subject, session):
         # session dir - should only contain a subfolder for each series
         # as created by rename_dicom()
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
 
         session_exists = False
 
@@ -2597,6 +2647,8 @@ class Garjus:
             logger.info(f'finished uploading scan:{scan}')
 
     def upload_scan(self, scan_dir, project, subject, session, scan):
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
 
         # Check that subject exists
         subject_object = self._xnat.select_subject(project, subject)
@@ -2620,6 +2672,8 @@ class Garjus:
         logger.info(f'finished uploading scan:{scan}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
 
         with tempfile.TemporaryDirectory() as temp_dir:
 
