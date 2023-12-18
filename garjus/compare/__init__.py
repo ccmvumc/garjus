@@ -15,6 +15,14 @@ def update(garjus, projects=None):
     for p in (projects or garjus.projects()):
         if p in projects:
             logger.debug(f'updating double entry compare:{p}')
+            if not garjus.secondary(p):
+                logger.debug(f'cannot run, secondary REDCap not set:{p}')
+                continue
+
+            if not garjus.primary(p):
+                logger.debug(f'cannot compare, primary REDCap not set:{p}')
+                continue
+
             update_project(garjus, p)
 
 

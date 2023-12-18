@@ -62,9 +62,8 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
         etl_autos = garjus.etl_automations(project)
         edat_autos = garjus.edat_automation_choices()
     else:
-        logging.debug(f'no xnat, disable scan automations')
+        logging.debug(f'no xnat, disable scan and edat automations')
         scan_autos = []
-        logging.debug(f'no xnat, disable edat automations')
         edat_autos = []
 
     if autos_include:
