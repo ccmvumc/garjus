@@ -223,7 +223,6 @@ class Garjus:
         return (self._rc is not None)
 
     def xnat_enabled(self):
-        logger.debug('xnat_enabled()')
         return (self._xnat is not None)
 
     def set_yamldir(self, yamldir=None):
@@ -841,19 +840,35 @@ class Garjus:
 
         return self._rc.export_records(records=projects, forms=['sites'])
 
-    def _load_project_names(self, has_redcap=False):
-        names = []
+    def _load_project_names(self):
 
+        # Get list of projects in redcap
+        if self.redcap_enabled():
+            _records = self._rc.export_records(fields=[self._rc.def_field])
+            redcap_names = [x[self._rc.def_field] for x in _records]
+            logger.debug(f'redcap projects={redcap_names}')
+        else:
+            redcap_names = None
+
+        # Get list of projects in xnat
         if self.xnat_enabled():
             # Load from xnat
-            names = utils_xnat.get_my_projects(self.xnat())
-            logger.debug(f'my xnat projects={names}')
+            xnat_names = utils_xnat.get_my_projects(self.xnat())
+            logger.debug(f'xnat projects={xnat_names}')
+        else:
+            xnat_names = None
 
-        if has_redcap and self.redcap_enabled():
-            _records = self._rc.export_records(fields=[self._rc.def_field])
-            _names = [x[self._rc.def_field] for x in _records]
-            logger.debug(f'my redcap projects={names}')
-            names = [x for x in names if x in _names]
+        # Get combination of lists
+        if redcap_names and xnat_names:
+            names = [x for x in redcap_names if x in xnat_names]
+        elif redcap_names and not xnat_names:
+            names = redcap_names
+        elif xnat_names:
+            names = xnat_names
+        else:
+            names = []
+
+        logger.debug(f'my projects={names}')
 
         return names
 
@@ -1136,10 +1151,10 @@ class Garjus:
 
         return df
 
-    def projects(self, has_redcap=False):
+    def projects(self):
         """Get list of projects."""
         if self._projects is None:
-            self._projects = self._load_project_names(has_redcap=has_redcap)
+            self._projects = self._load_project_names()
 
         return self._projects
 
@@ -1625,10 +1640,17 @@ class Garjus:
     def update(self, projects=None, choices=None, types=None):
         """Update projects."""
         if not projects:
-            projects = self.projects(has_redcap=True)
+            projects = self.projects()
 
         if not choices:
-            choices = ['automations', 'stats', 'tasks', 'issues',  'progress', 'compare']
+            choices = [
+                'automations',
+                'stats',
+                'tasks',
+                'issues',
+                'progress',
+                'compare'
+            ]
 
         logger.debug(f'updating projects:{projects}:{choices}')
 
