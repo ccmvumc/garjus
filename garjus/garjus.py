@@ -1668,7 +1668,8 @@ class Garjus:
             # Only run on intersect of specified projects and projects with
             # stats, such that if the list is empty, nothing will run
             logger.info('updating stats')
-            _projects = [x for x in projects if x in self.stats_projects()]
+            _stats_projects = self.stats_projects()
+            _projects = [x for x in projects if x in _stats_projects]
             update_stats(self, _projects, types)
 
         if 'progress' in choices:

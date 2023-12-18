@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 def update(garjus, projects, proctypes=None):
-    """Update project progress."""
+    """Update project."""
+    if not garjus.xnat_enabled():
+        logger.debug('no xnat, cannot update stats')
+        return
+
     for p in projects:
         if not proctypes:
             proctypes = garjus.stattypes(p)

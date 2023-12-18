@@ -17,6 +17,10 @@ logger = logging.getLogger('garjus.progress')
 
 def update(garjus, projects=None):
     """Update project progress."""
+    if not garjus.xnat_enabled():
+        logger.debug('no xnat, cannot update progress')
+        return
+
     for p in (projects or garjus.projects()):
         if p in projects:
             logger.debug(f'updating progress:{p}')

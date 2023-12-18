@@ -11,10 +11,15 @@ logger = logging.getLogger('garjus.issues')
 def update(garjus, projects=None):
     """Update issues."""
 
+    if not garjus.xnat_enabled():
+        logger.debug('no xnat, cannot update issues')
+        return
+
     # First find unmatched sessions across projects.
     # these are sessions that are in source project
     # but not found in destination projects
     unmatched = _unmatched(garjus)
+
     # TODO: only need to check projects with same source project
 
     # Update each project

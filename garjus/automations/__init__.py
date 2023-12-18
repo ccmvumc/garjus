@@ -55,9 +55,17 @@ def update(garjus, projects, autos_include=None, autos_exclude=None):
 
 def update_project(garjus, project, autos_include=None, autos_exclude=None):
     """Update automations for project."""
-    scan_autos = garjus.scan_automations(project)
     etl_autos = garjus.etl_automations(project)
-    edat_autos = garjus.edat_automation_choices()
+
+    if garjus.xnat_enabled():
+        scan_autos = garjus.scan_automations(project)
+        etl_autos = garjus.etl_automations(project)
+        edat_autos = garjus.edat_automation_choices()
+    else:
+        logging.debug(f'no xnat, disable scan automations')
+        scan_autos = []
+        logging.debug(f'no xnat, disable edat automations')
+        edat_autos = []
 
     if autos_include:
         # Apply include filter
