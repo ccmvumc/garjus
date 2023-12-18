@@ -50,6 +50,7 @@ def get_data(proj_filter):
 
     logger.info(f'loading activity:startdate={startdate}')
     dfc = g.activity(startdate=startdate)
+    dfc = dfc.sort_values(by=['DATETIME'], ascending=False).head(500)
 
     if g.xnat_enabled():
         print('xnat enabled')
