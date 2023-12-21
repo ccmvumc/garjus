@@ -70,6 +70,8 @@ REPORTS_RENAME = {
     'double_resultsfile': 'DATA',
     'double_name': 'NAME',
     'double_datetime': 'DATE',
+    'ndaimage03_name': 'NAME',
+    'ndaimage03_csvfile': 'DATA',
 }
 
 DISABLE_STATTYPES = [

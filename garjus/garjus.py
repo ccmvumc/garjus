@@ -1517,6 +1517,19 @@ class Garjus:
 
             data.append(d)
 
+        # Load NDAimage03 Reports
+        for r in self.ndaimage03_reports(projects):
+            d = {
+                'PROJECT': r[self._dfield()],
+                'TYPE': 'NDAimage03'}
+
+            # Get renamed variables
+            for k, v in self.reports_rename.items():
+                if v not in d or d[v] == '': 
+                    d[v] = r.get(k, '')
+
+            data.append(d)
+
         df = pd.DataFrame(data, columns=self.column_names('reports'))
 
         return df
@@ -1543,7 +1556,7 @@ class Garjus:
         return rec
 
     def double_reports(self, projects=None):
-        """List of progress records."""
+        """List of double entry report records."""
 
         if not self.redcap_enabled():
             logger.info('cannot load double reports, redcap not enabled')
@@ -1563,6 +1576,29 @@ class Garjus:
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'double']
         rec = [x for x in rec if str(x['double_complete']) == '2']
+        return rec
+
+    def ndaimage03_reports(self, projects=None):
+        """List of double entry report records."""
+
+        if not self.redcap_enabled():
+            logger.info('cannot load ndaimage03 reports, redcap not enabled')
+            return None
+
+        if projects:
+            projects = [x for x in projects if x in self.projects()]
+        else:
+            projects = self.projects()
+
+        rec = self._rc.export_records(
+            records=projects,
+            forms=['ndaimage03'],
+            fields=[self._dfield()])
+
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == 'ndaimage03']
+        rec = [x for x in rec if str(x['ndaimage03_complete']) == '2']
+
         return rec
 
     def processing_protocols(self, project, download=False):
