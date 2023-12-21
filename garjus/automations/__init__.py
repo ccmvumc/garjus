@@ -319,7 +319,6 @@ def _run_etl_arcdata(project, datadir):
 def _run_etl_gaitrite(project):
     data = {}
     results = []
-    events = []
     records = []
     file_field = 'gaitrite_upload'
     done_field = 'gaitrite_testrecord'
