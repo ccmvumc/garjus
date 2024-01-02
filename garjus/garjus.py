@@ -1716,7 +1716,11 @@ class Garjus:
         if 'compare' in choices:
             # confirm each project has report for current month
             logger.info('updating compare')
-            update_compare(self, projects)
+            try:
+                update_compare(self, projects)
+            except Exception as err:
+                logger.error(f'compare error:{err}')
+                pass
 
         if 'tasks' in choices:
             logger.info('updating tasks')
