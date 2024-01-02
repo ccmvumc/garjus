@@ -307,7 +307,7 @@ def compare_projects(p1, p2):
         rec = p1.export_records(fields=[def_field])
         id2subj1 = {x[def_field]: x[def_field] for x in rec if x[def_field]}
         rec = p2.export_records(fields=[def_field2])
-        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x[sec_field2]}
+        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x.get(sec_field2, False)}
 
     # Determine which fields to compare
     fields = get_fields(p1, p2)
