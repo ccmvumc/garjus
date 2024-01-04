@@ -85,8 +85,8 @@ def load_subjects(garjus, project, include_dob=False):
     elif project == 'D3':
         # Use arm/events names to determine group
         df['GROUP'] = df['redcap_event_name'].map({
-            'Screening (Arm 2: Never Depressed)': 'Control',
-            'Screening (Arm 1: Currently Depressed)': 'Depress',
+            'Screening (Arm 2: VUMC Never Depressed)': 'Control',
+            'Screening (Arm 1: VUMC Currently Depressed)': 'Depress',
         })
     elif project == 'REMBRANDT':
         # Use arm/events names to determine which arm
