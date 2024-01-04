@@ -124,7 +124,6 @@ def _download_dicom_zip(scan, zipfile):
         try:
             res = scan.resource('DICOMZIP')
             src_zip = res.files().get()[0]
-            print(src_zip)
             res.file(src_zip).get(zipfile)
         except BadZipFile as err:
             logger.error(f'error downloading:{err}')
