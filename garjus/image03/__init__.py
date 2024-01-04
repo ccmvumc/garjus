@@ -154,7 +154,7 @@ def _mr_info(scan_info, type_map, exp_map):
     scan_label = scan_info['SCANID']
 
     zip_path = os.path.join(
-        f'{subj_label}_MR_{datetime_as_string(scan_date, unit="D")}'.replace('-',''),
+        f'{subj_label}_MR_{str(scan_date).split(" ")[0]}'.replace('-',''),
         '{}_{}'.format(scan_label, scan_type.replace(' ', '_')),
         'DICOM.zip')
 
@@ -202,7 +202,7 @@ def _pet_info(scan_info, type_map):
     subj_label = scan_info['SUBJECT']
     scan_label = scan_info['SCANID']
     zip_path = os.path.join(
-        f'{subj_label}_PET_{datetime_as_string(scan_date, unit="D")}'.replace('-',''),
+        f'{subj_label}_PET_{str(scan_date).split(" ")[0]}'.replace('-',''),
         '{}_{}'.format(scan_label, scan_type.replace(' ', '_')),
         'DICOM.zip')
 
@@ -243,11 +243,11 @@ def get_image03_df(mr_scans, pet_scans, type_map, exp_map):
     data = []
 
     # Load the MRIs
-    for cur_scan in mr_scans.to_records():
+    for cur_scan in mr_scans.to_dict('records'):
         data.append(_mr_info(cur_scan, type_map, exp_map))
 
     # Load the PETs
-    for cur_scan in pet_scans.to_records():
+    for cur_scan in pet_scans.to_dict('records'):
         data.append(_pet_info(cur_scan, type_map))
 
     # Initialize with template columns, ignoring first row
