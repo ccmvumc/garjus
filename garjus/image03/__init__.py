@@ -113,7 +113,7 @@ def _download_dicom_zip(scan, zipfile):
         pass
 
     # Download zip of resource
-    if scan.resource('DICOM').exists(): 
+    if scan.resource('DICOM').exists():
         try:
             dst_zip = scan.resource('DICOM').get(dstdir, extract=False)
             return dst_zip
