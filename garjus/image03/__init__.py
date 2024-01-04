@@ -113,15 +113,24 @@ def _download_dicom_zip(scan, zipfile):
         pass
 
     # Download zip of resource
-    res = scan.resource('DICOM')
-    if not res.exists() and scan.resource('DICOMZIP').exists():
-        res = scan.resource('DICOMZIP')
- 
-    try:
-        dst_zip = res.get(dstdir, extract=False)
-        return dst_zip
-    except BadZipFile as err:
-        logger.error(f'error downloading:{err}')
+    if scan.resource('DICOM').exists(): 
+        try:
+            dst_zip = scan.resource('DICOM').get(dstdir, extract=False)
+            return dst_zip
+        except BadZipFile as err:
+            logger.error(f'error downloading:{err}')
+            return None
+    elif scan.resource('DICOMZIP').exists():
+        try:
+            res = scan.resource('DICOMZIP')
+            src_zip = res.files().get()[0]
+            print(src_zip)
+            res.file(src_zip).get(zipfile)
+        except BadZipFile as err:
+            logger.error(f'error downloading:{err}')
+            return None
+    else:
+        logger.error(f'error downloading, DICOM not found')
         return None
 
 
