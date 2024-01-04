@@ -23,6 +23,8 @@ def load_subjects(garjus, project, include_dob=False):
 
     if 'guid' in field_names:
         guid_field = 'guid'
+    elif 'guid_5b4861' in field_names:
+        guid_field = 'guid_5b4861'
 
     if 'dob' in field_names:
         dob_field = 'dob'
