@@ -481,12 +481,12 @@ def _add_graph_page(pdf, info):
     graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
 
-    if 'fmri_msit_v2' in proctypes:
+    if 'fmri_msit_v3' in proctypes:
         graph.add_node(pydot.Node('EDAT', color='violet'))
-        graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v2'))
-        graph.add_edge(pydot.Edge('T1', 'fmri_msit_v2'))
-        graph.add_node(pydot.Node('fmri_msit_v2', color='lightgreen'))
-        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v2'))
+        graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v3'))
+        graph.add_edge(pydot.Edge('T1', 'fmri_msit_v3'))
+        graph.add_node(pydot.Node('fmri_msit_v3', color='lightgreen'))
+        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v3'))
 
     if 'fmri_bct_v2' in proctypes:
         graph.add_node(pydot.Node('struct_preproc_v1', color='lightgreen'))
@@ -501,7 +501,7 @@ def _add_graph_page(pdf, info):
 
     if 'struct_preproc_noflair_v1' in proctypes:
         graph.add_edge(pydot.Edge(
-            'struct_preproc_noflair_v1', 'fmri_rest_v2', style='dashed'))
+            'struct_preproc_noflair_v1', 'fmri_rest_v4', style='dashed'))
         graph.add_edge(pydot.Edge(
             'T1', 'struct_preproc_noflair_v1', style='dashed'))
 
@@ -528,6 +528,15 @@ def _add_graph_page(pdf, info):
         graph.add_node(pydot.Node('BrainAgeGap_v2', color='lightgreen'))
         graph.add_edge(pydot.Edge('T1', 'Multi_Atlas_v3'))
         graph.add_edge(pydot.Edge('Multi_Atlas_v3', 'BrainAgeGap_v2'))
+
+    if 'francois_schaefer200_v1' in proctypes:
+        graph.add_node(pydot.Node('dtiQA_synb0_v7', color='lightgreen'))
+        graph.add_node(pydot.Node('francois_schaefer200_v1', color='lightblue'))
+        graph.add_edge(pydot.Edge('T1', 'dtiQA_synb0_v7'))
+        graph.add_edge(pydot.Edge('DTI_2min_b1000', 'dtiQA_synb0_v7'))
+        graph.add_edge(pydot.Edge('DTI_2min_b2000', 'dtiQA_synb0_v7'))
+        graph.add_edge(pydot.Edge('dtiQA_synb0_v7', 'francois_schaefer200_v1'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'francois_schaefer200_v1'))
 
     # Make the graph, draw to pdf
     image = Image.open(io.BytesIO(graph.create_png()))
@@ -1399,6 +1408,7 @@ def _filter_scantypes(scantypes):
     scantypes = [x for x in scantypes if not x.startswith('fMRI_rest')]
     scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
     scantypes = [x for x in scantypes if not x.startswith('DTI_2min_b1000a')]
+    scantypes = [x for x in scantypes if not x.startswith('DTI_b0')]
 
     return scantypes
 
