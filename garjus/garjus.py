@@ -1163,6 +1163,22 @@ class Garjus:
 
         return load_subjects(self, project, include_dob)
 
+    def orphans(self, project):
+        """Return orphaned assessors for project."""
+
+        # Get list of existing assessors and scans
+        dfs = self.scans(projects=[project])
+        dfa = self.assessors(projects=[project])
+
+        # Make a combined list of all existing artefacts
+        existing = list(dfs.full_path.unique()) + list(dfa.full_path.unique())
+
+        # Find any assessors with inputs not existing, child without parent
+        dfa['ORPHAN'] = dfa.apply(lambda x: bool([a for a in x.INPUTS.values() if a not in existing]), axis=1)
+
+        # Return list of assessor labels
+        return sorted(list(dfa[dfa.ORPHAN == True].ASSR))
+
     def stattypes(self, project):
         """Get list of projects stat types."""
         types = []

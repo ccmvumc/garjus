@@ -5,6 +5,7 @@ import os
 
 from .garjus import Garjus
 
+
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s:%(name)s:%(message)s',
     level=logging.INFO,
@@ -77,6 +78,26 @@ def subjects(ctx, project):
     import pandas as pd
     pd.set_option('display.max_rows', None)
     pprint.pprint(g.subjects(project))
+
+
+@cli.command('orphans')
+@click.option('--project', '-p', 'project')
+@click.option('--delete/--no-delete', default=False)
+def orphans(project, delete):
+    click.echo('garjus! orphans')
+    g = Garjus()
+
+    orphans = g.orphans(project)
+    
+    print(*orphans, sep='\n')
+
+    if delete:
+        print('deleting')
+        for cur in orphans:
+            print('delete', cur)
+            g.delete_assessor(project, cur)
+    else:
+        print('not deleting')
 
 
 @cli.command('activity')
