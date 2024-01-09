@@ -44,9 +44,12 @@ def get_data():
 
     project2id = {}
 
-    for p in df.PROJECT.unique():
-        project_id = g.project_setting(p, 'primary')
-        project2id[p] = project_id
+    # TODO: fix this so we only call redcap once, maybe allow a list of projects
+    #for p in df.PROJECT.unique():
+    #    project_id = g.project_setting(p, 'primary')
+    #    project2id[p] = project_id
+    project2id = g.projects_setting(list(df.PROJECT.unique()), 'primary')
+    print(project2id)
 
     df['PROJECTPID'] = df['PROJECT'].map(project2id)
 

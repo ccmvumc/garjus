@@ -5,6 +5,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 
 from .app import app
+from .pages import hub
 from .pages import qa
 from .pages import activity
 from .pages import issues
@@ -45,7 +46,13 @@ has_xnat = xnat_found()
 has_redcap = redcap_found()
 
 if has_xnat and has_redcap:
+    # include all tabs
     tabs = dbc.Tabs([
+        dbc.Tab(
+            label='Home',
+            tab_id='tab-home',
+            children=hub.get_content(),
+        ),
         dbc.Tab(
             label='QA',
             tab_id='tab-qa',
@@ -55,12 +62,12 @@ if has_xnat and has_redcap:
             label='Issues',
             tab_id='tab-issues',
             children=issues.get_content(),
-        ),
+         ),
         dbc.Tab(
             label='Queue',
             tab_id='tab-queue',
             children=queue.get_content(),
-        ),
+         ),
         dbc.Tab(
             label='Activity',
             tab_id='tab-activity',
@@ -84,9 +91,11 @@ if has_xnat and has_redcap:
         dbc.Tab(
             label='Analyses',
             tab_id='tab-analyses',
-            children=analyses.get_content(),
-        ),
-    ])
+           children=analyses.get_content(),
+        )
+        ],
+        active_tab="tab-qa",
+    )
 elif has_xnat and not has_redcap:
     tabs = html.Div(qa.get_content())
 elif has_redcap and not has_xnat:

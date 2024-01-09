@@ -119,6 +119,9 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
     else:
         df = read_data(fname)
 
+    if df.empty:
+        return df
+
     if hidetypes:
         logger.debug('applying autofilter to hide unused types')
         scantypes = None
@@ -153,8 +156,8 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
 
     logger.debug(f'done filtering by types:{len(df)}')
 
-
     df = df[df['PROJECT'].isin(projects)]
+
     df = df.dropna(subset=['TYPE'])
 
     return df
@@ -164,7 +167,7 @@ def read_data(filename):
     df = pd.read_pickle(filename)
 
     if df is None or len(df) == 0:
-        df = pd.DataFrame(columns=['PROJECT'])
+        df = pd.DataFrame(columns=['PROJECT', 'SCANTYPE', 'SESSTYPE', 'PROCTYPE'])
 
     return df
 

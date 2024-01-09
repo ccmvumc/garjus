@@ -2189,13 +2189,35 @@ class Garjus:
             logger.info('cannot load project setting, redcap not enabled')
             return None
 
-        records = self._rc.export_records(records=[project], forms=['main'])
+        if isinstance(project, list):
+            return self.projects_setting(project, setting)
+
+        records = self._rc.export_records(records=project, forms=['main'])
         if not records:
             return None
 
         # First try "project" then try "main"
         rec = records[0]
         return rec.get(f'project_{setting}', rec.get(f'main_{setting}', None))
+
+    def projects_setting(self, projects, setting):
+        """Return the value of the setting for projects as dict."""
+        project2setting = {}
+
+        if not self.redcap_enabled():
+            logger.info('cannot load project setting, redcap not enabled')
+            return None
+
+        records = self._rc.export_records(records=projects, forms=['main'])
+        if not records:
+            return None
+
+        for rec in records:
+            # First try "project" then try "main"
+            project2setting[self._dfield] = rec.get(
+                f'project_{setting}', rec.get(f'main_{setting}', None))
+
+        return project2setting
 
     def etl_automations(self, project):
         """Get ETL automation records."""
