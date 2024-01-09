@@ -32,7 +32,7 @@ app = dash.Dash(
 
 server = app.server
 
-app.config.suppress_callback_exceptions = True
+#app.config.suppress_callback_exceptions = True
 
 # more here:
 # https://hellodash.pythonanywhere.com
