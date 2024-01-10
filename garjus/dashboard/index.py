@@ -45,7 +45,27 @@ footer_content = [
 has_xnat = xnat_found()
 has_redcap = redcap_found()
 
-if has_xnat and has_redcap:
+if False:
+    tabs = dbc.Tabs([
+        dbc.Tab(
+            label='Home',
+            tab_id='tab-home',
+            children=hub.get_content(),
+        ),
+        dbc.Tab(
+            label='QA',
+            tab_id='tab-qa',
+            children=qa.get_content(),
+        ),
+        dbc.Tab(
+            label='Issues',
+            tab_id='tab-issues',
+            children=issues.get_content(),
+         ),
+        ],
+        active_tab="tab-qa",
+    )
+elif has_xnat and has_redcap:
     # include all tabs
     tabs = dbc.Tabs([
         dbc.Tab(

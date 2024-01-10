@@ -42,6 +42,7 @@ PROCESSING_RENAME = {
     'processor_file': 'FILE',
     'processor_filter': 'FILTER',
     'processor_args': 'ARGS',
+    'processing_complete': 'COMPLETE',
 }
 
 TASKS_RENAME = {
@@ -105,7 +106,7 @@ COLUMNS = {
         'DURATION', 'FRAMES', 'TR', 'THICK', 'SENSE', 'MB',
         'SCANID', 'SCANTYPE', 'QUALITY', 'RESOURCES', 'MODALITY', 'XSITYPE', 'full_path'],
     'processing': [
-        'ID', 'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD', 'EDIT'],
+        'ID', 'PROJECT', 'TYPE', 'FILTER', 'FILE', 'CUSTOM', 'ARGS', 'YAMLUPLOAD', 'EDIT', 'COMPLETE'],
     'subjects': [
         'PROJECT', 'SUBJECT', 'AGE', 'SEX', 'RACE'],
     'tasks': [

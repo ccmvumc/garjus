@@ -1617,7 +1617,7 @@ class Garjus:
 
         return rec
 
-    def processing_protocols(self, project, download=False):
+    def processing_protocols(self, project=None, download=False):
         """Return processing protocols."""
         data = []
 
