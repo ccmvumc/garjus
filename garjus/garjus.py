@@ -2214,7 +2214,7 @@ class Garjus:
 
         for rec in records:
             # First try "project" then try "main"
-            project2setting[self._dfield] = rec.get(
+            project2setting[self._dfield()] = rec.get(
                 f'project_{setting}', rec.get(f'main_{setting}', None))
 
         return project2setting

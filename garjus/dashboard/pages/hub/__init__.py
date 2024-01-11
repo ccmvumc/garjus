@@ -1,10 +1,7 @@
 """dashboard home"""
 import logging
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
 
 import pandas as pd
-import numpy as np
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
@@ -14,7 +11,6 @@ import dash_bootstrap_components as dbc
 from ... import utils
 from ..shared import STATUS2RGB
 from . import data
-from ....garjus import Garjus
 from .. import queue, activity
 
 logger = logging.getLogger('dashboard.hub')
@@ -32,7 +28,7 @@ COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
 
 
 def _reports_graph(df):
-    print(df)
+    df = df.sort_values('PDF')
     dfp = df.pivot_table(
         index='TYPE',
         values='VIEW',
@@ -40,12 +36,7 @@ def _reports_graph(df):
         aggfunc='last',
         fill_value='')
 
-    print(dfp)
-
-    dfp = dfp.applymap(lambda x: f'[📊]({x})' if x.startswith('http') else x)
-
-    print(dfp)
-
+    dfp = dfp.map(lambda x: f'[📊]({x})' if x.startswith('http') else x)
     dfp = dfp.reset_index()
     columns = dfp.columns
     records = dfp.to_dict('records')
@@ -74,19 +65,24 @@ def _reports_graph(df):
                 'fontWeight': 'bold',
                 'padding': '1px 1px 0px 1px',
             },
+            css=[
+                dict(selector="p", rule="margin: 0; text-align: center;"),
+                dict(selector="a", rule="text-decoration: none;"),
+            ],
             fill_width=False,
         )]
+
 
 def _processing_graph(df):
 
     df['STATUS'] = df['COMPLETE'].map(COMPLETE2EMO).fillna('')
 
     dfp = df.pivot_table(
-                index='TYPE',
-                values='STATUS',
-                columns=['PROJECT'],
-                aggfunc=lambda x: x.mode().iat[0],
-                fill_value='')
+        index='TYPE',
+        values='STATUS',
+        columns=['PROJECT'],
+        aggfunc=lambda x: x.mode().iat[0],
+        fill_value='')
 
     dfp = dfp.reset_index()
     columns = dfp.columns
@@ -100,10 +96,10 @@ def _processing_graph(df):
             page_action='none',
             sort_action='none',
             id='datatable-hub-processing',
-            #style_table={
-            #    'overflowY': 'scroll',
-            #    'overflowX': 'scroll',
-            #},
+            style_table={
+                'overflowY': 'scroll',
+                'overflowX': 'scroll',
+            },
             style_cell={
                 'textAlign': 'center',
                 'width': '10px',
@@ -122,11 +118,11 @@ def _automations_graph(df):
     df['STATUS'] = df['COMPLETE'].map(COMPLETE2EMO).fillna('')
 
     dfp = df.pivot_table(
-                index='TYPE',
-                values='STATUS',
-                columns=['PROJECT'],
-                aggfunc=lambda x: x.mode().iat[0],
-                fill_value='')
+        index='TYPE',
+        values='STATUS',
+        columns=['PROJECT'],
+        aggfunc=lambda x: x.mode().iat[0],
+        fill_value='')
 
     dfp = dfp.reset_index()
     columns = dfp.columns
@@ -154,6 +150,8 @@ def _automations_graph(df):
 
 
 def _queue_graph(df):
+    if df.empty:
+        return [html.P('Nothing in the queue for selected projects.', className='text-center')]
 
     status2rgb = {k: STATUS2RGB[k] for k in queue.STATUSES}
 
@@ -171,7 +169,6 @@ def _queue_graph(df):
     for status, color in status2rgb.items():
         ydata = sorted(dfp.index)
         if status not in dfp:
-            #xdata = [0] * len(dfp.index)
             continue
         else:
             xdata = dfp[status]
@@ -195,6 +192,9 @@ def _queue_graph(df):
 
 
 def _issues_graph(df):
+    if df.empty:
+        return [html.P('No issues for selected projects.', className='text-center')]
+
     STATUSES = ['FAIL', 'COMPLETE', 'PASS', 'UNKNOWN']
     status2rgb = {k: STATUS2RGB[k] for k in STATUSES}
     content = []
@@ -235,6 +235,9 @@ def _issues_graph(df):
 
 
 def _activity_graph(df):
+    if df.empty:
+        return [html.P('No recent activity for selected projects', className='text-center')]
+
     status2rgb = {k: STATUS2RGB[k] for k in activity.STATUSES}
     content = []
 
@@ -290,9 +293,10 @@ def get_content():
             ),
         ),
         dbc.Row([
-            dbc.Col(html.Label('Activity'), width=3),
-            dbc.Col(html.Label('Queue'), width=6),
-            dbc.Col(html.Label('Issues'), width=3),
+            dbc.Col(
+                html.H5('Activity', className='text-center'), width=3),
+            dbc.Col(html.H5('Queue', className='text-center'), width=6),
+            dbc.Col(html.H5('Issues'), className='text-center', width=3),
         ]),
         dbc.Row([
             dbc.Col(
@@ -300,19 +304,19 @@ def get_content():
             ),
             dbc.Col(
                 html.Div(id='div-hub-queue', children=[]), width=6,
-            ), 
+            ),
             dbc.Col(
                 html.Div(id='div-hub-issues', children=[]), width=3,
             ),
         ]),
-        dbc.Row([dbc.Col(html.Label('Reports'))]),
+        dbc.Row([dbc.Col(html.H5('Reports'))]),
         dbc.Row([dbc.Col(html.Div(id='div-hub-reports', children=[]))]),
-        dbc.Row([dbc.Col(html.Label('Processing'))]),
+        dbc.Row([dbc.Col(html.H5('Processing'))]),
         dbc.Row([dbc.Col(
             html.Div(id='div-hub-processing', children=[]),
             width=12,
         )]),
-        #dbc.Row([dbc.Col(html.Label('Automations'))]),
+        #dbc.Row([dbc.Col(html.Label('Automations:TBD'))]),
     ]
 
     content = [dbc.Spinner(id="loading-hub", children=content)]
@@ -342,7 +346,7 @@ def update_hub(n_clicks, selected_proj):
     if utils.was_triggered('button-hub-refresh'):
         # Refresh data if refresh button clicked
         logger.debug('refresh-hub:clicks={}'.format(n_clicks))
-        refresh=True
+        refresh = True
 
     # Load datas
     queue_data = data._get_queue_data(refresh=refresh)
@@ -369,6 +373,9 @@ def update_hub(n_clicks, selected_proj):
     act_graph = _activity_graph(act_data)
     proc_graph = _processing_graph(proc_data)
     reports_graph = _reports_graph(reports_data)
+
+    reports_graph = [html.Div(reports_graph, style={'margin-bottom': '2em'})]
+    proc_graph = [html.Div(proc_graph, style={'margin-bottom': '2em'})]
 
     # Return table, figure, dropdown options
     logger.debug('update_hub:returning data')

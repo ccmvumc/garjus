@@ -49,7 +49,6 @@ def get_data():
     #    project_id = g.project_setting(p, 'primary')
     #    project2id[p] = project_id
     project2id = g.projects_setting(list(df.PROJECT.unique()), 'primary')
-    print(project2id)
 
     df['PROJECTPID'] = df['PROJECT'].map(project2id)
 
