@@ -2192,7 +2192,7 @@ class Garjus:
         if isinstance(project, list):
             return self.projects_setting(project, setting)
 
-        records = self._rc.export_records(records=project, forms=['main'])
+        records = self._rc.export_records(records=[project], forms=['main'])
         if not records:
             return None
 
