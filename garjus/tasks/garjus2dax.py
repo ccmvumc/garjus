@@ -129,7 +129,9 @@ def _task2dax(
         xnat_host,
         xnat_user)
 
-    if 'Multi_Atlas' in cmds and cmds.startswith('singularity run --contain --cleanenv'):
+    print(cmds)
+
+    if 'Multi_Atlas' in cmds and cmds.startswith('singularity run'):
         print('removing contain for MultiAtlas')
         cmds = cmds.replace('--contain --cleanenv', '-e')
         print(cmds)
