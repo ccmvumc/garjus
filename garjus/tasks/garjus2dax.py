@@ -129,9 +129,10 @@ def _task2dax(
         xnat_host,
         xnat_user)
 
-    if 'MultiAtlas' in cmds and cmds.startswith('singularity run --contain --cleanenv'):
+    if 'Multi_Atlas' in cmds and cmds.startswith('singularity run --contain --cleanenv'):
         print('removing contain for MultiAtlas')
-        cmds.replace('--contain --cleanenv', '-e')
+        cmds = cmds.replace('--contain --cleanenv', '-e')
+        print(cmds)
 
     logger.info(f'writing batch file:{batch_file}')
     batch = cluster.PBS(
