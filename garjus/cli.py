@@ -88,7 +88,7 @@ def orphans(project, delete):
     g = Garjus()
 
     orphans = g.orphans(project)
-    
+
     print(*orphans, sep='\n')
 
     if delete:
@@ -347,10 +347,12 @@ def image03download(project, image03_csv, download_dir):
 @cli.command('delete')
 @click.option('--project', '-p', 'project', required=True)
 @click.option('--type', '-t', 'proctype', required=True)
-def delete(project, proctype):
+@click.option('--procstatus', '-s', 'procstatus', required=False)
+@click.option('--qcstatus', '-q', 'qcstatus', required=False)
+def delete(project, proctype, procstatus=None, qcstatus=None):
     click.echo('garjus! delete')
     g = Garjus()
-    g.delete_proctype(project, proctype)
+    g.delete_proctype(project, proctype, procstatus, qcstatus)
 
 
 @cli.command('dashboard')

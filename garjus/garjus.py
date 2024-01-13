@@ -383,9 +383,17 @@ class Garjus:
 
         return data
 
-    def delete_proctype(self, project, proctype):
+    def delete_proctype(self, project, proctype, procstatus=None, qcstatus=None):
         # Get list of assessors of proctype from project
         assessors = self.assessors(projects=[project], proctypes=[proctype])
+
+        if procstatus:
+            logger.debug(f'filter qcstatus:{procstatus}')
+            assessors = assessors[assessors.PROCSTATUS == procstatus]
+
+        if qcstatus:
+            logger.debug(f'filter qcstatus:{qcstatus}')
+            assessors = assessors[assessors.QCSTATUS == qcstatus]
 
         # Delete them
         for a in sorted(assessors.ASSR.unique()):
@@ -2877,8 +2885,6 @@ class Garjus:
         logger.info('deleting files from failed tasks')
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
-
-            logger.info(f'deleting files from failed task:{assr}')
 
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
