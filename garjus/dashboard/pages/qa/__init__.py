@@ -511,7 +511,10 @@ def get_content():
                 {'if': {'column_id': 'DURATION'}, 'textAlign': 'right'},
                 {'if': {'column_id': 'SESSION'}, 'textAlign': 'center'},
             ],
-            css=[dict(selector="p", rule="margin: 0; text-align: center")],
+            css=[
+                dict(selector="p", rule="margin: 0; text-align: center;"),
+                dict(selector="a", rule="text-decoration: none;"),
+            ],
             fill_width=False,
             export_format='xlsx',
             export_headers='names',
