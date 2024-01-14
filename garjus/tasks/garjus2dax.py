@@ -27,7 +27,8 @@ logger = logging.getLogger('garjus2dax')
 # set when the assessor was created by garjus update tasks)
 
 
-JOBDIR = '/tmp'
+#JOBDIR = '/tmp'
+JOBDIR = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir/DISKQ/INPUTS'
 IMAGEDIR = '/data/mcr/centos7/singularity'
 RESDIR = '/nobackup/vuiis_daily_singularity/Spider_Upload_Dir'
 RUNGROUP = 'h_vuiis'
@@ -218,4 +219,3 @@ def queue2dax(garjus):
             logger.error(err)
             import traceback
             traceback.print_exc()
-
