@@ -292,34 +292,45 @@ def get_content():
                 width=3,
             ),
         ),
-        dbc.Row([
-            dbc.Col(
-                html.H5('Activity', className='text-center'), width=3),
-            dbc.Col(html.H5('Queue', className='text-center'), width=6),
-            dbc.Col(html.H5('Issues'), className='text-center', width=3),
-        ]),
-        dbc.Row([
-            dbc.Col(
-                html.Div(id='div-hub-activity', children=[]), width=3,
-            ),
-            dbc.Col(
-                html.Div(id='div-hub-queue', children=[]), width=6,
-            ),
-            dbc.Col(
-                html.Div(id='div-hub-issues', children=[]), width=3,
-            ),
+        dbc.Spinner([
+            dbc.Row([
+                dbc.Col(
+                    html.H5('Activity', className='text-center'), width=3),
+                dbc.Col(html.H5('Queue', className='text-center'), width=6),
+                dbc.Col(html.H5('Issues'), className='text-center', width=3),
+            ]),
+            dbc.Row([
+                dbc.Col(
+                    html.Div(id='div-hub-activity', children=[]), width=3,
+                ),
+                dbc.Col(
+                    html.Div(id='div-hub-queue', children=[]), width=6,
+                ),
+                dbc.Col(
+                    html.Div(id='div-hub-issues', children=[]), width=3,
+                ),
+            ]),
         ]),
         dbc.Row([dbc.Col(html.H5('Reports'))]),
-        dbc.Row([dbc.Col(html.Div(id='div-hub-reports', children=[]))]),
+        dbc.Row([
+            dbc.Col(
+                html.Div(
+                    id='div-hub-reports',
+                    children=[],
+                    style={'margin-bottom': '2em'}))]),
         dbc.Row([dbc.Col(html.H5('Processing'))]),
-        dbc.Row([dbc.Col(
-            html.Div(id='div-hub-processing', children=[]),
-            width=12,
-        )]),
+        dbc.Row([
+            dbc.Col(
+                html.Div(
+                    id='div-hub-processing',
+                    children=[],
+                    style={'margin-bottom': '2em'},
+                ),
+                width=12
+            )
+        ]),
         #dbc.Row([dbc.Col(html.Label('Automations:TBD'))]),
     ]
-
-    content = [dbc.Spinner(id="loading-hub", children=content)]
 
     return content
 
@@ -373,9 +384,6 @@ def update_hub(n_clicks, selected_proj):
     act_graph = _activity_graph(act_data)
     proc_graph = _processing_graph(proc_data)
     reports_graph = _reports_graph(reports_data)
-
-    reports_graph = [html.Div(reports_graph, style={'margin-bottom': '2em'})]
-    proc_graph = [html.Div(proc_graph, style={'margin-bottom': '2em'})]
 
     # Return table, figure, dropdown options
     logger.debug('update_hub:returning data')
