@@ -76,9 +76,9 @@ def make_double(garjus, project, cur_double, now):
             garjus.add_double(project, cur_double, now, pdf_file, excel_file)
 
 
-def make_double_report(proj_primary, proj_secondary, pdf_file, excel_file):
+def make_double_report(proj_primary, proj_secondary, pdf_file, excel_file, fields=None, events=None):
     # Run it
     p1 = proj_primary.export_project_info().get('project_title')
     p2 = proj_secondary.export_project_info().get('project_title')
     logger.debug(f'compare {p1} to {p2}')
-    run_compare(proj_primary, proj_secondary, pdf_file, excel_file)
+    run_compare(proj_primary, proj_secondary, pdf_file, excel_file, fields, events)

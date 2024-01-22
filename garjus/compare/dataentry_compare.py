@@ -63,6 +63,11 @@ REDCap projects, but all values are blank in the Second REDCap. This list \
 should be empty.'
 }]
 
+IGNORE_FIELDS = ['record_id', 'subj_num', 'ddes_12child', 'entry_consider_list',
+    'entryconsid_c_list' 'pe_date', 'physical_specif', 'physical_yesno',
+    'pvas_date', 'pvas_interfere', 'pvas_pain'
+]
+
 
 # Our custom PDF file format
 class MYPDF(FPDF):
@@ -181,20 +186,16 @@ def add_sheet_description(pdf, name, description):
 
 def get_fields(p1, p2):
     # Get all the records so we can check for all nan
-    df = p2.export_records(format_type='df')
+    logging.debug(f'exporting p2 records')
+    records = p2.export_records()
 
     common_fields = sorted(list(set(p1.field_names) & set(p2.field_names)))
     p1_only_fields = sorted(list(set(p1.field_names) - set(p2.field_names)))
     p2_only_fields = sorted(list(set(p2.field_names) - set(p1.field_names)))
-    p2_used_fields = sorted(list((df.dropna(how='all', axis=1)).columns))
+    p2_used_fields = sorted(list(set({k for d in records for k in d.keys()})))
     p2_nan_fields = sorted(list(set(common_fields) - set(p2_used_fields)))
     compare_fields = sorted(list(set(common_fields) - set(p2_nan_fields)))
-
-    ignore_fields = ['subj_num', 'ddes_12child', 'entry_consider_list',
-    'entryconsid_c_list' 'pe_date', 'physical_specif', 'physical_yesno',
-    'pvas_date', 'pvas_interfere', 'pvas_pain']
-
-    compare_fields = [x for x in compare_fields if x not in ignore_fields]
+    compare_fields = [x for x in compare_fields if x not in IGNORE_FIELDS]
 
     fields = {
         'compare': compare_fields,
@@ -261,7 +262,7 @@ def _boring_record(record, compare_fields):
     return True
 
 
-def export_all_records(project, step=100):
+def export_all_records(project, step=100, fields=None, events=None):
     records = []
 
     # Get a list of unique IDs
@@ -274,13 +275,17 @@ def export_all_records(project, step=100):
 
     # Load in chunks of step size
     for i in range(0, count, step):
-        r = project.export_records(records=ids[i:i + step])
+        if fields:
+            r = project.export_records(records=ids[i:i + step], fields=fields, events=events)
+        else:
+            r = project.export_records(records=ids[i:i + step], events=events)
+
         records.extend(r)
 
     return records
 
 
-def compare_projects(p1, p2):
+def compare_projects(p1, p2, compare_fields=None, compare_events=None):
     # Compares two redcap projects and returns the results
     results = {}
     missing_subjects = []
@@ -309,14 +314,28 @@ def compare_projects(p1, p2):
         rec = p2.export_records(fields=[def_field2])
         subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x.get(sec_field2, False)}
 
-    # Determine which fields to compare
     fields = get_fields(p1, p2)
-    compare_fields = fields['compare']
+
+    if not compare_fields:
+        # Determine which fields to compare
+        compare_fields = fields['compare']
+    else:
+        fields['compare'] = compare_fields
+
+    logging.debug(f'compare_fields={compare_fields}')
+    logging.debug(f'compare_fields={compare_events}')
+
+    # Find date fields
     date_fields = [x for x in compare_fields if ('date' in x or '_dt' in x)]
     logging.debug(f'date_fields={date_fields}')
 
     # Get the records from the First project
-    records1 = export_all_records(p1)
+    logging.debug(f'exporting p1 records')
+    records1 = export_all_records(
+        p1,
+        fields=compare_fields,
+        events=compare_events
+    )
 
     # Set subject id
     for i, r in enumerate(records1):
@@ -330,6 +349,9 @@ def compare_projects(p1, p2):
     # Sort by subject
     records1 = sorted(records1, key=lambda x: x['sid'])
 
+    p2_events = [x['unique_event_name'] for x in p2.export_events()]
+    logging.debug(f'p2_events={p2_events}')
+
     # Compare each record
     for r1 in records1:
         sid = r1['sid']
@@ -339,6 +361,11 @@ def compare_projects(p1, p2):
         r2 = None
         name2 = ''
         num2 = ''
+
+        if eid not in p2_events:
+            logging.debug(f'No record in double/second:{sid}:{eid}')
+            missing_events.append((sid, eid))
+            continue
 
         if _boring_record(r1, compare_fields):
             # nothing to compare
@@ -623,9 +650,9 @@ def test_finish(outdir, outpref):
     write_results(info, pdf_file, excel_file)
 
 
-def run_compare(p1, p2, pdf_file, excel_file):
+def run_compare(p1, p2, pdf_file, excel_file, fields=None, events=None):
     # Get the compare results
-    results = compare_projects(p1, p2)
+    results = compare_projects(p1, p2, fields, events)
 
     # Write output files
     write_results(results, pdf_file, excel_file)
