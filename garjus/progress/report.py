@@ -59,7 +59,7 @@ ASTATUS2COLOR = {
     'COMPLETE': RGB_BLUE,
     'UNKNOWN': RGB_PURP}
 
-SESSCOLS = ['SESSION', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'MODALITY']
+SESSCOLS = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'MODALITY']
 
 HIDECOLS = [
     'assessor_label',
@@ -146,6 +146,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
     # sessions column names are: SESSION, PROJECT, DATE, SESSTYPE, SITE
     type_list = sessions.SESSTYPE.unique()
     site_list = sessions.SITE.unique()
+    group_list = sessions.GROUP.unique()
     indent_width = max(2.5 - len(type_list) * 0.5, 0.3)
 
     # Get the data
@@ -199,31 +200,32 @@ def _draw_counts(pdf, sessions, rangetype=None):
 
     pdf.set_font('helvetica', size=18)
 
-    # Row for each site
-    for cur_site in site_list:
-        pdf.cell(w=indent_width)
-
-        dfs = df[df.SITE == cur_site]
-        _txt = cur_site
-
-        if len(_txt) > 9:
-            pdf.set_font('helvetica', size=11)
-
-        pdf.cell(**_kwargs_s, text=_txt)
-
-        pdf.set_font('helvetica', size=18)
-
-        # Count each type for this site
-        for cur_type in type_list:
-            cur_count = str(len(dfs[dfs.SESSTYPE == cur_type]))
-            pdf.cell(**_kwargs, text=cur_count)
-
-        if len(type_list) > 1:
-            # Total for site
-            cur_count = str(len(dfs))
-            pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-
     if len(site_list) > 1:
+
+        # Row for each site
+        for cur_site in site_list:
+            pdf.cell(w=indent_width)
+
+            dfs = df[df.SITE == cur_site]
+            _txt = cur_site
+
+            if len(_txt) > 9:
+                pdf.set_font('helvetica', size=11)
+
+            pdf.cell(**_kwargs_s, text=_txt)
+
+            pdf.set_font('helvetica', size=18)
+
+            # Count each type for this site
+            for cur_type in type_list:
+                cur_count = str(len(dfs[dfs.SESSTYPE == cur_type]))
+                pdf.cell(**_kwargs, text=cur_count)
+
+            if len(type_list) > 1:
+                # Total for site
+                cur_count = str(len(dfs))
+                pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
         # TOTALS row
         pdf.cell(w=indent_width)
         pdf.cell(w=1.0)
@@ -231,6 +233,41 @@ def _draw_counts(pdf, sessions, rangetype=None):
             pdf.set_font('helvetica', size=18)
             cur_count = str(len(df[df.SESSTYPE == cur_type]))
             pdf.cell(**_kwargs, text=cur_count)
+
+        # Grandtotal
+        pdf.cell(**_kwargs_t, text=str(len(df)))
+
+    else:
+
+        # Row for each group
+        for cur_group in group_list:
+            pdf.cell(w=indent_width)
+
+            dfg = df[df.GROUP == cur_group]
+            _txt = cur_group
+
+            pdf.cell(**_kwargs_s, text=_txt)
+
+            pdf.set_font('helvetica', size=18)
+
+            # Count each type for this group
+            for cur_type in type_list:
+                cur_count = str(len(dfg[dfg.SESSTYPE == cur_type]))
+                pdf.cell(**_kwargs, text=cur_count)
+
+            if len(type_list) > 1:
+                # Total for group
+                cur_count = str(len(dfg))
+                pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        if len(group_list) > 1:
+            # TOTALS row
+            pdf.cell(w=indent_width)
+            pdf.cell(w=1.0)
+            for cur_type in type_list:
+                pdf.set_font('helvetica', size=18)
+                cur_count = str(len(df[df.SESSTYPE == cur_type]))
+                pdf.cell(**_kwargs, text=cur_count)
 
         # Grandtotal
         pdf.cell(**_kwargs_t, text=str(len(df)))
@@ -1457,6 +1494,15 @@ def make_project_report(
     # Extract sessions from scans/assessors
     sessions = pd.concat([scans[SESSCOLS], assessors[SESSCOLS]])
     sessions = sessions.drop_duplicates().sort_values('SESSION')
+
+    # Merge in group from subjects
+    subjects = garjus.subjects(project).reset_index()
+    sessions = pd.merge(
+        sessions,
+        subjects[['ID', 'PROJECT', 'GROUP']],
+        left_on=('SUBJECT', 'PROJECT'),
+        right_on=('ID', 'PROJECT')
+    )
 
     # Load stats with extra assessor columns
     stats = garjus.stats(project, assessors)
