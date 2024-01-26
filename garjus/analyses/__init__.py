@@ -11,10 +11,10 @@ from datetime import datetime
 import pandas as pd
 
 
-# TODO: check downloaded files, compare/size/md5 to xnat
-
-
 logger = logging.getLogger('garjus.analyses')
+
+
+# TODO: move some of these functions to xnat_utils or to garjus methods
 
 
 def _download_zip(xnat, uri, zipfile):
@@ -178,6 +178,36 @@ def _run(garjus, analysis, tempdir):
 
     # Run steps
     logger.info('running analysis steps...')
+
+    # Pre command
+    precommand = processor.get('pre', None)
+    if precommand:
+        # Run steps
+        logger.debug('running analysis pre-command')
+
+        # Get the container name or path
+        container = precommand['container']
+        for c in processor['containers']:
+            if c['name'] == container:
+                if 'path' in c and command_mode == 'singularity':
+                    container = c['path']
+                else:
+                    container = c['source']
+
+        extraopts = precommand.get('extraopts', '')
+        args = precommand.get('args', '')
+        command_type = precommand.get('type', '')
+
+        _run_command(
+            container,
+            extraopts,
+            args,
+            command_mode,
+            command_type,
+            tempdir)
+
+    # And now the main command must run
+    logger.debug(f'running main command mode')
 
     # Get the container name or path
     container = command['container']
@@ -453,7 +483,6 @@ def _download_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
     return dst
 
 
-
 def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdir):
     reszip = '{}_{}.zip'.format(assessor, resource)
     respath = 'data/projects/{}/subjects/{}/experiments/{}/resources/{}/files'
@@ -488,6 +517,20 @@ def _download_sess_file(garjus, proj, subj, sess, assr, res, fmatch, dst):
 
     # Download the file
     uri = f'data/projects/{proj}/subjects/{subj}/experiments/{sess}/assessors/{assr}/resources/{res}/files/{fmatch}'
+    logger.debug(uri)
+    _download_file_stream(garjus.xnat(), uri, dst)
+
+
+def _download_first_file(garjus, proj, subj, sess, scan, res, dst):
+    # Make the folders for this file path
+    _make_dirs(os.path.dirname(dst))
+
+    # Get name of the first file
+    src = garjus.xnat().select_scan_resource(
+        proj, subj, sess, scan, res).files().get()[0]
+
+    # Download the fil
+    uri = f'data/projects/{proj}/subjects/{subj}/experiments/{sess}/assessors/{scan}/resources/{res}/files/{src}'
     logger.debug(uri)
     _download_file_stream(garjus.xnat(), uri, dst)
 
@@ -536,13 +579,15 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
                         traceback.print_exc()
                         raise err
             else:
-                logger.debug(f'downloading:{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
+                logger.debug(f'{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
                 _download_resource(garjus, proj, subj, sess, assr, res, dst)
 
 
-def download_scan_resources(garjus, project, download_dir, scantype, resources, files, sesstypes):
+def download_scan_resources(
+    garjus, project, download_dir, scantype, resources, files, sesstypes):
     logger.debug(f'loading data:{project}:{scantype}')
-    scans = garjus.scans(projects=[project], scantypes=[scantype], sesstypes=sesstypes)
+    scans = garjus.scans(
+        projects=[project], scantypes=[scantype], sesstypes=sesstypes)
 
     scans = scans[scans.QUALITY != 'unusable']
 
@@ -808,15 +853,49 @@ def _download_scans(
                 logger.debug(f'skip scan, no match={scan}:{s.SCANTYPE}')
                 continue
 
-            for res_spec in scan_spec['resources']:
+            # Get list of resources to download from this scan
+            resources = scan_spec.get('resources', [])
 
+            # Check for nifti tag
+            if 'nifti' in scan_spec:
+                # Add a NIFTI resource using value as fdest
+                resources.append({
+                    'resource': 'NIFTI',
+                    'fdest': scan_spec['nifti']
+                })
+
+            for res_spec in resources:
                 try:
                     res = res_spec['resource']
                 except (KeyError, ValueError) as err:
                     logger.error(f'reading resource:{err}')
                     continue
 
-                if 'fmatch' in res_spec:
+                if 'fdest' in res_spec:
+                    fdest = res_spec['fdest']
+                    logger.debug(f'setting fdest:{fdest}')
+                    dst = f'{os.path.dirname(sess_dir)}/{fdest}'
+
+                    # Have we already downloaded it?
+                    if os.path.exists(dst):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download:{sess}:{scan}:{res}')
+                    try:
+                        _download_first_file(
+                            garjus,
+                            proj,
+                            subj,
+                            sess,
+                            scan,
+                            res,
+                            dst)
+                    except Exception as err:
+                        logger.error(f'{sess}:{scan}:{res}:first:{err}')
+                        raise err
+                elif 'fmatch' in res_spec:
                     # Download files
                     for fmatch in res_spec['fmatch'].split(','):
 
