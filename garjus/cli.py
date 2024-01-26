@@ -185,7 +185,10 @@ def download(
 @click.option('--dir', '-d', 'jobdir', required=False)
 def run(project, analysis_id, output_zip, processor, jobdir):
     click.echo('garjus! run')
-    output_zip = os.path.abspath(output_zip)
+
+    if output_zip:
+        output_zip = os.path.abspath(output_zip)
+
     g = Garjus()
     g.run_analysis(project, analysis_id, output_zip, processor, jobdir)
 
