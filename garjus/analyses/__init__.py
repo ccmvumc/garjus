@@ -327,7 +327,7 @@ def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
     _make_dirs(outputs_dir)
 
     # Run it
-    logger.info(f'running analysis:{analysis}')
+    logger.info(f'running analysis:{project}:{analysis_id}')
     _run(garjus, analysis, analysis_dir)
 
     # That is all
@@ -367,7 +367,7 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None, 
         _download_inputs(garjus, analysis, inputs_dir)
 
         # Run it
-        logger.info(f'running analysis:{analysis}')
+        logger.info(f'running analysis:{project}:{analysis_id}')
         _run(garjus, analysis, tempdir)
 
         if output_zip:
