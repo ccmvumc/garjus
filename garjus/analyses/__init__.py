@@ -279,7 +279,8 @@ def _run_command(container, extraopts, args, command_mode, command_type, tempdir
         else:
             cmd += ' run'
 
-        cmd += f' -c -e '
+        cmd += f' -c -e'
+        cmd += f' --home {tempdir}'
         cmd += f' -B {tempdir}/INPUTS:/INPUTS'
         cmd += f' -B {tempdir}/OUTPUTS:/OUTPUTS'
         cmd += f' -B {tempdir}:/tmp'
