@@ -2825,8 +2825,8 @@ class Garjus:
     def get_analysis_outputs(self, project, analysis_id, download_dir):
         download_analysis_outputs(self, project, analysis_id, download_dir)
 
-    def run_analysis(self, project, analysis_id, output_zip, processor):
-        run_analysis(self, project, analysis_id, output_zip, processor)
+    def run_analysis(self, project, analysis_id, output_zip, processor, jobdir):
+        run_analysis(self, project, analysis_id, output_zip, processor, jobdir)
 
     def finish_analysis(self, project, analysis_id, analysis_dir, processor):
         finish_analysis(self, project, analysis_id, analysis_dir, processor)

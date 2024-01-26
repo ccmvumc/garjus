@@ -334,7 +334,7 @@ def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
     logger.info(f'analysis done!')
 
 
-def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
+def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None, jobdir=None):
     analysis = garjus.load_analysis(project, analysis_id)
 
     if processor:
@@ -350,7 +350,10 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None):
         logger.error('no processor specified, cannot run')
         return
 
-    with tempfile.TemporaryDirectory() as tempdir:
+    if jobdir:
+        logger.debug(f'jobdir={jobdir}')
+
+    with tempfile.TemporaryDirectory(dir=jobdir) as tempdir:
 
         inputs_dir = f'{tempdir}/INPUTS'
         outputs_dir = f'{tempdir}/OUTPUTS'
