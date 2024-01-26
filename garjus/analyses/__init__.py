@@ -536,7 +536,6 @@ def _download_first_file(garjus, proj, subj, sess, scan, res, dst):
     # Download the file
     uri = f'data/projects/{proj}/subjects/{subj}/experiments/{sess}/scans/{scan}/resources/{res}/files/{src}'
     logger.debug(uri)
-    print(uri, dst)
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
