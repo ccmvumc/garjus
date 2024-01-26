@@ -1080,7 +1080,6 @@ def download_analysis_outputs(garjus, project, analysis_id, download_dir):
     _download_outputs(garjus, analysis, download_dir)
 
 
-
 def _download_inputs(garjus, analysis, download_dir):
     errors = []
 
@@ -1100,9 +1099,8 @@ def _download_inputs(garjus, analysis, download_dir):
     # Which subjects to include?
     subjects = analysis['SUBJECTS'].splitlines()
 
-    # TODO: include/exclude subjects, default to all
-
     if not subjects:
+        # Default to all subjects
         subjects = list(sessions.SUBJECT.unique())
 
     logger.debug(f'subjects={subjects}')
