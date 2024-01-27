@@ -279,7 +279,7 @@ def _run_command(container, extraopts, args, command_mode, command_type, tempdir
         else:
             cmd += ' run'
 
-        cmd += f' -c -e'
+        cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
         cmd += f' --home {tempdir}:$HOME'
         cmd += f' -B $HOME/.ssh:$HOME/.ssh'
         cmd += f' -B {tempdir}/INPUTS:/INPUTS'
