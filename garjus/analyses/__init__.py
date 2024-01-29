@@ -16,7 +16,6 @@ logger = logging.getLogger('garjus.analyses')
 
 # TODO: move some of these functions to xnat_utils or to garjus methods
 
-
 def _download_zip(xnat, uri, zipfile):
     # Build the uri to download
     _uri = uri + '?format=zip&structure=simplified'
@@ -32,8 +31,14 @@ def _download_file_stream(xnat, uri, dst):
 
     response = xnat.get(uri, stream=True)
 
-    with open(dst, 'wb') as f:
-        shutil.copyfileobj(response.raw, f)
+    if dst.endswith('.txt'):
+        # Write text as text
+        with open(dst, 'w') as f:
+            f.write(response.text)
+    else:
+        # Copy binary file contents
+        with open(dst, 'wb') as f:
+            shutil.copyfileobj(response.raw, f)
 
     return dst
 
