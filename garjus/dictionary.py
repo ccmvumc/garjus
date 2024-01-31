@@ -86,7 +86,8 @@ DISABLE_STATTYPES = [
     'francois_schaefer200_v1',
     'francois_schaefer400_v1',
     'dtiQA_synb0_v7',
-    'EEG-EGI-wavelet_v1'
+    'EEG-EGI-wavelet_v1',
+    'DnSeg_v1',
 ]
 
 COLUMNS = {
