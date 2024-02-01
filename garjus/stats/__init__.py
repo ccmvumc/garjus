@@ -202,7 +202,7 @@ def _get_bag(garjus, project):
 
     # Batch upload new stats
     for i, s in stats.iterrows():
-        logger.debug(f'set bag_age_gap:{ASSR}')
+        logger.debug(f'set bag_age_gap:{s.ASSR}')
         garjus.set_stats(
             project,
             s.SUBJECT,
