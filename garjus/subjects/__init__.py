@@ -11,7 +11,7 @@ def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
 
     if not project_redcap:
-        return pd.DataFrame([], columns=['ID', 'PROJECT'])
+        return pd.DataFrame([], columns=['ID', 'PROJECT', 'GROUP'])
 
     def_field = project_redcap.def_field
     sec_field = project_redcap.export_project_info()['secondary_unique_field']
