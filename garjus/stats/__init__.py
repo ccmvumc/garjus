@@ -198,7 +198,7 @@ def _get_bag(garjus, project):
     # Calculate age at scan
     stats['SCANDAYS'] = pd.to_datetime(stats['DATE']) - stats['DOB']
     stats['BAGDAYS'] = (stats['bag_age_pred'].astype(float) * 365.25).astype('timedelta64[D]')
-    stats['bag_age_gap'] = (stats['BAGDAYS'] - stats['SCANDAYS'])/np.timedelta64(1, 'Y')
+    stats['bag_age_gap'] = (stats['BAGDAYS'] - stats['SCANDAYS'])/np.timedelta64(365, 'D')
 
     # Batch upload new stats
     for i, s in stats.iterrows():
