@@ -52,7 +52,7 @@ class LifeDataFile2Redcap():
 
     def get_session_files(self, subj, sess_num):
         '''Returns list of file paths for specified subject and session'''
-        sess_glob = f'{self.boxdir}/{subj}/LifeData/*{sess_num}*.csv'
+        sess_glob = f'{self.boxdir}/{subj}/LifeData/Session*{sess_num}*.csv'
         file_list = sorted(glob.glob(sess_glob))
         return file_list
 
