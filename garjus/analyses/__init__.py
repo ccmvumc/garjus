@@ -545,10 +545,71 @@ def _download_first_file(garjus, proj, subj, sess, scan, res, dst):
     _download_file_stream(garjus.xnat(), uri, dst)
 
 
+def download_sgp_resources(garjus, project, download_dir, proctype, resources, files):
+
+    assessors = garjus.subject_assessors(
+        projects=[project],
+        proctypes=[proctype]
+    )
+
+    assessors = assessors[assessors.PROCSTATUS == 'COMPLETE']
+
+    for i, a in assessors.iterrows():
+        proj = a.PROJECT
+        subj = a.SUBJECT
+        assr = a.ASSR
+        dst = f'{download_dir}/{assr}'
+
+        for res in resources:
+            # check if it exists
+
+            if files:
+                # Download files
+                for fmatch in files:
+                    # Have we already downloaded it?
+                    if os.path.exists(dst):
+                        logger.debug(f'exists:{dst}')
+                        continue
+
+                    # Download it
+                    logger.info(f'download file:{assr}:{res}:{fmatch}')
+                    try:
+                        _download_sgp_file(
+                            garjus,
+                            proj,
+                            subj,
+                            assr,
+                            res,
+                            fmatch,
+                            f'{dst}/{res}/{fmatch}'
+                        )
+                    except Exception as err:
+                        logger.error(f'{subj}:{assr}:{res}:{fmatch}:{err}')
+                        import traceback
+                        traceback.print_exc()
+                        raise err
+            else:
+                logger.debug(f'{proj}:{subj}:{assr}:{res}:{dst}')
+                _download_sgp_resource_zip(
+                    garjus.xnat(),
+                    proj,
+                    subj,
+                    assr,
+                    res,
+                    dst)
+
+
 def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes):
+
     logger.debug(f'loading data:{project}:{proctype}')
-    assessors = garjus.assessors(projects=[project], proctypes=[proctype], sesstypes=sesstypes)
-    #sgp = garjus.subject_assessors(projects=[project])
+
+    assessors = garjus.assessors(
+        projects=[project], proctypes=[proctype], sesstypes=sesstypes)
+
+    if assessors.empty and not sesstypes:
+        logger.info('loading as sgp')
+        return download_sgp_resources(
+            garjus, project, download_dir, proctype, resources, files)
 
     assessors = assessors[assessors.PROCSTATUS == 'COMPLETE']
 
