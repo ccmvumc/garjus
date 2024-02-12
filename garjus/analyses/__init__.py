@@ -616,7 +616,7 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
         a = garjus.load_analysis(project, analysis_id)
         _subjects = a['SUBJECTS'].splitlines()
         logger.debug(f'applying subject filter to include:{_subjects}')
-        assessors[assessors.SUBJECT.isin(_subjects)]
+        assessors = assessors[assessors.SUBJECT.isin(_subjects)]
 
     if assessors.empty and not sesstypes:
         logger.info('loading as sgp')
