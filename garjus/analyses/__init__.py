@@ -599,12 +599,24 @@ def download_sgp_resources(garjus, project, download_dir, proctype, resources, f
                     dst)
 
 
-def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes):
+def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes, analysis_id=None):
 
     logger.debug(f'loading data:{project}:{proctype}')
 
     assessors = garjus.assessors(
-        projects=[project], proctypes=[proctype], sesstypes=sesstypes)
+        projects=[project],
+        proctypes=[proctype],
+        sesstypes=sesstypes)
+
+    if analysis_id:
+        # Get list of subjects for specified analysis and apply as filter
+        logger.info(f'analysis={analysis_id}')
+
+        # Get the subject list from the analysis
+        a = garjus.load_analysis(project, analysis_id)
+        _subjects = a['SUBJECTS'].splitlines()
+        logger.debug(f'applying subject filter to include:{_subjects}')
+        assessors[assessors.SUBJECT.isin(_subjects)]
 
     if assessors.empty and not sesstypes:
         logger.info('loading as sgp')

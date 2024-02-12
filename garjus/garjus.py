@@ -2831,8 +2831,8 @@ class Garjus:
     def finish_analysis(self, project, analysis_id, analysis_dir, processor):
         finish_analysis(self, project, analysis_id, analysis_dir, processor)
 
-    def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None):
-        download_resources(self, project, download_dir, proctype, resources, files, sesstypes)
+    def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None, analysis_id=None):
+        download_resources(self, project, download_dir, proctype, resources, files, sesstypes, analysis_id)
 
     def download_scantype(self, project, download_dir, scantype, resources, files, sesstypes=None):
         download_scan_resources(self, project, download_dir, scantype, resources, files, sesstypes)
