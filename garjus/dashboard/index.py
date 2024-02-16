@@ -28,19 +28,51 @@ def xnat_found():
     return Garjus.xnat_found()
 
 
-footer_content = [
-    html.Hr(),
-    html.Div(
-        [
-            html.A(
-                "garjus",
-                href='https://github.com/ccmvumc/garjus',
-                target="_blank",
+def footer_content(include_logout=False):
+    content = []
+
+    content.append(html.Hr())
+
+    if include_logout:
+        content.append(
+            html.Div(
+                [
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                html.A(
+                                    "garjus",
+                                    href='https://github.com/ccmvumc/garjus',
+                                    target="_blank",
+                                ),
+                            ),
+                            dbc.Col(
+                                html.A('xnat', href='https://xnat.vanderbilt.edu/xnat'),
+                            ),
+                            dbc.Col(
+                                html.A('logout', href='../logout'),
+                            ),
+                        ] 
+                    ),
+                ],
+                style={'textAlign': 'center'},
             )
-        ],
-        style={'textAlign': 'center'},
-    ),
-]
+        )
+    else:
+        content.append(
+            html.Div(
+                [
+                    html.A(
+                        "garjus",
+                        href='https://github.com/ccmvumc/garjus',
+                        target="_blank",
+                    )
+                ],
+                style={'textAlign': 'center'}
+            )
+        )
+
+    return content
 
 has_xnat = xnat_found()
 has_redcap = redcap_found()
@@ -157,7 +189,7 @@ app.layout = html.Div(
     style={'marginLeft': '20px', 'marginRight': '20px'},
     children=[
         html.Div(id='report-content', children=[tabs]),
-        html.Div(id='footer-content', children=footer_content)
+        html.Div(id='footer-content', children=footer_content())
     ])
 
 # For gunicorn to work correctly

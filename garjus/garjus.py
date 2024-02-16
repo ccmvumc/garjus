@@ -504,7 +504,7 @@ class Garjus:
 
     def tasks(self, download=False, hidedone=True, projects=None):
         """List of task records."""
-        DONE_LIST = ['COMPLETE', 'JOB_FAILED']
+        DONE_LIST = ['COMPLETE', 'JOB_FAILED', 'DELETED']
         data = []
 
         if projects:
