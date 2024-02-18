@@ -1706,7 +1706,6 @@ class Garjus:
             choices = [
                 'automations',
                 'stats',
-                'tasks',
                 'issues',
                 'progress',
                 'compare'
