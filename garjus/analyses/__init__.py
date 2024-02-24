@@ -20,7 +20,11 @@ def _download_zip(xnat, uri, zipfile):
     # Build the uri to download
     _uri = uri + '?format=zip&structure=simplified'
 
-    response = xnat.get(_uri, stream=True)
+    response = xnat.get(_uri, stream=True)    
+
+    if response.status_code != 200:
+        raise FileNotFoundError(uri)
+
     with open(zipfile, 'wb') as f:
         shutil.copyfileobj(response.raw, f)
 
@@ -30,6 +34,11 @@ def _download_zip(xnat, uri, zipfile):
 def _download_file_stream(xnat, uri, dst):
 
     response = xnat.get(uri, stream=True)
+
+    logger.debug(f'download response code:{response.status_code}')
+
+    if response.status_code != 200:
+        raise FileNotFoundError(uri)
 
     if dst.endswith('.txt'):
         # Write text as text
@@ -562,6 +571,7 @@ def download_sgp_resources(garjus, project, download_dir, proctype, resources, f
 
         for res in resources:
             # check if it exists
+
 
             if files:
                 # Download files
