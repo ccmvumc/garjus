@@ -23,17 +23,19 @@ def update(garjus, projects, proctypes=None):
         return
 
     for p in projects:
-        if not proctypes:
-            proctypes = garjus.stattypes(p)
+        if proctypes:
+            ptypes = proctypes
+        else:
+            ptypes = garjus.stattypes(p)
 
-        if not proctypes:
+        if not ptypes:
             logger.debug(f'no proctypes for stats project:{p}')
             continue
 
-        logger.debug(f'stats updating project:{p},proctypes={proctypes}')
-        update_project(garjus, p, proctypes)
+        logger.debug(f'stats updating project:{p},proctypes={ptypes}')
+        update_project(garjus, p, ptypes)
 
-        if 'BrainAgeGap_v2' in proctypes:
+        if 'BrainAgeGap_v2' in ptypes:
             logger.debug('getting bag_age_gap')
             _get_bag(garjus, p)
 
