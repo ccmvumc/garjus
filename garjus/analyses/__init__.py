@@ -12,7 +12,6 @@ import pandas as pd
 
 
 logger = logging.getLogger('garjus.analyses')
-x
 
 # TODO: move some of these functions to xnat_utils or to garjus methods
 
