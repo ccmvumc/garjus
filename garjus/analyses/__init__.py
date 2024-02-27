@@ -12,7 +12,7 @@ import pandas as pd
 
 
 logger = logging.getLogger('garjus.analyses')
-
+x
 
 # TODO: move some of these functions to xnat_utils or to garjus methods
 
@@ -609,7 +609,7 @@ def download_sgp_resources(garjus, project, download_dir, proctype, resources, f
                     dst)
 
 
-def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes, analysis_id=None):
+def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes, analysis_id=None, sessinclude=None):
 
     logger.debug(f'loading data:{project}:{proctype}')
 
@@ -617,6 +617,9 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
         projects=[project],
         proctypes=[proctype],
         sesstypes=sesstypes)
+
+    if sessinclude:
+        assessors = assessors[assessors.SESSION.isin(sessinclude)]
 
     if analysis_id:
         # Get list of subjects for specified analysis and apply as filter
@@ -677,10 +680,13 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
 
 
 def download_scan_resources(
-    garjus, project, download_dir, scantype, resources, files, sesstypes):
+    garjus, project, download_dir, scantype, resources, files, sesstypes, sessinclude=None):
     logger.debug(f'loading data:{project}:{scantype}')
     scans = garjus.scans(
         projects=[project], scantypes=[scantype], sesstypes=sesstypes)
+
+    if sessinclude:
+        scans = scans[scans.SESSION.isin(sessinclude)]
 
     scans = scans[scans.QUALITY != 'unusable']
 
