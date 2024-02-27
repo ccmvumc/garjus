@@ -140,24 +140,24 @@ def getoutputs(project, analysis_id, download_dir):
 @cli.command('download')
 @click.argument('download_dir', required=True)
 @click.option('--type', '-t', 'proctype', multiple=False, required=True)
-@click.option('--resources', '-r', 'resources', multiple=True, required=True)
-@click.option('--files', '-f', 'files', multiple=True, required=False)
+@click.option('--resource', '-r', 'resource', multiple=True, required=True)
+@click.option('--file', '-f', 'file', multiple=True, required=False)
 @click.option('--project', '-p', 'project', required=True)
-@click.option('--sesstypes', '-s', 'sesstypes', multiple=True, required=False)
+@click.option('--sesstype', '-s', 'sesstype', multiple=True, required=False)
 @click.option('--analysis', '-a', 'analysis', required=False)
-@click.option('--sessions', '-e', 'sessions', required=False)
+@click.option('--session', '-e', 'session', multiple=True, required=False)
 @click.option(
     "--scan", is_flag=True, default=False, help="scans, instead of assessors.")
 def download(
     project,
     proctype,
     download_dir,
-    resources,
-    files,
+    resource,
+    file,
     scan,
-    sesstypes,
+    sesstype,
     analysis,
-    sessions
+    session
 ):
     click.echo('garjus! download')
     g = Garjus()
@@ -166,21 +166,21 @@ def download(
             project,
             download_dir,
             proctype,
-            resources,
-            files,
-            sesstypes,
-            sessions
+            resource,
+            file,
+            sesstype,
+            session
         )
     else:
         g.download_proctype(
             project,
             download_dir,
             proctype,
-            resources,
-            files,
-            sesstypes,
+            resource,
+            file,
+            sesstype,
             analysis,
-            sessions
+            session
         )
 
 
