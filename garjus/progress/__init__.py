@@ -63,7 +63,8 @@ def make_stats_csv(
     sesstypes,
     csvname,
     persubject=False,
-    analysis=None
+    analysis=None,
+    sessions=None
 ):
     """"Make the file."""
     df = pd.DataFrame()
@@ -77,6 +78,9 @@ def make_stats_csv(
     if sesstypes is not None and not isinstance(sesstypes, list):
         sesstypes = sesstypes.split(',')
 
+    if sessions is not None and not isinstance(sessions, list):
+        sessions = sessions.split(',')
+
     for p in sorted(projects):
         # Load stats
         stats = garjus.stats(
@@ -85,7 +89,7 @@ def make_stats_csv(
 
     if analysis:
         # Get the list of subjects for specified analysis and apply as filter
-        logger.info(f'analysis={analysis}')
+        logger.info(f'{analysis=}')
 
         # Get the subject list from the analysis
         project, analysis_id = analysis.rsplit('_', 1)
@@ -98,7 +102,7 @@ def make_stats_csv(
         _subj = df.SUBJECT.unique()
         missing_subjects = [x for x in subjects if x not in _subj]
         if missing_subjects:
-            logger.info(f'missing_subjects={missing_subjects}')
+            logger.info(f'{missing_subjects=}')
             df = pd.concat([
                 df,
                 pd.DataFrame(
@@ -106,6 +110,10 @@ def make_stats_csv(
                     columns=['SUBJECT']
                 )
             ]).sort_values('SUBJECT')
+
+    if sessions:
+        df = df[df.SESSION.isin(sessions)]
+        logger.info(f'filter sessions:{sessions}')
 
     # Save file for this type
     logger.info(f'saving csv:{csvname}')

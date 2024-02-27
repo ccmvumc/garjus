@@ -147,7 +147,7 @@ def getoutputs(project, analysis_id, download_dir):
 @click.option('--analysis', '-a', 'analysis', required=False)
 @click.option('--session', '-e', 'session', multiple=True, required=False)
 @click.option(
-    "--scan", is_flag=True, default=False, help="scans, instead of assessors.")
+    "--scan", is_flag=True, default=False, help="scans instead of assessors.")
 def download(
     project,
     proctype,
@@ -288,8 +288,9 @@ def report(project, monthly):
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
 @click.option('--analysis', '-a', 'analysis', required=False)
 @click.option('--persubject', is_flag=True)
+@click.option('--sessions', '-e', 'sessions', required=False)
 @click.argument('csv', required=True)
-def stats(projects, proctypes, sesstypes, csv, persubject, analysis):
+def stats(projects, proctypes, sesstypes, csv, persubject, analysis, sessions):
     click.echo('garjus! stats')
     Garjus().export_stats(
         projects,
@@ -297,7 +298,8 @@ def stats(projects, proctypes, sesstypes, csv, persubject, analysis):
         sesstypes,
         csv,
         persubject,
-        analysis)
+        analysis,
+        sessions)
 
 
 @cli.command('compare')
