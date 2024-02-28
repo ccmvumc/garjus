@@ -24,6 +24,7 @@ STATUSES = [
     'RUNNING',
     'PENDING',
     'WAITING',
+    'QUEUED',
     'UNKNOWN',
 ]
 
