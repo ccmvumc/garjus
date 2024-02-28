@@ -107,6 +107,8 @@ def _run_edat_automations(automations, garjus, project):
     # Only MRI
     scanp = [x for x in scanp if x['scanning_modality'] == 'MRI']
 
+    logger.debug(f'{scanp=}')
+
     for p in scanp:
         s = p['scanning_xnatsuffix']
         _events = [x.strip() for x in p['scanning_events'].split(',')]
