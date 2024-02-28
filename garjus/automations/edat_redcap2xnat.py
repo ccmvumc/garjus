@@ -56,8 +56,9 @@ def process_project(
         # Check if it needs uploading
         try:
             session = subj + event2sess[event]
+            logger.debug(f'{session=}, {event2sess=}')
         except KeyError:
-            logger.debug(f'{subj}:{event}:event not in event session map')
+            logger.debug(f'{subj}:{event}:event not in map:{event2sess=}')
             continue
 
         # Filter scans for this session
