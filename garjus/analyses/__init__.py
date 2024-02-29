@@ -675,7 +675,11 @@ def download_resources(garjus, project, download_dir, proctype, resources, files
                         raise err
             else:
                 logger.debug(f'{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
-                _download_resource(garjus, proj, subj, sess, assr, res, dst)
+                try:
+                    _download_resource(garjus, proj, subj, sess, assr, res, dst)
+                except Exception as err:
+                    logger.info(f'failed to download:{assr}')
+                    continue
 
 
 def download_scan_resources(
