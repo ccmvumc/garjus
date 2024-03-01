@@ -6,7 +6,7 @@ import pandas as pd
 from ...utils_redcap import get_redcap, download_file, field2events
 
 
-logger = logging.getLogger('garjus.automations')
+logger = logging.getLogger('garjus.automations.etl_nihtoolbox_drnair')
 
 
 reg_field = 'toolbox_regdata'
@@ -14,7 +14,38 @@ score_field = 'toolbox_cogscores'
 done_field = 'toolbox_pin'
 
 
-def run(project, record_id, event_id):
+def process(project):
+    results = []
+    events = field2events(project, reg_field)
+
+    records = project.export_records(
+        fields=[project.def_field, done_field, reg_field, score_field],
+        events=events)
+
+    for r in records:
+        record_id = r[project.def_field]
+        event_id = r['redcap_event_name']
+
+        if r[done_field]:
+            logger.debug(f'already ETL:{record_id}:{event_id}')
+            continue
+
+        if not r[reg_field]:
+            logger.debug(f'no reg file:{record_id}:{event_id}')
+            continue
+
+        if not r[score_field]:
+            logger.debug(f'no data file:{record_id}:{event_id}')
+            continue
+
+        logger.debug(f'running ETL:{record_id}:{event_id}')
+        results.append({'subject': record_id, 'event': event_id})
+        _run(project, record_id, event_id)
+
+    return results
+
+
+def _run(project, record_id, event_id):
     data = None
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -28,20 +59,21 @@ def run(project, record_id, event_id):
         download_file(project, record_id, score_field, score_file, event_id=event_id)
 
         # Extract data from downloaded files
-        reg_data = toolbox_extract_regdata(reg_file)
+        reg_data = _extract_regdata(reg_file)
 
-        score_data = toolbox_extract_cogscores(score_file)
+        score_data = _extract_cogscores(score_file)
 
         # Transform data to match redcap field names
-        data = toolbox_transform(reg_data, score_data)
+        data = _transform(reg_data, score_data)
 
     # Load data back to redcap
-    toolbox_load(project, record_id, event_id, data)
+    print(data)
+    _load(project, record_id, event_id, data)
 
 
-def toolbox_transform(regdata, scoredata):
+def _transform(regdata, scoredata):
     # Initialize test data
-    picseqtest = None
+    picseqtest = {}
     listsorttest = None
     patterntest = None
     picvocabtest = None
@@ -68,44 +100,44 @@ def toolbox_transform(regdata, scoredata):
             picseqtest = scoredata[i]
 
     # Load the other tests
-    listsorttest = scoredata['NIH Toolbox List Sorting Working Memory Test Age 7+ v2.1']
-    patterntest = scoredata['NIH Toolbox Pattern Comparison Processing Speed Test Age 7+ v2.1']
-    picvocabtest = scoredata['NIH Toolbox Picture Vocabulary Test Age 3+ v2.1']
-    oralrecogtest = scoredata['NIH Toolbox Oral Reading Recognition Test Age 3+ v2.1']
-    flankertest = scoredata['NIH Toolbox Flanker Inhibitory Control and Attention Test Age 12+ v2.1']
-    cardsorttest = scoredata['NIH Toolbox Dimensional Change Card Sort Test Age 12+ v2.1']
+    listsorttest = scoredata.get('NIH Toolbox List Sorting Working Memory Test Age 7+ v2.1', {})
+    patterntest = scoredata.get('NIH Toolbox Pattern Comparison Processing Speed Test Age 7+ v2.1', {})
+    picvocabtest = scoredata.get('NIH Toolbox Picture Vocabulary Test Age 3+ v2.1', {})
+    oralrecogtest = scoredata.get('NIH Toolbox Oral Reading Recognition Test Age 3+ v2.1', {})
+    flankertest = scoredata.get('NIH Toolbox Flanker Inhibitory Control and Attention Test Age 12+ v2.1', {})
+    cardsorttest = scoredata.get('NIH Toolbox Dimensional Change Card Sort Test Age 12+ v2.1', {})
 
     # Get the individual scores
     data.update({
-        'toolbox_listsorttest_raw': listsorttest['RawScore'],
-        'toolbox_patterntest_raw': patterntest['RawScore'],
-        'toolbox_picseqtest_raw': picseqtest['RawScore'],
-        'toolbox_oralrecogtest_theta': oralrecogtest['Theta'],
-        'toolbox_picseqtest_theta': picseqtest['Theta'],
-        'toolbox_picvocabtest_theta': picvocabtest['Theta'],
-        'toolbox_listsorttest_uncstd': listsorttest['Uncorrected Standard Score'],
-        'toolbox_oralrecogtest_uncstd': oralrecogtest['Uncorrected Standard Score'],
-        'toolbox_patterntest_uncstd': patterntest['Uncorrected Standard Score'],
-        'toolbox_picseqtest_uncstd': picseqtest['Uncorrected Standard Score'],
-        'toolbox_picvocabtest_uncstd': picvocabtest['Uncorrected Standard Score'],
-        'toolbox_listsorttest_agestd': listsorttest['Age-Corrected Standard Score'],
-        'toolbox_oralrecogtest_agestd': oralrecogtest['Age-Corrected Standard Score'],
-        'toolbox_patterntest_agestd': patterntest['Age-Corrected Standard Score'],
-        'toolbox_picseqtest_agestd': picseqtest['Age-Corrected Standard Score'],
-        'toolbox_picvocabtest_agestd': picvocabtest['Age-Corrected Standard Score'],
-        'toolbox_listsorttest_tscore': listsorttest['Fully-Corrected T-score'],
-        'toolbox_oralrecogtest_tscore': oralrecogtest['Fully-Corrected T-score'],
-        'toolbox_patterntest_tscore': patterntest['Fully-Corrected T-score'],
-        'toolbox_picseqtest_tscore': picseqtest['Fully-Corrected T-score'],
-        'toolbox_picvocabtest_tscore': picvocabtest['Fully-Corrected T-score'],
-        'toolbox_flankertest_raw': flankertest['RawScore'],
-        'toolbox_flankertest_uncstd': flankertest['Uncorrected Standard Score'],
-        'toolbox_flankertest_agestd': flankertest['Age-Corrected Standard Score'],
-        'toolbox_flankertest_tscore': flankertest['Fully-Corrected T-score'],
-        'toolbox_cardsorttest_raw': cardsorttest['RawScore'],
-        'toolbox_cardsorttest_uncstd': cardsorttest['Uncorrected Standard Score'],
-        'toolbox_cardsorttest_agestd': cardsorttest['Age-Corrected Standard Score'],
-        'toolbox_cardsorttest_tscore': cardsorttest['Fully-Corrected T-score'],
+        'toolbox_listsorttest_raw': listsorttest.get('RawScore', ''),
+        'toolbox_patterntest_raw': patterntest.get('RawScore', ''),
+        'toolbox_picseqtest_raw': picseqtest.get('RawScore', ''),
+        'toolbox_oralrecogtest_theta': oralrecogtest.get('Theta', ''),
+        'toolbox_picseqtest_theta': picseqtest.get('Theta', ''),
+        'toolbox_picvocabtest_theta': picvocabtest.get('Theta', ''),
+        'toolbox_listsorttest_uncstd': listsorttest.get('Uncorrected Standard Score', ''),
+        'toolbox_oralrecogtest_uncstd': oralrecogtest.get('Uncorrected Standard Score', ''),
+        'toolbox_patterntest_uncstd': patterntest.get('Uncorrected Standard Score', ''),
+        'toolbox_picseqtest_uncstd': picseqtest.get('Uncorrected Standard Score', ''),
+        'toolbox_picvocabtest_uncstd': picvocabtest.get('Uncorrected Standard Score', ''),
+        'toolbox_listsorttest_agestd': listsorttest.get('Age-Corrected Standard Score', ''),
+        'toolbox_oralrecogtest_agestd': oralrecogtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_patterntest_agestd': patterntest.get('Age-Corrected Standard Score', ''),
+        'toolbox_picseqtest_agestd': picseqtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_picvocabtest_agestd': picvocabtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_listsorttest_tscore': listsorttest.get('Fully-Corrected T-score', ''),
+        'toolbox_oralrecogtest_tscore': oralrecogtest.get('Fully-Corrected T-score', ''),
+        'toolbox_patterntest_tscore': patterntest.get('Fully-Corrected T-score', ''),
+        'toolbox_picseqtest_tscore': picseqtest.get('Fully-Corrected T-score', ''),
+        'toolbox_picvocabtest_tscore': picvocabtest.get('Fully-Corrected T-score', ''),
+        'toolbox_flankertest_raw': flankertest.get('RawScore', ''),
+        'toolbox_flankertest_uncstd': flankertest.get('Uncorrected Standard Score', ''),
+        'toolbox_flankertest_agestd': flankertest.get('Age-Corrected Standard Score', ''),
+        'toolbox_flankertest_tscore': flankertest.get('Fully-Corrected T-score', ''),
+        'toolbox_cardsorttest_raw': cardsorttest.get('RawScore', ''),
+        'toolbox_cardsorttest_uncstd': cardsorttest.get('Uncorrected Standard Score', ''),
+        'toolbox_cardsorttest_agestd': cardsorttest.get('Age-Corrected Standard Score', ''),
+        'toolbox_cardsorttest_tscore': cardsorttest.get('Fully-Corrected T-score', ''),
     })
 
     cogcrystalcomp = scoredata.get('Cognition Crystallized Composite v1.1', None)
@@ -150,7 +182,10 @@ def toolbox_transform(regdata, scoredata):
     return data
 
 
-def toolbox_load(project, record_id, event_id, data):
+def _load(project, record_id, event_id, data):
+
+
+
     data[project.def_field] = record_id
     data['redcap_event_name'] = event_id
 
@@ -162,7 +197,7 @@ def toolbox_load(project, record_id, event_id, data):
         logger.error('error uploading', record_id, e)
 
 
-def toolbox_extract_regdata(filename):
+def _extract_regdata(filename):
     data = {}
 
     try:
@@ -176,7 +211,7 @@ def toolbox_extract_regdata(filename):
     return data
 
 
-def toolbox_extract_cogscores(filename):
+def _extract_cogscores(filename):
     data = {}
 
     # Load csv
@@ -191,42 +226,7 @@ def toolbox_extract_cogscores(filename):
     # convert to dict of dicts indexed by Instrument
     df = df.dropna(subset=['Inst'])
     df = df.set_index('Inst')
+    df = df.fillna('')
     data = df.to_dict('index')
 
     return data
-
-
-def process_project(project):
-    results = []
-    events = field2events(project, reg_field)
-
-    records = project.export_records(
-        fields=[project.def_field, done_field, reg_field, score_field],
-        events=events)
-
-    for r in records:
-        record_id = r[project.def_field]
-        event_id = r['redcap_event_name']
-
-        if r[done_field]:
-            logger.debug(f'already ETL:{record_id}:{event_id}')
-            continue
-
-        if not r[score_field]:
-            logger.debug(f'no data file:{record_id}:{event_id}')
-            continue
-
-        logger.debug(f'running ETL:{record_id}:{event_id}')
-        results.append({'subject': record_id, 'event': event_id})
-        run(project, record_id, event_id)
-
-    return results
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        format='%(asctime)s - %(levelname)s:%(module)s:%(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S')
-
-    process_project(get_redcap('', api_key=''))
