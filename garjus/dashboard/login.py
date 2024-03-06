@@ -17,7 +17,7 @@ from .pages import stats
 from .pages import analyses
 from .pages import processors
 from .pages import reports
-
+from . import content
 
 # This file serves the same purpose as index.py but wrapped in a flask app
 # with user/password authentication. garjus will return this app when
@@ -147,85 +147,8 @@ def load_user(username):
     """This function loads the user by user id."""
     return User(username)
 
-
-footer_content = [
-    html.Hr(),
-    html.Div(
-        [
-            dbc.Row([
-                dbc.Col(
-                    html.A(
-                        "garjus",
-                        href='https://github.com/ccmvumc/garjus',
-                        target="_blank",
-                    ),
-                ),
-                dbc.Col(
-                    html.A('xnat', href='https://xnat.vanderbilt.edu/xnat'),
-                ),
-                dbc.Col(
-                    html.A('logout', href='../logout'),
-                ),
-            ]),
-        ],
-        style={'textAlign': 'center'},
-    ),
-]
-
-if Garjus.redcap_found():
-    tabs = dbc.Tabs([
-        dbc.Tab(
-            label='QA',
-            tab_id='tab-qa',
-            children=qa.get_content(),
-        ),
-        dbc.Tab(
-            label='Issues',
-            tab_id='tab-issues',
-            children=issues.get_content(),
-        ),
-        dbc.Tab(
-            label='Queue',
-            tab_id='tab-queue',
-            children=queue.get_content(),
-        ),
-        dbc.Tab(
-            label='Activity',
-            tab_id='tab-activity',
-            children=activity.get_content(),
-        ),
-        dbc.Tab(
-            label='Stats',
-            tab_id='tab-stats',
-            children=stats.get_content(),
-        ),
-        dbc.Tab(
-            label='Processors',
-            tab_id='tab-processors',
-            children=processors.get_content(),
-        ),
-        dbc.Tab(
-            label='Reports',
-            tab_id='tab-reports',
-            children=reports.get_content(),
-        ),
-        dbc.Tab(
-            label='Analyses',
-            tab_id='tab-analyses',
-            children=analyses.get_content(),
-        ),
-    ])
-else:
-    tabs = html.Div(qa.get_content())
-
-# Wrap in a Div with margins
-app.layout = html.Div(
-    className='dbc',
-    style={'marginLeft': '20px', 'marginRight': '20px'},
-    children=[
-        html.Div(id='report-content', children=[tabs]),
-        html.Div(id='footer-content', children=footer_content)
-    ])
+# Set the main content
+app.layout = content.get_content(include_logout=True)
 
 if __name__ == "__main__":
     app.run_server(debug=True)
