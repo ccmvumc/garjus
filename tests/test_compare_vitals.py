@@ -45,7 +45,11 @@ EVENTS = [
     'baselinemonth_0_arm_2',
     'baselinemonth_0_arm_3',
     'month_8_arm_2',
-    'month_8_arm_3'
+    'month_8_arm_3',
+    'month_16_arm_2',
+    'month_16_arm_3',
+    'month_24_arm_2',
+    'month_24_arm_3',
 ]
 
 
