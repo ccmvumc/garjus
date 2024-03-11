@@ -1813,6 +1813,15 @@ class Garjus:
         # Get the projects to compare
         proj_primary = self.primary(project)
         proj_secondary = self.secondary(project)
+
+        if not proj_secondary:
+            logger.debug(f'cannot run, secondary REDCap not set:{project}')
+            return
+
+        if not proj_primary:
+            logger.debug(f'cannot compare, primary REDCap not set:{project}')
+            return
+
         make_double_report(proj_primary, proj_secondary, pdf_file, excel_file)
 
     def stats_projects(self):
