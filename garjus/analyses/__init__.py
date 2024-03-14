@@ -15,11 +15,12 @@ logger = logging.getLogger('garjus.analyses')
 
 # TODO: move some of these functions to xnat_utils or to garjus methods
 
+
 def _download_zip(xnat, uri, zipfile):
     # Build the uri to download
     _uri = uri + '?format=zip&structure=simplified'
 
-    response = xnat.get(_uri, stream=True)    
+    response = xnat.get(_uri, stream=True)
 
     if response.status_code != 200:
         raise FileNotFoundError(uri)
@@ -170,7 +171,7 @@ def _update(garjus, analysis):
     logger.info(f'analysis done!')
 
 
-def _run(garjus, analysis, tempdir):
+def _run(garjus, analysis, tempdir, sharedir=None):
     # Run commmand and upload output
 
     processor = analysis['PROCESSOR']
@@ -217,7 +218,9 @@ def _run(garjus, analysis, tempdir):
             args,
             command_mode,
             command_type,
-            tempdir)
+            tempdir,
+            sharedir=sharedir
+        )
 
     # And now the main command must run
     logger.debug(f'running main command mode')
@@ -245,7 +248,9 @@ def _run(garjus, analysis, tempdir):
         args,
         command_mode,
         command_type,
-        tempdir)
+        tempdir,
+        sharedir=sharedir
+    )
 
     # Post command
     post = processor.get('post', None)
@@ -272,7 +277,9 @@ def _run(garjus, analysis, tempdir):
             args,
             command_mode,
             command_type,
-            tempdir)
+            tempdir,
+            sharedir=sharedir
+        )
 
     # Upload it
     logger.info(f'uploading output')
@@ -280,7 +287,15 @@ def _run(garjus, analysis, tempdir):
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
-def _run_command(container, extraopts, args, command_mode, command_type, tempdir):
+def _run_command(
+    container,
+    extraopts,
+    args,
+    command_mode,
+    command_type,
+    tempdir,
+    sharedir=None
+):
     cmd = None
 
     # Build the command string
@@ -292,14 +307,23 @@ def _run_command(container, extraopts, args, command_mode, command_type, tempdir
         else:
             cmd += ' run'
 
-        cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
-        cmd += f' --home {tempdir}:$HOME'
-        cmd += f' -B $HOME/.ssh:$HOME/.ssh'
-        cmd += f' -B {tempdir}/INPUTS:/INPUTS'
-        cmd += f' -B {tempdir}/OUTPUTS:/OUTPUTS'
-        cmd += f' -B {tempdir}:/tmp'
-        cmd += f' -B {tempdir}:/dev/shm'
-        cmd += f' {extraopts} {container} {args}'
+        if sharedir:
+            cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
+            cmd += f' -B $HOME/.ssh:$HOME/.ssh'
+            cmd += f' -B {tempdir}/INPUTS:/INPUTS'
+            cmd += f' -B {sharedir}/OUTPUTS:/OUTPUTS'
+            cmd += f' -B {tempdir}:/tmp'
+            cmd += f' -B {tempdir}:/dev/shm'
+            cmd += f' {extraopts} {container} {args}'
+        else:
+            cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
+            cmd += f' --home {tempdir}:$HOME'
+            cmd += f' -B $HOME/.ssh:$HOME/.ssh'
+            cmd += f' -B {tempdir}/INPUTS:/INPUTS'
+            cmd += f' -B {tempdir}/OUTPUTS:/OUTPUTS'
+            cmd += f' -B {tempdir}:/tmp'
+            cmd += f' -B {tempdir}:/dev/shm'
+            cmd += f' {extraopts} {container} {args}'
 
     elif command_mode == 'docker':
         if container.startswith('docker://'):
@@ -349,7 +373,14 @@ def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
     logger.info(f'analysis done!')
 
 
-def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None, jobdir=None):
+def run_analysis(
+    garjus,
+    project,
+    analysis_id,
+    output_zip=None,
+    processor=None,
+    jobdir=None
+):
     analysis = garjus.load_analysis(project, analysis_id)
 
     if processor:
@@ -383,7 +414,10 @@ def run_analysis(garjus, project, analysis_id, output_zip=None, processor=None, 
 
         # Run it
         logger.info(f'running analysis:{project}:{analysis_id}')
-        _run(garjus, analysis, tempdir)
+        if jobdir:
+            _run(garjus, analysis, tempdir, sharedir=tempdir)
+        else:
+            _run(garjus, analysis, tempdir)
 
         if output_zip:
             # Zip output
@@ -608,7 +642,17 @@ def download_sgp_resources(garjus, project, download_dir, proctype, resources, f
                     dst)
 
 
-def download_resources(garjus, project, download_dir, proctype, resources, files, sesstypes, analysis_id=None, sessinclude=None):
+def download_resources(
+    garjus,
+    project,
+    download_dir,
+    proctype,
+    resources,
+    files,
+    sesstypes,
+    analysis_id=None,
+    sessinclude=None
+):
 
     logger.debug(f'loading data:{project}:{proctype}')
 
