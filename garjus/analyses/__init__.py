@@ -283,7 +283,12 @@ def _run(garjus, analysis, tempdir, sharedir=None):
 
     # Upload it
     logger.info(f'uploading output')
-    dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+    try:
+        dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
+    except Exception as err:
+        logger.error('uploading outputs failed:{err}')
+        return
+
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
 
 
