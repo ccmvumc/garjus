@@ -2229,10 +2229,13 @@ class Garjus:
             return None
 
         for rec in records:
-            # First try "project" then try "main"
-            project2setting[self._dfield()] = rec.get(
+            # First try "project" then try "main" otherwise nothing
+            #project2setting[self._dfield()] = rec.get(
+            #    f'project_{setting}', rec.get(f'main_{setting}', None))
+            project2setting[rec[self._dfield()]] = rec.get(
                 f'project_{setting}', rec.get(f'main_{setting}', None))
 
+        print(project2setting)
         return project2setting
 
     def etl_automations(self, project):

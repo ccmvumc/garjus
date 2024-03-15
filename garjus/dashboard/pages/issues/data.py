@@ -25,6 +25,7 @@ def get_filename():
 
 def get_data():
     g = Garjus()
+    pid = g.redcap_pid()
 
     logger.info('loading issues')
     df = g.issues()
@@ -33,21 +34,15 @@ def get_data():
     df.sort_values(by=['DATETIME'], inplace=True, ascending=False)
     df.reset_index(inplace=True)
 
-    df['ID'] = df.index
     df['STATUS'] = 'FAIL'
     df['LABEL'] = df['ID']
 
-    df['SESSIONLINK'] = g.xnat_host() + \
-        '/data/projects/' + df['PROJECT'] + \
-        '/subjects/' + df['SUBJECT'] + \
-        '/experiments/' + df['SESSION']
+    df['SESSIONLINK'] = g.xnat_host()
+    # + \
+    #    '/data/projects/' + df['PROJECT'] + \
+    #    '/subjects/' + df['SUBJECT'] + \
+    #    '/experiments/' + df['SESSION']
 
-    project2id = {}
-
-    # TODO: fix this so we only call redcap once, maybe allow a list of projects
-    #for p in df.PROJECT.unique():
-    #    project_id = g.project_setting(p, 'primary')
-    #    project2id[p] = project_id
     project2id = g.projects_setting(list(df.PROJECT.unique()), 'primary')
 
     df['PROJECTPID'] = df['PROJECT'].map(project2id)
@@ -68,14 +63,29 @@ def get_data():
             # Handle secondary ID
             rec = primary.export_records(fields=[def_field, sec_field])
             subj2id = {x[sec_field]: x[def_field] for x in rec if x[sec_field]}
-            df.loc[df['PROJECT'] == p, 'SUBJECTID'] = df['SUBJECT'].map(subj2id)
+            df.loc[df['PROJECT'] == p, 'SUBJECTID'] = df['SUBJECT'].map(
+                subj2id)
         else:
             # ID is same as subject number for this project
             pass
 
     # Make project link
-    df['PROJECTLINK'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/' + \
-        'DataEntry/record_home.php?pid=' + df['PROJECTPID']
+    df['PROJECTLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
+        '/index.php?pid=' + df['PROJECTPID']
+
+    # Make record link
+    df['IDLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
+        'DataEntry/index.php?' + \
+        'pid=' + str(pid) + \
+        '&page=issues&id=' + \
+        df['PROJECT'] + \
+        '&instance=' + \
+        df['ID'].astype(str)
+
+    # TODO: not able to work yet, need more redcap ids to get to page
+    #  Make field link
+    df['FIELDLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
+        '/index.php?pid=' + df['PROJECTPID']
 
     return df
 

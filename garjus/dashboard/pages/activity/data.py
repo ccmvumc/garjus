@@ -53,7 +53,6 @@ def get_data(proj_filter):
     dfc = dfc.sort_values(by=['DATETIME'], ascending=False).head(500)
 
     if g.xnat_enabled():
-        print('xnat enabled')
         dfx = g.assessors()
         dfq = load_recent_qa(dfx, startdate=startdate)
         logger.info('loaded {} qa records'.format(len(dfq)))

@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.subplots
-from dash import  Input, Output, callback, dcc, html, dash_table as dt
+from dash import Input, Output, callback, dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
 
 from .. import utils
@@ -12,6 +12,8 @@ from . import data
 
 
 logger = logging.getLogger('dashboard.issues')
+
+LINKFIELDS = ['PROJECT', 'ID', 'SESSION', 'FIELD']
 
 
 def _get_graph_content(df):
@@ -69,17 +71,19 @@ def get_content():
     columns = utils.make_columns([
         'DATETIME',
         'CATEGORY',
-        'PROJECT', 
+        'PROJECT',
+        'ID',
         'SUBJECT',
         'SESSION',
         'EVENT',
+        'FIELD',
         'DESCRIPTION',
     ])
     # removes: SCAN, FIELD, STATUS, ID
 
-    # Format columns
+    # Format columns to be markdown so links will work and be centered
     for i, c in enumerate(columns):
-        if c['name'] in ['PROJECT']:
+        if c['name'] in LINKFIELDS:
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
@@ -253,10 +257,11 @@ def update_issues(
 
     # Format records
     for r in records:
-        if r['PROJECT'] and 'PROJECTLINK' in r:
-            _proj = r['PROJECT']
-            _link = r['PROJECTLINK']
-            r['PROJECT'] = f'[{_proj}]({_link})'
+        for f in LINKFIELDS:
+            if r[f] and f + 'LINK' in r:
+                _val = r[f]
+                _link = r[f + 'LINK']
+                r[f] = f'[{_val}]({_link})'
 
     # Return table, figure, dropdown options
     logger.debug('update_issues:returning data')
