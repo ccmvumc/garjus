@@ -9,7 +9,7 @@ from . import data
 logger = logging.getLogger('dashboard.analyses')
 
 
-COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
+#COMPLETE2EMO = {'0': '🔴', '1': '🟡', '2': '🟢'}
 
 # command line examples for interacting with analyses
 TIPS_MARKDOWN = '''
@@ -54,17 +54,24 @@ TIPS_MARKDOWN = '''
 
 '''
 
+COLUMNS = [
+    'PROJECT',
+    'ID',
+    'NAME',
+    'LEAD',
+    'STATUS',
+#    'PROCESSOR',
+    'EDIT',
+    'REPORT',
+    'LOG',
+    'DATA',
+    'SUBJECTS',
+    'NOTES'
+]
+
 
 def get_content():
-    columns = utils.make_columns([
-        'PROJECT',
-        'ID',
-        'NAME',
-        'COMPLETE',
-        'EDIT',
-        'INPUT',
-        'OUTPUT',
-    ])
+    columns = utils.make_columns(COLUMNS)
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):
@@ -139,6 +146,14 @@ def update_analyses(
     # Load selected data with refresh if requested
     df = load_analyses(selected_proj)
 
+    # Truncate NOTES
+    if 'NOTES' in df:
+        df['NOTES'] = df['NOTES'].str.slice(0, 20)
+
+    # Truncate SUBJECTS
+    if 'SUBJECTS' in df:
+        df['SUBJECTS'] = df['SUBJECTS'].str.slice(0, 20)
+
     # Get options based on selected projects, only show proc for those projects
     proj_options = data.load_options()
 
@@ -149,7 +164,7 @@ def update_analyses(
     # Filter data based on dropdown values
     df = data.filter_data(df)
 
-    df['COMPLETE'] = df['COMPLETE'].map(COMPLETE2EMO).fillna('?')
+    #df['COMPLETE'] = df['COMPLETE'].map(COMPLETE2EMO).fillna('?')
 
     # Get the table data as one row per assessor
     records = df.reset_index().to_dict('records')
@@ -162,26 +177,26 @@ def update_analyses(
         r['EDIT'] = f'[{_text}]({_link})'
 
         # Make edit a link
-        if not r['INPUT']:
-            pass
-        else:
-            _link = r['INPUT']
-            _text = r['INPUT'].rsplit('/', 1)[1]
-            r['INPUT'] = f'[{_text}]({_link})'
+        #if not r['INPUT']:
+        #    pass
+        #else:
+        #    _link = r['INPUT']
+        #    _text = r['INPUT'].rsplit('/', 1)[1]
+        #    r['INPUT'] = f'[{_text}]({_link})'
 
         # Make output a link
-        if not r['OUTPUT']:
-            pass
-        elif 'sharepoint.com' in r['OUTPUT']:
-            _link = r['OUTPUT']
-            _text = r['OUTPUT'].rsplit('/', 1)[1]
-            r['OUTPUT'] = f'[{_text}]({_link})'
-        elif 'xnat' in r['OUTPUT']:
-            _link = r['OUTPUT']
-            _text = r['OUTPUT'].rsplit('/', 1)[1]
-            r['OUTPUT'] = f'[{_text}]({_link})'
-        else:
-            r['OUTPUT'] = r['OUTPUT']
+        #if not r['OUTPUT']:
+        #    pass
+        #elif 'sharepoint.com' in r['OUTPUT']:
+        #    _link = r['OUTPUT']
+        #    _text = r['OUTPUT'].rsplit('/', 1)[1]
+        #    r['OUTPUT'] = f'[{_text}]({_link})'
+        #elif 'xnat' in r['OUTPUT']:
+        #    _link = r['OUTPUT']
+        #    _text = r['OUTPUT'].rsplit('/', 1)[1]
+        #    r['OUTPUT'] = f'[{_text}]({_link})'
+        #else:
+        #    r['OUTPUT'] = r['OUTPUT']
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
