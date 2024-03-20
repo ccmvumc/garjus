@@ -63,7 +63,7 @@ def get_data(projects):
     pid = garjus.redcap_pid()
 
     # Load
-    df = garjus.analyses(projects)
+    df = garjus.analyses(projects, download=False)
 
     # Make edit link
     df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \

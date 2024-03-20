@@ -1,5 +1,6 @@
 import logging
 
+import pandas as pd
 from dash import dcc, html, dash_table as dt, Input, Output, callback
 import dash_bootstrap_components as dbc
 
@@ -58,14 +59,14 @@ COLUMNS = [
     'PROJECT',
     'ID',
     'NAME',
-    'LEAD',
-    'STATUS',
-#    'PROCESSOR',
     'EDIT',
-    'REPORT',
+    'STATUS',
+    'PDF',
     'LOG',
     'DATA',
     'SUBJECTS',
+    'INVESTIGATOR',
+    'PROCESSOR',
     'NOTES'
 ]
 
@@ -75,7 +76,7 @@ def get_content():
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):
-        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT']:
+        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT', 'DATA']:
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
@@ -86,6 +87,26 @@ def get_content():
                     id='dropdown-analyses-proj',
                     multi=True,
                     placeholder='Select Project(s)',
+                ),
+                width=3,
+            ),
+        ),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-analyses-lead',
+                    multi=True,
+                    placeholder='Select Lead Investigator(s)',
+                ),
+                width=3,
+            ),
+        ),
+        dbc.Row(
+            dbc.Col(
+                dcc.Dropdown(
+                    id='dropdown-analyses-status',
+                    multi=True,
+                    placeholder='Select Status',
                 ),
                 width=3,
             ),
@@ -131,15 +152,21 @@ def load_analyses(projects=[]):
 @callback(
     [
      Output('dropdown-analyses-proj', 'options'),
+     Output('dropdown-analyses-lead', 'options'),
+     Output('dropdown-analyses-status', 'options'),
      Output('datatable-analyses', 'data'),
      Output('label-analyses-rowcount1', 'children'),
      Output('label-analyses-rowcount2', 'children'),
     ],
     [
      Input('dropdown-analyses-proj', 'value'),
+     Input('dropdown-analyses-lead', 'value'),
+     Input('dropdown-analyses-status', 'value'),
     ])
 def update_analyses(
     selected_proj,
+    selected_lead,
+    selected_status,
 ):
     logger.debug('update_all')
 
@@ -150,19 +177,43 @@ def update_analyses(
     if 'NOTES' in df:
         df['NOTES'] = df['NOTES'].str.slice(0, 20)
 
-    # Truncate SUBJECTS
-    if 'SUBJECTS' in df:
-        df['SUBJECTS'] = df['SUBJECTS'].str.slice(0, 20)
+    # Count SUBJECTS list
+    df.loc[df['SUBJECTS'].str.len() > 0, 'SUBJECTS'] = 'n=' + df['SUBJECTS'].str.split(r'[,\n\s]+', regex=True, expand=False).agg(len).astype(str)
 
-    # Get options based on selected projects, only show proc for those projects
+    # Change blanks to asterisk
+    df.loc[df['SUBJECTS'].str.len() == 0, 'SUBJECTS'] = '*'
+
+    # Get just the folder
+    df['DATA'] = df['OUTPUT'].str.rsplit('/', n=1).str[0]
+
+    #if r['PDF']:
+    #            _link = r['PDF']
+    #            r['PDF'] = f'[📊]({_link})'
+    df['PDF'] = '📊'
+    df['LOG'] = '📄'
+    #        if r['LOG']:
+    #            _link = r['LOG']
+    #            r['LOG'] = f'[📄]({_link})'
+
+
+    # Get options
     proj_options = data.load_options()
-
-    logger.debug(f'loaded options:{proj_options}')
+    lead_options = sorted(df['INVESTIGATOR'].unique())
+    status_options = sorted(df['STATUS'].unique())
+    logger.debug(f'loaded options:{proj_options}:{lead_options}')
 
     proj = utils.make_options(proj_options)
+    lead = utils.make_options(lead_options)
+    status = utils.make_options(status_options)
 
     # Filter data based on dropdown values
     df = data.filter_data(df)
+
+    if selected_lead:
+        df = df[df['INVESTIGATOR'].isin(selected_lead)]
+
+    if selected_status:
+        df = df[df['STATUS'].isin(selected_status)]
 
     #df['COMPLETE'] = df['COMPLETE'].map(COMPLETE2EMO).fillna('?')
 
@@ -176,7 +227,15 @@ def update_analyses(
         _text = 'edit'
         r['EDIT'] = f'[{_text}]({_link})'
 
-        # Make edit a link
+        # Make a link
+        if not r['DATA']:
+            pass
+        else:
+            _link = r['DATA']
+            _text = r['DATA'].rsplit('/', 2)[1]
+            r['DATA'] = f'[{_text}]({_link})'
+
+        # Make a link
         #if not r['INPUT']:
         #    pass
         #else:
@@ -201,4 +260,4 @@ def update_analyses(
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
 
-    return [proj, records, rowcount, rowcount]
+    return [proj, lead, status, records, rowcount, rowcount]

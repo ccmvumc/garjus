@@ -79,7 +79,7 @@ def _update_project(garjus, project):
             logger.debug(f'skipping complete not set:{aname}')
             continue
 
-        if a['STATUS'] == 'READY':
+        if a['STATUS'] in ['READY', 'ARCHIVE', 'COMPLETE', 'DEVEL']:
             logger.debug(f'skipping done:{aname}')
             continue
 
