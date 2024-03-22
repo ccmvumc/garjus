@@ -1,7 +1,5 @@
 """Gaitrite data extraction."""
 import logging
-import tempfile
-import subprocess
 import os
 
 import pandas as pd
@@ -36,19 +34,23 @@ def process(gaitrite_file):
             'gaitrite_normvelocity': d['Normalized Velocity  '],
             'gaitrite_heeltime_left': d['Heel Off On Time L'],
             'gaitrite_heeltime_right': d['Heel Off On Time R']
-    })
+        })
 
     return data
 
- 
+
 def _extract(filename):
-    """Extract data from file that has a header row and one data row"""
+    """ Extract data from file that has a header row and one data row"""
     try:
         df = pd.read_csv(filename, dtype=str)
-    except:
+    except Exception:
         df = pd.read_excel(filename, dtype=str)
 
-    df = df.dropna(subset=['Test Record #'])
+    try:
+        df = df.dropna(subset=['Test Record #'])
+    except Exception as err:
+        logger.error(f'failed to extract gaitrite from excel:{err}')
+        return []
 
     df = df.sort_values('Test Record #')
 
@@ -56,6 +58,7 @@ def _extract(filename):
     df = df.fillna('')
 
     return df.to_records()
+
 
 if __name__ == "__main__":
     import pprint
@@ -70,4 +73,3 @@ if __name__ == "__main__":
 
     data = process(test_file)
     pprint.pprint(data)
-    #pprint.pprint(data.keys())
