@@ -286,7 +286,9 @@ def _run(garjus, analysis, tempdir, sharedir=None):
     try:
         dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
     except Exception as err:
-        logger.error('uploading outputs failed:{err}')
+        logger.error(f'uploading outputs failed:{err}')
+        # TODO: determine if upload actually completed, usually does and
+        # we could continue here. how? check size? checksum?
         return
 
     garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
