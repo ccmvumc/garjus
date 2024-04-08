@@ -312,7 +312,7 @@ def compare_projects(p1, p2, compare_fields=None, compare_events=None):
         rec = p1.export_records(fields=[def_field])
         id2subj1 = {x[def_field]: x[def_field] for x in rec if x[def_field]}
         rec = p2.export_records(fields=[def_field2])
-        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x.get(sec_field2, False)}
+        subj2id2 = {x[def_field2]: x[def_field2] for x in rec if x[def_field2]}
 
     fields = get_fields(p1, p2)
 
@@ -386,7 +386,7 @@ def compare_projects(p1, p2, compare_fields=None, compare_events=None):
         try:
             rid2 = subj2id2[sid]
         except KeyError as err:
-            logging.debug(f'missing subject:{rid1}:{err}')
+            logging.debug(f'missing subject:{rid2}:{err}')
             missing_subjects.append(sid)
             continue
 
@@ -449,11 +449,11 @@ def compare_projects(p1, p2, compare_fields=None, compare_events=None):
 
         # Check for conflicts in best matching record 2
         if (name1 != name2) or (not name1 and (num1 != num2)):
-            logging.debug(f'skipping, name conflict:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
+            logging.debug(f'skipping, name conflict:{sid},{eid},{rid2},{name1},{num1},{name2},{num2}')
             r2 = None
 
         if r2:
-            logging.debug(f'compare_records:{sid},{eid},{rid1},{rid2},{name1},{num1},{name2},{num2}')
+            logging.debug(f'compare_records:{sid},{eid},{rid2},{name1},{num1},{name2},{num2}')
             (mism, misv, _m) = compare_records(r1, r2, compare_fields)
             mismatches += mism
             missing_values += misv
