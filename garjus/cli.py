@@ -365,7 +365,11 @@ def image03download(project, image03_csv, download_dir):
 def delete(project, proctype, procstatus=None, qcstatus=None):
     click.echo('garjus! delete')
     g = Garjus()
-    g.delete_proctype(project, proctype, procstatus, qcstatus)
+    g.delete_proctype(
+        project,
+        proctype,
+        procstatus=procstatus,
+        qcstatus=qcstatus)
 
 
 @cli.command('dashboard')
