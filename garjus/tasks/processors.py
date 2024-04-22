@@ -26,7 +26,6 @@ def get_scan_status(project_data, scan_path):
     sess_label = path_parts[6]
     scan_label = path_parts[8]
 
-
     _df = project_data.get('scans')
     _df = _df[(_df.SESSION == sess_label) & (_df.SCANID == scan_label)]
 
@@ -425,12 +424,14 @@ class Processor_v3_1(Processor_v3):
         parameter_matrix = self._generate_parameter_matrix(artefacts_by_input)
         logger.debug(f'parameter_matrix={parameter_matrix}')
 
-        # Apply filters (for example, removes parameter sets where inputs don't match)
+        # Apply filters (e.g., removes parameter sets where inputs don't match)
         artefact_inputs = {}
         for i, a in project_data['assessors'].iterrows():
             artefact_inputs[a['full_path']] = a['INPUTS']
 
-        parameter_matrix = self._filter_matrix(parameter_matrix, artefact_inputs)
+        parameter_matrix = self._filter_matrix(
+            parameter_matrix,
+            artefact_inputs)
         logger.debug(f'filtered={parameter_matrix}')
 
         return parameter_matrix
@@ -1485,12 +1486,19 @@ class SgpProcessor_v3_1(Processor_v3_1):
                         continue
 
                     # Then check session types
+                    sesstype = cassr.get('SESSTYPE')
+                    sess_match = False
                     for typeexp in iv['sesstypes']:
                         regex = re.compile(fnmatch.translate(typeexp))
-                        sesstype = cassr.get('SESSTYPE')
-                        if not regex.match(sesstype):
-                            logger.debug('wrong sesstype')
-                            continue
+                        if regex.match(sesstype):
+                            sess_match = True
+                            break
+                        else:
+                            logger.debug(f'wrong type:{typeexp}:{sesstype}')
+
+                    if not sess_match:
+                        logger.debug(f'no sesstype match:{sesstype}')
+                        continue
 
                     # still good, then check proc types
                     proctype = cassr.get('PROCTYPE')
