@@ -994,6 +994,9 @@ def update_qa(
             'EDAT',
         ]
 
+        # Only include columns that have values
+        selected_cols = [x for x in selected_cols if (df[x].count() - df[x].eq('').sum()) > 0]
+
         # Format as column names and record dictionaries for dash table
         columns = utils.make_columns(selected_cols)
         records = df.reset_index().to_dict('records')
