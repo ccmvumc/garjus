@@ -303,30 +303,41 @@ def load_stats(projects=[], refresh=False, filename=None):
 
 def _subject_pivot(df):
     # Pivot to one row per subject
-    level_cols = ['SESSTYPE', 'PROCTYPE']
-    stat_cols = []
+
     index_cols = ['PROJECT', 'SUBJECT', 'SITE']
+
+    level_cols = []
+
+    if len(df.SESSTYPE.unique()) > 1:
+        level_cols.append('SESSTYPE')
+
+    if len(df.PROCTYPE.unique()) > 1:
+        level_cols.append('PROCTYPE')
+
+    stat_cols = []
 
     # Drop any duplicates found
     df = df.drop_duplicates()
 
     # And duplicate proctype for session
     df = df.drop_duplicates(
-        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE', 'DATE'],
         keep='last')
 
-    df = df.drop(columns=['ASSR', 'SESSION', 'DATE', 'SESSIONLINK'])
+    df = df.drop(columns=['ASSR', 'SESSION', 'SESSIONLINK'])
 
-    stat_cols = [x for x in df.columns if (x not in index_cols and x not in level_cols)]
+    # Build list of stat columns
+    stat_cols = [x for x in df.columns if (x not in index_cols and x not in ['SESSTYPE', 'PROCTYPE'])]
 
     # Make the pivot table based on _index, _cols, _vars
     dfp = df.pivot(index=index_cols, columns=level_cols, values=stat_cols)
 
-    if len(df.SESSTYPE.unique()) > 1:
+    if len(level_cols) == 1:
         # Concatenate column levels to get one level with delimiter
         dfp.columns = [f'{c[1]}_{c[0]}' for c in dfp.columns.values]
-    else:
-        dfp.columns = [c[0] for c in dfp.columns.values]
+    elif len(level_cols) == 2:
+        # Concatenate column levels to get one level with delimiter
+        dfp.columns = [f'{c[2]}_{c[1]}_{c[0]}' for c in dfp.columns.values]
 
     # Clear the index so all columns are named
     dfp = dfp.dropna(axis=1, how='all')
@@ -339,14 +350,14 @@ def _session_pivot(df):
     # Pivot to one row per session
     level_cols = ['PROCTYPE']
     stat_cols = []
-    index_cols = ['PROJECT', 'SUBJECT', 'SITE', 'SESSION', 'SESSIONLINK']
+    index_cols = ['PROJECT', 'SUBJECT', 'SITE', 'SESSION', 'SESSIONLINK', 'SESSTYPE', 'DATE']
 
     # Drop any duplicates found
     df = df.drop_duplicates()
 
     # And drop any duplicate proctypes per session
     df = df.drop_duplicates(
-        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE', 'DATE'],
         keep='last')
 
     df = df.drop(columns=['ASSR'])
