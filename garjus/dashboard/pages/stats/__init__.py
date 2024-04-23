@@ -321,7 +321,7 @@ def _subject_pivot(df):
 
     # And duplicate proctype for session
     df = df.drop_duplicates(
-        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE', 'DATE'],
+        subset=['SUBJECT', 'SESSTYPE', 'PROCTYPE'],
         keep='last')
 
     df = df.drop(columns=['ASSR', 'SESSION', 'SESSIONLINK'])
