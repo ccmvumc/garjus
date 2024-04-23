@@ -2076,7 +2076,6 @@ class Garjus:
         else:
             # Download and load the first file
             src = files[0]
-            print(project, subject, session, scan, src)
             with tempfile.TemporaryDirectory() as tmpdir:
                 dst = os.path.join(tmpdir, src)
                 xnat_resource.file(src).get(dst)
@@ -2141,7 +2140,6 @@ class Garjus:
         # Now upload
         try:
             logger.debug('uploading to redcap')
-            print(rec)
             response = self._stats_redcap(project).import_records([rec])
             assert 'count' in response
             logger.debug('scan record uploaded')
@@ -2235,7 +2233,6 @@ class Garjus:
             project2setting[rec[self._dfield()]] = rec.get(
                 f'project_{setting}', rec.get(f'main_{setting}', None))
 
-        print(project2setting)
         return project2setting
 
     def etl_automations(self, project):
