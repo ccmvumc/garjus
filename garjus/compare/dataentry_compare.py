@@ -392,7 +392,7 @@ def compare_projects(p1, p2, compare_fields=None, compare_events=None):
 
         # Get records from secondary redcap for this subject/event
         try:
-            records2 = p2.export_records(records=[rid2], events=[eid])
+            records2 = p2.export_records(records=[sid], events=[eid])
         except Exception:
             import traceback
             traceback.print_exc()
