@@ -386,13 +386,13 @@ def compare_projects(p1, p2, compare_fields=None, compare_events=None):
         try:
             rid2 = subj2id2[sid]
         except KeyError as err:
-            logging.debug(f'missing subject:{rid2}:{err}')
+            logging.debug(f'missing subject:{sid}:{err}')
             missing_subjects.append(sid)
             continue
 
         # Get records from secondary redcap for this subject/event
         try:
-            records2 = p2.export_records(records=[sid], events=[eid])
+            records2 = p2.export_records(records=[rid2], events=[eid])
         except Exception:
             import traceback
             traceback.print_exc()
