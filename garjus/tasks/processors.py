@@ -1491,7 +1491,7 @@ class SgpProcessor_v3_1(Processor_v3_1):
                         sess_match = False
                         for typeexp in iv['sesstypes']:
                             regex = re.compile(fnmatch.translate(typeexp))
-                         if regex.match(sesstype):
+                            if regex.match(sesstype):
                                 sess_match = True
                                 break
                             else:
