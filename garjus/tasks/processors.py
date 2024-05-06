@@ -1486,19 +1486,20 @@ class SgpProcessor_v3_1(Processor_v3_1):
                         continue
 
                     # Then check session types
-                    sesstype = cassr.get('SESSTYPE')
-                    sess_match = False
-                    for typeexp in iv['sesstypes']:
-                        regex = re.compile(fnmatch.translate(typeexp))
-                        if regex.match(sesstype):
-                            sess_match = True
-                            break
-                        else:
-                            logger.debug(f'wrong type:{typeexp}:{sesstype}')
+                    if iv['sesstypes']:
+                        sesstype = cassr.get('SESSTYPE')
+                        sess_match = False
+                        for typeexp in iv['sesstypes']:
+                            regex = re.compile(fnmatch.translate(typeexp))
+                         if regex.match(sesstype):
+                                sess_match = True
+                                break
+                            else:
+                                logger.debug(f'wrong type:{typeexp}:{sesstype}')
 
-                    if not sess_match:
-                        logger.debug(f'no sesstype match:{sesstype}')
-                        continue
+                        if not sess_match:
+                            logger.debug(f'no sesstype match:{sesstype}')
+                            continue
 
                     # still good, then check proc types
                     proctype = cassr.get('PROCTYPE')
