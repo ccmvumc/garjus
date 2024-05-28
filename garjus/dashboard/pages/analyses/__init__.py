@@ -76,7 +76,7 @@ def get_content():
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):
-        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT', 'DATA']:
+        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT', 'DATA', 'PROCESSOR']:
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
@@ -195,7 +195,6 @@ def update_analyses(
     #            _link = r['LOG']
     #            r['LOG'] = f'[📄]({_link})'
 
-
     # Get options
     proj_options = data.load_options()
     lead_options = sorted(df['INVESTIGATOR'].unique())
@@ -230,32 +229,23 @@ def update_analyses(
         # Make a link
         if not r['DATA']:
             pass
-        else:
+        elif '/' in r['DATA']:
             _link = r['DATA']
             _text = r['DATA'].rsplit('/', 2)[1]
             r['DATA'] = f'[{_text}]({_link})'
+        else:
+            _link = r['DATA']
+            _text = r['DATA']
+            r['DATA'] = f'[{_text}]({_link})'
 
         # Make a link
-        #if not r['INPUT']:
-        #    pass
-        #else:
-        #    _link = r['INPUT']
-        #    _text = r['INPUT'].rsplit('/', 1)[1]
-        #    r['INPUT'] = f'[{_text}]({_link})'
-
-        # Make output a link
-        #if not r['OUTPUT']:
-        #    pass
-        #elif 'sharepoint.com' in r['OUTPUT']:
-        #    _link = r['OUTPUT']
-        #    _text = r['OUTPUT'].rsplit('/', 1)[1]
-        #    r['OUTPUT'] = f'[{_text}]({_link})'
-        #elif 'xnat' in r['OUTPUT']:
-        #    _link = r['OUTPUT']
-        #    _text = r['OUTPUT'].rsplit('/', 1)[1]
-        #    r['OUTPUT'] = f'[{_text}]({_link})'
-        #else:
-        #    r['OUTPUT'] = r['OUTPUT']
+        if not r['PROCESSOR']:
+            pass
+        elif '/' in r['PROCESSOR']:
+            _u, _r, _v = r['PROCESSOR'].replace(':', '/').split('/')
+            _link = f'https://github.com/{_u}/{_r}/tree/{_v}'
+            _text = r['PROCESSOR']
+            r['PROCESSOR'] = f'[{_text}]({_link})'
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

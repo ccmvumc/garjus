@@ -927,6 +927,9 @@ class Garjus:
             for k, v in self.analyses_rename.items():
                 d[v] = r.get(k, '')
 
+            if r['analysis_procrepo']:
+                d['PROCESSOR'] = r['analysis_procrepo']
+
             # Download the yaml file and load it too
             if download and d['PROCESSOR']:
                 logger.debug(f'loading:{d["PROCESSOR"]}')

@@ -195,7 +195,9 @@ def get_data(projects):
         assr_df = load_assr_data(garjus, projects)
         logger.debug(f'load sgp data:{projects}')
         subj_df = load_sgp_data(garjus, projects)
-
+        logger.debug(f'load subjects:{projects}')
+        subjects = load_subjects(garjus, projects)
+        print(f'{subjects=}')
     except Exception as err:
         logger.error(err)
         _cols = QA_COLS + ['DATE', 'SESSIONLINK', 'SUBJECTLINK']
@@ -213,7 +215,7 @@ def get_data(projects):
 
     for x in ['SESSION', 'SITE', 'NOTE', 'SESSTYPE', 'MODALITY']:
         subj_df[x] = 'SGP'
- 
+
     for x in ['SCANID', 'SCANTYPE', 'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB']:
         assr_df[x] = None
         subj_df[x] = None
@@ -230,9 +232,22 @@ def get_data(projects):
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
-    # Convert duration from string of total seconds to formatted string HH:MM:SS
-    df['DURATION'] = df['DURATION'].fillna(np.nan).replace('', np.nan).replace('None', np.nan)
-    df['DURATION'] = pd.to_datetime(df.DURATION.astype(float), unit='s', errors='coerce').dt.strftime("%-M:%S")
+    print(df.columns)
+    df = pd.merge(
+        df,
+        subjects,
+        left_on=('SUBJECT', 'PROJECT'),
+        right_on=('SUBJECT', 'PROJECT')
+    )
+    print(df.columns)
+
+    # Convert duration from string of total seconds to formatted HH:MM:SS
+    df['DURATION'] = df['DURATION'].fillna(np.nan).replace(
+        '', np.nan).replace('None', np.nan)
+    df['DURATION'] = pd.to_datetime(
+        df.DURATION.astype(float),
+        unit='s',
+        errors='coerce').dt.strftime("%-M:%S")
 
     df['SESSIONLINK'] = garjus.xnat().host + \
         '/data/projects/' + df['PROJECT'] + \
@@ -302,6 +317,16 @@ def _filter(scan_df, assr_df, scantypes, assrtypes):
 
     return scan_df, assr_df
 
+
+def load_subjects(garjus, project_filter):
+    subjects = pd.DataFrame(
+        [], columns=['ID', 'PROJECT', 'GROUP', 'SEX', 'AGE']
+    )
+    for p in project_filter:
+        logger.debug()
+        subjects = pd.concat([subjects, garjus.subjects(p)])
+
+    return subjects
 
 def load_assr_data(garjus, project_filter):
     dfa = garjus.assessors(project_filter).copy()
