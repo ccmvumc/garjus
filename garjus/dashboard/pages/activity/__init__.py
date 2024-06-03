@@ -9,7 +9,7 @@ from dash import Input, Output, callback
 import dash_bootstrap_components as dbc
 
 from .. import utils
-from ...shared import GWIDTH, STATUS2RGB
+from ..shared import GWIDTH, STATUS2RGB
 from . import data
 
 

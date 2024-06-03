@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ....garjus import Garjus
-from ...utils import file_age
+from ..utils import file_age
 
 
 logger = logging.getLogger('dashboard.qa.data')
@@ -196,8 +196,9 @@ def get_data(projects):
         logger.debug(f'load sgp data:{projects}')
         subj_df = load_sgp_data(garjus, projects)
         logger.debug(f'load subjects:{projects}')
-        subjects = load_subjects(garjus, projects)
-        print(f'{subjects=}')
+        if False:
+            subjects = load_subjects(garjus, projects)
+            print(f'{subjects=}')
     except Exception as err:
         logger.error(err)
         _cols = QA_COLS + ['DATE', 'SESSIONLINK', 'SUBJECTLINK']
@@ -232,14 +233,15 @@ def get_data(projects):
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
-    print(df.columns)
-    df = pd.merge(
-        df,
-        subjects,
-        left_on=('SUBJECT', 'PROJECT'),
-        right_on=('SUBJECT', 'PROJECT')
-    )
-    print(df.columns)
+    if False:
+        print(df.columns)
+        df = pd.merge(
+            df,
+            subjects,
+            left_on=('SUBJECT', 'PROJECT'),
+            right_on=('SUBJECT', 'PROJECT')
+        )
+        print(df.columns)
 
     # Convert duration from string of total seconds to formatted HH:MM:SS
     df['DURATION'] = df['DURATION'].fillna(np.nan).replace(
@@ -323,10 +325,11 @@ def load_subjects(garjus, project_filter):
         [], columns=['ID', 'PROJECT', 'GROUP', 'SEX', 'AGE']
     )
     for p in project_filter:
-        logger.debug()
+        logger.debug(f'loading subjects:{p}')
         subjects = pd.concat([subjects, garjus.subjects(p)])
 
     return subjects
+
 
 def load_assr_data(garjus, project_filter):
     dfa = garjus.assessors(project_filter).copy()

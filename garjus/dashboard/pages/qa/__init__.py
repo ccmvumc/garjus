@@ -29,8 +29,8 @@ from dash import Input, Output, callback
 import dash_bootstrap_components as dbc
 
 from ....garjus import Garjus
-from ... import utils
-from ...shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
+from .. import utils
+from ..shared import QASTATUS2COLOR, RGB_DKBLUE, GWIDTH
 from . import data
 
 

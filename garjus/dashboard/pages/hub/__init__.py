@@ -8,7 +8,7 @@ import plotly.subplots
 from dash import Input, Output, callback, dcc, html, dash_table as dt
 import dash_bootstrap_components as dbc
 
-from ... import utils
+from .. import utils
 from ..shared import STATUS2RGB
 from . import data
 from .. import queue, activity
