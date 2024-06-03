@@ -28,53 +28,65 @@ def extract_arc(records):
     # Count complete sessions
     data['arc_warcsesscomp'] = len(df[df['arc_finishedsession'] == '1'])
 
+    # Convert format to float so we can math
+    df['arc_symbolsrt'] = pd.to_numeric(
+        df['arc_symbolsrt'], errors='coerce')
+    df['arc_symbols_accuracy'] = pd.to_numeric(
+        df['arc_symbols_accuracy'], errors='coerce')
+    df['arc_pricesrt'] = pd.to_numeric(
+        df['arc_pricesrt'], errors='coerce')
+    df['arc_prices_accuracy'] = pd.to_numeric(
+        df['arc_prices_accuracy'], errors='coerce')
+    df['arc_grided'] = pd.to_numeric(
+        df['arc_grided'], errors='coerce')
+
     # Calculate range for whole week
     data[f'arc_wrangesymbolsrt'] = \
-        df.arc_symbolsrt.astype(float).max() - \
-        df.arc_symbolsrt.astype(float).min()
+        df.arc_symbolsrt.max() - \
+        df.arc_symbolsrt.min()
     data[f'arc_wrangesymbolsacc'] = \
-        df.arc_symbols_accuracy.astype(float).max() - \
-        df.arc_symbols_accuracy.astype(float).min()
+        df.arc_symbols_accuracy.max() - \
+        df.arc_symbols_accuracy.min()
     data[f'arc_wrangepricesrt'] = \
-        df.arc_pricesrt.astype(float).max() - \
-        df.arc_pricesrt.astype(float).min()
+        df.arc_pricesrt.max() - \
+        df.arc_pricesrt.min()
     data[f'arc_wrangepricesacc'] = \
-        df.arc_prices_accuracy.astype(float).max() - \
-        df.arc_prices_accuracy.astype(float).min()
+        df.arc_prices_accuracy.max() - \
+        df.arc_prices_accuracy.min()
     data[f'arc_wrangegrided'] = \
-        df.arc_grided.astype(float).max() - \
-        df.arc_grided.astype(float).min()
+        df.arc_grided.max() - \
+        df.arc_grided.min()
 
     # Calculate means for whole week
-    data['arc_wmeansymbolsrt'] = df.arc_symbolsrt.astype(float).mean()
-    data['arc_wmeansymbolsacc'] = df.arc_symbols_accuracy.astype(float).mean()
-    data['arc_wmeanpricesrt'] = df.arc_pricesrt.astype(float).mean()
-    data['arc_wmeanpricesacc'] = df.arc_prices_accuracy.astype(float).mean()
-    data['arc_wmeangrided'] = df.arc_grided.astype(float).mean()
+    data['arc_wmeansymbolsrt'] = df.arc_symbolsrt.mean()
+    data['arc_wmeansymbolsacc'] = df.arc_symbols_accuracy.mean()
+    data['arc_wmeanpricesrt'] = df.arc_pricesrt.mean()
+    data['arc_wmeanpricesacc'] = df.arc_prices_accuracy.mean()
+    data['arc_wmeangrided'] = df.arc_grided.mean()
 
     # Calculate SD for whole week
-    data['arc_wsdsymbolsrt'] = df.arc_symbolsrt.astype(float).std()
-    data['arc_wsdsymbolsacc'] = df.arc_symbols_accuracy.astype(float).std()
-    data['arc_wsdpricesrt'] = df.arc_pricesrt.astype(float).std()
-    data['arc_wsdpricesacc'] = df.arc_prices_accuracy.astype(float).std()
-    data['arc_wsdgrided'] = df.arc_grided.astype(float).std()
+    data['arc_wsdsymbolsrt'] = df.arc_symbolsrt.std()
+    data['arc_wsdsymbolsacc'] = df.arc_symbols_accuracy.std()
+    data['arc_wsdpricesrt'] = df.arc_pricesrt.std()
+    data['arc_wsdpricesacc'] = df.arc_prices_accuracy.std()
+    data['arc_wsdgrided'] = df.arc_grided.std()
 
     # Calculate CV for whole week
     data[f'arc_wcovsymbolsrt'] = \
-        df.arc_symbolsrt.astype(float).std() / \
-        df.arc_symbolsrt.astype(float).mean()
+        df.arc_symbolsrt.std() / \
+        df.arc_symbolsrt.mean()
     data[f'arc_wcovsymbolsacc'] = \
-        df.arc_symbols_accuracy.astype(float).std() / \
-        df.arc_symbols_accuracy.astype(float).mean()
+        df.arc_symbols_accuracy.std() / \
+        df.arc_symbols_accuracy.mean()
     data[f'arc_wcovpricesrt'] = \
-        df.arc_pricesrt.astype(float).std() / \
-        df.arc_pricesrt.astype(float).mean()
+        df.arc_pricesrt.std() / \
+        df.arc_pricesrt.mean()
     data[f'arc_wcovpricesacc'] = \
-        df.arc_prices_accuracy.astype(float).std() / \
-        df.arc_prices_accuracy.astype(float).mean()
+        df.arc_prices_accuracy.std() / \
+        df.arc_prices_accuracy.mean()
     data[f'arc_wcovgrided'] = \
-        df.arc_grided.astype(float).std() / \
-        df.arc_grided.astype(float).mean()
+        df.arc_grided.std() / \
+        df.arc_grided.mean()
 
     # Loop days 1-7, calculate for each day
     for d in range(1, 8):
@@ -86,57 +98,56 @@ def extract_arc(records):
 
         # Calculate ranges
         data[f'arc_d{d}rangesymbolsrt'] = \
-            dfd.arc_symbolsrt.astype(float).max() - \
-            dfd.arc_symbolsrt.astype(float).min()
+            dfd.arc_symbolsrt.max() - \
+            dfd.arc_symbolsrt.min()
         data[f'arc_d{d}rangesymbolsacc'] = \
-            dfd.arc_symbols_accuracy.astype(float).max() - \
-            dfd.arc_symbols_accuracy.astype(float).min()
+            dfd.arc_symbols_accuracy.max() - \
+            dfd.arc_symbols_accuracy.min()
         data[f'arc_d{d}rangepricesrt'] = \
-            dfd.arc_pricesrt.astype(float).max() - \
-            dfd.arc_pricesrt.astype(float).min()
+            dfd.arc_pricesrt.max() - \
+            dfd.arc_pricesrt.min()
         data[f'arc_d{d}rangepricesacc'] = \
-            dfd.arc_prices_accuracy.astype(float).max() - \
-            dfd.arc_prices_accuracy.astype(float).min()
+            dfd.arc_prices_accuracy.max() - \
+            dfd.arc_prices_accuracy.min()
         data[f'arc_d{d}rangegrided'] = \
-            dfd.arc_grided.astype(float).max() - \
-            dfd.arc_grided.astype(float).min()
+            dfd.arc_grided.max() - \
+            dfd.arc_grided.min()
 
         # Calculate means
-        data[f'arc_d{d}meansymbolsrt'] = dfd.arc_symbolsrt.astype(float).mean()
-        data[f'arc_d{d}meansymbolsacc'] = \
-            dfd.arc_symbols_accuracy.astype(float).mean()
-        data[f'arc_d{d}meanpricesrt'] = dfd.arc_pricesrt.astype(float).mean()
-        data[f'arc_d{d}meanpricesacc'] = \
-            dfd.arc_prices_accuracy.astype(float).mean()
-        data[f'arc_d{d}meangrided'] = dfd.arc_grided.astype(float).mean()
+        data[f'arc_d{d}meansymbolsrt'] = dfd.arc_symbolsrt.mean()
+        data[f'arc_d{d}meansymbolsacc'] = dfd.arc_symbols_accuracy.mean()
+        data[f'arc_d{d}meanpricesrt'] = dfd.arc_pricesrt.mean()
+        data[f'arc_d{d}meanpricesacc'] = dfd.arc_prices_accuracy.mean()
+        data[f'arc_d{d}meangrided'] = dfd.arc_grided.mean()
 
         # Calculate SD
-        data[f'arc_d{d}sdsymbolsrt'] = dfd.arc_symbolsrt.astype(float).std()
-        data[f'arc_d{d}sdsymbolsacc'] = \
-            dfd.arc_symbols_accuracy.astype(float).std()
-        data[f'arc_d{d}sdpricesrt'] = dfd.arc_pricesrt.astype(float).std()
-        data[f'arc_d{d}sdpricesacc'] = \
-            dfd.arc_prices_accuracy.astype(float).std()
-        data[f'arc_d{d}sdgrided'] = dfd.arc_grided.astype(float).std()
+        data[f'arc_d{d}sdsymbolsrt'] = dfd.arc_symbolsrt.std()
+        data[f'arc_d{d}sdsymbolsacc'] = dfd.arc_symbols_accuracy.std()
+        data[f'arc_d{d}sdpricesrt'] = dfd.arc_pricesrt.std()
+        data[f'arc_d{d}sdpricesacc'] = dfd.arc_prices_accuracy.std()
+        data[f'arc_d{d}sdgrided'] = dfd.arc_grided.std()
 
         # Calculate CV
         data[f'arc_d{d}covsymbolsrt'] = \
-            dfd.arc_symbolsrt.astype(float).std() / \
-            dfd.arc_symbolsrt.astype(float).mean()
+            dfd.arc_symbolsrt.std() / \
+            dfd.arc_symbolsrt.mean()
         data[f'arc_d{d}covsymbolsacc'] = \
-            dfd.arc_symbols_accuracy.astype(float).std() / \
-            dfd.arc_symbols_accuracy.astype(float).mean()
+            dfd.arc_symbols_accuracy.std() / \
+            dfd.arc_symbols_accuracy.mean()
         data[f'arc_d{d}covpricesrt'] = \
-            dfd.arc_pricesrt.astype(float).std() / \
-            dfd.arc_pricesrt.astype(float).mean()
+            dfd.arc_pricesrt.std() / \
+            dfd.arc_pricesrt.mean()
         data[f'arc_d{d}covpricesacc'] = \
-            dfd.arc_prices_accuracy.astype(float).std() / \
-            dfd.arc_prices_accuracy.astype(float).mean()
+            dfd.arc_prices_accuracy.std() / \
+            dfd.arc_prices_accuracy.mean()
         data[f'arc_d{d}covgrided'] = \
-            dfd.arc_grided.astype(float).std() / \
-            dfd.arc_grided.astype(float).mean()
+            dfd.arc_grided.std() / \
+            dfd.arc_grided.mean()
 
-    # Return etl data
+    # Return etl data as strings
+    for k, v in data.items():
+        data[k] = str(v)
+
     return data
 
 
@@ -165,9 +176,6 @@ def process_project(project):
         subj2id = {x[def_field]: x[def_field] for x in rec if x[def_field]}
         subjects = sorted(list(set([x[def_field] for x in rec])))
 
-    print(subjects)
-    subjects = ['14063']
-
     # Get records
     all_records = project.export_records(fields=fields, forms=['arc_data'])
 
@@ -179,8 +187,6 @@ def process_project(project):
         subj_id = subj2id[subj]
         subj_events = sorted(list(set([x['redcap_event_name'] for x in all_records if x[def_field] == subj_id])))
         subj_arc = [x for x in arc_records if x[def_field] == subj_id]
-
-        print(subj_events)
 
         # Iterate subject events
         for event_id in subj_events:
