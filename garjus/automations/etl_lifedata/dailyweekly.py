@@ -29,7 +29,11 @@ def extract_life(records):
     df['lifedata_notification_time'] = pd.to_datetime(
         df['lifedata_notification_time'], errors='coerce')
     df = df.sort_values('lifedata_notification_time')
-    df['day'] = (df['lifedata_notification_time'] - df.iloc[1]['lifedata_notification_time']).dt.days
+    if len(df) > 1:
+        df['day'] = (df['lifedata_notification_time'] - df.iloc[1]['lifedata_notification_time']).dt.days
+    else:
+        df['day'] = (df['lifedata_notification_time'] - df.iloc[0]['lifedata_notification_time']).dt.days
+
     df['day'] = df['day'] + 1
 
     # Count complete sessions for the week
