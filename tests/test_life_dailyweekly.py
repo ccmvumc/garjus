@@ -17,7 +17,6 @@ if __name__ == "__main__":
 
     logging.info('Running it')
     project = redcap.Project(api_url, api_key)
-    print(project.forms)
     results = process_project(project)
     logging.info(results)
     logging.info('Done!')
