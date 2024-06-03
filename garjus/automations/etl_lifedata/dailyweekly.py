@@ -25,7 +25,7 @@ def extract_life(records):
     # Load into dataframe
     df = pd.DataFrame(records)
 
-    # Set day using first notification as baseline
+    # Set day using first real notification as baseline, skip 0th
     df['lifedata_notification_time'] = pd.to_datetime(
         df['lifedata_notification_time'], errors='coerce')
     df = df.sort_values('lifedata_notification_time')
@@ -170,9 +170,6 @@ def process_project(project):
         subj2id = {x[def_field]: x[def_field] for x in rec if x[def_field]}
         subjects = sorted(list(set([x[def_field] for x in rec])))
 
-    print(subjects)
-    subjects = ['14063']
-
     # Get records
     all_records = project.export_records(fields=fields, forms=['ema_lifedata_survey'])
 
@@ -184,8 +181,6 @@ def process_project(project):
         subj_id = subj2id[subj]
         subj_events = sorted(list(set([x['redcap_event_name'] for x in all_records if x[def_field] == subj_id])))
         subj_life = [x for x in life_records if x[def_field] == subj_id]
-
-        print(subj_events)
 
         # Iterate subject events
         for event_id in subj_events:
