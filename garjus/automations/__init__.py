@@ -669,6 +669,7 @@ def _run_scan_automations(automations, garjus, project):
             project,
             D3_SLICE_TIMING,
             ['fMRI_REST1', 'fMRI_REST2'],
+            sites=['VUMC'],
         )
 
     # load the automations
