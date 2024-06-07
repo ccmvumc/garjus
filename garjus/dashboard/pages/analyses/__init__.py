@@ -61,9 +61,10 @@ COLUMNS = [
     'NAME',
     'EDIT',
     'STATUS',
+    'PBS',
     'PDF',
     'LOG',
-    'DATA',
+    'OUTPUT',
     'SUBJECTS',
     'INVESTIGATOR',
     'PROCESSOR',
@@ -76,7 +77,7 @@ def get_content():
 
     # Format columns with links as markdown text
     for i, c in enumerate(columns):
-        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT', 'DATA', 'PROCESSOR']:
+        if c['name'] in ['OUTPUT', 'EDIT', 'INPUT', 'DATA', 'PROCESSOR', 'LOG', 'PDF', 'PBS']:
             columns[i]['type'] = 'text'
             columns[i]['presentation'] = 'markdown'
 
@@ -122,8 +123,8 @@ def get_content():
             id='datatable-analyses',
             style_cell={
                 'textAlign': 'center',
-                'padding': '15px 5px 15px 5px',
                 'height': 'auto',
+                'padding': '15px 5px 15px 5px',
             },
             style_header={
                 'fontWeight': 'bold',
@@ -131,8 +132,12 @@ def get_content():
             style_cell_conditional=[
                 {'if': {'column_id': 'NAME'}, 'textAlign': 'left'},
             ],
-            # Aligns the markdown cells, both vertical and horizontal
-            css=[dict(selector="p", rule="margin: 0; text-align: center")],
+            # Aligns the markdown cells, both vertical and horizontal, and 
+            # prevent extra underlines around links
+            css=[
+                dict(selector="p", rule="margin: 0; text-align: center"),
+                dict(selector="a", rule="text-decoration: none;"),
+            ],
         ),
         html.Label('0', id='label-analyses-rowcount2'),
         dcc.Markdown(TIPS_MARKDOWN)
@@ -183,18 +188,6 @@ def update_analyses(
     # Change blanks to asterisk
     df.loc[df['SUBJECTS'].str.len() == 0, 'SUBJECTS'] = '*'
 
-    # Get just the folder
-    df['DATA'] = df['OUTPUT'].str.rsplit('/', n=1).str[0]
-
-    #if r['PDF']:
-    #            _link = r['PDF']
-    #            r['PDF'] = f'[📊]({_link})'
-    df['PDF'] = '📊'
-    df['LOG'] = '📄'
-    #        if r['LOG']:
-    #            _link = r['LOG']
-    #            r['LOG'] = f'[📄]({_link})'
-
     # Get options
     proj_options = data.load_options()
     lead_options = sorted(df['INVESTIGATOR'].unique())
@@ -226,17 +219,30 @@ def update_analyses(
         _text = 'edit'
         r['EDIT'] = f'[{_text}]({_link})'
 
+         # Make log a link
+        _link = r['LOGLINK']
+        r['LOG'] = f'[📄]({_link})'
+
+         # Make pdf a link
+        _link = r['PDFLINK']
+        r['PDF'] = f'[📊]({_link})'
+
+        # Make pbs a link
+        _link = r['PBSLINK']
+        r['PBS'] = f'[🛠️]({_link})'
+
         # Make a link
-        if not r['DATA']:
+        if not r['OUTPUT']:
             pass
-        elif '/' in r['DATA']:
-            _link = r['DATA']
-            _text = r['DATA'].rsplit('/', 2)[1]
-            r['DATA'] = f'[{_text}]({_link})'
-        else:
-            _link = r['DATA']
-            _text = r['DATA']
-            r['DATA'] = f'[{_text}]({_link})'
+        elif r['OUTPUTLINK']:
+            _link = r['OUTPUTLINK']
+            _text = r['OUTPUT']
+            r['OUTPUT'] = f'[{_text}]({_link})'
+        elif '/' in r['OUTPUT']:
+            _link = r['OUTPUT']
+            _text = r['OUTPUT'].rsplit('/', 2)[1]
+            r['OUTPUT'] = f'[{_text}]({_link})'
+        
 
         # Make a link
         if not r['PROCESSOR']:

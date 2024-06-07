@@ -76,6 +76,38 @@ def get_data(projects):
         '&instance=' + \
         df['ID'].astype(str)
 
+    df['OUTPUTLINK'] = g.xnat_host() + \
+        '/data/projects/' + \
+        df['PROJECT'] + \
+        '/resources/' + \
+        df['OUTPUT'] + \
+        '/files'
+
+    df['LOGLINK'] = g.xnat_host() + \
+        '/data/projects/' + \
+        df['PROJECT'] + \
+        '/resources/' + \
+        df['OUTPUT'] + \
+        '/files/' + \
+        df['OUTPUT'] + \
+        '.txt'
+
+    df['PDFLINK'] = g.xnat_host() + \
+        '/data/projects/' + \
+        df['PROJECT'] + \
+        '/resources/' + \
+        df['OUTPUT'] + \
+        '/files/report.pdf'
+
+    df['PBSLINK'] = g.xnat_host() + \
+        '/data/projects/' + \
+        df['PROJECT'] + \
+        '/resources/' + \
+        df['OUTPUT'] + \
+        '/files/' + \
+        df['OUTPUT'] + \
+        '.slurm'
+
     return df
 
 

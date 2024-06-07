@@ -67,7 +67,16 @@ class Garjus:
         self._xnat = None
         self._rc = None
 
-        if current_user and current_user.is_authenticated and current_user.id == 'admin':
+        username = 'UnknownUser'
+        try:
+            if current_user.is_authenticated:
+                username = current_user.id
+        except Exception as err:
+            logger.debug(err)
+
+        logger.debug(f'current user is:{username}')
+
+        if username == 'admin':
             # Prevent xnat admin user from accessing redcap
             logger.debug('refusing to connect xnat admin to redcap')
         else:
