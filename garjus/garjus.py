@@ -2259,7 +2259,10 @@ class Garjus:
 
         auto_names = self.etl_automation_choices()
         logger.debug(f'loading etl_automations:{project}')
-        rec = self._rc.export_records(records=[project], forms=['main'])[0]
+        try:
+            rec = self._rc.export_records(records=[project], forms=['main'])[0]
+        except IndexError:
+            return
 
         # Determine which automations we want to run
         for a in auto_names:
