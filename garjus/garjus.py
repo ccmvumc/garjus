@@ -67,11 +67,15 @@ class Garjus:
         self._xnat = None
         self._rc = None
 
-        try:
-            self._rc = (redcap_project or self._default_redcap())
-        except FileNotFoundError as err:
-            logger.debug(err)
-            logger.debug('REDCap disabled, no credentials in ~/.redcap.txt')
+        # Prevent xnat admin user from accessing redcap
+        if current_user.id == 'admin':
+            logger.debug('refusing to connect xnat admin to redcap')
+        else:
+            try:
+                self._rc = (redcap_project or self._default_redcap())
+            except FileNotFoundError as err:
+                logger.debug(err)
+                logger.debug('REDCap credentials not found in ~/.redcap.txt')
 
         try:
             if current_user.is_authenticated:
@@ -785,23 +789,26 @@ class Garjus:
             # Filter end
             df = df[df.DATE <= enddate]
 
-        # Merge in auxiliary scan data
-        dfp = pd.DataFrame()
-        for p in projects:
-            dfp = pd.concat([dfp, self._load_scan_stats(p)])
+        if self.redcap_enabled():
+            # Merge in auxiliary scan data
 
-        index_cols = ['SUBJECT', 'SESSION', 'SCANID']
+            logger.info('merging in scan stats')
+            dfp = pd.DataFrame()
+            for p in projects:
+                dfp = pd.concat([dfp, self._load_scan_stats(p)])
 
-        drop_cols = [x for x in dfp.columns if x in df.columns and x not in index_cols]
+            index_cols = ['SUBJECT', 'SESSION', 'SCANID']
 
-        df = df.drop(columns=drop_cols)
+            drop_cols = [x for x in dfp.columns if x in df.columns and x not in index_cols]
 
-        df = pd.merge(
-            df,
-            dfp,
-            how='left',
-            on=index_cols,
-        )
+            df = df.drop(columns=drop_cols)
+
+            df = pd.merge(
+                df,
+                dfp,
+                how='left',
+                on=index_cols,
+            )
 
         # Return as dataframe
         df = df.sort_values('full_path')
@@ -848,7 +855,7 @@ class Garjus:
 
         return self._rc.export_records(records=projects, forms=['sites'])
 
-    def _load_project_names(self):
+    def _load_project_names(self, autofilter=False):
 
         # Get list of projects in redcap
         if self.redcap_enabled():
@@ -868,7 +875,12 @@ class Garjus:
 
         # Get combination of lists
         if redcap_names and xnat_names:
-            names = [x for x in redcap_names if x in xnat_names]
+            if autofilter:
+                # filter out projects not in redcap
+                names = [x for x in redcap_names if x in xnat_names]
+            else:
+                # Get the union
+                names = sorted(list(set(redcap_names) | set(xnat_names)))
         elif redcap_names and not xnat_names:
             names = redcap_names
         elif xnat_names:
@@ -1115,7 +1127,7 @@ class Garjus:
         """Return all stats for project, filtered."""
 
         if not self.redcap_enabled():
-            logger.info('cannot load stats, redcap not enabled')
+            logger.info('cannot load scan stats, redcap not enabled')
             return None
 
         try:

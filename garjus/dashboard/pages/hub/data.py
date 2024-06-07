@@ -3,7 +3,9 @@ import logging
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
-from .. import queue, issues, activity, reports
+import pandas as pd
+
+from .. import queue, issues, reports
 from ....garjus import Garjus
 
 
@@ -32,7 +34,6 @@ def _get_processing_data(g=None, refresh=False):
 
 
 def _get_activity_data(g=None, refresh=False):
-    #df = activity.data.load_data(refresh=True, )
     startdate = datetime.today() - relativedelta(days=7)
     startdate = startdate.strftime('%Y-%m-%d')
 
@@ -40,7 +41,7 @@ def _get_activity_data(g=None, refresh=False):
         g = Garjus()
 
     if not g.redcap_enabled():
-        return None
+        return pd.DataFrame(columns=g.column_names('activity'))
 
     logger.info(f'loading activity:startdate={startdate}')
     df = g.activity(startdate=startdate)
@@ -60,4 +61,3 @@ def _get_issues_data(refresh=False):
 
 def _load_options(df):
     return list(df.PROJECT.unique())
-

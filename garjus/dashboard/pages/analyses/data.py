@@ -56,14 +56,17 @@ def save_data(df, filename):
 
 
 def get_data(projects):
-    df = pd.DataFrame()
-    garjus = Garjus()
+    g = Garjus()
+
+    if not g.redcap_enabled():
+        logger.debug('redcap not enabled, no data')
+        return pd.DataFrame(columns=g.column_names('analyses'))
 
     # Get the pid of the main redcap so we can make links
-    pid = garjus.redcap_pid()
+    pid = g.redcap_pid()
 
     # Load
-    df = garjus.analyses(projects, download=False)
+    df = g.analyses(projects, download=False)
 
     # Make edit link
     df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \

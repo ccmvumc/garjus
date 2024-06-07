@@ -74,6 +74,7 @@ def filter_data(df, projects, types, timeframe):
 
     return df
 
+
 def read_data(filename):
     df = pd.read_pickle(filename)
     return df
@@ -85,13 +86,17 @@ def save_data(df, filename):
 
 
 def get_data():
-    garjus = Garjus()
+    g = Garjus()
+
+    if not g.redcap_enabled():
+        logger.debug('redcap not enabled, no data')
+        return pd.DataFrame(columns=g.column_names('reports'))
 
     # Get the pid of the main redcap so we can make links
-    pid = garjus.redcap_pid()
+    pid = g.redcap_pid()
 
     # Load
-    df = garjus.reports()
+    df = g.reports()
 
     # Make pdf link
     df['VIEW'] = 'https://redcap.vanderbilt.edu/redcap_v14.0.0/DataEntry/index.php?' + \

@@ -25,6 +25,11 @@ def get_filename():
 
 def get_data():
     g = Garjus()
+
+    if not g.redcap_enabled():
+        logger.debug('redcap not enabled, no data')
+        return pd.DataFrame(columns=g.column_names('issues'))
+
     pid = g.redcap_pid()
 
     logger.info('loading issues')

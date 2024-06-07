@@ -80,11 +80,11 @@ def get_content(include_logout=False):
     if has_xnat and has_redcap:
         # include all tabs
         tabs = dbc.Tabs([
-            dbc.Tab(
-                label='Home',
-                tab_id='tab-home',
-                children=hub.get_content(),
-            ),
+            #dbc.Tab(
+            #    label='Home',
+            #    tab_id='tab-home',
+            #    children=hub.get_content(),
+            #),
             dbc.Tab(
                 label='QA',
                 tab_id='tab-qa',

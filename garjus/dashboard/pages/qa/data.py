@@ -139,20 +139,20 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
             scantypes = list(set(scantypes))
             assrtypes = list(set(assrtypes))
 
-        if not scantypes and not df.empty:
-            # Get list of scan types based on assessor inputs
-            logger.debug('loading used scan types')
-            scantypes = garjus.used_scantypes(
-                df[df.TYPE == 'ASSR'],
-                df[df.TYPE == 'SCAN']
-            )
+            if not scantypes and not df.empty:
+                # Get list of scan types based on assessor inputs
+                logger.debug('loading used scan types')
+                scantypes = garjus.used_scantypes(
+                    df[df.TYPE == 'ASSR'],
+                    df[df.TYPE == 'SCAN']
+                )
 
-        # Apply filter
-        alltypes = scantypes + assrtypes
+            # Apply filter
+            alltypes = scantypes + assrtypes
 
-        if alltypes is not None:
-            logger.debug(f'filtering by types:{len(df)}')
-            df = df[df.TYPE.isin(alltypes)]
+            if alltypes is not None:
+                logger.debug(f'filtering by types:{len(df)}')
+                df = df[df.TYPE.isin(alltypes)]
 
     logger.debug(f'done filtering by types:{len(df)}')
 
@@ -188,19 +188,20 @@ def get_data(projects):
         garjus = Garjus()
 
         # Load data
-        logger.info(f'load data:{projects}')
+        logger.debug(f'load data:{projects}')
         logger.debug(f'load scan data:{projects}')
         scan_df = load_scan_data(garjus, projects)
         logger.debug(f'load assr data:{projects}')
         assr_df = load_assr_data(garjus, projects)
         logger.debug(f'load sgp data:{projects}')
         subj_df = load_sgp_data(garjus, projects)
-        logger.debug(f'load subjects:{projects}')
+        logger.debug(f'all loaded')
         if False:
+            logger.debug(f'load subjects:{projects}')
             subjects = load_subjects(garjus, projects)
             print(f'{subjects=}')
     except Exception as err:
-        logger.error(err)
+        logger.error(f'load failed:{err}')
         _cols = QA_COLS + ['DATE', 'SESSIONLINK', 'SUBJECTLINK']
         return pd.DataFrame(columns=_cols)
 

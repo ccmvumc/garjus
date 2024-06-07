@@ -1,6 +1,8 @@
 import logging
 import os
 
+import pandas as pd
+
 from .. import utils
 from ....garjus import Garjus
 
@@ -25,7 +27,8 @@ def get_data(proj_filter, hidedone=True):
     g = Garjus()
 
     if not g.redcap_enabled():
-        return None
+        logger.debug('redcap not enabled, no data')
+        return pd.DataFrame(columns=g.column_names('tasks') + ['USER', 'LABEL'])
 
     df = g.tasks(hidedone=hidedone)
 
