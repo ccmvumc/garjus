@@ -2255,14 +2255,14 @@ class Garjus:
 
         if not self.redcap_enabled():
             logger.info('cannot load etl_automations, redcap not enabled')
-            return None
+            return []
 
         auto_names = self.etl_automation_choices()
         logger.debug(f'loading etl_automations:{project}')
         try:
             rec = self._rc.export_records(records=[project], forms=['main'])[0]
         except IndexError:
-            return
+            return []
 
         # Determine which automations we want to run
         for a in auto_names:
@@ -2316,14 +2316,14 @@ class Garjus:
 
         if not self.redcap_enabled():
             logger.info('cannot load scan automations, redcap not enabled')
-            return None
+            return []
 
         auto_names = self.scan_automation_choices()
 
         try:
             rec = self._rc.export_records(records=[project], forms=['main'])[0]
         except IndexError:
-            return
+            return []
 
         # Determine what scan autos we want to run
         for a in auto_names:
@@ -2337,7 +2337,7 @@ class Garjus:
 
         if not self.redcap_enabled():
             logger.info('cannot load edat protocols, redcap not enabled')
-            return None
+            return []
 
         rec = self._rc.export_records(records=[project], forms=['edat'])
 
@@ -2350,7 +2350,7 @@ class Garjus:
 
         if not self.redcap_enabled():
             logger.info('cannot load scanning protocols, redcap not enabled')
-            return None
+            return []
 
         rec = self._rc.export_records(records=[project], forms=['scanning'])
 
