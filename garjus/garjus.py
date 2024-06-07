@@ -2319,7 +2319,11 @@ class Garjus:
             return None
 
         auto_names = self.scan_automation_choices()
-        rec = self._rc.export_records(records=[project], forms=['main'])[0]
+
+        try:
+            rec = self._rc.export_records(records=[project], forms=['main'])[0]
+        except IndexError:
+            return
 
         # Determine what scan autos we want to run
         for a in auto_names:
