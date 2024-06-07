@@ -791,10 +791,9 @@ class Garjus:
 
         if self.redcap_enabled():
             # Merge in auxiliary scan data
-
-            logger.info('merging in scan stats')
             dfp = pd.DataFrame()
             for p in projects:
+                logger.debug(f'loading scan stats:{p}')
                 dfp = pd.concat([dfp, self._load_scan_stats(p)])
 
             index_cols = ['SUBJECT', 'SESSION', 'SCANID']
@@ -2259,6 +2258,7 @@ class Garjus:
             return None
 
         auto_names = self.etl_automation_choices()
+        logger.debug(f'loading etl_automations:{project}')
         rec = self._rc.export_records(records=[project], forms=['main'])[0]
 
         # Determine which automations we want to run
