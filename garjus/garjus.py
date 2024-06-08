@@ -939,6 +939,10 @@ class Garjus:
             fields=[self._dfield()])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
+
+        # Apply hideshow
+        rec = [x for x in rec if x['analysis_hideshow'] != '1']
+
         for r in rec:
             # Initialize record with project
             d = {'PROJECT': r[self._dfield()]}

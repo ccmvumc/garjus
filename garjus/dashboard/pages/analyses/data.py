@@ -68,6 +68,9 @@ def get_data(projects):
     # Load
     df = g.analyses(projects, download=False)
 
+    # Pad with zeros
+    df['ID'] = df['ID'].astype(str).str.zfill(3)
+
     # Make edit link
     df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \
         str(pid) + \

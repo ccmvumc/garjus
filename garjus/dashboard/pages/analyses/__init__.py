@@ -229,7 +229,7 @@ def update_analyses(
 
         # Make pbs a link
         _link = r['PBSLINK']
-        r['PBS'] = f'[🛠️]({_link})'
+        r['PBS'] = f'[📋]({_link})'
 
         # Make a link
         if not r['OUTPUT']:
