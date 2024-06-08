@@ -242,16 +242,24 @@ def update_analyses(
             _link = r['OUTPUT']
             _text = r['OUTPUT'].rsplit('/', 2)[1]
             r['OUTPUT'] = f'[{_text}]({_link})'
-        
 
         # Make a link
         if not r['PROCESSOR']:
             pass
         elif '/' in r['PROCESSOR']:
-            _u, _r, _v = r['PROCESSOR'].replace(':', '/').split('/')
-            _link = f'https://github.com/{_u}/{_r}/tree/{_v}'
-            _text = r['PROCESSOR']
-            r['PROCESSOR'] = f'[{_text}]({_link})'
+            try:
+                p = r['PROCESSOR'].replace(':', '/').split('/')
+                if len(p) == 4:
+                    _link = f'https://github.com/{p[0]}/{p[1]}/tree/{p[2]}/processors/{p[3]}'
+                elif len(p) == 3:
+                    _link = f'https://github.com/{p[0]}/{p[1]}/tree/{p[2]}'
+                else:
+                    _link = f'https://github.com/{p}'
+
+                _text = r['PROCESSOR']
+                r['PROCESSOR'] = f'[{_text}]({_link})'
+            except Exception as err:
+                logger.error(f'failed to parse processor:{r["PROCESSOR"]}')
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))
