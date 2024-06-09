@@ -863,7 +863,7 @@ class Garjus:
 
         return self._rc.export_records(records=projects, forms=['sites'])
 
-    def _load_project_names(self, autofilter=False):
+    def _load_project_names(self):
 
         # Get list of projects in redcap
         if self.redcap_enabled():
@@ -881,24 +881,8 @@ class Garjus:
         else:
             xnat_names = None
 
-        # Get combination of lists
-        if redcap_names and xnat_names:
-            if autofilter:
-                # filter out projects not in redcap
-                names = [x for x in redcap_names if x in xnat_names]
-            else:
-                # Get the union
-                names = sorted(list(set(redcap_names) | set(xnat_names)))
-        elif redcap_names and not xnat_names:
-            names = redcap_names
-        elif xnat_names:
-            names = xnat_names
-        else:
-            names = []
-
-        logger.debug(f'my projects={names}')
-
-        return names
+        self._xnat_projects = xnat_names
+        self._rc_projects = redcap_names
 
     def _default_column_names(self):
         return COLUMNS
@@ -1186,10 +1170,28 @@ class Garjus:
 
         return df
 
-    def projects(self):
+    def projects(self, autofilter=True):
         """Get list of projects."""
         if self._projects is None:
-            self._projects = self._load_project_names()
+            # Loads projects names from xnat and redcap
+            self._load_project_names()
+
+        # Get combination of lists
+        if self._rc_projects and self._xnat_projects:
+            if autofilter:
+                # Only redcap projects
+                self._projects = self._rc_projects
+            else:
+                # Get the union
+                self._projects = sorted(list(set(self._rc_projects) | set(self._xnat_projects)))
+        elif self._rc_projects and not self._xnat_projects:
+            self._projects = self._rc_projects
+        elif self._xnat_projects:
+            self._projects = self._xnat_projects
+        else:
+            self._projects = []
+
+        logger.debug(f'my projects={self._projects}')
 
         return self._projects
 
