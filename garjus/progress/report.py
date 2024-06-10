@@ -141,7 +141,7 @@ def blank_letter():
     return p
 
 
-def _draw_counts(pdf, sessions, rangetype=None):
+def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
     # Counts of each session type with sums
     # sessions column names are: SESSION, PROJECT, DATE, SESSTYPE, SITE
     type_list = sessions.SESSTYPE.unique()
@@ -200,7 +200,7 @@ def _draw_counts(pdf, sessions, rangetype=None):
 
     pdf.set_font('helvetica', size=18)
 
-    if len(site_list) > 1:
+    if groupby == 'site':
 
         # Row for each site
         for cur_site in site_list:
@@ -225,17 +225,20 @@ def _draw_counts(pdf, sessions, rangetype=None):
                 # Total for site
                 cur_count = str(len(dfs))
                 pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            else:
+                pdf.cell(**{'w': 1.0, 'h': 0.5, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-        # TOTALS row
-        pdf.cell(w=indent_width)
-        pdf.cell(w=1.0)
-        for cur_type in type_list:
-            pdf.set_font('helvetica', size=18)
-            cur_count = str(len(df[df.SESSTYPE == cur_type]))
-            pdf.cell(**_kwargs, text=cur_count)
+        if len(site_list) > 1:
+            # TOTALS row
+            pdf.cell(w=indent_width)
+            pdf.cell(w=1.0)
+            for cur_type in type_list:
+                pdf.set_font('helvetica', size=18)
+                cur_count = str(len(df[df.SESSTYPE == cur_type]))
+                pdf.cell(**_kwargs, text=cur_count)
 
-        # Grandtotal
-        pdf.cell(**_kwargs_t, text=str(len(df)))
+            # Grandtotal
+            pdf.cell(**_kwargs_t, text=str(len(df)))
 
     else:
 
@@ -982,6 +985,7 @@ def plot_qa(dfp):
         dfp,
         id_vars=(
             'SESSION',
+            'SUBJECT',
             'PROJECT',
             'DATE',
             'SITE',
