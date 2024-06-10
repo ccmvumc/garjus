@@ -540,9 +540,13 @@ class Garjus:
             rec = [x for x in rec if x['task_status'] not in DONE_LIST]
 
         for r in rec:
+            project_id = r[self._dfield()]
+            repeat_id = r['redcap_repeat_instance']
+            link = self.get_link('taskqueue', project_id, repeat_id)
             d = {
-                'PROJECT': r[self._dfield()],
-                'ID': r['redcap_repeat_instance']
+                'PROJECT': project_id,
+                'ID': repeat_id,
+                'IDLINK': link,
             }
             for k, v in self.tasks_rename.items():
                 d[v] = r.get(k, '')
@@ -2500,7 +2504,25 @@ class Garjus:
 
     def redcap_pid(self):
         """Get the redcap host for this garjus."""
-        return self._rc.export_project_info().get('project_id')
+        return str(self._rc.export_project_info().get('project_id'))
+
+    def redcap_url(self):
+        return self._rc.url
+
+    def redcap_version(self):
+        return str(self._rc.redcap_version)
+
+    def get_link(self, instrument, project_id, repeat_id):
+        redcap_url = self.redcap_url()
+        redcap_version = self.redcap_version()
+        redcap_pid = self.redcap_pid()
+
+        if redcap_url.endswith('/api/'):
+            redcap_url = redcap_url[:-5]
+
+        redcap_link = f'{redcap_url}/redcap_v{redcap_version}/DataEntry/index.php?pid={redcap_pid}&page={instrument}&id={project_id}&instance={repeat_id}'
+
+        return redcap_link
 
     def _copy_session(
         self,

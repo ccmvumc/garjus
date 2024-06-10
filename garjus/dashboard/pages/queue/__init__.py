@@ -69,7 +69,8 @@ def get_graph_content(df):
 
 
 def get_content():
-    COLS = [
+    COLUMNS = [
+        'ID',
         'LABEL',
         'STATUS',
         'WALLTIME',
@@ -79,7 +80,13 @@ def get_content():
         'USER',
     ]
 
-    columns = [{"name": i, "id": i} for i in COLS]
+    columns = utils.make_columns(COLUMNS)
+
+    # Format columns with links as markdown text
+    for i, c in enumerate(columns):
+        if c['name'] in ['ID']:
+            columns[i]['type'] = 'text'
+            columns[i]['presentation'] = 'markdown'
 
     content = [
         dbc.Row([
@@ -139,12 +146,13 @@ def get_content():
             style_cell={
                 'textAlign': 'center',
                 'padding': '5px 5px 0px 5px',
-                'width': '30px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis',
-                'height': 'auto',
-                'minWidth': '40',
-                'maxWidth': '60'},
+            #    'width': '30px',
+            #    'overflow': 'hidden',
+            #    'textOverflow': 'ellipsis',
+            #    'height': 'auto',
+            #    'minWidth': '40',
+            #    'maxWidth': '60'
+            },
             style_data_conditional=[
                 {'if': {'column_id': 'LABEL'}, 'textAlign': 'left'},
             #    {'if': {'filter_query': '{STATUS} = "QUEUED"'},  'backgroundColor': STATUS2HEX['WAITING']},
@@ -249,6 +257,13 @@ def update_queue(
 
     # Get the table data
     records = df.reset_index().to_dict('records')
+
+    # Format records
+    for r in records:
+         # Make log a link
+        _link = r['IDLINK']
+        _text = r['ID']
+        r['ID'] = f'[{_text}]({_link})'
 
     # Count how many rows are in the table
     if len(records) > 1:
