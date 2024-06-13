@@ -39,7 +39,8 @@ QA_COLS = [
     'SESSION', 'SUBJECT', 'PROJECT', 'SCANID', 'ASSR',
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
     'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY',
-    'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB', 'RESOURCES'
+    'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB', 'RESOURCES',
+    'JOBDATE', 'TIMEUSED', 'MEMUSED'
 ]
 
 
@@ -220,6 +221,10 @@ def get_data(projects):
 
     for x in ['SCANID', 'SCANTYPE', 'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB']:
         assr_df[x] = None
+        subj_df[x] = None
+
+    for x in ['JOBDATE', 'TIMEUSED', 'MEMUSED']:
+        scan_df[x] = None
         subj_df[x] = None
 
     assr_df['RESOURCES'] = ''

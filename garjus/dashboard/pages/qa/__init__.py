@@ -1055,6 +1055,9 @@ def update_qa(
             'STATUS',
             'PDF',
             'LOG',
+            'JOBDATE',
+            'TIMEUSED',
+            'MEMUSED',
         ]
 
         # Format as column names and record dictionaries for dash table

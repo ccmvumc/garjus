@@ -53,6 +53,8 @@ proc:genprocdata/validation/status,\
 proc:genprocdata/validation/date,\
 proc:genprocdata/validation/validated_by,\
 proc:genprocdata/jobstartdate,\
+proc:genprocdata/walltimeused,\
+proc:genprocdata/memused,\
 last_modified,\
 proc:genprocdata/inputs'
 
@@ -104,6 +106,8 @@ ASSR_RENAME = {
     'proc:genprocdata/validation/validated_by': 'QCBY',
     'xsiType': 'XSITYPE',
     'proc:genprocdata/inputs': 'INPUTS',
+    'proc:genprocdata/walltimeused': 'TIMEUSED',
+    'proc:genprocdata/memused': 'MEMUSED',
 }
 
 SGP_RENAME = {

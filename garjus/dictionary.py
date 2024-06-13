@@ -99,8 +99,8 @@ COLUMNS = {
         'DATETIME', 'EVENT', 'REPEAT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
     'assessors': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'NOTE', 'DATE', 'SITE',
-        'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'QCSTATUS',
-        'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
+        'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'TIMEUSED', 'MEMUSED',
+        'QCSTATUS', 'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
     'issues': [
         'ID', 'DATETIME', 'PROJECT', 'CATEGORY',
         'SUBJECT', 'SESSION', 'SCAN ', 'DESCRIPTION',
