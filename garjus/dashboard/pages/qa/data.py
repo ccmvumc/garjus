@@ -196,11 +196,11 @@ def get_data(projects):
         assr_df = load_assr_data(garjus, projects)
         logger.debug(f'load sgp data:{projects}')
         subj_df = load_sgp_data(garjus, projects)
+
+        logger.debug(f'load subjects:{projects}')
+        subjects = load_subjects(garjus, projects)
+
         logger.debug(f'all loaded')
-        if False:
-            logger.debug(f'load subjects:{projects}')
-            subjects = load_subjects(garjus, projects)
-            print(f'{subjects=}')
     except Exception as err:
         logger.error(f'load failed:{err}')
         _cols = QA_COLS + ['DATE', 'SESSIONLINK', 'SUBJECTLINK']
@@ -239,15 +239,12 @@ def get_data(projects):
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
-    if False:
-        print(df.columns)
-        df = pd.merge(
-            df,
-            subjects,
-            left_on=('SUBJECT', 'PROJECT'),
-            right_on=('SUBJECT', 'PROJECT')
-        )
-        print(df.columns)
+    df = pd.merge(
+        df,
+        subjects,
+        left_on=('SUBJECT', 'PROJECT'),
+        right_on=('ID', 'PROJECT')
+    )
 
     # Convert duration from string of total seconds to formatted HH:MM:SS
     df['DURATION'] = df['DURATION'].fillna(np.nan).replace(
@@ -332,7 +329,7 @@ def load_subjects(garjus, project_filter):
     )
     for p in project_filter:
         logger.debug(f'loading subjects:{p}')
-        subjects = pd.concat([subjects, garjus.subjects(p)])
+        subjects = pd.concat([subjects, garjus.subjects(p).reset_index()])
 
     return subjects
 

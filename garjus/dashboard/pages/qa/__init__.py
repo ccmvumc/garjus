@@ -575,7 +575,7 @@ def qa_pivot(df):
     dfp = df.pivot_table(
         index=(
             'SESSION', 'SESSIONLINK', 'SUBJECT', 'SUBJECTLINK', 'PROJECT',
-            'DATE', 'SESSTYPE', 'SITE', 'MODALITY', 'NOTE'),
+            'DATE', 'SESSTYPE', 'SITE', 'GROUP', 'AGE', 'MODALITY', 'NOTE'),
         columns='TYPE',
         values='STATUS',
         aggfunc=lambda x: ''.join(x))
@@ -1105,7 +1105,7 @@ def update_qa(
 
         # Get the table data
         selected_cols = [
-            'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
+            'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'GROUP', 'AGE']
 
         if selected_proc:
             selected_cols += selected_proc
