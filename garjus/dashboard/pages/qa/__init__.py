@@ -1149,14 +1149,15 @@ def update_qa(
                 _link = r['SESSIONLINK']
                 r['SESSION'] = f'[{_sess}]({_link})'
 
-            if r['SUBJECT'] and 'SUBJECTLINK' in r:
-                _subj = r['SUBJECT']
-                _link = r['SUBJECTLINK']
-                r['SUBJECT'] = f'[{_subj}]({_link})'
+            #if r['SUBJECT'] and 'SUBJECTLINK' in r:
+            #    _subj = r['SUBJECT']
+            #    _link = r['SUBJECTLINK']
+            #    r['SUBJECT'] = f'[{_subj}]({_link})'
 
         # Format columns
         for i, c in enumerate(columns):
-            if c['name'] in ['SESSION', 'SUBJECT']:
+            #if c['name'] in ['SESSION', 'SUBJECT']:
+            if c['name'] in ['SESSION']:
                 columns[i]['type'] = 'text'
                 columns[i]['presentation'] = 'markdown'
 
