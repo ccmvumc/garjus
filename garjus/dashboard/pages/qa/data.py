@@ -243,7 +243,8 @@ def get_data(projects):
         df,
         subjects,
         left_on=('SUBJECT', 'PROJECT'),
-        right_on=('ID', 'PROJECT')
+        right_on=('ID', 'PROJECT'),
+        how='left'
     )
 
     # Convert duration from string of total seconds to formatted HH:MM:SS

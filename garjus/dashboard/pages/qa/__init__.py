@@ -570,7 +570,7 @@ def get_metastatus(status):
 
 
 def qa_pivot(df):
-    df.DATE = df.DATE.fillna('')
+    df = df.fillna('')
 
     dfp = df.pivot_table(
         index=(
