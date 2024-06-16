@@ -161,6 +161,20 @@ def get_main_redcap():
     return redcap.Project(api_url, api_key)
 
 
+def get_rcq_redcap():
+    api_url = 'https://redcap.vumc.org/api/'
+    keyfile = os.path.join(os.path.expanduser('~'), '.redcap.txt')
+
+    # Check for overrides in environment vars
+    api_url = os.environ.get('REDCAP_API_URL', api_url)
+    keyfile = os.environ.get('REDCAP_API_KEYFILE', keyfile)
+
+    project_id = get_projectid('rcq', keyfile)
+    api_key = get_projectkey(project_id, keyfile)
+
+    return redcap.Project(api_url, api_key)
+
+
 def match_repeat(rc, record_id, repeat_name, match_field, match_value):
     # Load potential matches
     records = rc.export_records(records=[record_id])

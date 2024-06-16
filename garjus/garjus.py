@@ -61,11 +61,13 @@ class Garjus:
         self,
         redcap_project: Project=None,
         xnat_interface: Interface=None,
+        rcq_project: Project=None
     ):
         """Initialize garjus."""
         self._disconnect_xnat = False
         self._xnat = None
         self._rc = None
+        self._rcq = None
 
         username = 'UnknownUser'
         try:
@@ -78,13 +80,19 @@ class Garjus:
 
         if username == 'admin':
             # Prevent xnat admin user from accessing redcap
-            logger.debug('refusing to connect xnat admin to redcap')
+            logger.debug('refusing to connect xnat admin to garjus redcap')
         else:
             try:
                 self._rc = (redcap_project or self._default_redcap())
             except FileNotFoundError as err:
                 logger.debug(err)
                 logger.debug('REDCap credentials not found in ~/.redcap.txt')
+
+        try:
+            self._rcq = (rcq_project or self._default_rcq())
+        except FileNotFoundError as err:
+            logger.debug(err)
+            logger.debug('REDCap credentials not found in ~/.redcap.txt')
 
         try:
             if current_user.is_authenticated:
@@ -195,8 +203,11 @@ class Garjus:
 
     @staticmethod
     def _default_redcap():
-        from .utils_redcap import get_main_redcap
-        return get_main_redcap()
+        return utils_redcap.get_main_redcap()
+
+    @staticmethod
+    def _default_rcq():
+        return utils_redcap.get_rcq_redcap()
 
     @staticmethod
     def redcap_found():
@@ -256,6 +267,8 @@ class Garjus:
     def activity(self, project=None, startdate=None):
         """List of activity records."""
         data = []
+        def_field = self._rc.def_field
+
 
         if not self.redcap_enabled():
             logger.info('cannot load activity, redcap not enabled')
@@ -269,12 +282,12 @@ class Garjus:
         rec = self._rc.export_records(
             records=projects,
             forms=['activity'],
-            fields=[self._dfield()])
+            fields=[def_field])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'activity']
         for r in rec:
             d = {
-                'PROJECT': r[self._dfield()],
+                'PROJECT': r[def_field],
                 'STATUS': 'COMPLETE',
                 'SOURCE': 'ccmutils'}
             for k, v in self.activity_rename.items():
@@ -304,6 +317,8 @@ class Garjus:
         result=None,
     ):
         """Add an activity record."""
+        def_field = self._rc.def_field
+
         if not actdatetime:
             actdatetime = datetime.now()
 
@@ -311,7 +326,7 @@ class Garjus:
         activity_datetime = actdatetime.strftime("%Y-%m-%d %H:%M:%S")
 
         record = {
-            self._dfield(): project,
+            def_field: project,
             'activity_description': f'{description}:{result}',
             'activity_datetime': activity_datetime,
             'activity_event': event,
@@ -453,10 +468,10 @@ class Garjus:
                 'content': 'record',
                 'format': 'json',
                 'instrument': 'taskqueue',
-                'token': self._rc.token,
+                'token': self._rcq.token,
                 'records[0]': project,
                 'repeat_instance': task_id}
-            self._rc._call_api(payload, 'del_record')
+            self._rcq._call_api(payload, 'del_record')
 
     def subject_assessors(self, projects=None, proctypes=None):
         """Query XNAT for all subject assessors, return dataframe."""
@@ -479,6 +494,7 @@ class Garjus:
     def issues(self, project=None):
         """Return the current existing issues data as list of dicts."""
         data = []
+        def_field = self._rc.def_field
 
         if project:
             projects = [project]
@@ -491,7 +507,7 @@ class Garjus:
             return None
 
         # Get the data from redcap
-        _fields = [self._dfield()]
+        _fields = [def_field]
 
         # Only the specified project
         rec = self._rc.export_records(
@@ -506,7 +522,7 @@ class Garjus:
 
         # Reformat each record
         for r in rec:
-            d = {'PROJECT': r[self._dfield()], 'STATUS': 'FAIL'}
+            d = {'PROJECT': r[def_field], 'STATUS': 'FAIL'}
             for k, v in self.issues_rename.items():
                 d[v] = r.get(k, '')
 
@@ -519,6 +535,7 @@ class Garjus:
         """List of task records."""
         DONE_LIST = ['COMPLETE', 'JOB_FAILED', 'DELETED']
         data = []
+        def_field = self._rcq.def_field
 
         if projects:
             projects = [x for x in projects if x in self.projects()]
@@ -529,10 +546,10 @@ class Garjus:
             logger.info('cannot load tasks, redcap not enabled')
             return None
 
-        rec = self._rc.export_records(
+        rec = self._rcq.export_records(
             records=projects,
             forms=['taskqueue'],
-            fields=[self._dfield()])
+            fields=[def_field])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
 
@@ -540,7 +557,7 @@ class Garjus:
             rec = [x for x in rec if x['task_status'] not in DONE_LIST]
 
         for r in rec:
-            project_id = r[self._dfield()]
+            project_id = r[def_field]
             repeat_id = r['redcap_repeat_instance']
             link = self.get_link('taskqueue', project_id, repeat_id)
             d = {
@@ -558,7 +575,7 @@ class Garjus:
 
     def save_task_yaml(self, project, task_id, yaml_dir):
         return utils_redcap.download_named_file(
-            self._rc,
+            self._rcq,
             project,
             'task_yamlupload',
             yaml_dir,
@@ -566,11 +583,12 @@ class Garjus:
 
     def set_task_statuses(self, tasks):
         records = []
+        def_field = self._rcq.def_field
 
         # Build list of task updates as records with updated values
         for i, t in tasks.iterrows():
             r = {
-                self._dfield(): t['PROJECT'],
+                def_field: t['PROJECT'],
                 'redcap_repeat_instance': t['ID'],
                 'redcap_repeat_instrument': 'taskqueue',
                 'task_status': t['STATUS']
@@ -585,15 +603,17 @@ class Garjus:
 
         # Apply the updates in one call
         try:
-            response = self._rc.import_records(records)
+            response = self._rcq.import_records(records)
             assert 'count' in response
             logger.debug('task status records updated')
         except AssertionError as err:
             logger.error(f'failed to set task statuses:{err}')
 
     def set_task_status(self, project, task_id, status):
+        def_field = self._rcq.def_field
+
         record = {
-            self._dfield(): project,
+            def_field: project,
             'redcap_repeat_instance': task_id,
             'redcap_repeat_instrument': 'taskqueue',
             'task_status': status,
@@ -605,7 +625,7 @@ class Garjus:
             record['taskqueue_complete'] = '0'
 
         try:
-            response = self._rc.import_records([record])
+            response = self._rcq.import_records([record])
             assert 'count' in response
             logger.debug('task status updated')
         except AssertionError as err:
@@ -613,6 +633,7 @@ class Garjus:
 
     def delete_old_issues(self, projects=None, days=7):
         old_issues = []
+        def_field = self._rc.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot delete issues, redcap not enabled')
@@ -624,7 +645,7 @@ class Garjus:
             projects = self.projects()
 
         # Get the data from redcap
-        _fields = [self._dfield()]
+        _fields = [def_field]
         # Only the specified project
         rec = self._rc.export_records(
             records=projects,
@@ -650,7 +671,7 @@ class Garjus:
 
             # Append to list if more than requested days
             if days_old >= days:
-                _main = r[self._dfield()],
+                _main = r[def_field],
                 _id = r['redcap_repeat_instance']
                 logger.debug(f'{_main}:{_id}:{days_old} days old')
                 old_issues.append(r)
@@ -892,15 +913,17 @@ class Garjus:
         return COLUMNS
 
     def _stats_redcap(self, project):
+        def_field = self._rc.def_field
+
         if not self.redcap_enabled():
             logger.info('cannot load stats, redcap not enabled')
             return None
 
         if project not in self._project2stats:
             # get the project ID for the stats redcap for this project
-            _fields = [self._dfield(), 'project_stats']
+            _fields = [def_field, 'project_stats']
             rec = self._rc.export_records(records=[project], fields=_fields)
-            rec = [x for x in rec if x[self._dfield()] == project][0]
+            rec = [x for x in rec if x[def_field] == project][0]
             redcap_id = rec['project_stats']
             self._project2stats[project] = utils_redcap.get_redcap(redcap_id)
 
@@ -909,6 +932,7 @@ class Garjus:
     def analyses(self, projects, download=True):
         """Return analyses."""
         data = []
+        def_field = self._rcq.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot load analyses, redcap not enabled')
@@ -921,10 +945,10 @@ class Garjus:
         else:
             projects = self.projects()
 
-        rec = self._rc.export_records(
+        rec = self._rcq.export_records(
             records=projects,
             forms=['analyses'],
-            fields=[self._dfield()])
+            fields=[def_field])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
 
@@ -933,7 +957,7 @@ class Garjus:
 
         for r in rec:
             # Initialize record with project
-            d = {'PROJECT': r[self._dfield()]}
+            d = {'PROJECT': r[def_field]}
 
             # Get renamed variables
             for k, v in self.analyses_rename.items():
@@ -947,7 +971,7 @@ class Garjus:
                 logger.debug(f'loading:{d["PROCESSOR"]}')
                 with tempfile.TemporaryDirectory() as temp_dir:
                     yaml_file = utils_redcap.download_named_file(
-                        self._rc,
+                        self._rcq,
                         d['PROJECT'],
                         'analysis_processor',
                         temp_dir,
@@ -968,6 +992,8 @@ class Garjus:
 
     def load_analysis(self, project, analysis_id, download=True):
         """Return analysis protocol record."""
+        def_field = self._rcq.def_field
+
         if not self.redcap_enabled():
             logger.info('cannot load analysis, redcap not enabled')
             return None
@@ -977,8 +1003,8 @@ class Garjus:
             'ID': analysis_id,
         }
 
-        rec = self._rc.export_records(
-            fields=[self._dfield()],
+        rec = self._rcq.export_records(
+            fields=[def_field],
             forms=['analyses'],
             records=[project],
         )
@@ -994,7 +1020,7 @@ class Garjus:
             logger.debug(f'loading:{data["PROCESSOR"]}')
             with tempfile.TemporaryDirectory() as temp_dir:
                 yaml_file = utils_redcap.download_named_file(
-                    self._rc,
+                    self._rcq,
                     project,
                     'analysis_processor',
                     temp_dir,
@@ -1535,12 +1561,9 @@ class Garjus:
 
         return info
 
-    def _dfield(self):
-        """Name of redcap filed that stores project name."""
-        return self._rc.def_field
-
     def reports(self, projects=None):
         data = []
+        def_field = self._rc.def_field
 
         # only our projects
         if projects:
@@ -1551,7 +1574,7 @@ class Garjus:
         # Load Progress Reports
         for r in self.progress_reports(projects):
             d = {
-                'PROJECT': r[self._dfield()],
+                'PROJECT': r[def_field],
                 'TYPE': 'Progress'}
 
             # Get renamed variables
@@ -1564,7 +1587,7 @@ class Garjus:
         # Load Double Reports
         for r in self.double_reports(projects):
             d = {
-                'PROJECT': r[self._dfield()],
+                'PROJECT': r[def_field],
                 'TYPE': 'Double'}
 
             # Get renamed variables
@@ -1577,7 +1600,7 @@ class Garjus:
         # Load NDAimage03 Reports
         for r in self.ndaimage03_reports(projects):
             d = {
-                'PROJECT': r[self._dfield()],
+                'PROJECT': r[def_field],
                 'TYPE': 'NDAimage03'}
 
             # Get renamed variables
@@ -1606,7 +1629,7 @@ class Garjus:
         rec = self._rc.export_records(
             records=projects,
             forms=['progress'],
-            fields=[self._dfield()])
+            fields=[self._rc.def_field])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'progress']
         rec = [x for x in rec if str(x['progress_complete']) == '2']
@@ -1628,7 +1651,7 @@ class Garjus:
         rec = self._rc.export_records(
             records=projects,
             forms=['double'],
-            fields=[self._dfield()])
+            fields=[self._rc.def_field])
 
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'double']
@@ -1650,7 +1673,7 @@ class Garjus:
         rec = self._rc.export_records(
             records=projects,
             forms=['ndaimage03'],
-            fields=[self._dfield()])
+            fields=[self._rc.def_field])
 
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'ndaimage03']
@@ -1661,6 +1684,7 @@ class Garjus:
     def processing_protocols(self, project=None, download=False):
         """Return processing protocols."""
         data = []
+        def_field = self._rcq.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot load processing protocols, redcap not enabled')
@@ -1671,10 +1695,10 @@ class Garjus:
         else:
             projects = self.projects()
 
-        rec = self._rc.export_records(
+        rec = self._rcq.export_records(
             records=projects,
             forms=['processing'],
-            fields=[self._dfield()])
+            fields=[def_field])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'processing']
 
@@ -1683,7 +1707,7 @@ class Garjus:
 
         for r in rec:
             # Initialize record with project
-            d = {'PROJECT': r[self._dfield()]}
+            d = {'PROJECT': r[self._rcq.def_field]}
 
             # Find the yaml file
             if r['processor_yamlupload']:
@@ -1692,7 +1716,7 @@ class Garjus:
                     filename = os.path.join(
                         self._tempdir, r['processor_yamlupload'])
                     filepath = utils_redcap.download_file(
-                        self._rc,
+                        self._rcq,
                         project,
                         'processor_yamlupload',
                         filename,
@@ -1859,17 +1883,19 @@ class Garjus:
 
     def stats_projects(self):
         """List of projects that have stats, checks for a stats project ID."""
+        def_field = self._rc.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot load stats, redcap not enabled')
             return None
 
-        _fields = [self._dfield(), 'project_stats']
+        _fields = [def_field, 'project_stats']
         rec = self._rc.export_records(fields=_fields)
-        return [x[self._dfield()] for x in rec if x['project_stats']]
+        return [x[def_field] for x in rec if x['project_stats']]
 
     def add_task(self, project, assr, inputlist, var2val, walltime, memreq, yamlfile, userinputs):
         """Add a new task record ."""
+        def_field = self._rcq.def_field
 
         # Convert to string for storing
         var2val = json.dumps(var2val)
@@ -1887,7 +1913,7 @@ class Garjus:
             # Update existing record
             try:
                 record = {
-                    'main_name': project,
+                    def_field: project,
                     'redcap_repeat_instrument': 'taskqueue',
                     'redcap_repeat_instance': task_id,
                     'task_status': 'QUEUED',
@@ -1900,7 +1926,7 @@ class Garjus:
                     'task_timeused': '',
                     'task_memused': '',
                 }
-                response = self._rc.import_records([record])
+                response = self._rcq.import_records([record])
                 assert 'count' in response
                 logger.debug('task record created')
             except AssertionError as err:
@@ -1910,7 +1936,7 @@ class Garjus:
             # Create a new record
             try:
                 record = {
-                    'main_name': project,
+                    def_field: project,
                     'redcap_repeat_instrument': 'taskqueue',
                     'redcap_repeat_instance': 'new',
                     'task_assessor': assr,
@@ -1922,7 +1948,7 @@ class Garjus:
                     'task_yamlfile': task_yamlfile,
                     'task_userinputs': userinputs,
                 }
-                response = self._rc.import_records([record])
+                response = self._rcq.import_records([record])
                 assert 'count' in response
                 logger.debug('task record created')
 
@@ -1939,7 +1965,7 @@ class Garjus:
 
             logger.debug(f'uploading file:{yamlfile}')
             utils_redcap.upload_file(
-                self._rc,
+                self._rcq,
                 project,
                 'task_yamlupload',
                 yamlfile,
@@ -1947,15 +1973,16 @@ class Garjus:
 
     def assessor_task_id(self, project, assessor):
         task_id = None
+        def_field = self._rcq.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot load assessor task id, redcap not enabled')
             return None
 
-        rec = self._rc.export_records(
+        rec = self._rcq.export_records(
             forms=['taskqueue'],
             records=[project],
-            fields=[self._dfield(), 'task_assessor'])
+            fields=[def_field, 'task_assessor'])
 
         rec = [x for x in rec if x['redcap_repeat_instrument'] == 'taskqueue']
         rec = [x for x in rec if x['task_assessor'] == assessor]
@@ -1972,12 +1999,13 @@ class Garjus:
         """Add a progress record with PDF and Zip at dated and named."""
         # Format for REDCap
         progress_datetime = prog_date.strftime("%Y-%m-%d %H:%M:%S")
+        def_field = self._rc.def_field
 
         # Add new record
         try:
             record = {
+                def_field: project,
                 'progress_datetime': progress_datetime,
-                'main_name': project,
                 'redcap_repeat_instrument': 'progress',
                 'redcap_repeat_instance': 'new',
                 'progress_name': prog_name,
@@ -2019,6 +2047,7 @@ class Garjus:
 
     def add_double(self, project, comp_name, comp_date, comp_pdf, comp_excel):
         """Add a compare record with PDF and Excel at dated and named."""
+        def_field = self._rc.def_field
 
         # Format for REDCap
         compare_datetime = comp_date.strftime("%Y-%m-%d %H:%M:%S")
@@ -2026,8 +2055,8 @@ class Garjus:
         # Add new record
         try:
             record = {
+                def_field: project,
                 'double_datetime': compare_datetime,
-                'main_name': project,
                 'redcap_repeat_instrument': 'double',
                 'redcap_repeat_instance': 'new',
                 'double_name': comp_name,
@@ -2186,14 +2215,16 @@ class Garjus:
 
     def set_analysis_status(self, project, analysis_id, status):
         logger.info(f'setting analysis status:{project}:{analysis_id}:{status}')
+        def_field = self._rcq.def_field
+
         try:
             record = {
-                self._dfield(): project,
+                def_field: project,
                 'redcap_repeat_instrument': 'analyses',
                 'redcap_repeat_instance': analysis_id,
                 'analysis_status': status,
             }
-            response = self._rc.import_records([record])
+            response = self._rcq.import_records([record])
             assert 'count' in response
             logger.debug('analysis record updated')
         except AssertionError as err:
@@ -2201,14 +2232,16 @@ class Garjus:
 
     def set_analysis_inputs(self, project, analysis_id, inputs):
         logger.info(f'setting analysis inputs:{project}:{analysis_id}:{inputs}')
+        def_field = self._rcq.def_field
+
         try:
             record = {
-                self._dfield(): project,
+                def_field: project,
                 'redcap_repeat_instrument': 'analyses',
                 'redcap_repeat_instance': analysis_id,
                 'analysis_input': inputs,
             }
-            response = self._rc.import_records([record])
+            response = self._rcq.import_records([record])
             assert 'count' in response
             logger.debug('analysis record updated')
         except AssertionError as err:
@@ -2216,14 +2249,16 @@ class Garjus:
 
     def set_analysis_outputs(self, project, analysis_id, outputs):
         logger.info(f'setting analysis outputs:{project}:{analysis_id}:{outputs}')
+        def_field = self._rcq.def_field
+
         try:
             record = {
-                self._dfield(): project,
+                def_field: project,
                 'redcap_repeat_instrument': 'analyses',
                 'redcap_repeat_instance': analysis_id,
                 'analysis_output': outputs,
             }
-            response = self._rc.import_records([record])
+            response = self._rcq.import_records([record])
             assert 'count' in response
             logger.debug('analysis record updated')
         except AssertionError as err:
@@ -2250,6 +2285,7 @@ class Garjus:
     def projects_setting(self, projects, setting):
         """Return the value of the setting for projects as dict."""
         project2setting = {}
+        def_field = self._rc.def_field
 
         if not self.redcap_enabled():
             logger.info('cannot load project setting, redcap not enabled')
@@ -2263,7 +2299,7 @@ class Garjus:
             # First try "project" then try "main" otherwise nothing
             #project2setting[self._dfield()] = rec.get(
             #    f'project_{setting}', rec.get(f'main_{setting}', None))
-            project2setting[rec[self._dfield()]] = rec.get(
+            project2setting[rec[def_field]] = rec.get(
                 f'project_{setting}', rec.get(f'main_{setting}', None))
 
         return project2setting
@@ -2382,10 +2418,11 @@ class Garjus:
         """Add list of issues."""
         records = []
         issue_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        def_field = self._rc.def_field
 
         for i in issues:
             records.append({
-                self._dfield(): i['project'],
+                def_field: i['project'],
                 'issue_description': i['description'],
                 'issue_date': issue_datetime,
                 'issue_subject': i.get('subject', None),
@@ -2418,8 +2455,10 @@ class Garjus:
         category=None
     ):
         """Add a new issue."""
+        def_field = self._rc.def_field
+
         record = {
-            self._dfield(): project,
+            def_field: project,
             'issue_description': description,
             'issue_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'issue_subject': subject,
@@ -2581,10 +2620,11 @@ class Garjus:
         """Close specified issues, set to complete in REDCap."""
         records = []
         issue_closedate = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        def_field = self._rc.def_field
 
         for i in issues:
             records.append({
-                self._dfield(): i['project'],
+                def_field: i['project'],
                 'redcap_repeat_instance': i['id'],
                 'issue_closedate': issue_closedate,
                 'redcap_repeat_instrument': 'issues',
@@ -2600,9 +2640,11 @@ class Garjus:
 
     def delete_issues(self, issues):
         """Delete specified issues, delete in REDCap."""
+        def_field = self._rc.def_field
+
         try:
             for i in issues:
-                _main = i[self._dfield()],
+                _main = i[def_field],
                 _id = i['redcap_repeat_instance']
                 logger.debug(f'deleting:issue:{_main}:{_id}')
                 # https://redcap.vanderbilt.edu/api/help/?content=del_records
@@ -2943,6 +2985,7 @@ class Garjus:
         '''Delete outputs on xnat, set to job running, reset on redcap'''
         SKIP_LIST = ['OLD', 'EDITS']
         records = []
+        def_field = self._rcq.def_field
 
         # get tasks with status of fail, failcount blank or 0
         df = self.tasks(hidedone=False)
@@ -2992,7 +3035,7 @@ class Garjus:
                     logger.error('deleting xnat resource')
 
             records.append({
-                'main_name': project,
+                def_field: project,
                 'redcap_repeat_instrument': 'taskqueue',
                 'redcap_repeat_instance': t['ID'],
                 'task_status': 'QUEUED',
@@ -3032,7 +3075,7 @@ class Garjus:
         if records:
             # Apply the updates in one call
             try:
-                response = self._rc.import_records(records)
+                response = self._rcq.import_records(records)
                 assert 'count' in response
                 logger.debug('retry task records updated')
             except AssertionError as err:
