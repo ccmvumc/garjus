@@ -62,22 +62,11 @@ def get_data(projects):
         logger.debug('redcap not enabled, no data')
         return pd.DataFrame(columns=g.column_names('analyses'))
 
-    # Get the pid of the main redcap so we can make links
-    pid = g.redcap_pid()
-
     # Load
     df = g.analyses(projects, download=False)
 
     # Pad with zeros
     df['ID'] = df['ID'].astype(str).str.zfill(3)
-
-    # Make edit link
-    df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \
-        str(pid) + \
-        '&page=analyses&id=' + \
-        df['PROJECT'] + \
-        '&instance=' + \
-        df['ID'].astype(str)
 
     df['OUTPUTLINK'] = g.xnat_host() + \
         '/data/projects/' + \

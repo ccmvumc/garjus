@@ -255,16 +255,16 @@ def get_data(projects):
         unit='s',
         errors='coerce').dt.strftime("%-M:%S")
 
-    df['SESSIONLINK'] = garjus.xnat().host + \
+    df['SESSIONLINK'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION']
 
-    df['SUBJECTLINK'] = garjus.xnat().host + \
+    df['SUBJECTLINK'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT']
 
-    df['PDF'] = garjus.xnat().host + \
+    df['PDF'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION'] + \
@@ -272,7 +272,7 @@ def get_data(projects):
         '/out/resources/PDF/files/' + \
         'report_' + df['ASSR'] + '.pdf'
 
-    df['LOG'] = garjus.xnat().host + \
+    df['LOG'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION'] + \
@@ -280,21 +280,21 @@ def get_data(projects):
         '/out/resources/OUTLOG/files/' + \
         df['ASSR'] + '.txt'
 
-    df['NIFTI'] = garjus.xnat().host + \
+    df['NIFTI'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION'] + \
         '/scans/' + df['SCANID'] + \
         '/resources/NIFTI/files?format=zip'
 
-    df['JSON'] = garjus.xnat().host + \
+    df['JSON'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION'] + \
         '/scans/' + df['SCANID'] + \
         '/resources/JSON/files?format=zip'
 
-    df['EDAT'] = garjus.xnat().host + \
+    df['EDAT'] = garjus.xnat_host() + \
         '/data/projects/' + df['PROJECT'] + \
         '/subjects/' + df['SUBJECT'] + \
         '/experiments/' + df['SESSION'] + \

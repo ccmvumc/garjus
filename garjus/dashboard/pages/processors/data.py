@@ -63,22 +63,12 @@ def get_data(projects):
         logger.debug('redcap not enabled, no data')
         return pd.DataFrame(columns=g.column_names('processors'))
 
-    pid = g.redcap_pid()
-
     # Load
     df = g.processing_protocols(projects)
 
     df['FILE'] = df['FILE'].apply(os.path.basename)
 
     df = df.sort_values(['PROJECT', 'FILE'])
-
-    # Make edit link
-    df['EDIT'] = 'https://redcap.vanderbilt.edu/redcap_v13.9.3/DataEntry/index.php?pid=' + \
-        str(pid) + \
-        '&page=processing&id=' + \
-        df['PROJECT'] + \
-        '&instance=' + \
-        df['ID'].astype(str)
 
     return df
 

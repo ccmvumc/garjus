@@ -956,8 +956,15 @@ class Garjus:
         rec = [x for x in rec if x['analysis_hideshow'] != '1']
 
         for r in rec:
-            # Initialize record with project
-            d = {'PROJECT': r[def_field]}
+            # Initialize record
+            project_id = r[def_field]
+            repeat_id = r['redcap_repeat_instance']
+            link = self.get_link('analyses', project_id, repeat_id)
+            d = {
+                'PROJECT': project_id,
+                'ID': repeat_id,
+                'EDIT': link,
+            }
 
             # Get renamed variables
             for k, v in self.analyses_rename.items():
@@ -1707,7 +1714,16 @@ class Garjus:
 
         for r in rec:
             # Initialize record with project
-            d = {'PROJECT': r[self._rcq.def_field]}
+            project_id = r[def_field]
+            repeat_id = r['redcap_repeat_instance']
+            link = self.get_link('processing', project_id, repeat_id)
+            d = {
+
+                'PROJECT': project_id,
+                'EDIT': link,
+                'ID': repeat_id,
+
+            }
 
             # Find the yaml file
             if r['processor_yamlupload']:
@@ -1738,8 +1754,6 @@ class Garjus:
 
             d['FILE'] = filepath
             d['TYPE'] = self._get_proctype(d['FILE'])
-
-            d['EDIT'] = 'edit'
 
             # Finally, add to our list
             data.append(d)
@@ -2545,6 +2559,10 @@ class Garjus:
         """Get the redcap host for this garjus."""
         return str(self._rc.export_project_info().get('project_id'))
 
+    def rcq_pid(self):
+        """Get the redcap host for this garjus."""
+        return str(self._rcq.export_project_info().get('project_id'))
+
     def redcap_url(self):
         return self._rc.url
 
@@ -2555,6 +2573,11 @@ class Garjus:
         redcap_url = self.redcap_url()
         redcap_version = self.redcap_version()
         redcap_pid = self.redcap_pid()
+
+        if instrument in ['taskqueue', 'processing', 'analyses']:
+            redcap_pid = self.rcq_pid()
+        else:
+            redcap_pid = self.redcap_pid()
 
         if redcap_url.endswith('/api/'):
             redcap_url = redcap_url[:-5]
