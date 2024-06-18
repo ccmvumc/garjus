@@ -521,7 +521,7 @@ def get_content():
             export_columns='visible'
         ),
         dbc.Label('Get ready...', id='label-qa-rowcount2'),
-        dcc.Markdown(TIPS_MARKDOWN),
+        #dcc.Markdown(TIPS_MARKDOWN),
         html.Div([
             html.P(
                 LEGEND1,

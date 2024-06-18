@@ -140,7 +140,7 @@ def get_content():
             ],
         ),
         html.Label('0', id='label-analyses-rowcount2'),
-        dcc.Markdown(TIPS_MARKDOWN)
+        #dcc.Markdown(TIPS_MARKDOWN)
     ]
 
     return content
