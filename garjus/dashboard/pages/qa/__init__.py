@@ -135,7 +135,7 @@ def _get_graph_content(dfp):
     dfp_copy = dfp_copy.reset_index().copy()
 
     # don't need subject
-    dfp_copy = dfp_copy.drop(columns=['SUBJECT', 'SUBJECTLINK'])
+    dfp_copy = dfp_copy.drop(columns=['SUBJECT', 'SUBJECTLINK', 'AGE', 'SEX', 'GROUP'])
 
     # use pandas melt function to unpivot our pivot table
     df = pd.melt(
@@ -375,7 +375,7 @@ def get_content():
                 align='center',
             ),
         ]),
-        dbc.Row(
+        dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
                     id='dropdown-qa-proj',
@@ -385,7 +385,15 @@ def get_content():
                 ),
                 width=3,
             ),
-        ),
+            dbc.Col(
+                dbc.Switch(
+                    id='switch-qa-demog',
+                    label='Demographics',
+                    value=False,
+                ),
+                align='center',
+            ),
+        ]),
         dbc.Row([
             dbc.Col(
                 dcc.Dropdown(
@@ -656,6 +664,7 @@ def load_options(df):
      Input('dpr-qa-time', 'end_date'),
      Input('switch-qa-autofilter', 'value'),
      Input('switch-qa-graph', 'value'),
+     Input('switch-qa-demog', 'value'),
      Input('switches-qa-procstatus', 'value'),
      Input('switches-qa-modality', 'value'),
      Input('radio-qa-pivot', 'value'),
@@ -669,6 +678,7 @@ def update_qa(
     selected_endtime,
     selected_autofilter,
     selected_graph,
+    selected_demog,
     selected_procstatus,
     selected_modality,
     selected_pivot,
@@ -1105,7 +1115,10 @@ def update_qa(
 
         # Get the table data
         selected_cols = [
-            'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'GROUP', 'AGE', 'SEX']
+            'SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE']
+
+        if selected_demog:
+            selected_cols += ['GROUP', 'AGE', 'SEX']
 
         if selected_proc:
             selected_cols += selected_proc
