@@ -2,7 +2,7 @@
 from datetime import datetime
 import tempfile
 import logging
-import os
+import os, shutil
 
 from .dataentry_compare import run_compare
 
@@ -74,6 +74,17 @@ def make_double(garjus, project, cur_double, now):
         else:
             logger.debug(f'uploading results')
             garjus.add_double(project, cur_double, now, pdf_file, excel_file)
+            _pdf = os.path.join(
+                '/Volumes/SharedData/LACIshare/DoubleDataEntry',
+                os.path.basename(pdf_file))
+            logger.info(f'copying files:{pdf_file}:{_pdf}')
+            shutil.copyfile(pdf_file, _pdf)
+
+            _excel = os.path.join(
+                '/Volumes/SharedData/LACIshare/DoubleDataEntry',
+                os.path.basename(excel_file))
+            logger.info(f'copying file:{excel_file}:{_excel}')
+            shutil.copyfile(excel_file, _excel)
 
 
 def make_double_report(proj_primary, proj_secondary, pdf_file, excel_file, fields=None, events=None):
