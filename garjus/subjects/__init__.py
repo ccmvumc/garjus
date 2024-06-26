@@ -82,14 +82,16 @@ def load_subjects(garjus, project, include_dob=False):
     # Determine group
     df['GROUP'] = 'UNKNOWN'
 
-    if project == 'DepMIND2':
-        # All DM2 are depressed
+    if project in ['DepMIND2', 'DepMIND3']:
+        # All are depressed
         df['GROUP'] = 'Depress'
     elif project == 'D3':
         # Use arm/events names to determine group
         df['GROUP'] = df['redcap_event_name'].map({
             'Screening (Arm 2: VUMC Never Depressed)': 'Control',
             'Screening (Arm 1: VUMC Currently Depressed)': 'Depress',
+            'Screening (Arm 4: UPMC Never Depressed)': 'Control',
+            'Screening (Arm 3: UPMC Currently Depressed)': 'Depress',
         })
     elif project == 'REMBRANDT':
         # Use arm/events names to determine which arm

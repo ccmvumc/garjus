@@ -103,18 +103,19 @@ class MYPDF(FPDF):
         """Set the filename."""
         self.filename = filename
 
-    def set_project(self, project, disable_monthly=False):
+    def set_project(self, project, enable_monthly=False):
         """Set the project name."""
         self.project = project
         today = datetime.now().strftime("%Y-%m-%d")
         self.date = today
 
-        if disable_monthly:
-            self.title = f'{project} Report'
-            self.subtitle = '{}'.format(datetime.now().strftime("%B %d, %Y"))
-        else:
+        if enable_monthly:
             self.title = f'{project} Monthly Report'
             self.subtitle = '{}'.format(datetime.now().strftime("%B %Y"))
+        else:
+            self.title = f'{project} Report'
+            self.subtitle = '{}'.format(datetime.now().strftime("%B %d, %Y"))
+            
 
     def footer(self):
         """Return the custom footer."""
@@ -186,7 +187,11 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
     # Column header for each session type
     pdf.cell(indent_width)
     for cur_type in type_list:
-        pdf.cell(**_kwargs, text=cur_type)
+        _txt = cur_type
+        if len(_txt) > 6:
+            pdf.set_font('helvetica', size=12)
+
+        pdf.cell(**_kwargs, text=_txt)
 
     # Got to next line
     pdf.ln()
@@ -241,19 +246,22 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
             pdf.cell(**_kwargs_t, text=str(len(df)))
 
     else:
-
         # Row for each group
         for cur_group in group_list:
             pdf.cell(w=indent_width)
 
             dfg = df[df.GROUP == cur_group]
+
+            # Show the group
             _txt = cur_group
+
+            if len(_txt) > 6:
+                pdf.set_font('helvetica', size=12)
 
             pdf.cell(**_kwargs_s, text=_txt)
 
-            pdf.set_font('helvetica', size=18)
-
             # Count each type for this group
+            pdf.set_font('helvetica', size=18)
             for cur_type in type_list:
                 cur_count = str(len(dfg[dfg.SESSTYPE == cur_type]))
                 pdf.cell(**_kwargs, text=cur_count)
@@ -262,6 +270,9 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
                 # Total for group
                 cur_count = str(len(dfg))
                 pdf.cell(**_kwargs_t, text=cur_count, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            else:
+                #pdf.cell(w=0, h=0, border=0, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.ln()
 
         if len(group_list) > 1:
             # TOTALS row
@@ -272,8 +283,112 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
                 cur_count = str(len(df[df.SESSTYPE == cur_type]))
                 pdf.cell(**_kwargs, text=cur_count)
 
-        # Grandtotal
-        pdf.cell(**_kwargs_t, text=str(len(df)))
+            # Grandtotal
+            if len(type_list) > 1:
+                pdf.cell(**_kwargs_t, text=str(len(df)))
+
+    # End by going to next line
+    pdf.ln()
+
+    return pdf
+
+def _exclude_maps(scantypes):
+    return [x for x in scantypes if not 'FIELDMAP' in x.replace('_', '').upper() and not 'FSA' in x.replace('_', '').upper()]
+
+def _draw_scan_counts(pdf, scans, groupby='site'):
+    # Counts of each scan type by sess type by site/group
+    scantypes = sorted(scans.SCANTYPE.unique())
+    sesstypes = sorted(scans.SESSTYPE.unique())
+    sitetypes = sorted(scans.SITE.unique())
+    grouptypes = sorted(scans.GROUP.unique())
+
+    scantypes = _exclude_maps(scantypes)
+
+    if groupby == 'site':
+        indent_width = max(2.0 - len(sitetypes) * 0.5, 0.3)
+    else:
+        indent_width = max(2.0 - len(grouptypes) * 0.5, 0.3)
+
+    # Get the data
+    df = scans.copy()
+
+    pdf.set_fill_color(94, 156, 211)
+    _txt = 'Scan Counts'
+
+    # Draw heading
+    pdf.set_font('helvetica', size=14)
+    pdf.cell(w=7.5, h=0.5, text=_txt, align='C', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    # Header Formatting
+    pdf.cell(w=1.0)
+    pdf.set_text_color(245, 245, 245)
+    pdf.set_line_width(0.01)
+    _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
+
+    # Column header for each type
+    pdf.cell(w=indent_width + 2.0)
+    if groupby == 'site':
+        for cur_type in sitetypes:
+            _txt = cur_type
+            if len(_txt) > 6:
+                pdf.set_font('helvetica', size=12)
+
+            pdf.cell(**_kwargs, text=cur_type)
+    
+    else:
+        for cur_type in grouptypes:
+            _txt = cur_type
+            if len(_txt) > 6:
+                pdf.set_font('helvetica', size=12)
+
+            pdf.cell(**_kwargs, text=cur_type)
+
+    # Next line
+    pdf.ln()
+
+    # Row formatting
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_text_color(0, 0, 0)
+    _kwargs = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_s = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_t = {'w': 0.7, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_x = {'w': 2.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+
+    pdf.set_font('helvetica', size=12)
+
+    # First grouping by scan type
+    for cur_scan in scantypes:
+        # Reset our cursor and indent
+        pdf.cell(**{'w': 0, 'h': 0, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(w=(indent_width))
+
+        # Show the scan type
+        pdf.set_font('helvetica', size=12, style='B')
+        _txt = cur_scan
+        pdf.cell(**_kwargs_x, text=_txt)
+
+        # Row for each session type
+        for cur_sess in sesstypes:
+            # Show the session type
+            pdf.set_font('helvetica', size=12)
+            _txt = cur_sess
+            pdf.cell(**_kwargs_s, text=_txt)
+
+            pdf.set_font('helvetica', size=16)
+            if groupby == 'site':
+                # Show count for each site
+                for cur_site in sitetypes:
+                    _txt = str(len(df[(df.SESSTYPE == cur_sess) & (df.SCANTYPE == cur_scan) & (df.SITE == cur_site)]))
+                    pdf.cell(**_kwargs_s, text=_txt)
+            else:
+                # Show count for each group
+                for cur_group in grouptypes:
+                    _txt = str(len(df[(df.SESSTYPE == cur_sess) & (df.SCANTYPE == cur_scan) & (df.GROUP == cur_group)]))
+                    pdf.cell(**_kwargs, text=_txt)
+
+            # Fill then next line and indent
+            pdf.cell(**{'w': 1.0, 'h': 0.4, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(w=(indent_width + 2.0))
 
     # End by going to next line
     pdf.ln()
@@ -406,7 +521,7 @@ def plot_activity(df, pivot_index):
     return image
 
 
-def _add_count_pages(pdf, sessions, disable_monthly=False):
+def _add_count_pages(pdf, sessions, enable_monthly=False, groupby='site'):
     mr_sessions = sessions[sessions.MODALITY == 'MR'].copy()
 
     # Start the page with titles
@@ -418,12 +533,12 @@ def _add_count_pages(pdf, sessions, disable_monthly=False):
 
     # Show all MRI session counts
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, h=0.4, align='C', text='MRI')
+    pdf.cell(w=7.5, h=0.4, align='C', text=f'MRI by {groupby}')
     pdf.ln(0.25)
-    _draw_counts(pdf, mr_sessions)
+    _draw_counts(pdf, mr_sessions, groupby=groupby)
     pdf.ln(1)
 
-    if not disable_monthly:
+    if enable_monthly:
         if len(mr_sessions.SITE.unique()) > 3:
             # Start a new page so it fits
             pdf.add_page()
@@ -431,12 +546,32 @@ def _add_count_pages(pdf, sessions, disable_monthly=False):
         # Show MRI session counts in date range
         pdf.cell(w=7.5, h=0.4, align='C', text='MRI')
         pdf.ln(0.25)
-        _draw_counts(pdf, mr_sessions, rangetype='lastmonth')
+        _draw_counts(pdf, mr_sessions, rangetype='lastmonth', groupby=groupby)
         pdf.ln(1)
 
     # Add other Modalities, counts for each session type
     logger.debug('adding other counts')
-    _add_others(pdf, sessions, disable_monthly=disable_monthly)
+    _add_others(pdf, sessions, enable_monthly=enable_monthly, groupby=groupby)
+
+    return pdf
+
+def _add_scan_count_pages(pdf, scans, groupby='site'):
+    mr_scans = scans[scans.MODALITY == 'MR'].copy()
+
+    # Start the page
+    pdf.add_page()
+
+    # Show all MRI scan counts
+    pdf.set_font('helvetica', size=18)
+    pdf.cell(w=7.5, h=0.4, align='C', text=f'MRI by {groupby}')
+    pdf.ln(0.25)
+    _draw_scan_counts(pdf, mr_scans, groupby=groupby)
+    pdf.ln(1)
+
+    # Add other Modalities
+    # addpage
+    #logger.debug('adding other counts')
+    #_add_others(pdf, sessions, enable_monthly=enable_monthly, groupby=groupby)
 
     return pdf
 
@@ -491,6 +626,9 @@ def _add_graph_page(pdf, info):
         else:
             graph.add_node(pydot.Node(scan, color='orange'))
 
+    if 'fMRI_NBACK' in scantypes:
+        graph.add_node(pydot.Node('NBACK', color='violet'))
+
     if 'NMQA_v1' in proctypes:
         graph.add_node(pydot.Node('NMQA_v1', color='lightblue'))
         graph.add_edge(pydot.Edge('NM', 'NMQA_v1'))
@@ -513,7 +651,9 @@ def _add_graph_page(pdf, info):
     graph.add_node(pydot.Node('FS7HPCAMG_v1', color='lightgreen'))
     graph.add_node(pydot.Node('LST_v1', color='lightgreen'))
     graph.add_node(pydot.Node('SAMSEG_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('DnSeg_v1', color='lightgreen'))
 
+    graph.add_edge(pydot.Edge('T1', 'DnSeg_v1'))
     graph.add_edge(pydot.Edge('T1', 'LST_v1'))
     graph.add_edge(pydot.Edge('T1', 'FS7_v1'))
     graph.add_edge(pydot.Edge('FS7_v1', 'SAMSEG_v1'))
@@ -585,7 +725,7 @@ def _add_graph_page(pdf, info):
     return pdf
 
 
-def _add_others(pdf, sessions, disable_monthly=False):
+def _add_others(pdf, sessions, enable_monthly=False, groupby='site'):
     # Get non-MRI sessions
     other_sessions = sessions[sessions.MODALITY != 'MR'].copy()
 
@@ -595,16 +735,16 @@ def _add_others(pdf, sessions, disable_monthly=False):
 
     # Show all session counts
     pdf.set_font('helvetica', size=18)
-    pdf.cell(w=7.5, h=0.4, align='C', text='Other Modalities')
+    pdf.cell(w=7.5, h=0.4, align='C', text=f'Other Modalities by {groupby}')
     pdf.ln(0.25)
-    _draw_counts(pdf, other_sessions)
+    _draw_counts(pdf, other_sessions, groupby=groupby)
     pdf.ln(1)
 
-    if not disable_monthly:
+    if enable_monthly:
         # Show session counts in date range
         pdf.cell(w=7.5, h=0.4, align='C', text='Other Modalities')
         pdf.ln(0.25)
-        _draw_counts(pdf, other_sessions, rangetype='lastmonth')
+        _draw_counts(pdf, other_sessions, rangetype='lastmonth', groupby=groupby)
         pdf.ln(1)
 
     return pdf
@@ -760,7 +900,7 @@ def _add_qa_page(pdf, scandata, assrdata, sesstype):
     return pdf
 
 
-def _add_timeline_page(pdf, info, disable_monthly=False):
+def _add_timeline_page(pdf, info, enable_monthly=False):
     # Get the data for all
     df = info['sessions'].copy()
 
@@ -770,7 +910,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
 
     # Draw all timeline
     _txt = 'Sessions Timeline'
-    if not disable_monthly:
+    if enable_monthly:
         _txt += ' (all)'
 
     pdf.cell(w=7.5, align='C', text=_txt)
@@ -778,7 +918,7 @@ def _add_timeline_page(pdf, info, disable_monthly=False):
     pdf.image(image, x=0.5, y=0.75, w=7.5)
     pdf.ln(5)
 
-    if not disable_monthly:
+    if enable_monthly:
         # Get the dates of last month
         enddate = date.today().replace(day=1) - timedelta(days=1)
         startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
@@ -903,7 +1043,7 @@ def _add_proclib_page(pdf, info):
     return pdf
 
 
-def _add_phantoms(pdf, info, disable_monthly=False):
+def _add_phantoms(pdf, info, enable_monthly=False):
     # Get the data for all
     df = info['phantoms'].copy()
 
@@ -915,7 +1055,7 @@ def _add_phantoms(pdf, info, disable_monthly=False):
     pdf.image(image, x=0.5, w=7.5)
     pdf.ln(5)
 
-    if not disable_monthly:
+    if enable_monthly:
         # Get the dates of last month
         enddate = date.today().replace(day=1) - timedelta(days=1)
         startdate = date.today().replace(day=1) - timedelta(days=enddate.day)
@@ -1237,27 +1377,33 @@ def _add_stats_pages(pdf, info):
 
 
 def make_pdf(info, filename):
-    disable_monthly = info['disable_monthly']
+    enable_monthly = info['enable_monthly']
     """Make PDF from info, save to filename."""
     logger.debug('making PDF')
 
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
     pdf.set_filename(filename)
-    pdf.set_project(info['project'], disable_monthly=disable_monthly)
+    pdf.set_project(info['project'], enable_monthly=enable_monthly)
 
     # Add first page showing MRIs
     logger.debug('adding first page')
-    _add_count_pages(pdf, info['sessions'], disable_monthly=disable_monthly)
+    _add_count_pages(pdf, info['sessions'], enable_monthly=enable_monthly, groupby='site')
+    _add_count_pages(pdf, info['sessions'], enable_monthly=enable_monthly, groupby='group')
+
+    # Add per scan counts
+    logger.debug('adding per scan count pages')
+    _add_scan_count_pages(pdf, info['scans'], groupby='site')
+    _add_scan_count_pages(pdf, info['scans'], groupby='group')
 
     # Timeline
     logger.debug('adding timeline page')
-    _add_timeline_page(pdf, info, disable_monthly=disable_monthly)
+    _add_timeline_page(pdf, info, enable_monthly=enable_monthly)
 
     # Phantom pages
     if len(info['phantoms']) > 0:
         logger.debug('adding phantom page')
-        _add_phantoms(pdf, info, disable_monthly=disable_monthly)
+        _add_phantoms(pdf, info, enable_monthly=enable_monthly)
     else:
         logger.debug('no phantom page')
 
@@ -1295,9 +1441,8 @@ def make_pdf(info, filename):
     # LST vs SAMSEG
     _add_wml_page(pdf, info)
 
-
     # QA/Jobs/Issues counts
-    if not info['disable_monthly']:
+    if info['enable_monthly']:
         _add_activity_page(pdf, info)
 
     # Directed Graph of processing
@@ -1505,8 +1650,18 @@ def make_project_report(
         sessions,
         subjects[['ID', 'PROJECT', 'GROUP']],
         left_on=('SUBJECT', 'PROJECT'),
-        right_on=('ID', 'PROJECT')
+        right_on=('ID', 'PROJECT'),
+        how='left',
     )
+    sessions['GROUP'] = sessions['GROUP'].fillna('UNKNOWN')
+    scans = pd.merge(
+        scans,
+        subjects[['ID', 'PROJECT', 'GROUP']],
+        left_on=('SUBJECT', 'PROJECT'),
+        right_on=('ID', 'PROJECT'),
+        how='left'
+    )
+    scans['GROUP'] = scans['GROUP'].fillna('UNKNOWN')
 
     # Load stats with extra assessor columns
     stats = garjus.stats(project, assessors)
@@ -1530,7 +1685,7 @@ def make_project_report(
     info['scanqa'] = _scanqa(scans, scantypes)
     info['assrqa'] = _assrqa(assessors, proctypes)
     info['phantoms'] = phantoms
-    info['disable_monthly'] = (not monthly)
+    info['enable_monthly'] = monthly
     info['xnat_scanmap'] = garjus.project_setting(project, 'scanmap')
     info['nda_expmap'] = garjus.project_setting(project, 'xst2nei')
     info['nda_scanmap'] = garjus.project_setting(project, 'xst2nst')

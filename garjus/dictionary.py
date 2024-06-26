@@ -198,6 +198,10 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI, FLAIR MRI',
         'procurl': 'https://github.com/ccmvumc/LST1',
     },
+    'Multi_Atlas_v3': {
+        'short_descrip': 'Multi Atlas Labeling with BrainColor atlas and ICV.',
+        'inputs_descrip': 'T1w MRI',
+    },
     'SAMSEG_v1': {
         'short_descrip': 'Runs SAMSEG from FreeSurfer 7.2 to get White Matter Lesion Volume.',
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), FLAIR MRI',
@@ -215,6 +219,10 @@ PROCLIB = {
         'procurl': 'https://github.com/ccmvumc/fmri_emostroop:v2',
         'stats_subset': ['lhSFG2_incgtcon', 'rhSFG2_incgtcon', 'overall_rt_mean'],
     },
+    'struct_preproc_v1': {
+        'short_descrip': 'Structural Pre-processing',
+        'inputs_descrip': 'T1w MRI, FLAIR MRI',
+    }
 }
 
 STATLIB = {
@@ -287,5 +295,8 @@ STATLIB = {
     },
     'fmri_bct_v2': {
         'Schaefer400_thr0p1_deg': 'Degree'
+    },
+    'Multi_Atlas_v3': {
+        'ticv_mm3': 'Total intracranial volume in cubic millimeters',
     }
 }
