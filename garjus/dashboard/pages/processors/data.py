@@ -56,15 +56,8 @@ def save_data(df, filename):
 
 
 def get_data(projects):
-    df = pd.DataFrame()
-    g = Garjus()
-
-    if not g.redcap_enabled():
-        logger.debug('redcap not enabled, no data')
-        return pd.DataFrame(columns=g.column_names('processors'))
-
     # Load
-    df = g.processing_protocols(projects)
+    df = Garjus().processing_protocols(projects)
 
     df['FILE'] = df['FILE'].apply(os.path.basename)
 

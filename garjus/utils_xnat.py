@@ -18,6 +18,7 @@ logger = logging.getLogger('garjus.utils_xnat')
 SCAN_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
+xnat:imagesessiondata/sharing/share/project,\
 subject_label,\
 session_label,\
 session_type,\
@@ -39,6 +40,7 @@ xnat:imagescandata/file/label'
 ASSR_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
+xnat:imagesessiondata/sharing/share/project,\
 subject_label,\
 session_label,\
 session_type,\
@@ -581,6 +583,19 @@ def _create_zip(input_dir, output_zip):
 
         for file_path in dir_path.rglob("*.dcm"):
             archive.write(file_path, arcname=file_path.relative_to(dir_path))
+
+
+def get_admin_projects(xnat):
+    """Get result of xnat query."""
+    uri = '/data/archive/projects?accessible=true'
+    logger.debug(uri)
+    json_data = json.loads(xnat._exec(uri, 'GET'), strict=False)
+    result = json_data['ResultSet']['Result']
+
+    if len(result) == 0:
+        return []
+
+    return [x['id'] for x in result]
 
 
 def get_my_projects(xnat):

@@ -81,6 +81,7 @@ class Garjus:
         if username == 'admin':
             # Prevent xnat admin user from accessing redcap
             logger.debug('refusing to connect xnat admin to garjus redcap')
+            self._rc = None
         else:
             try:
                 self._rc = (redcap_project or self._default_redcap())
@@ -97,8 +98,8 @@ class Garjus:
         try:
             if current_user.is_authenticated:
                 hostname = current_user.hostname
-                username = current_user.id
-                self._xnat = self._alias_xnat(hostname, username)
+                self._user = current_user.id
+                self._xnat = self._alias_xnat(hostname, self._user)
             else:
                 raise Exception('user not authenticated')
         except Exception as err:
@@ -134,6 +135,7 @@ class Garjus:
         self._tempdir = tempfile.mkdtemp()
         self._our_assessors = set()
         self._cachedir = os.path.expanduser('~/.garjus')
+
         try:
             os.makedirs(self._cachedir)
         except FileExistsError:
@@ -542,9 +544,9 @@ class Garjus:
         else:
             projects = self.projects()
 
-        if not self.redcap_enabled():
-            logger.info('cannot load tasks, redcap not enabled')
-            return None
+        #if not self.redcap_enabled():
+        #    logger.info('cannot load tasks, redcap not enabled')
+        #    return None
 
         rec = self._rcq.export_records(
             records=projects,
@@ -900,11 +902,14 @@ class Garjus:
 
         # Get list of projects in xnat
         if self.xnat_enabled():
-            # Load from xnat
-            xnat_names = utils_xnat.get_my_projects(self.xnat())
-            logger.debug(f'xnat projects={xnat_names}')
-        else:
-            xnat_names = None
+            if self._user == 'admin':
+                logger.debug('loading admin projects')
+                xnat_names = utils_xnat.get_admin_projects(self._xnat)
+            else:
+                logger.debug(f'not admin:{self._xnat._user}')
+                # Load from xnat
+                xnat_names = utils_xnat.get_my_projects(self.xnat())
+                logger.debug(f'xnat projects={xnat_names}')
 
         self._xnat_projects = xnat_names
         self._rc_projects = redcap_names
@@ -1404,6 +1409,17 @@ class Garjus:
 
         result = self._get_result(uri)
 
+        # Get shared
+        uri = self.scan_uri
+        uri += f'&xnat:imagesessiondata/sharing/share/project={",".join(projects)}'
+        result2 = self._get_result(uri)
+        # Set project to shared name
+        for r in result2:
+            r['project'] = r['xnat:imagesessiondata/sharing/share/project']
+
+        # Append shared
+        result += result2
+
         # Change from one row per resource to one row per scan
         # TODO: use pandas pivot/melt?
         scans = {}
@@ -1442,6 +1458,17 @@ class Garjus:
             uri += f'&project={",".join(projects)}'
 
         result = self._get_result(uri)
+
+        # Get shared
+        uri = self.assr_uri
+        uri += f'&xnat:imagesessiondata/sharing/share/project={",".join(projects)}'
+        result2 = self._get_result(uri)
+        # Set project to shared name
+        for r in result2:
+            r['project'] = r['xnat:imagesessiondata/sharing/share/project']
+
+        # Append shared
+        result += result2
 
         for r in result:
             assessors.append(self._assessor_info(r))
@@ -1692,10 +1719,6 @@ class Garjus:
         """Return processing protocols."""
         data = []
         def_field = self._rcq.def_field
-
-        if not self.redcap_enabled():
-            logger.info('cannot load processing protocols, redcap not enabled')
-            return None
 
         if project:
             projects = [project]
@@ -2564,15 +2587,14 @@ class Garjus:
         return str(self._rcq.export_project_info().get('project_id'))
 
     def redcap_url(self):
-        return self._rc.url
+        return self._rcq.url
 
     def redcap_version(self):
-        return str(self._rc.redcap_version)
+        return str(self._rcq.redcap_version)
 
     def get_link(self, instrument, project_id, repeat_id):
         redcap_url = self.redcap_url()
         redcap_version = self.redcap_version()
-        redcap_pid = self.redcap_pid()
 
         if instrument in ['taskqueue', 'processing', 'analyses']:
             redcap_pid = self.rcq_pid()

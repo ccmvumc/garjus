@@ -24,13 +24,8 @@ def get_filename():
 
 
 def get_data(proj_filter, hidedone=True):
-    g = Garjus()
 
-    if not g.redcap_enabled():
-        logger.debug('redcap not enabled, no data')
-        return pd.DataFrame(columns=g.column_names('tasks') + ['USER', 'LABEL'])
-
-    df = g.tasks(hidedone=hidedone)
+    df = Garjus().tasks(hidedone=hidedone)
 
     df = df[df.STATUS != 'NEED_INPUTS']
 

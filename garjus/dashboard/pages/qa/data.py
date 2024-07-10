@@ -155,10 +155,12 @@ def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
                 logger.debug(f'filtering by types:{len(df)}')
                 df = df[df.TYPE.isin(alltypes)]
 
-    logger.debug(f'done filtering by types:{len(df)}')
+        logger.debug(f'done filtering by types:{len(df)}')
 
+    # Filter projects
     df = df[df['PROJECT'].isin(projects)]
 
+    # Must have type
     df = df.dropna(subset=['TYPE'])
 
     return df
@@ -198,7 +200,10 @@ def get_data(projects):
         subj_df = load_sgp_data(garjus, projects)
 
         logger.debug(f'load subjects:{projects}')
-        subjects = load_subjects(garjus, projects)
+        if garjus.redcap_enabled():
+            subjects = load_subjects(garjus, projects)
+        else:
+            subjects = None
 
         logger.debug(f'all loaded')
     except Exception as err:
@@ -239,13 +244,18 @@ def get_data(projects):
 
     df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
 
-    df = pd.merge(
-        df,
-        subjects,
-        left_on=('SUBJECT', 'PROJECT'),
-        right_on=('ID', 'PROJECT'),
-        how='left'
-    )
+    if subjects is None:
+        df['GROUP'] = 'UNKNOWN'
+        df['AGE'] = ''
+        df['SEX'] = ''
+    else:
+        df = pd.merge(
+            df,
+            subjects,
+            left_on=('SUBJECT', 'PROJECT'),
+            right_on=('ID', 'PROJECT'),
+            how='left'
+        )  
 
     # Convert duration from string of total seconds to formatted HH:MM:SS
     df['DURATION'] = df['DURATION'].fillna(np.nan).replace(
