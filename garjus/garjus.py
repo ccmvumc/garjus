@@ -544,10 +544,6 @@ class Garjus:
         else:
             projects = self.projects()
 
-        #if not self.redcap_enabled():
-        #    logger.info('cannot load tasks, redcap not enabled')
-        #    return None
-
         rec = self._rcq.export_records(
             records=projects,
             forms=['taskqueue'],
@@ -558,21 +554,25 @@ class Garjus:
         if hidedone:
             rec = [x for x in rec if x['task_status'] not in DONE_LIST]
 
-        for r in rec:
-            project_id = r[def_field]
-            repeat_id = r['redcap_repeat_instance']
-            link = self.get_link('taskqueue', project_id, repeat_id)
-            d = {
-                'PROJECT': project_id,
-                'ID': repeat_id,
-                'IDLINK': link,
-            }
-            for k, v in self.tasks_rename.items():
-                d[v] = r.get(k, '')
+        df = pd.DataFrame(rec)
+        df['PROJECT'] = df[def_field]
+        df['ID'] = df['redcap_repeat_instance'].astype(str)
 
-            data.append(d)
+        # Make ID link back to redcap
+        _url = self.redcap_url()
+        _version = self.redcap_version()
+        _pid = self.rcq_pid()
+        if _url.endswith('/api/'):
+            _url = _url[:-5]
 
-        df = pd.DataFrame(data, columns=self.column_names('tasks'))
+        df['IDLINK'] = _url + '/redcap_v' + _version + '/DataEntry/index.php?pid=' + _pid + '&page=taskqueue&id=' + df['PROJECT'] + '&instance=' + df['ID']
+
+        df['PROCTYPE'] = ''
+        df['IMAGEDIR'] = ''
+        df['JOBTEMPLATE'] = ''
+        df = df.rename(columns=self.tasks_rename)
+        df = df[self.column_names('tasks')]
+
         return df
 
     def save_task_yaml(self, project, task_id, yaml_dir):
