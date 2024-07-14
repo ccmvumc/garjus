@@ -712,14 +712,14 @@ class Garjus:
             session=sess,
             result='COMPLETE')
 
-    def import_nifti(self, src, dst):
+    def import_nifti(self, src, dst, modality='MR'):
         """Import nifti source to destination."""
         logger.debug(f'uploading from:{src}')
 
         if dst.count('/') == 4:
             (proj, subj, sess, scan, scantype) = dst.split('/')
             logger.debug(f'uploading to:{proj},{subj},{sess},{scan},{scantype}')
-            return self.upload_nifti(src, proj, subj, sess, scan, scantype)
+            return self.upload_nifti(src, proj, subj, sess, scan, scantype, modality)
         else:
             logger.error(f'invalid dst:{dst}')
             return
@@ -2885,17 +2885,15 @@ class Garjus:
             logger.info(f'uploading JSON:{json_path}')
             utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
 
-    def _upload_nifti(self, nifti, scan_object, scan_type):
-        scan_modality = 'MR'
-        scan_datatype = 'xnat:mrScanData'
+    def _upload_nifti(self, nifti, scan_object, scan_type, data_type):
         scan_attrs = {
             'series_description': scan_type,
             'type': scan_type,
             'quality': 'usable'}
 
         # make the scan
-        logger.debug(f'creating xnat scan:datatype={scan_datatype}')
-        scan_object.create(scans=scan_datatype)
+        logger.debug(f'creating xnat scan:datatype={data_type}')
+        scan_object.create(scans=data_type)
         scan_object.attrs.mset(scan_attrs)
 
         # Upload the NIFTIs
@@ -2972,8 +2970,11 @@ class Garjus:
         self._upload_scan(scan_dir, scan_object)
         logger.info(f'finished uploading scan:{scan}')
 
-    def upload_nifti(self, nifti, project, subject, session, scan, scantype):
-        sess_datatype = 'xnat:mrSessionData'
+    def upload_nifti(self, nifti, project, subject, session, scan, scantype, modality='MR'):
+        if modality == 'PET':
+            sess_datatype = 'xnat:petSessionData'
+        else:
+            sess_datatype = 'xnat:mrSessionData'
 
         if not self.xnat_enabled():
             raise Exception('xnat not enabled')
@@ -2994,12 +2995,17 @@ class Garjus:
             logger.info(f'session exists:{session}')
 
         scan_object = session_object.scan(scan)
+        
         if scan_object.exists():
             logger.info(f'scan exists, skipping:{scan}')
             return
 
         logger.info(f'uploading nifti:{nifti}')
-        self._upload_nifti(nifti, scan_object, scantype)
+        if modality == 'PET':
+            scan_datatype = 'xnat:petScanData'
+        else:
+            scan_datatype = 'xnat:mrScanData'
+        self._upload_nifti(nifti, scan_object, scantype, scan_datatype)
         logger.info(f'finished uploading nifti:{nifti}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):

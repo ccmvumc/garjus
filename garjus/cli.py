@@ -321,10 +321,11 @@ def import_dicom(src, dst):
 @cli.command('importnifti')
 @click.argument('src', required=True)
 @click.argument('dst', required=True)
-def import_nifti(src, dst):
+@click.option('--modality', '-m', 'modality', required=False)
+def import_nifti(src, dst, modality):
     click.echo('garjus! importnifti')
     g = Garjus()
-    g.import_nifti(src, dst)
+    g.import_nifti(src, dst, modality=modality)
 
 
 @cli.command('pdf')
