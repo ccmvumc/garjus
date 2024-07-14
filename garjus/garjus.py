@@ -712,6 +712,28 @@ class Garjus:
             session=sess,
             result='COMPLETE')
 
+    def import_nifti(self, src, dst):
+        """Import nifti source to destination."""
+        logger.debug(f'uploading from:{src}')
+
+        if dst.count('/') == 4:
+            (proj, subj, sess, scan, scantype) = dst.split('/')
+            logger.debug(f'uploading to:{proj},{subj},{sess},{scan},{scantype}')
+            return self.upload_nifti(src, proj, subj, sess, scan, scantype)
+        else:
+            logger.error(f'invalid dst:{dst}')
+            return
+
+        logger.debug(f'adding activity:{src}')
+        self.add_activity(
+            project=proj,
+            category='import_nifti',
+            description=src,
+            subject=subj,
+            session=sess,
+            scan=scan,
+            result='COMPLETE')
+
     def copy_sess(self, src, dst):
         """Copy dicom source to destination."""
         logger.debug(f'copy from:{src}')
@@ -2863,6 +2885,22 @@ class Garjus:
             logger.info(f'uploading JSON:{json_path}')
             utils_xnat.upload_file(json_path, scan_object.resource('JSON'))
 
+    def _upload_nifti(self, nifti, scan_object, scan_type):
+        scan_modality = 'MR'
+        scan_datatype = 'xnat:mrScanData'
+        scan_attrs = {
+            'series_description': scan_type,
+            'type': scan_type,
+            'quality': 'usable'}
+
+        # make the scan
+        logger.debug(f'creating xnat scan:datatype={scan_datatype}')
+        scan_object.create(scans=scan_datatype)
+        scan_object.attrs.mset(scan_attrs)
+
+        # Upload the NIFTIs
+        utils_xnat.upload_files([nifti], scan_object.resource('NIFTI'))
+
     def upload_session(self, session_dir, project, subject, session):
         # session dir - should only contain a subfolder for each series
         # as created by rename_dicom()
@@ -2933,6 +2971,36 @@ class Garjus:
         logger.info(f'uploading scan:{scan}')
         self._upload_scan(scan_dir, scan_object)
         logger.info(f'finished uploading scan:{scan}')
+
+    def upload_nifti(self, nifti, project, subject, session, scan, scantype):
+        sess_datatype = 'xnat:mrSessionData'
+
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
+        # Check that subject exists, create as needed
+        subject_object = self._xnat.select_subject(project, subject)
+        if not subject_object.exists():
+            logger.info(f'subject does not exist, creating:{subject}')
+            subject_object.create()
+        else:
+            logger.info(f'subject exists:{subject}')
+
+        session_object = subject_object.experiment(session)
+        if not session_object.exists():
+            logger.info(f'session does not exist, creating')
+            session_object.create(experiments=sess_datatype)
+        else:
+            logger.info(f'session exists:{session}')
+
+        scan_object = session_object.scan(scan)
+        if scan_object.exists():
+            logger.info(f'scan exists, skipping:{scan}')
+            return
+
+        logger.info(f'uploading nifti:{nifti}')
+        self._upload_nifti(nifti, scan_object, scantype)
+        logger.info(f'finished uploading nifti:{nifti}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):
         if not self.xnat_enabled():

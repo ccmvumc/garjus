@@ -318,6 +318,15 @@ def import_dicom(src, dst):
     g.import_dicom(src, dst)
 
 
+@cli.command('importnifti')
+@click.argument('src', required=True)
+@click.argument('dst', required=True)
+def import_nifti(src, dst):
+    click.echo('garjus! importnifti')
+    g = Garjus()
+    g.import_nifti(src, dst)
+
+
 @cli.command('pdf')
 @click.argument('src', required=True)
 @click.option('--project', '-p', 'project', required=True)
