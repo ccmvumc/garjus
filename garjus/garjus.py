@@ -68,17 +68,29 @@ class Garjus:
         self._xnat = None
         self._rc = None
         self._rcq = None
+        self._user = 'UnknownUser'
 
-        username = 'UnknownUser'
         try:
             if current_user.is_authenticated:
-                username = current_user.id
+                hostname = current_user.hostname
+                self._user = current_user.id
+                self._xnat = self._alias_xnat(hostname, self._user)
+                logger.debug(f'current user is:{self._user}')
+            else:
+                raise Exception('user not authenticated')
         except Exception as err:
             logger.debug(err)
 
-        logger.debug(f'current user is:{username}')
+            if xnat_interface:
+                self._xnat = xnat_interface
+            else:
+                try:
+                    self._xnat = self._default_xnat()
+                    self._disconnect_xnat = True
+                except Exception as err2:
+                    logger.debug(f'could not connect to XNAT:{err2}')
 
-        if username == 'admin':
+        if self._user == 'admin':
             # Prevent xnat admin user from accessing redcap
             logger.debug('refusing to connect xnat admin to garjus redcap')
             self._rc = None
@@ -94,25 +106,6 @@ class Garjus:
         except FileNotFoundError as err:
             logger.debug(err)
             logger.debug('REDCap credentials not found in ~/.redcap.txt')
-
-        try:
-            if current_user.is_authenticated:
-                hostname = current_user.hostname
-                self._user = current_user.id
-                self._xnat = self._alias_xnat(hostname, self._user)
-            else:
-                raise Exception('user not authenticated')
-        except Exception as err:
-            logger.debug(err)
-
-            if xnat_interface:
-                self._xnat = xnat_interface
-            else:
-                try:
-                    self._xnat = self._default_xnat()
-                    self._disconnect_xnat = True
-                except Exception as err2:
-                    logger.debug(f'could not connect to XNAT:{err2}')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
