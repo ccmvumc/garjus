@@ -548,6 +548,9 @@ class Garjus:
             rec = [x for x in rec if x['task_status'] not in DONE_LIST]
 
         df = pd.DataFrame(rec)
+        if df.empty:
+            return pd.DataFrame(columns=self.column_names('tasks'))
+
         df['PROJECT'] = df[def_field]
         df['ID'] = df['redcap_repeat_instance'].astype(str)
 
