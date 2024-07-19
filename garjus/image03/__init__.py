@@ -45,12 +45,12 @@ logger = logging.getLogger('garjus.image03')
 IMAGE03_TEMPLATE = "https://nda.nih.gov/api/datadictionary/v2/datastructure/image03/template"
 
 
-def update(garjus, projects=None, startdate=None, enddate=None):
+def update(garjus, projects=None, startdate=None, enddate=None, sites=None):
     """Update image03 batches."""
     for p in (projects or garjus.projects()):
         if p in projects:
             logger.debug(f'updating image03:{p}')
-            _update_project(garjus, p, startdate, enddate)
+            _update_project(garjus, p, startdate, enddate, sites)
 
 
 def download(garjus, project, image03_csv, download_dir):
@@ -71,8 +71,7 @@ def _parse_map(mapstring):
     return parsed_map
 
 
-def _update_project(garjus, project, startdate=None, enddate=None):
-
+def _update_project(garjus, project, startdate=None, enddate=None, sites=None):
     # Get map of Xnat scan types to NDA scan types
     xst2nst = garjus.project_setting(project, 'xst2nst')
     if not xst2nst:
@@ -100,7 +99,8 @@ def _update_project(garjus, project, startdate=None, enddate=None):
         xst2nei,
         outfile,
         startdate,
-        enddate)
+        enddate,
+        sites=sites)
 
 
 def _download_dicom_zip(scan, zipfile):
@@ -342,7 +342,8 @@ def _make_image03_csv(
     exp_map,
     outfile,
     startdate=None,
-    enddate=None
+    enddate=None,
+    sites=None,
 ):
     dfs = garjus.subjects(project, include_dob=True)
 
@@ -351,7 +352,7 @@ def _make_image03_csv(
         projects=[project],
         scantypes=type_map.keys(),
         modalities=['MR'],
-        sites=['VUMC'],
+        sites=sites,
         startdate=startdate,
         enddate=enddate)
 
@@ -360,7 +361,7 @@ def _make_image03_csv(
         projects=[project],
         scantypes=type_map.keys(),
         modalities=['PET'],
-        sites=['VUMC'],
+        sites=sites,
         startdate=startdate,
         enddate=enddate)
 
