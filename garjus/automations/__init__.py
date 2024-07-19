@@ -671,7 +671,7 @@ def _run_scan_automations(automations, garjus, project):
             ['fMRI_REST1', 'fMRI_REST2'],
             sites=['VUMC'],
         )
-     elif project in ['DepMIND2', 'DepMIND3']:
+    elif project in ['DepMIND2', 'DepMIND3']:
         logger.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module(
