@@ -1820,7 +1820,8 @@ class Garjus:
                 'stats',
                 'issues',
                 'progress',
-                'compare'
+                'compare',
+                'scans',
             ]
 
         logger.debug(f'updating projects:{projects}:{choices}')

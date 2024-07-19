@@ -647,7 +647,7 @@ def _run_scan_automations(automations, garjus, project):
     project_redcap = garjus.primary(project)
 
     # Add slice timing
-    if project == 'REMBRANDT':
+    if project in ['REMBRANDT', 'COGD']:
         logger.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module(
