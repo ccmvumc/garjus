@@ -671,6 +671,18 @@ def _run_scan_automations(automations, garjus, project):
             ['fMRI_REST1', 'fMRI_REST2'],
             sites=['VUMC'],
         )
+     elif project in ['DepMIND2', 'DepMIND3']:
+        logger.debug(f'running add_slicetiming:{project}')
+
+        slicetiming = importlib.import_module(
+            'garjus.automations.xnat_add_slicetiming')
+        results += slicetiming.process_project(
+            garjus,
+            project,
+            DM2_SLICE_TIMING,
+            ['fMRI_REST1', 'fMRI_REST2', 'fMRI_REST3'],
+            sites=['VUMC'],
+        )
 
     # load the automations
     try:
