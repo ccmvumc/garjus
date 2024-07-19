@@ -343,7 +343,7 @@ def export_pdf(src, project):
     '--start', '-s', 'startdate', type=click.DateTime(formats=['%Y-%m-%d']))
 @click.option(
     '--end', '-e', 'enddate', type=click.DateTime(formats=['%Y-%m-%d']))
-@click.option('--site', '-s', 'site', multiple=True)
+@click.option('--site', multiple=True)
 def image03csv(project, startdate, enddate, site):
     click.echo('garjus! image03csv')
     g = Garjus()
