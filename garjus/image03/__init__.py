@@ -72,17 +72,27 @@ def _parse_map(mapstring):
 
 
 def _update_project(garjus, project, startdate=None, enddate=None, sites=None):
+    xst2nei = None
+
     # Get map of Xnat scan types to NDA scan types
     xst2nst = garjus.project_setting(project, 'xst2nst')
     if not xst2nst:
         logger.debug('no xst2nst')
         return
 
-    # Get map of Xnat scan types to NDA experiment types (as applicable)
-    xst2nei = garjus.project_setting(project, 'xst2nei')
+    # Check for site specific experiment types in xst2nei
+    if len(sites) == 1:
+        site_data = garjus.sites(project)
+        for rec in site_data:
+            if rec['site_shortname'] == sites[0] and rec['site_xst2nei']:
+                xst2nei = rec['site_xst2nei']
+
     if not xst2nei:
-        logger.debug('no xst2nei')
-        return
+        # Get map of Xnat scan types to NDA experiment types
+        xst2nei = garjus.project_setting(project, 'xst2nei')
+        if not xst2nei:
+            logger.debug('no xst2nei')
+            return
 
     # Parse strings into dictionary
     xst2nst = _parse_map(xst2nst)
