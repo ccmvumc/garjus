@@ -20,6 +20,7 @@ logger = logging.getLogger('dashboard.queue')
 STATUSES = [
     'FAILED',
     'COMPLETE',
+    'COMPLETED',
     'UPLOADING',
     'RUNNING',
     'PENDING',
