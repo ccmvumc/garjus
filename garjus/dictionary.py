@@ -174,7 +174,7 @@ PROCLIB = {
         'short_descrip': 'FreeSurfer 7 ScLimbic - volumes of subcortical limbic regions including Basal Forebrain.',
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1)',
         'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/ScLimbic',
-        'stats_subset': ['Left-Basal-Forebrain', 'Right-Basal-Forebrain', 'Left-Nucleus-Accumbens', 'Right-Nucleus-Accumbens', 'eTIV'],
+        'stats_subset': ['Left-Basal-Forebrain', 'Right-Basal-Forebrain'],
     },
     'FEOBVQA_v2': {
         'short_descrip': 'Regional SUVR using Supra-ventricular White Matter as reference.',
@@ -220,12 +220,20 @@ PROCLIB = {
         'stats_subset': ['lhSFG2_incgtcon', 'rhSFG2_incgtcon', 'overall_rt_mean'],
     },
     'struct_preproc_v1': {
-        'short_descrip': 'Structural Pre-processing',
+        'short_descrip': 'SPM Structural Pre-processing - segmentation/normalization',
         'inputs_descrip': 'T1w MRI, FLAIR MRI',
     }
 }
 
 STATLIB = {
+    'BFC_v2': {
+        'CH4_L_VOL': 'Basal Forebrain Left Hemisphere CH4 Volume',
+        'CH4_L_VOL': 'Basal Forebrain Right Hemisphere CH4 Volume'
+    },
+    'BrainAgeGap_v2': {
+        'bag_age_gap': 'Brain Age Gap',
+        'bag_age_pred': 'Predicted Age',
+    },
     'FALLYPRIDEQA_v2': {
         'accumbens_suvr': 'Accumbens regional mean SUVR normalized by Whole Cerebellum',
         'amygdala_suvr': 'Amygdala regional mean SUVR normalized by Whole Cerebellum',
@@ -281,8 +289,12 @@ STATLIB = {
         'hpctail_lh': 'Hippocampus Tail Left Hemisphere Volume in cubic millimeters',
         'hpctail_rh': 'Hippocampus Tail Right Hemisphere Volume in cubic millimeters',
     },
+    'FS7sclimbic_v0': {
+        'Left-Basal-Forebrain': 'Basal Forebrain Left Hemisphere Volume in cubic millimeters',
+        'Right-Basal-Forebrain': 'Basal Forebrain Right Hemisphere Volume in cubic millimeters',
+    },
     'LST_v1': {
-        'wml_volume': 'White Matter Lesion Volume',
+        'wml_volume': 'White Matter Lesion Volume in milliliters',
     },
     'fmriqa_v4': {
         'dvars_mean': 'Derivative of Variance of voxels (measure of signal consistency)',

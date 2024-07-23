@@ -146,7 +146,7 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
     # Counts of each session type with sums
     # sessions column names are: SESSION, PROJECT, DATE, SESSTYPE, SITE
     type_list = sessions.SESSTYPE.unique()
-    site_list = sessions.SITE.unique()
+    site_list = sorted(sessions.SITE.unique())
     group_list = sessions.GROUP.unique()
     indent_width = max(2.5 - len(type_list) * 0.5, 0.3)
 
@@ -184,7 +184,7 @@ def _draw_counts(pdf, sessions, rangetype=None, groupby='site'):
     pdf.set_line_width(0.01)
     _kwargs = {'w': 1.0, 'h': 0.7, 'border': 1, 'align': 'C', 'fill': True}
 
-    # Column header for each session type
+    # Column header for each type
     pdf.cell(indent_width)
     for cur_type in type_list:
         _txt = cur_type
@@ -323,19 +323,33 @@ def _draw_scan_counts(pdf, scans, groupby='site'):
     pdf.cell(w=1.0)
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
-    _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
 
-    # Column header for each type
-    pdf.cell(w=indent_width + 2.0)
+    if len(sitetypes) > 4:
+        _kwargs = {'w': 0.5, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
+    else:
+        _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
+
+    # Column header for each type 
+
     if groupby == 'site':
+        if len(sitetypes) > 4:
+            pdf.cell(w=indent_width + 1.2)
+        else:
+            pdf.cell(w=indent_width + 2.0)
+
         for cur_type in sitetypes:
             _txt = cur_type
             if len(_txt) > 6:
                 pdf.set_font('helvetica', size=12)
 
-            pdf.cell(**_kwargs, text=cur_type)
+            if len(sitetypes) > 4:
+                _txt = _txt[:4]
+
+            pdf.cell(**_kwargs, text=_txt)
     
     else:
+        pdf.cell(w=indent_width + 2.0)
+
         for cur_type in grouptypes:
             _txt = cur_type
             if len(_txt) > 6:
@@ -349,14 +363,23 @@ def _draw_scan_counts(pdf, scans, groupby='site'):
     # Row formatting
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
-    _kwargs = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_s = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_t = {'w': 0.7, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_x = {'w': 2.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+
+    if len(sitetypes) > 4:
+        _kwargs = {'w': 0.5, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_s = {'w': 0.5, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_x = {'w': 1.5, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_t = {'w': 0.7, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+    else:
+        _kwargs = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_s = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_x = {'w': 2.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
+        _kwargs_t = {'w': 1.0, 'h': 0.4, 'border': 1, 'align': 'C', 'fill': False}
 
     pdf.set_font('helvetica', size=12)
 
     # First grouping by scan type
+    print(f'{indent_width=}')
+
     for cur_scan in scantypes:
         # Reset our cursor and indent
         pdf.cell(**{'w': 0, 'h': 0, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -372,7 +395,8 @@ def _draw_scan_counts(pdf, scans, groupby='site'):
             # Show the session type
             pdf.set_font('helvetica', size=12)
             _txt = cur_sess
-            pdf.cell(**_kwargs_s, text=_txt)
+            #pdf.cell(**_kwargs_s, text=_txt)
+            pdf.cell(**_kwargs_t, text=_txt)
 
             pdf.set_font('helvetica', size=16)
             if groupby == 'site':
@@ -388,7 +412,10 @@ def _draw_scan_counts(pdf, scans, groupby='site'):
 
             # Fill then next line and indent
             pdf.cell(**{'w': 1.0, 'h': 0.4, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.cell(w=(indent_width + 2.0))
+            if len(sitetypes) > 4:
+                pdf.cell(w=indent_width + 1.5)
+            else:
+                pdf.cell(w=indent_width + 2.0)
 
     # End by going to next line
     pdf.ln()
@@ -548,6 +575,7 @@ def _add_count_pages(pdf, sessions, enable_monthly=False, groupby='site'):
         pdf.ln(0.25)
         _draw_counts(pdf, mr_sessions, rangetype='lastmonth', groupby=groupby)
         pdf.ln(1)
+        pdf.add_page()
 
     # Add other Modalities, counts for each session type
     logger.debug('adding other counts')
@@ -567,11 +595,6 @@ def _add_scan_count_pages(pdf, scans, groupby='site'):
     pdf.ln(0.25)
     _draw_scan_counts(pdf, mr_scans, groupby=groupby)
     pdf.ln(1)
-
-    # Add other Modalities
-    # addpage
-    #logger.debug('adding other counts')
-    #_add_others(pdf, sessions, enable_monthly=enable_monthly, groupby=groupby)
 
     return pdf
 
@@ -1378,6 +1401,8 @@ def _add_stats_pages(pdf, info):
 
 def make_pdf(info, filename):
     enable_monthly = info['enable_monthly']
+    multi_group = info['multi_group']
+
     """Make PDF from info, save to filename."""
     logger.debug('making PDF')
 
@@ -1389,12 +1414,16 @@ def make_pdf(info, filename):
     # Add first page showing MRIs
     logger.debug('adding first page')
     _add_count_pages(pdf, info['sessions'], enable_monthly=enable_monthly, groupby='site')
-    _add_count_pages(pdf, info['sessions'], enable_monthly=enable_monthly, groupby='group')
+
+    # Show group pages only when multiple groups found
+    if multi_group:
+        _add_count_pages(pdf, info['sessions'], enable_monthly=enable_monthly, groupby='group')
 
     # Add per scan counts
     logger.debug('adding per scan count pages')
     _add_scan_count_pages(pdf, info['scans'], groupby='site')
-    _add_scan_count_pages(pdf, info['scans'], groupby='group')
+    if multi_group:
+        _add_scan_count_pages(pdf, info['scans'], groupby='group')
 
     # Timeline
     logger.debug('adding timeline page')
@@ -1695,6 +1724,11 @@ def make_project_report(
     info['primary_redcap'] = garjus.project_setting(project, 'primary')
     info['secondary_redcap'] = garjus.project_setting(project, 'secondary')
     info['stats_redcap'] = garjus.project_setting(project, 'stats')
+
+    if len(sessions['GROUP'].unique()) > 1:
+        info['multi_group'] = True
+    else:
+        info['multi_group'] = False
 
     # Save the PDF report to file
     make_pdf(info, pdfname)
