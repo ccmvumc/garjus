@@ -3,7 +3,7 @@ import logging
 
 import redcap
 
-from ..utils_redcap import upload_file
+from ...utils_redcap import upload_file
 
 
 logger = logging.getLogger('garjus.automations.fitbit.file2redcap')
