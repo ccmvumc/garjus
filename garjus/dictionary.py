@@ -90,7 +90,8 @@ DISABLE_STATTYPES = [
     'EEG-EGI-wavelet_v1',
     'EEG-EGI-preproc_v2',
     'DnSeg_v1',
-    'synbold_v1'
+    'synbold_v1',
+    'fmri_rest_schaef_conn_v1',
 ]
 
 COLUMNS = {
