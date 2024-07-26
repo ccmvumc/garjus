@@ -1,7 +1,7 @@
 import logging
 import sys
 import redcap
-from garjus.automations.fitbit.file2redcap import File2Redcap
+from garjus.automations.etl_fitbit.file2redcap import File2Redcap
 
 
 # For testing, we create a connection and run it.
