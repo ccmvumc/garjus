@@ -1,7 +1,7 @@
 import logging
 import sys
 import redcap
-from garjus.automations.lifedata_file2redcap import LifeDataFile2Redcap
+from garjus.automations.fitbit.file2redcap import File2Redcap
 
 
 # For testing, we create a connection and run it.
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     rc = redcap.Project(api_url, api_key)
 
     logging.info('Running it')
-    results = LifeDataFile2Redcap(rc, ROOTDIR).run()
+    results = File2Redcap(rc, ROOTDIR).run()
 
     logging.info(results)
     logging.info('Done!')
