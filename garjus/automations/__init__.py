@@ -249,6 +249,78 @@ def _run_etl_automation(automation, garjus, project):
         garjus.add_activity(**r)
 
 
+def _run_etl_fitbit(project):
+    '''project is a pycap redcap project that contains data to process'''
+    results = []
+    file_field = 'fitbit_summary_worn'
+    def_field = project.def_field
+    fields = [def_field, file_field]
+    id2subj = {}
+
+    # load the automation
+    try:
+        fitbit = importlib.import_module(f'garjus.automations.etl_fitbit')
+    except ModuleNotFoundError as err:
+        logger.error(f'error loading module:{err}')
+        return
+
+    events = field2events(project, file_field)
+    sec_field = project.export_project_info()['secondary_unique_field']
+    if sec_field:
+        rec = project.export_records(fields=[def_field, sec_field])
+        id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
+    else:
+        rec = project.export_records(fields=[def_field])
+        id2subj = {x[def_field]: x[def_field] for x in rec if x[def_field]}
+
+    # Get records
+    rec = project.export_records(fields=fields, events=events)
+
+    # Process each record
+    for r in rec:
+        record_id = r[def_field]
+        event_id = r['redcap_event_name']
+        subj = id2subj.get(record_id)
+
+        # Check for converted file
+        if not r[file_field]:
+            logging.debug(f'no file found:{record_id}:{subj}:{event_id}:{file_field}')
+            continue
+
+        if r[file_field] == 'CONVERT_FAILED.txt':
+            logging.debug(f'found CONVERT_FAILED')
+            continue
+
+        if r[file_field] == 'MISSING_DATA.txt':
+            logging.debug(f'found MISSING_DATA')
+            continue
+
+        # Do the ETL
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_file = f'{tmpdir}/TimeFBWorn.csv'
+
+            # Download files from redcap
+            logger.debug(f'downloading file:{data_file}')
+            download_file(
+                project, record_id, file_field, data_file, event_id=event_id)
+
+            # Extract and Transform
+            data = etl_fitbit.process(data_file)
+
+        # Load data back to redcap
+        _load(project, record_id, event_id, data)
+
+        results.append({
+            'result': 'COMPLETE',
+            'category': 'etl_fitbit',
+            'description': 'etl_fitbit',
+            'subject': subj,
+            'event': event_id,
+            'field': file_field})
+
+    return results
+
+
 def _run_etl_nihtoolbox_drtaylor(project):
     data = {}
     results = []
