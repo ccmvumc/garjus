@@ -200,11 +200,12 @@ PROCLIB = {
         'procurl': 'https://github.com/ccmvumc/LST1',
     },
     'Multi_Atlas_v3': {
-        'short_descrip': 'Multi Atlas Labeling with BrainColor atlas and ICV.',
+        'short_descrip': 'Multi Atlas Labeling with BrainColor atlas.',
         'inputs_descrip': 'T1w MRI',
+        'procurl': 'https://pubmed.ncbi.nlm.nih.gov/27726243',
     },
     'SAMSEG_v1': {
-        'short_descrip': 'Runs SAMSEG from FreeSurfer 7.2 to get White Matter Lesion Volume.',
+        'short_descrip': 'Runs SAMSEG from FreeSurfer 7.2.',
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), FLAIR MRI',
         'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/Samseg',
     },
@@ -223,13 +224,19 @@ PROCLIB = {
     'struct_preproc_v1': {
         'short_descrip': 'SPM Structural Pre-processing - segmentation/normalization',
         'inputs_descrip': 'T1w MRI, FLAIR MRI',
+    },
+    'FS7hypothal_v1': {
+        'short_descrip': 'FreeSurfer Hypothalamic Subunit Segmentation',
+        'inputs_descrip': 'T1w processed with FreeSurfer (FS7_v1)',
+        'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/HypothalamicSubunits',
+        'stats_subset': ['whole left', 'whole right'],
     }
 }
 
 STATLIB = {
     'BFC_v2': {
         'CH4_L_VOL': 'Basal Forebrain Left Hemisphere CH4 Volume',
-        'CH4_L_VOL': 'Basal Forebrain Right Hemisphere CH4 Volume'
+        'CH4_R_VOL': 'Basal Forebrain Right Hemisphere CH4 Volume'
     },
     'BrainAgeGap_v2': {
         'bag_age_gap': 'Brain Age Gap',
@@ -311,5 +318,9 @@ STATLIB = {
     },
     'Multi_Atlas_v3': {
         'ticv_mm3': 'Total intracranial volume in cubic millimeters',
-    }
+    },
+    'FS7hypothal_v1': {
+        'whole left': 'whole left Hypothalamus',
+        'whole right': 'whole right Hypothalamus',
+    },
 }
