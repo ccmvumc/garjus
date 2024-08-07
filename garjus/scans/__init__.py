@@ -75,7 +75,7 @@ def update_scan(garjus, proj, subj, sess, scan):
         logger.warn(f'could not set stats:{sess}:{scan}:{err}')
         return
 
-    if stats.get('duration', False) or stats.get('tr', False):
+    if stats.get('duration', False) or stats.get('tr', False) or stats.get('tracer', False):
         # we go something so upload it
         try:
             logger.debug(f'uploading:{proj}:{subj}:{sess}:{scan}')
@@ -83,3 +83,5 @@ def update_scan(garjus, proj, subj, sess, scan):
         except Exception as err:
             logger.warn(f'could not set stats:{sess}:{scan}:{err}')
             return
+    else:
+        logger.debug('nothing to upload')
