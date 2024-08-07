@@ -79,6 +79,7 @@ REPORTS_RENAME = {
 DISABLE_STATTYPES = [
     'fmri_rest_v2',
     'fmri_rest_v4',
+    'fmri_rest_v5',
     'fmri_roi_v1',
     'struct_preproc_noflair_v1',
     'fmri_nback_v2',
