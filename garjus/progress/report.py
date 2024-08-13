@@ -1682,7 +1682,12 @@ def make_project_report(
         right_on=('ID', 'PROJECT'),
         how='left',
     )
-    sessions['GROUP'] = sessions['GROUP'].fillna('UNKNOWN')
+
+    if project == 'REMBRANDT':
+        sessions['GROUP'] = sessions['GROUP'].fillna('Depress')
+    else:
+        sessions['GROUP'] = sessions['GROUP'].fillna('UNKNOWN')
+
     scans = pd.merge(
         scans,
         subjects[['ID', 'PROJECT', 'GROUP']],
@@ -1690,7 +1695,11 @@ def make_project_report(
         right_on=('ID', 'PROJECT'),
         how='left'
     )
-    scans['GROUP'] = scans['GROUP'].fillna('UNKNOWN')
+
+    if project == 'REMBRANDT':
+        scans['GROUP'] = scans['GROUP'].fillna('Depress')
+    else:
+        scans['GROUP'] = scans['GROUP'].fillna('UNKNOWN')
 
     # Load stats with extra assessor columns
     stats = garjus.stats(project, assessors)
