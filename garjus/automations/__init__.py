@@ -254,7 +254,8 @@ def _run_etl_fitbit(project):
     results = []
     file_field = 'fitbit_summary_worn'
     def_field = project.def_field
-    fields = [def_field, file_field]
+    done_field = 'fitbit_daysworn'
+    fields = [def_field, file_field, done_field]
     id2subj = {}
 
     # load the automation
@@ -281,6 +282,10 @@ def _run_etl_fitbit(project):
         record_id = r[def_field]
         event_id = r['redcap_event_name']
         subj = id2subj.get(record_id)
+
+        if r[done_field]:
+            logger.debug(f'already ETL:{record_id}:{event_id}')
+            continue
 
         # Check for converted file
         if not r[file_field]:
