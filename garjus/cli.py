@@ -184,6 +184,32 @@ def download(
         )
 
 
+@cli.command('switch')
+@click.option('--type', '-t', 'proctype', multiple=False, required=True)
+@click.option('--old', '-o', 'oldstatus', multiple=False, required=True)
+@click.option('--new', '-n', 'newstatus', multiple=False, required=True)
+@click.option('--project', '-p', 'project', required=True)
+@click.option('--sesstype', '-s', 'sesstype', multiple=True, required=False)
+@click.option('--session', '-e', 'session', multiple=True, required=False)
+def switch_status(
+    project,
+    proctype,
+    oldstatus,
+    newstatus,
+    sesstype,
+    session
+):
+    click.echo('garjus! switch status')
+    Garjus().switch_status(
+        project,
+        proctype,
+        oldstatus,
+        newstatus,
+        sesstype,
+        session
+    )
+
+
 @cli.command('run')
 @click.argument('analysis_id', required=True)
 @click.argument('output_zip', type=click.Path(), required=False)

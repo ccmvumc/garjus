@@ -952,6 +952,63 @@ class Garjus:
 
         return self._project2stats[project]
 
+    def switch_status(
+        self,
+        project,
+        proctype,
+        oldstatus,
+        newstatus,
+        sesstype,
+        session
+    ):
+        # Switch assessor status in xnat/redcap, e.g. from JOB_FAILED to COMPLETE
+        # Load assessors
+        #df = self.assessors(
+        #    projects=[project],
+        #    proctypes=[proctype],
+        #    sesstypes=sesstype
+        #)
+
+        # get tasks
+        df = self.tasks(hidedone=False)
+        df = df[(df.PROJECT == project) & (df.YAMLUPLOAD.str.startswith(proctype))]
+
+        # Filter
+        # df = df[df.STATUS == oldstatus]
+        df = df[df.ASSESSOR == 'NIC-x-NIC0130089-x-NIC0130089_m06-x-ASHS_v2-x-401ce309']
+
+        logger.info(f'set from {oldstatus} to {newstatus}:{len(df)}')
+
+        # Set statuses
+        for i, t in df.iterrows():
+            assr = t['ASSESSOR']
+
+            # Connect to the assessor on xnat
+            if is_sgp_assessor(t['ASSESSOR']):
+                xsitype = 'proc:subjgenprocdata'
+                assessor = self.xnat().select_sgp_assessor(
+                    project,
+                    assr.split('-x-')[1],
+                    assr)
+            else:
+                xsitype = 'proc:genprocdata'
+                assessor = self.xnat().select_assessor(
+                    project,
+                    assr.split('-x-')[1],
+                    assr.split('-x-')[2],
+                    assr)
+
+            if not assessor.exists():
+                logger.debug(f'assessor not found on xnat:{assr}')
+                continue
+
+            logger.info(f'setting xnat attributes:{project}:{assr}:{newstatus}')
+            assessor.attrs.set(f'{xsitype}/procstatus', newstatus)
+
+            task_id = t['ID']
+            logger.info(f'setting REDCap attributes:{project}:{task_id}:{newstatus}')
+            self.set_task_status(project, task_id, newstatus)
+
     def analyses(self, projects, download=True):
         """Return analyses."""
         data = []
