@@ -974,8 +974,7 @@ class Garjus:
         df = df[(df.PROJECT == project) & (df.YAMLUPLOAD.str.startswith(proctype))]
 
         # Filter
-        # df = df[df.STATUS == oldstatus]
-        df = df[df.ASSESSOR == 'NIC-x-NIC0130089-x-NIC0130089_m06-x-ASHS_v2-x-401ce309']
+        df = df[df.STATUS == oldstatus]
 
         logger.info(f'set from {oldstatus} to {newstatus}:{len(df)}')
 
