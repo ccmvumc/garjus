@@ -378,8 +378,7 @@ def _draw_scan_counts(pdf, scans, groupby='site'):
     pdf.set_font('helvetica', size=12)
 
     # First grouping by scan type
-    print(f'{indent_width=}')
-
+    #print(f'{indent_width=}')
     for cur_scan in scantypes:
         # Reset our cursor and indent
         pdf.cell(**{'w': 0, 'h': 0, 'border': 0}, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -967,6 +966,40 @@ def _add_nda_page(pdf, info):
 
     return pdf
 
+def _add_analyses_page(pdf, info):
+    pdf.add_page()
+
+    pdf.cell(text='ANALYSES', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    analyses = info['analyses']
+
+    #print(analyses)
+
+    for i, a in analyses.iterrows():
+        #PROJECT
+        #ID
+        #NAME
+        #STATUS
+        #EDIT
+        #NOTES
+        #SUBJECTS
+        #PROCESSOR
+        #INVESTIGATOR
+        #OUTPUT
+
+        _txt = f'{a.PROJECT}-A{a.ID} {a.NAME}'
+        pdf.cell(text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        _txt = f'STATUS:{a.STATUS} OUTPUT:{a.OUTPUT}'
+        pdf.cell(text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        _txt = f'NOTES:{a.NOTES}'
+        pdf.cell(text=_txt, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        pdf.ln(0.3)
+
+
+    return pdf
 
 def _add_settings_page(pdf, info):
     pdf.add_page()
@@ -1484,6 +1517,13 @@ def make_pdf(info, filename):
     # Settings
     _add_settings_page(pdf, info)
 
+    # NDA
+    _add_nda_page(pdf, info)
+
+    # Analyses
+    _add_analyses_page(pdf, info)
+
+
     # Save to file
     logger.debug('saving PDF to file:{}'.format(pdf.filename))
     try:
@@ -1640,6 +1680,7 @@ def make_project_report(
     statlib = garjus.stats_library()
     activity = garjus.activity(project)
     issues = garjus.issues(project)
+    analyses = garjus.analyses([project], download=False)
 
     # Load types for this project
     proctypes = garjus.proctypes(project)
@@ -1717,6 +1758,7 @@ def make_project_report(
     info['sessions'] = sessions
     info['activity'] = activity
     info['issues'] = issues
+    info['analyses'] = analyses
     info['recentjobs'] = _recent_jobs(assessors)
     info['recentqa'] = _recent_qa(assessors)
     info['stats'] = stats
