@@ -407,11 +407,14 @@ class Garjus:
         return data
 
     def delete_proctype(self, project, proctype, procstatus=None, qcstatus=None):
+        msg = f'deleting assessors:{project=}:{proctypes=}:{procstatus=}:{qcstatus=}'
+        logger.info(msg)
+
         # Get list of assessors of proctype from project
         assessors = self.assessors(projects=[project], proctypes=[proctype])
 
         if procstatus:
-            logger.debug(f'filter qcstatus:{procstatus}')
+            logger.debug(f'filter proctatus:{procstatus}')
             assessors = assessors[assessors.PROCSTATUS == procstatus]
 
         if qcstatus:
@@ -429,6 +432,14 @@ class Garjus:
 
         if assessors.empty:
             return
+
+        if procstatus:
+            logger.debug(f'filter proctatus:{procstatus}')
+            assessors = assessors[assessors.PROCSTATUS == procstatus]
+
+        if qcstatus:
+            logger.debug(f'filter qcstatus:{qcstatus}')
+            assessors = assessors[assessors.QCSTATUS == qcstatus]
 
         for a in sorted(assessors.ASSR.unique()):
             logger.info(f'deleting assessor:{a}')
