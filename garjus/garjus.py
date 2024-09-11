@@ -407,7 +407,7 @@ class Garjus:
         return data
 
     def delete_proctype(self, project, proctype, procstatus=None, qcstatus=None):
-        msg = f'deleting assessors:{project=}:{proctypes=}:{procstatus=}:{qcstatus=}'
+        msg = f'deleting assessors:{project=}:{proctype=}:{procstatus=}:{qcstatus=}'
         logger.info(msg)
 
         # Get list of assessors of proctype from project
