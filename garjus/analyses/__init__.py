@@ -7,13 +7,296 @@ import subprocess as sb
 import yaml
 import zipfile
 from datetime import datetime
+import zipfile
+import glob
 
 import pandas as pd
+import requests
 
 
 logger = logging.getLogger('garjus.analyses')
 
-# TODO: move some of these functions to xnat_utils or to garjus methods
+
+# Files are downloaded into hierarchy,
+# for session assessors:
+# /INPUTS/<SUBJECT>/<SESSION>/assessors/<ASSESSOR>/<FILES>
+# for subject assessors:
+# /INPUTS/<SUBJECT>/assessors/<ASSESSOR>/<FILES>
+
+
+class Analysis(object):
+    def __init__(self, project, subjects, repo, csvfile=None, yamlfile=None):
+        self._project = project
+        self._subjects = subjects
+        self._csvfile = csvfile
+        self._repo = repo
+
+        if yamlfile:
+            self._yamlfile = yamlfile
+            self._processor = self.load_yaml()
+        else:
+            self._processor = self.load_processor()
+
+    def load_yaml(self):
+        # Load yaml contents
+        yaml_file = self._yamlfile
+        logger.info(f'loading yamlfile:{yaml_file}')
+        try:
+            with open(yaml_file, "r") as f:
+                return yaml.load(f, Loader=yaml.FullLoader)
+        except yaml.error.YAMLError as err:
+            logger.error(f'failed to load yaml:{yaml_file}:{err}')
+
+    def load_processor(self):
+        filename = 'processor.yaml'
+
+        if self._repo.startswith('/'):
+            self._yamlfile = f'{self._repo}/{filename}'
+            return self.load_yaml()
+        else:
+            # Load processor yaml from repo
+            base = 'https://raw.githubusercontent.com'
+
+            p = self._repo.replace(':', '/').split('/')
+            if len(p) != 2:
+                logger.error(f'failed to parse:{repo}')
+                return None
+
+            user = p[0]
+            repo = p[1]
+
+            logger.info(f'loading:{user=}:{repo=}')
+
+            url = f'{base}/{user}/{repo}/main/{filename}'
+
+            logger.info(f'{url=}')
+
+            # Get the file contents
+            try:
+                r = requests.get(url, allow_redirects=True)
+                if r.content == '':
+                    raise Exception('error exporting file from github')
+            except Exception as err:
+                logger.error(f'downloading file:{err}')
+                return None
+
+            # Cache these for downloading repo later
+            self._repo_user = user
+            self._repo_name = repo
+
+            return yaml.safe_load(r.text)
+
+    def download_repo(self, repo_dir):
+        #curl -sL $REPO | tar zxvf - -C $REPODIR --strip-components=1
+        user = self._repo_user
+        repo = self._repo_name
+        branch = 'main'
+        url = f'https://github.com/{user}/{repo}/archive/{branch}.zip'
+        repo_zip = f'{repo_dir}/{branch}.zip'
+
+        logger.info(f'loading:{url=}')
+
+        # Get the file contents
+        try:
+            r = requests.get(url, allow_redirects=True)
+            if r.content == '':
+                raise Exception('error exporting file from github')
+        except Exception as err:
+            logger.error(f'downloading file:{err}')
+            return None
+
+        # Save it
+        if r.status_code == 200:
+            with open(repo_zip, 'wb') as f:
+                f.write(r.content)
+        else:
+            logger.error(f'download failed:{r.text}')
+
+        # Unzip it
+        with zipfile.ZipFile(repo_zip, 'r') as z:
+            z.extractall(repo_dir)
+
+    def run(self, garjus, jobdir):
+        jobdir = os.path.abspath(jobdir)
+
+        inputs_dir = f'{jobdir}/INPUTS'
+        outputs_dir = f'{jobdir}/OUTPUTS'
+      
+        logger.info(f'creating INPUTS and OUTPUTS in:{jobdir}')
+        _make_dirs(inputs_dir)
+        _make_dirs(outputs_dir)
+
+        # Download inputs
+        logger.info(f'downloading analysis inputs to {inputs_dir}')
+        self.download_inputs(garjus, inputs_dir)
+
+        if os.path.exists(self._repo):
+            repo_dir = self._repo
+            logger.info(f'using local repo:{repo_dir}')
+        else:
+            # Get the code
+            repo_dir = f'{jobdir}/REPO'
+            logger.info('downloading repo')
+            self.download_repo(repo_dir)
+
+        # Run all commands
+        self.run_commands(jobdir, repo_dir)
+
+    def download_inputs(self, garjus, inputs_dir):
+        errors = []
+        processor = self._processor
+        project = self._project
+        subjects = self._subjects
+
+        logger.info('loading project data')
+        assessors = garjus.assessors(projects=[project])
+        scans = garjus.scans(projects=[project])
+        sgp = garjus.subject_assessors(projects=[project])
+
+        sessions = pd.concat([
+            _sessions_from_scans(scans),
+            _sessions_from_assessors(assessors)
+        ])
+        sessions = sessions.drop_duplicates()
+
+        if not subjects:
+            # Default to all subjects
+            subjects = list(sessions.SUBJECT.unique())
+
+        logger.info(f'subjects={subjects}')
+
+        # What to download for each subject?
+        subj_spec = processor['inputs']['xnat']['subjects']
+
+        logger.debug(f'subject spec={subj_spec}')
+
+        for subj in subjects:
+            logger.debug(f'subject={subj}')
+
+            # Make the Subject download folder
+            subj_dir = f'{inputs_dir}/{subj}'
+            _make_dirs(subj_dir)
+
+            # Download the subject as specified in subj_spec
+            try:
+                logger.info(f'_download_subject={subj}')
+                _download_subject(
+                    garjus,
+                    subj_dir,
+                    subj_spec,
+                    project,
+                    subj,
+                    sessions,
+                    assessors,
+                    sgp,
+                    scans)
+            except Exception as err:
+                logger.debug(err)
+                errors.append(subj)
+                continue
+
+        # report what's missing
+        if errors:
+            logger.info(f'errors{errors}')
+        else:
+            logger.info(f'download complete with no errors!')
+
+        logger.debug('done!')
+
+
+    def run_commands(self, jobdir, repodir=None):
+        command_mode = 'docker'
+        processor = self._processor
+
+        # Check for docker command
+        if not shutil.which('docker'):
+            logger.error('docker not found, cannot run containers')
+            return
+
+        command = processor.get('command', None)
+        if command is None:
+            logger.debug('no command found')
+            return
+
+        # Run steps
+        logger.info('running analysis steps...')
+
+        # Pre command
+        precommand = processor.get('pre', None)
+        if precommand:
+            # Get the container name or path
+            container = precommand['container']
+            for c in processor['containers']:
+                if c['name'] == container:
+                    container = c['source']
+
+            extraopts = precommand.get('extraopts', '')
+            args = precommand.get('args', '')
+            command_type = precommand.get('type', '')
+
+            logger.info(f'running analysis pre-command:{precommand=}')
+
+            _run_command(
+                container,
+                extraopts,
+                args,
+                command_mode,
+                command_type,
+                jobdir,
+                repodir
+            )
+
+        # And now the main command must run
+        container = command['container']
+        for c in processor['containers']:
+            if c['name'] == container:
+                if 'source' in c:
+                    container = c['source']
+                else:
+                    raise Exception('processor cannot be run in this environment.')
+
+        logger.debug(f'command mode is {command_mode}')
+
+        extraopts = command.get('extraopts', '')
+        args = command.get('args', '')
+        command_type = command.get('type', '')
+
+        logger.info(f'running main command:{command=}')
+
+        _run_command(
+            container,
+            extraopts,
+            args,
+            command_mode,
+            command_type,
+            jobdir,
+            repodir
+        )
+
+        # Post command
+        post = processor.get('post', None)
+        if post:
+            # Get the container name or path
+            container = post['container']
+            for c in processor['containers']:
+                if c['name'] == container:
+                    container = c['source']
+
+            extraopts = post.get('extraopts', '')
+            args = post.get('args', '')
+            command_type = post.get('type', '')
+
+            logger.info(f'running post command:{post=}')
+
+            _run_command(
+                container,
+                extraopts,
+                args,
+                command_mode,
+                command_type,
+                jobdir,
+                repodir
+            )
 
 
 def _download_zip(xnat, uri, zipfile):
@@ -52,295 +335,42 @@ def _download_file_stream(xnat, uri, dst):
     return dst
 
 
-def update(garjus, projects=None):
-    """Update analyses."""
-    for p in (projects or garjus.projects()):
-        if p in projects:
-            logger.debug(f'updating analyses:{p}')
-            _update_project(garjus, p)
-
-
-def _update_project(garjus, project):
-    analyses = garjus.analyses([project], download=True)
-
-    if len(analyses) == 0:
-        logger.debug(f'no open analyses for project:{project}')
-        return
-
-    # Handle each record
-    for i, a in analyses.iterrows():
-        aname = a['NAME']
-
-        if not a.get('PROCESSOR', False):
-            logger.debug(f'no processor:{aname}')
-            continue
-
-        if a['COMPLETE'] != '2':
-            logger.debug(f'skipping complete not set:{aname}')
-            continue
-
-        if a['STATUS'] in ['READY', 'ARCHIVE', 'COMPLETE', 'DEVEL']:
-            logger.debug(f'skipping done:{aname}')
-            continue
-
-        logger.info(f'updating analysis:{aname}')
-        _update(garjus, a)
-
-
-def _has_outputs(garjus, analysis):
-    project = analysis['PROJECT']
-    analysis_id = analysis['ID']
-    resource = f'{project}_{analysis_id}'
-    res_uri = f'/projects/{project}/resources/{resource}'
-    output_zip = f'{project}_{analysis_id}_OUTPUTS.zip'
-
-    res = garjus.xnat().select(res_uri)
-
-    file_list = res.files()
-    if output_zip in file_list:
-        logger.info(f'found:{output_zip}')
-        return True
-    else:
-        return False
-
-
-def _has_inputs(garjus, analysis):
-    project = analysis['PROJECT']
-    analysis_id = analysis['ID']
-    resource = f'{project}_{analysis_id}'
-    res_uri = f'/projects/{project}/resources/{resource}'
-    inputs_zip = f'{project}_{analysis_id}_INPUTS.zip'
-
-    res = garjus.xnat().select(res_uri)
-
-    file_list = res.files()
-    if inputs_zip in file_list:
-        logger.info(f'found:{inputs_zip}')
-        return True
-    else:
-        logger.info(f'inputs not found:{res_uri}:{inputs_zip}')
-
-        return False
-
-
-def _update(garjus, analysis):
-    with tempfile.TemporaryDirectory() as tempdir:
-        inputs_dir = f'{tempdir}/INPUTS'
-        outputs_dir = f'{tempdir}/OUTPUTS'
-
-        if _has_outputs(garjus, analysis):
-            logger.debug(f'outputs exist')
-        elif _has_inputs(garjus, analysis):
-            logger.debug(f'inputs exist')
-        else:
-            _make_dirs(inputs_dir)
-            _make_dirs(outputs_dir)
-
-            # Create new inputs
-            logger.info(f'downloading analysis inputs to {inputs_dir}')
-            _download_inputs(garjus, analysis, inputs_dir)
-
-            logger.info(f'uploading analysis inputs zip')
-            try:
-                dst = upload_inputs(
-                    garjus,
-                    analysis['PROJECT'],
-                    analysis['ID'],
-                    tempdir)
-
-                logger.debug(f'set analysis inputs')
-                garjus.set_analysis_inputs(
-                    analysis['PROJECT'],
-                    analysis['ID'],
-                    dst)
-            except Exception as err:
-                logger.error(f'upload failed:{err}')
-                return
-
-            logger.info(f'running analysis')
-            _run(garjus, analysis, tempdir)
-
-            # Set STATUS
-            logger.info(f'set analysis status')
-            garjus.set_analysis_status(
-                analysis['PROJECT'],
-                analysis['ID'],
-                'READY')
-
-    # That is all
-    logger.info(f'analysis done!')
-
-
-def _run(garjus, analysis, tempdir, sharedir=None):
-    # Run commmand and upload output
-
-    processor = analysis['PROCESSOR']
-
-    # Determine what container service we are using
-    if shutil.which('singularity'):
-        command_mode = 'singularity'
-    elif shutil.which('docker'):
-        command_mode = 'docker'
-    else:
-        logger.error('command mode not found, cannot run container command')
-        return
-
-    command = processor.get('command', None)
-    if command is None:
-        logger.debug('no command found')
-        return
-
-    # Run steps
-    logger.info('running analysis steps...')
-
-    # Pre command
-    precommand = processor.get('pre', None)
-    if precommand:
-        # Run steps
-        logger.debug('running analysis pre-command')
-
-        # Get the container name or path
-        container = precommand['container']
-        for c in processor['containers']:
-            if c['name'] == container:
-                if 'path' in c and command_mode == 'singularity':
-                    container = c['path']
-                else:
-                    container = c['source']
-
-        extraopts = precommand.get('extraopts', '')
-        args = precommand.get('args', '')
-        command_type = precommand.get('type', '')
-
-        _run_command(
-            container,
-            extraopts,
-            args,
-            command_mode,
-            command_type,
-            tempdir,
-            sharedir=sharedir
-        )
-
-    # And now the main command must run
-    logger.debug(f'running main command mode')
-
-    # Get the container name or path
-    container = command['container']
-    for c in processor['containers']:
-        if c['name'] == container:
-            if 'path' in c and command_mode == 'singularity':
-                container = c['path']
-            elif 'source' in c:
-                container = c['source']
-            else:
-                raise Exception('processor cannot be run in this environment.')
-
-    logger.debug(f'command mode is {command_mode}')
-
-    extraopts = command.get('extraopts', '')
-    args = command.get('args', '')
-    command_type = command.get('type', '')
-
-    _run_command(
-        container,
-        extraopts,
-        args,
-        command_mode,
-        command_type,
-        tempdir,
-        sharedir=sharedir
-    )
-
-    # Post command
-    post = processor.get('post', None)
-    if post:
-        # Run steps
-        logger.debug('running analysis post')
-
-        # Get the container name or path
-        container = post['container']
-        for c in processor['containers']:
-            if c['name'] == container:
-                if 'path' in c and command_mode == 'singularity':
-                    container = c['path']
-                else:
-                    container = c['source']
-
-        extraopts = post.get('extraopts', '')
-        args = post.get('args', '')
-        command_type = post.get('type', '')
-
-        _run_command(
-            container,
-            extraopts,
-            args,
-            command_mode,
-            command_type,
-            tempdir,
-            sharedir=sharedir
-        )
-
-    # Upload it
-    logger.info(f'uploading output')
-    try:
-        dst = upload_outputs(garjus, analysis['PROJECT'], analysis['ID'], tempdir)
-    except Exception as err:
-        logger.error(f'uploading outputs failed:{err}')
-        # TODO: determine if upload actually completed, usually does and
-        # we could continue here. how? check size? checksum?
-        return
-
-    garjus.set_analysis_outputs(analysis['PROJECT'], analysis['ID'], dst)
-
-
 def _run_command(
     container,
     extraopts,
     args,
     command_mode,
     command_type,
-    tempdir,
-    sharedir=None
+    jobdir,
+    repodir=None
 ):
     cmd = None
 
+    if not repodir:
+        # Mount to top-level of unextracted zipfile
+        repodir = glob.glob(f'{jobdir}/REPO/*/')[0]
+
     # Build the command string
-    if command_mode == 'singularity':
-        cmd = 'singularity'
-
-        if command_type == 'singularity_exec':
-            cmd += ' exec'
-        else:
-            cmd += ' run'
-
-        if sharedir:
-            cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
-            cmd += f' -B $HOME/.ssh:$HOME/.ssh'
-            cmd += f' -B {tempdir}/INPUTS:/INPUTS'
-            cmd += f' -B {sharedir}/OUTPUTS:/OUTPUTS'
-            cmd += f' -B {tempdir}:/tmp'
-            cmd += f' -B {tempdir}:/dev/shm'
-            cmd += f' {extraopts} {container} {args}'
-        else:
-            cmd += f' -e --env USER=$USER --env HOSTNAME=$HOSTNAME'
-            cmd += f' --home {tempdir}:$HOME'
-            cmd += f' -B $HOME/.ssh:$HOME/.ssh'
-            cmd += f' -B {tempdir}/INPUTS:/INPUTS'
-            cmd += f' -B {tempdir}/OUTPUTS:/OUTPUTS'
-            cmd += f' -B {tempdir}:/tmp'
-            cmd += f' -B {tempdir}:/dev/shm'
-            cmd += f' {extraopts} {container} {args}'
-
-    elif command_mode == 'docker':
+    if command_mode == 'docker':
         if container.startswith('docker://'):
             # Remove docker prefix
             container = container.split('docker://')[1]
 
-        cmd = f'docker run --rm'
-        cmd += f' -v {tempdir}/INPUTS:/INPUTS'
-        cmd += f' -v {tempdir}/OUTPUTS:/OUTPUTS'
-        cmd += f' {container}'
+        cmd = 'docker'
+
+        if extraopts:
+            extraopts = extraopts.replace('-B', '-v')
+            logger.info(f'{extraopts=}')
+
+        if command_type == 'singularity_exec':
+            cmd += ' run --rm --entrypoint ""'
+        else:
+            cmd += ' run'
+
+        cmd += f' -v {jobdir}/INPUTS:/INPUTS'
+        cmd += f' -v {jobdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' -v {repodir}:/REPO'
+        cmd += f' {extraopts} {container} {args}'
 
     if not cmd:
         logger.debug('invalid command')
@@ -351,141 +381,22 @@ def _run_command(
     os.system(cmd)
 
 
-def finish_analysis(garjus, project, analysis_id, analysis_dir, processor=None):
-    '''Finish an analysis where inputs are already downloaded'''
-    analysis = garjus.load_analysis(project, analysis_id)
-
-    if processor:
-        # override processor with specified file
-        try:
-            with open(processor, "r") as f:
-                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
-        except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{processor}:{err}')
-            return None
-
-    if not analysis['PROCESSOR']:
-        logger.error('no processor specified, cannot run')
-        return
-
-    outputs_dir = f'{analysis_dir}/OUTPUTS'
-
-    _make_dirs(outputs_dir)
-
-    # Run it
-    logger.info(f'running analysis:{project}:{analysis_id}')
-    _run(garjus, analysis, analysis_dir)
-
-    # That is all
-    logger.info(f'analysis done!')
-
-
 def run_analysis(
     garjus,
     project,
-    analysis_id,
-    output_zip=None,
-    processor=None,
-    jobdir=None
+    subjects,
+    repo,
+    jobdir,
+    csv=None,
+    yamlfile=None
 ):
-    analysis = garjus.load_analysis(project, analysis_id)
-
-    if processor:
-        # override processor with specified file
-        try:
-            with open(processor, "r") as f:
-                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
-        except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{processor}:{err}')
-            return None
-
-    if not analysis['PROCESSOR']:
-        logger.error('no processor specified, cannot run')
-        return
-
-    if jobdir:
-        logger.debug(f'jobdir={jobdir}')
-
-    with tempfile.TemporaryDirectory(dir=jobdir) as tempdir:
-
-        inputs_dir = f'{tempdir}/INPUTS'
-        outputs_dir = f'{tempdir}/OUTPUTS'
-
-        logger.info(f'creating INPUTS and OUTPUTS in:{tempdir}')
-        _make_dirs(inputs_dir)
-        _make_dirs(outputs_dir)
-
-        # Download inputs
-        logger.info(f'downloading analysis inputs to {inputs_dir}')
-        _download_inputs(garjus, analysis, inputs_dir)
-
-        # Run it
-        logger.info(f'running analysis:{project}:{analysis_id}')
-        if jobdir:
-            _run(garjus, analysis, tempdir, sharedir=tempdir)
-        else:
-            _run(garjus, analysis, tempdir)
-
-        if output_zip:
-            # Zip output
-            logger.info(f'zipping output to {output_zip}')
-            sb.run(['zip', '-r', output_zip, 'OUTPUTS'], cwd=tempdir)
+    # Run it
+    logger.info(f'running analysis')
+    Analysis(project, subjects, repo, csv, yamlfile).run(
+        garjus, jobdir)
 
     # That is all
     logger.info(f'analysis done!')
-
-
-def upload_outputs(garjus, project, analysis_id, tempdir):
-    # Upload output_zip Project Resource on XNAT named with
-    # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
-    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    resource = f'{project}_{analysis_id}'
-    res_uri = f'/projects/{project}/resources/{resource}'
-    outputs_zip = f'{tempdir}/{project}_{analysis_id}_OUTPUTS_{now}.zip'
-
-    # Zip output
-    logger.info(f'zipping output to {outputs_zip}')
-    sb.run(['zip', '-r', outputs_zip, 'OUTPUTS'], cwd=tempdir)
-
-    logger.debug(f'connecting to xnat resource:{res_uri}')
-    res = garjus.xnat().select(res_uri)
-
-    logger.debug(f'uploading file to xnat resource:{outputs_zip}')
-    res.file(os.path.basename(outputs_zip)).put(
-        outputs_zip,
-        overwrite=True,
-        params={"event_reason": "analysis upload"})
-
-    uri = f'{garjus.xnat_host()}/data{res_uri}/files/{os.path.basename(outputs_zip)}'
-
-    return uri
-
-
-def upload_inputs(garjus, project, analysis_id, tempdir):
-    # Upload to Project Resource on XNAT named with
-    # the project and analysis id as PROJECT_ID, e.g. REMBRANDT_1
-    resource = f'{project}_{analysis_id}'
-    res_uri = f'/projects/{project}/resources/{resource}'
-    inputs_zip = f'{tempdir}/{project}_{analysis_id}_INPUTS.zip'
-
-    logger.info(f'zipping inputs {tempdir} to {inputs_zip}')
-    sb.run(['zip', '-r', inputs_zip, 'INPUTS'], cwd=tempdir)
-
-    assert(os.path.isfile(inputs_zip))
-
-    logger.debug(f'connecting to xnat resource:{res_uri}')
-    res = garjus.xnat().select(res_uri)
-
-    logger.debug(f'uploading file to xnat resource:{inputs_zip}')
-    res.file(os.path.basename(inputs_zip)).put(
-        inputs_zip,
-        overwrite=True,
-        params={"event_reason": "analysis upload"})
-
-    uri = f'{garjus.xnat_host()}/data{res_uri}/files/{os.path.basename(inputs_zip)}'
-
-    return uri
-
 
 def _sessions_from_scans(scans):
     return scans[[
@@ -859,7 +770,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                     # Download files
                     for fmatch in res_spec['fmatch'].split(','):
                         # Where shall we save it?
-                        dst = f'{subj_dir}/{assr}/{res}/{fmatch}'
+                        dst = f'{subj_dir}/assessors/{assr}/{fmatch}'
 
                         # Have we already downloaded it?
                         if os.path.exists(dst):
@@ -923,7 +834,7 @@ def _download_subject(
     #  subject-level assessors
     sgp_spec = subj_spec.get('assessors', None)
     if sgp_spec:
-        logger.debug(f'download_sgp={subj_dir}')
+        logger.info(f'download_sgp={subj_dir}')
         _download_subject_assessors(
             garjus,
             subj_dir,
@@ -944,7 +855,7 @@ def _download_subject(
             sess = subj_mris.SESSION.iloc[0]
 
             sess_dir = f'{subj_dir}/{sess}'
-            logger.debug(f'download_session={sess_dir}')
+            logger.info(f'download_session={sess_dir}')
             _download_session(
                 garjus,
                 sess_dir,
@@ -955,8 +866,8 @@ def _download_subject(
                 assessors,
                 scans)
 
-        else:
-            sess_types = sess_spec['types'].split(',')
+        elif 'types' in sess_spec:
+            sess_types = parse_list(sess_spec['types'])
 
             for i, s in sessions[sessions.SUBJECT == subj].iterrows():
                 sess = s.SESSION
@@ -967,7 +878,22 @@ def _download_subject(
                     continue
 
                 sess_dir = f'{subj_dir}/{sess}'
-                logger.debug(f'download_session={sess_dir}')
+                logger.info(f'download_session={sess_dir}')
+                _download_session(
+                    garjus,
+                    sess_dir,
+                    sess_spec,
+                    proj,
+                    subj,
+                    sess,
+                    assessors,
+                    scans)
+        else:
+            for i, s in sessions[sessions.SUBJECT == subj].iterrows():
+                sess = s.SESSION
+
+                sess_dir = f'{subj_dir}/{sess}'
+                logger.info(f'download_session={sess_dir}')
                 _download_session(
                     garjus,
                     sess_dir,
@@ -1053,7 +979,7 @@ def _download_scans(
                     for fmatch in res_spec['fmatch'].split(','):
 
                         # Where shall we save it?
-                        dst = f'{sess_dir}/{scan}/{res}/{fmatch}'
+                        dst = f'{sess_dir}/{scan}/{fmatch}'
 
                         # Have we already downloaded it?
                         if os.path.exists(dst):
@@ -1148,7 +1074,7 @@ def _download_session(
                     for fmatch in res_spec['fmatch'].split(','):
 
                         # Where shall we save it?
-                        dst = f'{sess_dir}/{assr}/{res}/{fmatch}'
+                        dst = f'{sess_dir}/assessors/{assr}/{fmatch}'
 
                         # Have we already downloaded it?
                         if os.path.exists(dst):
@@ -1198,118 +1124,3 @@ def _download_session(
                         logger.error(f'{subj}:{sess}:{assr}:{res}:{err}')
                         raise err
 
-
-def download_analysis_inputs(garjus, project, analysis_id, download_dir, processor=None):
-
-    logger.debug(f'download_analysis_inputs:{project}:{analysis_id}:{download_dir}')
-
-    analysis = garjus.load_analysis(project, analysis_id)
-
-    if processor:
-        # override processor with specified file
-        try:
-            with open(processor, "r") as f:
-                analysis['PROCESSOR'] = yaml.load(f, Loader=yaml.FullLoader)
-        except yaml.error.YAMLError as err:
-            logger.error(f'failed to load yaml file{processor}:{err}')
-            return None
-
-    if not analysis['PROCESSOR']:
-        logger.error('no processor specified, cannot download')
-        return
-
-    _download_inputs(garjus, analysis, download_dir)
-
-
-def download_analysis_outputs(garjus, project, analysis_id, download_dir):
-
-    logger.debug(f'download_analysis_outputs:{project}:{analysis_id}:{download_dir}')
-
-    analysis = garjus.load_analysis(project, analysis_id)
-
-    _download_outputs(garjus, analysis, download_dir)
-
-
-def _download_inputs(garjus, analysis, download_dir):
-    errors = []
-
-    project = analysis['PROJECT']
-
-    logger.info('loading project data')
-    assessors = garjus.assessors(projects=[project])
-    scans = garjus.scans(projects=[project])
-    sgp = garjus.subject_assessors(projects=[project])
-
-    sessions = pd.concat([
-        _sessions_from_scans(scans),
-        _sessions_from_assessors(assessors)
-    ])
-    sessions = sessions.drop_duplicates()
-
-    # Which subjects to include?
-    subjects = analysis['SUBJECTS'].splitlines()
-
-    if not subjects:
-        # Default to all subjects
-        subjects = list(sessions.SUBJECT.unique())
-
-    logger.debug(f'subjects={subjects}')
-
-    # What to download for each subject?
-    subj_spec = analysis['PROCESSOR']['inputs']['xnat']['subjects']
-
-    logger.debug(f'subject spec={subj_spec}')
-
-    for subj in subjects:
-        logger.debug(f'subject={subj}')
-
-        # Make the Subject download folder
-        subj_dir = f'{download_dir}/{subj}'
-        _make_dirs(subj_dir)
-
-        # Download the subject as specified in subj_spec
-        try:
-            logger.debug(f'_download_subject={subj}')
-            _download_subject(
-                garjus,
-                subj_dir,
-                subj_spec,
-                project,
-                subj,
-                sessions,
-                assessors,
-                sgp,
-                scans)
-        except Exception as err:
-            logger.debug(err)
-            errors.append(subj)
-            continue
-
-    # report what's missing
-    if errors:
-        logger.info(f'errors{errors}')
-    else:
-        logger.info(f'download complete with no errors!')
-
-    logger.debug('done!')
-
-
-def _download_outputs(garjus, analysis, download_dir):
-    project = analysis['PROJECT']
-    analysis_id = analysis['ID']
-    resource = f'{project}_{analysis_id}'
-    res_uri = f'/projects/{project}/resources/{resource}'
-
-    res = garjus.xnat().select(res_uri)
-
-    file_list = res.files().get()
-    file_list = [x for x in file_list if 'OUTPUTS' in x]
-    file_list = sorted(file_list)
-
-    if len(file_list) < 1:
-        raise Exception('no outputs found')
-
-    uri = f'/data/{res_uri}/files/{file_list[0]}'
-    dst = f'{download_dir}/{file_list[0]}'
-    _make_dirs(download_dir)
-    _download_file_stream(garjus.xnat(), uri, dst)

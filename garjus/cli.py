@@ -211,19 +211,17 @@ def switch_status(
 
 
 @cli.command('run')
-@click.argument('analysis_id', required=True)
-@click.argument('output_zip', type=click.Path(), required=False)
 @click.option('--project', '-p', 'project', required=True)
-@click.option('--processor', '-y', 'processor', required=False)
-@click.option('--dir', '-d', 'jobdir', required=False)
-def run(project, analysis_id, output_zip, processor, jobdir):
+@click.option('--subjects', '-s', 'subjects', required=True, multiple=True)
+@click.option('--repo', '-r', 'repo', required=True)
+@click.option('--dir', '-d', 'jobdir', type=click.Path(), required=True)
+@click.option('--csv', '-c', 'csv', required=False)
+@click.option('--yaml', '-y', 'yamlfile', type=click.Path(), required=False)
+def run(project, subjects, repo, jobdir, csv, yamlfile):
     click.echo('garjus! run')
 
-    if output_zip:
-        output_zip = os.path.abspath(output_zip)
-
     g = Garjus()
-    g.run_analysis(project, analysis_id, output_zip, processor, jobdir)
+    g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile)
 
 
 @cli.command('finish')

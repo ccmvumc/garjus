@@ -37,7 +37,7 @@ from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
 from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
 from .tasks import update as update_tasks
-from .analyses import update as update_analyses, download_analysis_inputs, download_analysis_outputs, run_analysis, finish_analysis, download_resources, download_scan_resources
+from .analyses import run_analysis, download_resources, download_scan_resources
 from .scans import update as update_scans
 
 
@@ -1934,10 +1934,6 @@ class Garjus:
                 import traceback
                 traceback.print_exc()
 
-        if 'analyses' in choices:
-            logger.info('updating analyses')
-            update_analyses(self, projects)
-
         if 'scans' in choices:
             logger.info('updating scans')
             update_scans(self, projects)
@@ -2335,57 +2331,6 @@ class Garjus:
             logger.info('wait a minute')
             import time
             time.sleep(60)
-
-    def set_analysis_status(self, project, analysis_id, status):
-        logger.info(f'setting analysis status:{project}:{analysis_id}:{status}')
-        def_field = self._rcq.def_field
-
-        try:
-            record = {
-                def_field: project,
-                'redcap_repeat_instrument': 'analyses',
-                'redcap_repeat_instance': analysis_id,
-                'analysis_status': status,
-            }
-            response = self._rcq.import_records([record])
-            assert 'count' in response
-            logger.debug('analysis record updated')
-        except AssertionError as err:
-            logger.error(f'failed to set analysis status:{err}')
-
-    def set_analysis_inputs(self, project, analysis_id, inputs):
-        logger.info(f'setting analysis inputs:{project}:{analysis_id}:{inputs}')
-        def_field = self._rcq.def_field
-
-        try:
-            record = {
-                def_field: project,
-                'redcap_repeat_instrument': 'analyses',
-                'redcap_repeat_instance': analysis_id,
-                'analysis_input': inputs,
-            }
-            response = self._rcq.import_records([record])
-            assert 'count' in response
-            logger.debug('analysis record updated')
-        except AssertionError as err:
-            logger.error(f'failed to set analysis inputs:{err}')
-
-    def set_analysis_outputs(self, project, analysis_id, outputs):
-        logger.info(f'setting analysis outputs:{project}:{analysis_id}:{outputs}')
-        def_field = self._rcq.def_field
-
-        try:
-            record = {
-                def_field: project,
-                'redcap_repeat_instrument': 'analyses',
-                'redcap_repeat_instance': analysis_id,
-                'analysis_output': outputs,
-            }
-            response = self._rcq.import_records([record])
-            assert 'count' in response
-            logger.debug('analysis record updated')
-        except AssertionError as err:
-            logger.error(f'failed to set analysis outputs:{err}')
 
     def project_setting(self, project, setting):
         """Return the value of the setting for this project."""
@@ -3111,17 +3056,8 @@ class Garjus:
     def image03download(self, project, image03_csv, download_dir):
         download_image03(self, project, image03_csv, download_dir)
 
-    def get_analysis_inputs(self, project, analysis_id, download_dir, processor):
-        download_analysis_inputs(self, project, analysis_id, download_dir, processor)
-
-    def get_analysis_outputs(self, project, analysis_id, download_dir):
-        download_analysis_outputs(self, project, analysis_id, download_dir)
-
-    def run_analysis(self, project, analysis_id, output_zip, processor, jobdir):
-        run_analysis(self, project, analysis_id, output_zip, processor, jobdir)
-
-    def finish_analysis(self, project, analysis_id, analysis_dir, processor):
-        finish_analysis(self, project, analysis_id, analysis_dir, processor)
+    def run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile):
+        run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile)
 
     def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None, analysis_id=None, sessinclude=None):
         download_resources(self, project, download_dir, proctype, resources, files, sesstypes, analysis_id, sessinclude)
