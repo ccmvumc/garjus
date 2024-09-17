@@ -31,6 +31,8 @@ class Analysis(object):
         self._csvfile = csvfile
         self._repo = repo
 
+        print(self._csvfile)
+
         if yamlfile:
             self._yamlfile = yamlfile
             self._processor = self.load_yaml()
@@ -59,7 +61,7 @@ class Analysis(object):
 
             p = self._repo.replace(':', '/').split('/')
             if len(p) != 2:
-                logger.error(f'failed to parse:{repo}')
+                logger.error(f'failed to parse:{self._repo}')
                 return None
 
             user = p[0]
@@ -121,7 +123,7 @@ class Analysis(object):
 
         inputs_dir = f'{jobdir}/INPUTS'
         outputs_dir = f'{jobdir}/OUTPUTS'
-      
+
         logger.info(f'creating INPUTS and OUTPUTS in:{jobdir}')
         _make_dirs(inputs_dir)
         _make_dirs(outputs_dir)
@@ -130,14 +132,22 @@ class Analysis(object):
         logger.info(f'downloading analysis inputs to {inputs_dir}')
         self.download_inputs(garjus, inputs_dir)
 
+        # Get the code
         if os.path.exists(self._repo):
             repo_dir = self._repo
             logger.info(f'using local repo:{repo_dir}')
         else:
-            # Get the code
+            # Download repository
             repo_dir = f'{jobdir}/REPO'
             logger.info('downloading repo')
             self.download_repo(repo_dir)
+
+        # Copy covars
+        print(self._csvfile)
+        print(os.path.exists(self._csvfile))
+        if self._csvfile and os.path.exists(self._csvfile):
+            print('copy csv')
+            shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
 
         # Run all commands
         self.run_commands(jobdir, repo_dir)
@@ -203,7 +213,6 @@ class Analysis(object):
 
         logger.debug('done!')
 
-
     def run_commands(self, jobdir, repodir=None):
         command_mode = 'docker'
         processor = self._processor
@@ -253,7 +262,7 @@ class Analysis(object):
                 if 'source' in c:
                     container = c['source']
                 else:
-                    raise Exception('processor cannot be run in this environment.')
+                    raise Exception('cannot run in this environment.')
 
         logger.debug(f'command mode is {command_mode}')
 
@@ -1123,4 +1132,3 @@ def _download_session(
                     except Exception as err:
                         logger.error(f'{subj}:{sess}:{assr}:{res}:{err}')
                         raise err
-
