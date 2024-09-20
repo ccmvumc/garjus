@@ -31,8 +31,6 @@ class Analysis(object):
         self._csvfile = csvfile
         self._repo = repo
 
-        print(self._csvfile)
-
         if yamlfile:
             self._yamlfile = yamlfile
             self._processor = self.load_yaml()
@@ -143,8 +141,6 @@ class Analysis(object):
             self.download_repo(repo_dir)
 
         # Copy covars
-        print(self._csvfile)
-        print(os.path.exists(self._csvfile))
         if self._csvfile and os.path.exists(self._csvfile):
             print('copy csv')
             shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')

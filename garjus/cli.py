@@ -212,7 +212,7 @@ def switch_status(
 
 @cli.command('run')
 @click.option('--project', '-p', 'project', required=True)
-@click.option('--subjects', '-s', 'subjects', required=True, multiple=True)
+@click.option('--subjects', '-s', 'subjects', required=False, multiple=True)
 @click.option('--repo', '-r', 'repo', required=True)
 @click.option('--dir', '-d', 'jobdir', type=click.Path(), required=True)
 @click.option('--csv', '-c', 'csv', required=False)
