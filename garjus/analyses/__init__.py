@@ -50,7 +50,11 @@ class Analysis(object):
     def load_processor(self):
         filename = 'processor.yaml'
 
-        if self._repo.startswith('/'):
+        if self._repo.endswith(filename):
+            self._yamlfile = self._repo
+            self._repo = os.path.abspath(os.path.join(self._repo, '..', '..', '..'))
+            return self.load_yaml()
+        elif self._repo.startswith('/'):
             self._yamlfile = f'{self._repo}/{filename}'
             return self.load_yaml()
         else:
@@ -131,6 +135,7 @@ class Analysis(object):
         self.download_inputs(garjus, inputs_dir)
 
         # Get the code
+        print(f'{self._repo=}')
         if os.path.exists(self._repo):
             repo_dir = self._repo
             logger.info(f'using local repo:{repo_dir}')
