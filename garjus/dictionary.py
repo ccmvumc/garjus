@@ -90,6 +90,7 @@ DISABLE_STATTYPES = [
     'dtiQA_synb0_v7',
     'EEG-EGI-wavelet_v1',
     'EEG-EGI-preproc_v2',
+    'DnSeg_v1',
     'synbold_v1',
     'fmri_rest_schaef_conn_v1',
 ]
