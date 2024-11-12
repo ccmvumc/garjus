@@ -71,13 +71,18 @@ def issues(ctx, project):
 
 @cli.command('subjects')
 @click.option('--project', '-p', 'project')
+@click.option('--csv', '-c', 'csv', required=False)
 @click.pass_context
-def subjects(ctx, project):
+def subjects(ctx, project, csv):
     click.echo('garjus! subjects')
     g = Garjus()
     import pandas as pd
     pd.set_option('display.max_rows', None)
-    pprint.pprint(g.subjects(project))
+    subjects = g.subjects(project)
+    if csv:
+        subjects.to_csv(csv)
+    else:
+        pprint.pprint(subjects)
 
 
 @cli.command('orphans')
@@ -310,7 +315,7 @@ def report(project, monthly):
 @click.option('--projects', '-p', 'projects', required=True)
 @click.option('--types', '-t', 'proctypes', required=False)
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
-@click.option('--analysis', '-a', 'analysis', required=False)
+@click.option('--analysis', '-a', 'analysis (PROJECT_AID)', required=False)
 @click.option('--persubject', is_flag=True)
 @click.option('--sessions', '-e', 'sessions', required=False)
 @click.argument('csv', required=True)

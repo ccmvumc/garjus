@@ -90,6 +90,17 @@ class Analysis(object):
 
             return yaml.safe_load(r.text)
 
+    def download_covars(self, garjus, inputs_dir):
+        try:
+            df = garjus.subjects(self._project)
+            print('renaming')
+            df.index.name = 'id'
+            print(df)
+            df.to_csv(f'{inputs_dir}/covariates.csv')
+        except Exception as err:
+            logger.error(f'downloading:{err}')
+            return None
+
     def download_repo(self, repo_dir):
         #curl -sL $REPO | tar zxvf - -C $REPODIR --strip-components=1
         user = self._repo_user
@@ -135,7 +146,7 @@ class Analysis(object):
         self.download_inputs(garjus, inputs_dir)
 
         # Get the code
-        print(f'{self._repo=}')
+        logger.info(f'repo={self._repo}')
         if os.path.exists(self._repo):
             repo_dir = self._repo
             logger.info(f'using local repo:{repo_dir}')
@@ -149,6 +160,9 @@ class Analysis(object):
         if self._csvfile and os.path.exists(self._csvfile):
             print('copy csv')
             shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
+        else:
+            # Download covars
+            self.download_covars(garjus, inputs_dir)
 
         # Run all commands
         self.run_commands(jobdir, repo_dir)
