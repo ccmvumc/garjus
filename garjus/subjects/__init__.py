@@ -7,6 +7,48 @@ import pandas as pd
 logger = logging.getLogger('garjus.subjects')
 
 
+def load_gait_data(rc):
+    def_field = rc.def_field
+    fields = [
+        def_field,
+        'gaitrite_comments',
+        'gaitrite_velocity',
+    ]
+
+    events = [
+        'baseline_arm_1',
+        'baseline_arm_2',
+        'baseline_arm_3',
+        'baseline_arm_4'
+    ]
+
+    data = []
+
+    rec = rc.export_records(fields=fields)
+
+    # Only gaitrite records
+    rec = [x for x in rec if x['redcap_repeat_instrument'] == 'gaitrite']
+
+    # Filter by selected events
+    rec = [x for x in rec if x['redcap_event_name'] in events]
+
+    rec = [x for x in rec if \
+        x['gaitrite_comments'].lower().startswith('standard') or \
+        x['gaitrite_comments'].lower().startswith('first')
+    ]
+
+    dfg = pd.DataFrame(rec, columns=fields)
+
+    dfg = dfg.astype(str)
+    
+    dfg = dfg.drop_duplicates(subset=[def_field], keep='first')
+
+    dfg['SPEED'] = dfg['gaitrite_velocity']
+
+    return dfg[[def_field, 'SPEED']]
+
+
+
 def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
 
@@ -86,6 +128,12 @@ def load_subjects(garjus, project, include_dob=False):
         # All are depressed
         df['GROUP'] = 'Depress'
     elif project == 'D3':
+        # Load gait velocity
+        dfg = load_gait_data(project_redcap)
+
+        # Merge in gait data
+        df = pd.merge(df, dfg, how='left', on=def_field)
+
         # Use arm/events names to determine group
         df['GROUP'] = df['redcap_event_name'].map({
             'Screening (Arm 2: VUMC Never Depressed)': 'Control',
