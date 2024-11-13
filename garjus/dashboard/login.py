@@ -58,40 +58,44 @@ def is_authenticated():
 
 @server.route('/login', methods=['POST', 'GET'])
 def login(message=""):
-    if request.method == 'POST':
-        if request.form:
-            hostname = 'https://xnat.vanderbilt.edu/xnat'
-            username = request.form['username']
-            password = request.form['password']
+    try:
+        if request.method == 'POST':
+            if request.form:
+                hostname = 'https://xnat.vanderbilt.edu/xnat'
+                username = request.form['username']
+                password = request.form['password']
 
-            try:
-                # Get the xnat alias token
-                from ..garjus import Garjus
-                Garjus.login(hostname, username, password)
-
-                login_user(User(username, hostname))
-
-                # What page do we send?
-                if session.get('url', False):
-                    # redirect to original target
-                    url = session['url']
-                    logger.debug(f'redirecting to target url:{url}')
-                    session['url'] = None
-                    return redirect(url)
-                else:
-                    # redirect to home
-                    return redirect('/')
-            except Exception as err:
-                logger.debug(f'login failed:{err}')
-                message = 'login failed, try again'
-    else:
-        if current_user:
-            if current_user.is_authenticated:
                 try:
-                    return redirect('/')
+                    # Get the xnat alias token
+                    from ..garjus import Garjus
+                    Garjus.login(hostname, username, password)
+
+                    login_user(User(username, hostname))
+
+                    # What page do we send?
+                    if session.get('url', False):
+                        # redirect to original target
+                        url = session['url']
+                        logger.debug(f'redirecting to target url:{url}')
+                        session['url'] = None
+                        return redirect(url)
+                    else:
+                        # redirect to home
+                        return redirect('/')
                 except Exception as err:
-                    logger.debug(f'cannot log in, try again:{err}')
+                    logger.debug(f'login failed:{err}')
                     message = 'login failed, try again'
+        else:
+            if current_user:
+                if current_user.is_authenticated:
+                    try:
+                        return redirect('/')
+                    except Exception as err:
+                        logger.debug(f'cannot log in, try again:{err}')
+                        message = 'login failed, try again'
+    except Exception as err:
+        logger.error(f'login error, route to logout:{err}')
+        return logout()
 
     return render_template('login.html', message=message)
 
