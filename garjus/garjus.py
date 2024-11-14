@@ -948,6 +948,7 @@ class Garjus:
 
     def _stats_redcap(self, project):
         def_field = self._rc.def_field
+        stats_redcap = None
 
         if not self.redcap_enabled():
             logger.info('cannot load stats, redcap not enabled')
@@ -959,9 +960,16 @@ class Garjus:
             rec = self._rc.export_records(records=[project], fields=_fields)
             rec = [x for x in rec if x[def_field] == project][0]
             redcap_id = rec['project_stats']
-            self._project2stats[project] = utils_redcap.get_redcap(redcap_id)
 
-        return self._project2stats[project]
+            if len(redcap_id) == 32:
+                stats_redcap = utils_redcap.get_redcap(api_key=redcap_id)
+            else:
+                stats_redcap = utils_redcap.get_redcap(project_id=redcap_id)
+
+            # Save it
+            self._project2stats[project] = stats_redcap
+
+        return stats_redcap
 
     def switch_status(
         self,

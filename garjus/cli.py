@@ -315,7 +315,7 @@ def report(project, monthly):
 @click.option('--projects', '-p', 'projects', required=True)
 @click.option('--types', '-t', 'proctypes', required=False)
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
-@click.option('--analysis', '-a', 'analysis (PROJECT_AID)', required=False)
+@click.option('--analysis', '-a', 'analysis', required=False)
 @click.option('--persubject', is_flag=True)
 @click.option('--sessions', '-e', 'sessions', required=False)
 @click.argument('csv', required=True)

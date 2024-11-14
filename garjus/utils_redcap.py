@@ -88,7 +88,7 @@ def upload_file(
             file_object=f)
 
 
-def get_redcap(project_id, key_file=None, api_url=None, api_key=None):
+def get_redcap(project_id=None, key_file=None, api_url=None, api_key=None):
     # Check for overrides in environment vars
     api_url = os.environ.get('REDCAP_API_URL', api_url)
     key_file = os.environ.get('REDCAP_API_KEYFILE', key_file)
@@ -104,7 +104,8 @@ def get_redcap(project_id, key_file=None, api_url=None, api_key=None):
             key_file = os.path.join(os.path.expanduser('~'), '.redcap.txt')
 
         # Load from the key file
-        api_key = get_projectkey(project_id, key_file)
+        if project_id:
+            api_key = get_projectkey(project_id, key_file)
 
     if not api_key:
         raise Exception('api key not found in file or arguments')
