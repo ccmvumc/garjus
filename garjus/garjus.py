@@ -26,7 +26,7 @@ from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
 from .progress import update as update_progress
-from .progress import make_project_report, make_stats_csv
+from .progress import make_project_report, make_stats_csv, make_zip
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -962,12 +962,16 @@ class Garjus:
             redcap_id = rec['project_stats']
 
             if len(redcap_id) == 32:
+                logger.debug(f'loading redcap with key:{project}')
                 stats_redcap = utils_redcap.get_redcap(api_key=redcap_id)
             else:
+                logger.debug(f'loading redcap with id:{project}')
                 stats_redcap = utils_redcap.get_redcap(project_id=redcap_id)
 
             # Save it
             self._project2stats[project] = stats_redcap
+        else:
+            stats_redcap = self._project2stats[project]
 
         return stats_redcap
 
@@ -1980,6 +1984,18 @@ class Garjus:
         make_stats_csv(
             self, projects, proctypes, sesstypes, csvname, persubject, analysis, sessions)
 
+    def export_zip(self, projects, proctypes, sesstypes, zipfile, analysis=None, sessions=None):
+        """Create a zip file of stats csv files."""
+
+        if os.path.exists(zipfile):
+            logger.info(f'{zipfile} exists, delete or rename.')
+            return
+
+        logger.info(f'writing zip file:{zipfile}.')
+        make_zip(
+            self, projects, proctypes, sesstypes, zipfile, analysis, sessions
+        )
+
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
         pdf_file = f'{project}_double.pdf'
@@ -2294,8 +2310,10 @@ class Garjus:
             r['stats_complete'] = 2
 
         # Now upload
-        logger.debug('uploading to redcap')
+        logger.debug(f'uploading to redcap:{project}')
         statsrc = self._stats_redcap(project)
+        logger.debug(f'{statsrc=}')
+
         try:
             logger.debug('importing records')
             response = statsrc.import_records(rec)

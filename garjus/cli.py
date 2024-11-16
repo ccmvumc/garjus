@@ -331,6 +331,24 @@ def stats(projects, proctypes, sesstypes, csv, persubject, analysis, sessions):
         sessions)
 
 
+@cli.command('export')
+@click.option('--projects', '-p', 'projects', required=True)
+@click.option('--types', '-t', 'proctypes', required=False)
+@click.option('--sesstypes', '-s', 'sesstypes', required=False)
+@click.option('--analysis', '-a', 'analysis', required=False)
+@click.option('--sessions', '-e', 'sessions', required=False)
+@click.argument('zipfile', required=True)
+def export(projects, proctypes, sesstypes, zipfile, analysis, sessions):
+    click.echo('garjus! export')
+    Garjus().export_zip(
+        projects,
+        proctypes,
+        sesstypes,
+        zipfile,
+        analysis,
+        sessions)
+
+
 @cli.command('compare')
 @click.option('--project', '-p', 'project', required=True)
 def compare(project):

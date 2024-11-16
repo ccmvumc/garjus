@@ -56,6 +56,75 @@ def make_progress(garjus, project, cur_progress, now):
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
 
+def make_zip(garjus, projects, proctypes, sesstypes, zipfile, analysis, sessions):
+    df = pd.DataFrame()
+
+    if not isinstance(projects, list):
+        projects = projects.split(',')
+
+    if proctypes is not None and not isinstance(proctypes, list):
+        proctypes = proctypes.split(',')
+
+    if sesstypes is not None and not isinstance(sesstypes, list):
+        sesstypes = sesstypes.split(',')
+
+    if sessions is not None and not isinstance(sessions, list):
+        sessions = sessions.split(',')
+
+    if analysis:
+        # Get the list of subjects for specified analysis and apply as filter
+        logger.info(f'{analysis=}')
+
+        # Get the subject list from the analysis
+        project, analysis_id = analysis.rsplit('_', 1)
+        logger.info(f'loading analysis:{project}:{analysis_id}')
+        a = garjus.load_analysis(project, analysis_id)
+        subjects = a['SUBJECTS'].splitlines()
+        logger.debug(f'applying subject filter to include:{subjects}')
+        #df = df[df.SUBJECT.isin(subjects)]
+
+        # Append rows for missing subjects and resort
+        #_subj = df.SUBJECT.unique()
+        #missing_subjects = [x for x in subjects if x not in _subj]
+        #if missing_subjects:
+        #    logger.info(f'{missing_subjects=}')
+        #    df = pd.concat([
+        #        df,
+        #        pd.DataFrame(
+        #            missing_subjects,
+        #            columns=['SUBJECT']
+        #        )
+        #    ]).sort_values('SUBJECT')
+
+    print(f'{projects=}')
+    print(f'{proctypes=}')
+    print(f'{sesstypes=}')
+    print(f'{sessions=}')
+    print(f'{subjects=}')
+
+    print('getting stats')
+
+    for p in sorted(projects):
+        # Load stats
+        stats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
+
+        # Check for empty
+        if len(stats) == 0:
+            logger.info(f'no stats for project:{p}')
+            continue
+
+        # Filter by subject
+        stats = stats[stats.SUBJECT.isin(subjects)]
+        print(f'{p}:{len(stats)}')
+
+        # Append to total
+        df = pd.concat([df, stats])
+
+    print(df)
+    print('TODO:making pdf')
+    print('TODO:making zip')
+
+
 def make_stats_csv(
     garjus,
     projects,
