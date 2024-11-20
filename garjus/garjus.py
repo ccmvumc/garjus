@@ -26,7 +26,7 @@ from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
 from .progress import update as update_progress
-from .progress import make_project_report, make_stats_csv, make_zip
+from .progress import make_project_report, make_stats_csv, make_export_zip
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -1984,16 +1984,23 @@ class Garjus:
         make_stats_csv(
             self, projects, proctypes, sesstypes, csvname, persubject, analysis, sessions)
 
-    def export_zip(self, projects, proctypes, sesstypes, zipfile, analysis=None, sessions=None):
+    def export_zip(self, filename, projects, proctypes, sesstypes, analysis=None, sessions=None):
         """Create a zip file of stats csv files."""
 
-        if os.path.exists(zipfile):
-            logger.info(f'{zipfile} exists, delete or rename.')
+        if os.path.exists(filename):
+            logger.info(f'{filename} exists, delete or rename.')
             return
 
-        logger.info(f'writing zip file:{zipfile}.')
-        make_zip(
-            self, projects, proctypes, sesstypes, zipfile, analysis, sessions
+        print(f'{filename=}')
+        print(f'{projects=}')
+        print(f'{proctypes=}')
+        print(f'{sesstypes=}')
+        print(f'{analysis=}')
+
+
+        logger.info(f'writing zip file:{filename}.')
+        make_export_zip(
+            self, filename, projects, proctypes, sesstypes, analysis, sessions
         )
 
     def compare(self, project):

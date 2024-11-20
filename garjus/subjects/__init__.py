@@ -2,7 +2,7 @@
 import logging
 
 import pandas as pd
-
+import numpy as np
 
 logger = logging.getLogger('garjus.subjects')
 
@@ -48,13 +48,262 @@ def load_gait_data(rc):
     return dfg[[def_field, 'SPEED']]
 
 
+def load_R21Perfusion(garjus):
+    R21_SCREEN_FIELDS = [
+        'participant_id',
+        'study_ident',
+        'madrs_same',
+        'ma_tot',
+        'crit_meets',
+        'critcon_meets']
+
+    R21_BASE_FIELDS = [
+        'participant_id',
+        'madrs_same',
+        'ma_tot',
+        'age',
+        'sex_xcount']
+
+    rc = garjus.primary('R21Perfusion')
+
+    screenR = rc.export_records(
+        raw_or_label='label',
+        format_type='df',
+        fields=R21_SCREEN_FIELDS,
+        events=['screen_arm_1'])
+    baseR = rc.export_records(
+        raw_or_label='label',
+        format_type='df',
+        fields=R21_BASE_FIELDS,
+        events=['baseline_arm_1'])
+
+    # Change index
+    screenR.reset_index(inplace=True)
+    screenR.set_index('participant_id', inplace=True)
+    screenR.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Change index
+    baseR.reset_index(inplace=True)
+    baseR.set_index('participant_id', inplace=True)
+    baseR.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Set the group
+    screenR = screenR.apply(get_group_R21Perfusion, axis=1)
+
+    # Prep to later merge MADRS
+    screenR['ma_tot_screen'] = screenR['ma_tot']
+    screenR['madrs_same_screen'] = screenR['madrs_same']
+    screenR.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+    baseR['ma_tot_base'] = baseR['ma_tot']
+    baseR['madrs_same_base'] = baseR['madrs_same']
+    baseR.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+
+    # Merge Baseline and Screen
+    dataR = pd.merge(
+        screenR,
+        baseR,
+        how='outer',
+        left_index=True,
+        right_index=True,
+        sort=True)
+
+    # Merge MADRS
+    dataR = dataR.apply(get_base_madrs, axis=1)
+    dataR.drop(
+        ['ma_tot_base', 'madrs_same_base', 'ma_tot_screen', 'madrs_same_screen'],
+        inplace=True, axis=1)
+
+    # Change index to ID
+    dataR['study_ident'] = dataR['study_ident'].astype(int).astype(str)
+    dataR.rename(columns={'study_ident': 'ID'}, inplace=True)
+    dataR.reset_index(inplace=True)
+    dataR.set_index('ID', inplace=True)
+    dataR.drop(['participant_id'], inplace=True, axis=1)
+
+    # Set common fields
+    dataR['PROJECT'] = 'R21Perfusion'
+    dataR['AGE'] = dataR['age']
+    dataR['SEX'] = dataR['sex_xcount'].map({'Male': 'M', 'Female': 'F'})
+
+    return dataR
+
+
+def get_group_R21Perfusion(row):
+    if row['crit_meets'] == 'Yes' and row['critcon_meets'] == 'Yes':
+        print('ERROR:cannot be both DEPRESSED and CONTROL')
+    elif row['crit_meets'] == 'Yes':
+        row['GROUP'] = 'Depress'
+    elif row['critcon_meets'] == 'Yes':
+        row['GROUP'] = 'Control'
+
+    return row
+
+
+def get_base_madrs(row):    
+    base_madrs = row['ma_tot_base']
+    screen_madrs = row['ma_tot_screen']
+    screen_same = row['madrs_same_screen']
+
+    if np.isfinite(base_madrs):
+        row['ma_tot'] = base_madrs
+    elif ~np.isfinite(base_madrs) and np.isfinite(screen_madrs) and screen_same:
+        row['ma_tot'] = screen_madrs
+    elif ~np.isfinite(base_madrs) and np.isfinite(screen_madrs):
+        print('using screen madrs:'+str(row['study_ident']))
+        row['ma_tot'] = screen_madrs
+    else:
+        pass
+
+    return row
+
+
+def load_CAARE(garjus):
+    C1_SCREEN_FIELDS = [
+        'participant_id',
+        'study_ident',
+        'madrs_same',
+        'ma_tot',
+        'mmse_total',
+        'age',
+        'sex_xcount']
+
+    C1_BASE_FIELDS = [
+        'participant_id',
+        'madrs_same',
+        'ma_tot']
+
+    C2_SCREEN_FIELDS = [
+        'participant_id',
+        'study_ident',
+        'madrs_same',
+        'ma_tot',
+        'mmse_total',
+        'age',
+        'sex_xcount']
+
+    C2_BASE_FIELDS = [
+        'participant_id',
+        'madrs_same',
+        'ma_tot']
+
+    rc = garjus.primary('TAYLOR_CAARE')
+
+    screenC1 = rc.export_records(
+        raw_or_label='label', format_type='df', fields=C1_SCREEN_FIELDS, events=['screen_arm_1'])
+    baseC1 = rc.export_records(
+        raw_or_label='label', format_type='df', fields=C1_BASE_FIELDS, events=['baseline_arm_1'])
+    screenC2 = rc.export_records(
+        raw_or_label='label', format_type='df', fields=C2_SCREEN_FIELDS, events=['screen_arm_2'])
+    baseC2 = rc.export_records(
+        raw_or_label='label', format_type='df', fields=C2_BASE_FIELDS, events=['baseline_arm_2'])
+
+    # Change index
+    screenC1.reset_index(inplace=True)
+    screenC1.set_index('participant_id', inplace=True)
+    screenC1.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Change index
+    baseC1.reset_index(inplace=True)
+    baseC1.set_index('participant_id', inplace=True)
+    baseC1.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Deal with MADRS
+    screenC1['ma_tot_screen'] = screenC1['ma_tot']
+    screenC1['madrs_same_screen'] = screenC1['madrs_same']
+    screenC1.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+    baseC1['ma_tot_base'] = baseC1['ma_tot']
+    baseC1['madrs_same_base'] = baseC1['madrs_same']
+    baseC1.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+
+    # Now merge screen and base
+    dataC1 = pd.merge(screenC1, baseC1, how='outer', left_index=True, right_index=True, sort=True)
+    dataC1 = dataC1[np.isfinite(dataC1['study_ident'])]
+    dataC1['study_ident'] = dataC1['study_ident'].astype(int).astype(str)
+    dataC1 = dataC1.apply(get_base_madrs, axis=1)
+
+    # Change index
+    screenC2.reset_index(inplace=True)
+    screenC2.set_index('participant_id', inplace=True)
+    screenC2.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Change index
+    baseC2.reset_index(inplace=True)
+    baseC2.set_index('participant_id', inplace=True)
+    baseC2.drop(['redcap_event_name'], inplace=True, axis=1)
+
+    # Deal with MADRS
+    screenC2['ma_tot_screen'] = screenC2['ma_tot']
+    screenC2['madrs_same_screen'] = screenC2['madrs_same']
+    screenC2.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+    baseC2['ma_tot_base'] = baseC2['ma_tot']
+    baseC2['madrs_same_base'] = baseC2['madrs_same']
+    baseC2.drop(['ma_tot','madrs_same'], inplace=True, axis=1)
+
+    # Now merge screen and base
+    dataC2 = pd.merge(
+        screenC2, baseC2,
+        how='outer', left_index=True, right_index=True, sort=True)
+    dataC2['study_ident'] = dataC2['study_ident'].astype(int).astype(str)
+    dataC2 = dataC2.apply(get_base_madrs, axis=1)
+
+    # Concat arms
+    dataC1['GROUP'] = 'Depress'
+    dataC2['GROUP'] = 'Control'
+    dataC = pd.concat([dataC1, dataC2], sort=True)
+
+    # Change index to ID
+    dataC.rename(columns={'study_ident': 'ID'}, inplace=True)
+    dataC.reset_index(inplace=True)
+    dataC.set_index('ID', inplace=True)
+    dataC.drop(['participant_id'], inplace=True, axis=1)
+
+    # Drop unused columns
+    dataC.drop(
+        ['ma_tot_base', 'madrs_same_base', 'ma_tot_screen', 'madrs_same_screen'],
+        inplace=True, axis=1)
+
+    dataC['PROJECT'] = 'TAYLOR_CAARE'
+    dataC['AGE'] = dataC['age']
+    dataC['SEX'] = dataC['sex_xcount'].map({'Male': 'M', 'Female': 'F'})
+
+    return dataC
+
+def load_MDDHx():
+    controls = [
+        '2503', '2505', '2510', '2511', '2513', '2518', '2520', '2522', '2526',
+        '2527', '2529', '2531', '2532', '2535', '2536', '2537', '2538', '2539',
+        '2540', '2541', '2542', '2543', '2544', '2547', '2551', '2552', '2553',
+        '2554', '2556', '2558', '2561', '2563', '2569', '2574', '2575', '2577',
+        '2578', '2579', '2580', '2581', '2582', '2585', '2586', '2588', '2592'
+        ]
+
+    age = [
+        64, 62, 63, 69, 68, 66, 74, 54, 60, 68, 70, 72, 57, 54, 63, 58, 53, 53,
+        61, 67, 55, 54, 56, 57, 66, 65, 58, 58, 53, 71, 56, 54, 59, 55, 51, 67,
+        52, 70, 60, 59, 56, 66, 67, 70, 58]
+
+    df = pd.DataFrame({'ID': controls})
+    df['GROUP'] = 'Control'
+    df['PROJECT'] = 'NewhouseMDDHx'
+    df['AGE'] = age
+    df['SEX'] = 'F'
+
+    return df
 
 def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
 
+    if project == 'NewhouseMDDHx':
+        return load_MDDHx()
+
     if not project_redcap:
         logger.debug(f'project redcap not found:{project}')
         return pd.DataFrame([], columns=['ID', 'PROJECT', 'GROUP'])
+
+    if project == 'R21Perfusion':
+        return load_R21Perfusion(garjus)        
+    elif project == 'TAYLOR_CAARE':
+        return load_CAARE(garjus)
 
     def_field = project_redcap.def_field
     sec_field = project_redcap.export_project_info()['secondary_unique_field']
@@ -178,7 +427,7 @@ def load_subjects(garjus, project, include_dob=False):
     df = df.dropna()
 
     if sex_field:
-        df['SEX'] = df[sex_field].map({'Male': 'M', 'Female': 'F'})
+        df['SEX'] = df[sex_field].map({'Male': 'M', 'Female': 'F'}, )
 
     if guid_field:
         df['GUID'] = df[guid_field]

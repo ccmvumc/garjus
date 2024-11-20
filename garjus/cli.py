@@ -337,14 +337,14 @@ def stats(projects, proctypes, sesstypes, csv, persubject, analysis, sessions):
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
 @click.option('--analysis', '-a', 'analysis', required=False)
 @click.option('--sessions', '-e', 'sessions', required=False)
-@click.argument('zipfile', required=True)
-def export(projects, proctypes, sesstypes, zipfile, analysis, sessions):
+@click.argument('filename', required=True)
+def export(filename, projects, proctypes, sesstypes, analysis, sessions):
     click.echo('garjus! export')
     Garjus().export_zip(
+        filename,
         projects,
         proctypes,
         sesstypes,
-        zipfile,
         analysis,
         sessions)
 

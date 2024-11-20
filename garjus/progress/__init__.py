@@ -1,18 +1,29 @@
 """
 
-Manager progress reports. Update will create any missing.
+Manage progress reports. Update will create any missing.
 
 """
 from datetime import datetime
 import tempfile
 import logging
+import os, shutil
 
 import pandas as pd
 
 from .report import make_project_report
+from .export import make_export_report
 
 
 logger = logging.getLogger('garjus.progress')
+
+
+# class dataarchive
+# -projects
+# -proctypes
+# -sesstypes
+
+
+SUBJECTS_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
 
 def update(garjus, projects=None):
@@ -56,8 +67,10 @@ def make_progress(garjus, project, cur_progress, now):
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
 
-def make_zip(garjus, projects, proctypes, sesstypes, zipfile, analysis, sessions):
-    df = pd.DataFrame()
+def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, sessions):
+    stats = pd.DataFrame()
+    subjects = pd.DataFrame()
+    include_subjects = None
 
     if not isinstance(projects, list):
         projects = projects.split(',')
@@ -79,8 +92,9 @@ def make_zip(garjus, projects, proctypes, sesstypes, zipfile, analysis, sessions
         project, analysis_id = analysis.rsplit('_', 1)
         logger.info(f'loading analysis:{project}:{analysis_id}')
         a = garjus.load_analysis(project, analysis_id)
-        subjects = a['SUBJECTS'].splitlines()
-        logger.debug(f'applying subject filter to include:{subjects}')
+        include_subjects = a['SUBJECTS'].splitlines()
+        logger.debug(f'applying subject filter to include:{include_subjects}')
+
         #df = df[df.SUBJECT.isin(subjects)]
 
         # Append rows for missing subjects and resort
@@ -100,29 +114,78 @@ def make_zip(garjus, projects, proctypes, sesstypes, zipfile, analysis, sessions
     print(f'{proctypes=}')
     print(f'{sesstypes=}')
     print(f'{sessions=}')
-    print(f'{subjects=}')
 
     print('getting stats')
 
     for p in sorted(projects):
-        # Load stats
-        stats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
+        # Load project subjects
+        psubjects = garjus.subjects(p).reset_index()
+
+        # Load project stats
+        pstats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
 
         # Check for empty
-        if len(stats) == 0:
+        if len(pstats) == 0:
             logger.info(f'no stats for project:{p}')
             continue
 
-        # Filter by subject
-        stats = stats[stats.SUBJECT.isin(subjects)]
-        print(f'{p}:{len(stats)}')
+        if include_subjects:
+            # Filter by subject
+            psubjects = psubjects[psubjects.ID.isin(include_subjects)]
+            pstats = pstats[pstats.SUBJECT.isin(include_subjects)]
 
         # Append to total
-        df = pd.concat([df, stats])
+        subjects = pd.concat([subjects, psubjects])
+        stats = pd.concat([stats, pstats])
 
-    print(df)
-    print('TODO:making pdf')
-    print('TODO:making zip')
+    # Only include specifc subset of columns
+    subjects = subjects[SUBJECTS_COLUMNS]
+
+    # Only stats for subjects in subjects
+    stats = stats[stats.SUBJECT.isin(subjects.ID.unique())]
+
+    # Make PITT be UPMC
+    stats['SITE'] = stats['SITE'].replace({'PITT': 'UPMC'})
+    if 'SITE' in subjects.columns:
+        subjects['SITE'] = subjects['SITE'].replace({'PITT': 'UPMC'})
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Prep output dir
+        data_dir = os.path.join(tmpdir, 'data')
+        zip_file = os.path.join(tmpdir, 'data.zip')
+        stats_dir = os.path.join(data_dir, 'stats')
+        pdf_file = os.path.join(data_dir, 'report.pdf')
+        os.mkdir(data_dir)
+        os.mkdir(stats_dir)
+
+        make_export_report(pdf_file, garjus, analysis, subjects, stats)
+
+        # Save subjects csv
+        csv_file = os.path.join(data_dir, f'subjects.csv')
+        logger.info(f'saving subjects csv:{csv_file}')
+        subjects.to_csv(csv_file, index=False)
+
+        # Save a csv for each proc type
+        for proctype in stats.PROCTYPE.unique():
+            # Get the data for this processing type
+            dft = stats[stats.PROCTYPE == proctype]
+
+            dft = dft.dropna(axis=1, how='all')
+
+            dft = dft.sort_values('ASSR')
+
+            # Save file for this type
+            csv_file = os.path.join(stats_dir, f'{proctype}.csv')
+            logger.info(f'saving csv:{proctype}:{csv_file}')
+            dft.to_csv(csv_file, index=False)
+
+        # Create zip file of dir of csv files
+        shutil.make_archive(data_dir, 'zip', data_dir)
+
+
+        # Save it outside of temp dir
+        logger.info(f'saving zip:{filename}')
+        shutil.copy(zip_file, filename)
 
 
 def make_stats_csv(
