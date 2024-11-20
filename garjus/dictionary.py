@@ -143,6 +143,11 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI parcellated with BrainColor atlas',
         'procurl': 'https://pubmed.ncbi.nlm.nih.gov/32948749/',
     },
+    'DnSeg_v1': {
+        'short_descrip': 'Basal Forebrain labeling',
+        'inputs_descrip': 'T1w MRI',
+        'procurl': 'https://github.com/DerekDoss/DnSeg',
+    },
     'FALLYPRIDEQA_v2':{
         'short_descrip': 'Fallypride QA with Regional SUVR using whole cerebellum as reference.',
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), Fallypride PET',
@@ -187,6 +192,7 @@ PROCLIB = {
         'short_descrip': 'FreeSurfer 7 recon-all - whole brain parcellation, surfaces, cortical thickness.',
         'inputs_descrip': 'T1w MRI',
         'procurl': 'https://github.com/bud42/FS7',
+        'stats_subset': ['fs7_hpc_lh', 'fs7_hpc_rh', 'fs7_stnv'],
     },
     'FS7HPCAMG_v1': {
         'short_descrip': 'FreeSurfer 7 hippocampus & amygdala sub-region volumes.',
@@ -242,6 +248,10 @@ STATLIB = {
         'bag_age_gap': 'Brain Age Gap',
         'bag_age_pred': 'Predicted Age',
     },
+    'DnSeg_v1': {
+        'nbm_lh': 'Nucleus Basalis of Meynert Left Hemisphere Volume',
+        'nbm_rh': 'Nucleus Basalis of Meynert Right Hemisphere Volume',
+    },
     'FALLYPRIDEQA_v2': {
         'accumbens_suvr': 'Accumbens regional mean SUVR normalized by Whole Cerebellum',
         'amygdala_suvr': 'Amygdala regional mean SUVR normalized by Whole Cerebellum',
@@ -264,14 +274,11 @@ STATLIB = {
         'ventraldc_suvr': 'Ventral Diencephalon regional mean SUVR normalized by Whole Cerebellum',
     },
     'FS7_v1': {
-        'fs7_etiv': 'Estimated Total Intracranial Volume',
         'fs7_hpc_lh': 'Hippocampus Left Hemisphere Volume',
         'fs7_hpc_rh': 'Hippocampus Right Hemisphere Volume',
         'fs7_latvent_lh': 'Lateral Ventricle Left Hemisphere Volume',
         'fs7_latvent_rh': 'Lateral Ventricle Right Hemisphere Volume',
         'fs7_stnv': 'Supra-tentorial not ventricles Volume',
-        'fs7_supflobe_lh': 'Superior Frontal Lobe Left Hemisphere Thickness',
-        'fs7_supflobe_rh': 'Superior Frontal Lobe Right Hemisphere Thickness',
     },
     'FEOBVQA_v2': {
         'antcing_suvr': 'Anterior Cingulate SUVR normalized by Supra-ventricular White Matter',
