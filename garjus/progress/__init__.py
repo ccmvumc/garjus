@@ -95,28 +95,6 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, 
         include_subjects = a['SUBJECTS'].splitlines()
         logger.debug(f'applying subject filter to include:{include_subjects}')
 
-        #df = df[df.SUBJECT.isin(subjects)]
-
-        # Append rows for missing subjects and resort
-        #_subj = df.SUBJECT.unique()
-        #missing_subjects = [x for x in subjects if x not in _subj]
-        #if missing_subjects:
-        #    logger.info(f'{missing_subjects=}')
-        #    df = pd.concat([
-        #        df,
-        #        pd.DataFrame(
-        #            missing_subjects,
-        #            columns=['SUBJECT']
-        #        )
-        #    ]).sort_values('SUBJECT')
-
-    print(f'{projects=}')
-    print(f'{proctypes=}')
-    print(f'{sesstypes=}')
-    print(f'{sessions=}')
-
-    print('getting stats')
-
     for p in sorted(projects):
         # Load project subjects
         psubjects = garjus.subjects(p).reset_index()
@@ -140,6 +118,11 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, 
 
     # Only include specifc subset of columns
     subjects = subjects[SUBJECTS_COLUMNS]
+
+    # Pivot table to count occurrences of each type for each subject
+    dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
+    valid_subjects = dfp[(dfp > 0).all(axis=1)].index
+    subjects = subjects[subjects.ID.isin(valid_subjects)]
 
     # Only stats for subjects in subjects
     stats = stats[stats.SUBJECT.isin(subjects.ID.unique())]

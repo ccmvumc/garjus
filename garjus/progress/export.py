@@ -299,14 +299,13 @@ def _draw_demog(pdf, subjects):
 
 
 def _draw_proc(pdf, stats):
-    pdf.set_font('helvetica', size=12)
-
     common_count = len(stats.dropna(axis=1).columns)
 
     # Draw heading
+    pdf.set_font('helvetica', size=14)
     _txt = 'Processing Types (see additional pages for details):\n' 
-    pdf.set_font('helvetica', size=12)
     pdf.cell(w=7.5, h=0.5, text=_txt, align='C', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_font('helvetica', size=12)
 
     # Column header
     pdf.cell(1.5)
@@ -344,11 +343,14 @@ def _add_first_page(pdf, info):
     pdf.ln(0.1)
 
     pdf.set_font('helvetica', size=12)
-    _text = f'XNAT: {info.get("xnat")}\n'
+
+    # Show settings for proctypes, sesstypes, projects, etc.
+    _text = 'Subject data in subjects.csv, processing data in stats/[TYPE].csv\n'
+    _text += f'XNAT: {info.get("xnat")}\n'
     _text +=f'REDCap:{info.get("redcap")}\n'
     _text += f'Session Types: '
     _text += ','.join(sorted(list(stats.SESSTYPE.unique())))
-    pdf.multi_cell(0, 0.25, text=_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.multi_cell(0, 0.25, text=_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
     # Show subject counts by project
     _draw_counts(pdf, subjects)
@@ -361,7 +363,6 @@ def _add_first_page(pdf, info):
     # Show processing types table
     _draw_proc(pdf, stats)
 
-    # Show settings for proctypes, sesstypes, projects, etc.
     return pdf
 
 def _add_stats_fmriqa(pdf, stats, info):
