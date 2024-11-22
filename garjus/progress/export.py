@@ -303,7 +303,7 @@ def _draw_proc(pdf, stats):
 
     # Draw heading
     pdf.set_font('helvetica', size=14)
-    _txt = 'Processing Types (see additional pages for details):\n' 
+    _txt = 'Processing Types (see additional pages for details)\n' 
     pdf.cell(w=7.5, h=0.5, text=_txt, align='C', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font('helvetica', size=12)
 

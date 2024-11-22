@@ -120,7 +120,7 @@ class Garjus:
         self.analyses_rename = ANALYSES_RENAME
         self.reports_rename = REPORTS_RENAME
         self.xsi2mod = utils_xnat.XSI2MOD
-        self.max_stats = 64
+        self.max_stats = 300
         self._projects = None
         self._project2stats = {}
         self._columns = self._default_column_names()
