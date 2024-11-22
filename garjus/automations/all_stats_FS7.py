@@ -315,6 +315,8 @@ df = g.assessors(projects=['REMBRANDT'])
 
 df = df[df.PROCTYPE == 'FS7_v1']
 
+df = df.sort_values('ASSR')
+
 for i, row in df.iterrows():
     print(i, row['full_path'])
     stats = get_stats(g.xnat(), row['full_path'])
