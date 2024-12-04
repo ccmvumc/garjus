@@ -2000,7 +2000,7 @@ class Garjus:
 
         logger.info(f'writing zip file:{filename}.')
         make_export_zip(
-            self, filename, projects, proctypes, sesstypes, analysis, sessions
+            self, filename, projects, proctypes, sesstypes, sessions
         )
 
     def compare(self, project):

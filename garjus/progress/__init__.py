@@ -124,7 +124,7 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
         os.mkdir(data_dir)
         os.mkdir(stats_dir)
 
-        make_export_report(pdf_file, garjus, analysis, subjects, stats)
+        make_export_report(pdf_file, garjus, subjects, stats)
 
         # Save subjects csv
         csv_file = os.path.join(data_dir, f'subjects.csv')
