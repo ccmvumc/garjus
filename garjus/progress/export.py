@@ -1,21 +1,14 @@
 """Creates report PDF with zip."""
 import logging
 import io
-import re
-import os
-import shutil
-import itertools
-from datetime import datetime, date, timedelta
-import tempfile
+from datetime import datetime
 import math
 
 import numpy as np
-import pydot
 import pandas as pd
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
-import plotly.express as px
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 from PIL import Image
