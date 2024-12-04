@@ -149,14 +149,16 @@ def _draw_counts(pdf, subjects):
     pdf.cell(w=0.7)
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
-    _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
+    _kwargs = {'w': 0.9, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
 
     # Column header for each project
     pdf.cell(indent_width)
     for cur_proj in project_list:
         _txt = cur_proj
         if len(_txt) > 6:
-            pdf.set_font('helvetica', size=10)
+            pdf.set_font('helvetica', size=9)
+        else:
+            pdf.set_font('helvetica', size=12)
 
         pdf.cell(**_kwargs, text=_txt)
 
@@ -166,11 +168,9 @@ def _draw_counts(pdf, subjects):
     # Row formatting
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
-    _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs = {'w': 0.9, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
     _kwargs_s = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_t = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-
-    pdf.set_font('helvetica', size=18)
+    _kwargs_t = {'w': 0.5, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
 
     # Row for each group
     for cur_group in group_list:
@@ -183,11 +183,13 @@ def _draw_counts(pdf, subjects):
 
         if len(_txt) > 6:
             pdf.set_font('helvetica', size=12)
+        else:
+            pdf.set_font('helvetica', size=14)
 
         pdf.cell(**_kwargs_s, text=_txt)
 
         # Count each type for this group
-        pdf.set_font('helvetica', size=18)
+        pdf.set_font('helvetica', size=14)
         for cur_proj in project_list:
             cur_count = str(len(dfg[dfg.PROJECT == cur_proj]))
             pdf.cell(**_kwargs, text=cur_count)
@@ -200,12 +202,12 @@ def _draw_counts(pdf, subjects):
             #pdf.cell(w=0, h=0, border=0, text='', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln()
 
+    pdf.set_font('helvetica', size=14)
     if len(group_list) > 1:
         # TOTALS row
         pdf.cell(w=indent_width)
         pdf.cell(w=0.7)
         for cur_proj in project_list:
-            pdf.set_font('helvetica', size=18)
             cur_count = str(len(subjects[subjects.PROJECT == cur_proj]))
             pdf.cell(**_kwargs, text=cur_count)
 
@@ -235,7 +237,7 @@ def _draw_demog(pdf, subjects):
     pdf.cell(w=7.5, h=0.5, text=_txt, align='C', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # Header Formatting
-    pdf.cell(w=0.7)
+    pdf.cell(w=0.5)
     pdf.set_text_color(245, 245, 245)
     pdf.set_line_width(0.01)
     _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': True}
@@ -256,10 +258,9 @@ def _draw_demog(pdf, subjects):
     pdf.set_fill_color(255, 255, 255)
     pdf.set_text_color(0, 0, 0)
     _kwargs = {'w': 1.0, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_s = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
-    _kwargs_t = {'w': 0.7, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_s = {'w': 0.5, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
+    _kwargs_t = {'w': 0.5, 'h': 0.5, 'border': 1, 'align': 'C', 'fill': False}
 
-    pdf.set_font('helvetica', size=18)
 
     # Row for each sex
     for cur_sex in sex_list:
@@ -272,11 +273,13 @@ def _draw_demog(pdf, subjects):
 
         if len(_txt) > 6:
             pdf.set_font('helvetica', size=12)
+        else:
+            pdf.set_font('helvetica', size=14)
 
         pdf.cell(**_kwargs_s, text=_txt)
 
         # Count each type for this
-        pdf.set_font('helvetica', size=18)
+        pdf.set_font('helvetica', size=14)
         for cur_proj in project_list:
             proj_tot = len(subjects[subjects.PROJECT == cur_proj])
             proj_sex = len(dfg[dfg.PROJECT == cur_proj])
@@ -612,7 +615,7 @@ def _add_stats_pages(pdf, info):
             pdf.cell(text=_url, link=_url)
 
 
-def make_export_report(filename, garjus, analysis, subjects, stats):
+def make_export_report(filename, garjus, subjects, stats):
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
     pdf.set_filename(filename)

@@ -268,6 +268,7 @@ def load_CAARE(garjus):
 
     return dataC
 
+
 def load_MDDHx():
     controls = [
         '2503', '2505', '2510', '2511', '2513', '2518', '2520', '2522', '2526',
@@ -289,6 +290,30 @@ def load_MDDHx():
     df['SEX'] = 'F'
 
     return df
+
+
+def load_COGD(garjus):
+    dob_field = 'backg_dob'
+    sex_field = 'backg_sex'
+    date_field = 'mri_date'
+    fields = [dob_field, sex_field, date_field]
+
+    project_redcap = garjus.primary('COGD')
+
+    rec = project_redcap.export_records(fields=fields, raw_or_label='label')
+
+    try:
+        rec = [x for x in rec if x[dob_field]]
+    except KeyError as err:
+        logger.debug(f'cannot access dob:{dob_field}:{err}')
+
+    df = pd.DataFrame(rec, columns=fields + ['redcap_event_name'])
+
+    # all are depressed
+    df['GROUP'] = 'Depress'
+
+    return df
+
 
 def load_subjects(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
@@ -322,6 +347,8 @@ def load_subjects(garjus, project, include_dob=False):
         dob_field = 'dob'
     elif 'dob_sub' in field_names:
         dob_field = 'dob_sub'
+    elif 'backg_dob' in field_names:
+        dob_field = 'backg_dob'
 
     if 'sex_xcount' in field_names:
         sex_field = 'sex_xcount'
@@ -329,6 +356,8 @@ def load_subjects(garjus, project, include_dob=False):
         sex_field = 'dems_sex'
     elif 'sex_demo' in field_names:
         sex_field = 'sex_demo'
+    elif 'backg_sex' in field_names:
+        sex_field = 'backg_sex'
 
     if 'mri_date' in field_names:
         date_field = 'mri_date'
@@ -373,7 +402,7 @@ def load_subjects(garjus, project, include_dob=False):
     # Determine group
     df['GROUP'] = 'UNKNOWN'
 
-    if project in ['DepMIND2', 'DepMIND3']:
+    if project in ['DepMIND2', 'DepMIND3', 'COGD']:
         # All are depressed
         df['GROUP'] = 'Depress'
     elif project == 'D3':
@@ -410,6 +439,8 @@ def load_subjects(garjus, project, include_dob=False):
         # Merge in date
         df = pd.merge(df, dfm, how='left', on=def_field)
 
+        df[sex_field] = df[sex_field].fillna('UNKNOWN')
+
         # Exclude incomplete data
         df = df.dropna()
 
@@ -427,7 +458,11 @@ def load_subjects(garjus, project, include_dob=False):
     df = df.dropna()
 
     if sex_field:
-        df['SEX'] = df[sex_field].map({'Male': 'M', 'Female': 'F'}, )
+        df['SEX'] = df[sex_field].map({
+            'Male': 'M',
+            'Female': 'F',
+            'UNKNOWN': 'U'
+        })
 
     if guid_field:
         df['GUID'] = df[guid_field]
