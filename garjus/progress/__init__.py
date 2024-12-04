@@ -67,10 +67,9 @@ def make_progress(garjus, project, cur_progress, now):
         garjus.add_progress(project, cur_progress, now, pdf_file, zip_file)
 
 
-def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, sessions):
+def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
     stats = pd.DataFrame()
     subjects = pd.DataFrame()
-    include_subjects = None
 
     if not isinstance(projects, list):
         projects = projects.split(',')
@@ -84,17 +83,6 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, 
     if sessions is not None and not isinstance(sessions, list):
         sessions = sessions.split(',')
 
-    if analysis:
-        # Get the list of subjects for specified analysis and apply as filter
-        logger.info(f'{analysis=}')
-
-        # Get the subject list from the analysis
-        project, analysis_id = analysis.rsplit('_', 1)
-        logger.info(f'loading analysis:{project}:{analysis_id}')
-        a = garjus.load_analysis(project, analysis_id)
-        include_subjects = a['SUBJECTS'].splitlines()
-        logger.debug(f'applying subject filter to include:{include_subjects}')
-
     for p in sorted(projects):
         # Load project subjects
         psubjects = garjus.subjects(p).reset_index()
@@ -106,11 +94,6 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, analysis, 
         if len(pstats) == 0:
             logger.info(f'no stats for project:{p}')
             continue
-
-        if include_subjects:
-            # Filter by subject
-            psubjects = psubjects[psubjects.ID.isin(include_subjects)]
-            pstats = pstats[pstats.SUBJECT.isin(include_subjects)]
 
         # Append to total
         subjects = pd.concat([subjects, psubjects])
