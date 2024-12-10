@@ -2,7 +2,7 @@ import glob
 import re
 import logging
 
-from ..utils_redcap import upload_file
+from ...utils_redcap import upload_file
 
 
 logger = logging.getLogger('garjus.automations.etl_nihexaminer.files2redcap')
