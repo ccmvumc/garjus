@@ -337,7 +337,7 @@ def run(project):
                 })
 
         for k in manual_values:
-            if r[k] == '':
+            if r.get(k, '') == '':
                 logger.debug(f'blank value:{record_id}:{event_id}:{k}')
                 has_blank = True
                 break
