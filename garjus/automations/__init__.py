@@ -211,6 +211,20 @@ def _parse_scanmap(scanmap):
     return scanmap
 
 
+def _parse_map(mapstring):
+    """Parse map stored as string into dictionary."""
+
+    parsed_map = mapstring.replace('=', ':')
+
+    # Parse multiline string of delimited key value pairs into dictionary
+    parsed_map = dict(x.strip().split(':', 1) for x in parsed_map.split('\n'))
+
+    # Remove extra whitespace from keys and values
+    parsed_map = {k.strip(): v.strip() for k, v in parsed_map.items()}
+
+    return parsed_map
+
+
 def _run_etl_automation(automation, garjus, project):
     """Load the project primary redcap."""
     results = []
@@ -230,6 +244,7 @@ def _run_etl_automation(automation, garjus, project):
             limbo = garjus.project_setting(project, 'limbodir')
             _dir = f'{limbo}/{project}_EXAMINER/data'
             e2s = garjus.project_setting(project, 'examinermap')
+            e2s = _parse_map(e2s)
             print(e2s)
             results = etl_nihexaminer.file2redcap(project_redcap, _dir, e2s)
         else:
