@@ -400,7 +400,10 @@ def run(project):
 
         # Load data back to redcap
         logger.debug(f'loading:{project}:{record_id}:{event_id}')
-        data['nih_examiner_scoring_complete'] = '2'
+
+        if 'nih_dot_total' in project.field_names:
+            data['nih_examiner_scoring_complete'] = '2'
+        
         repeat_id = r.get('redcap_repeat_instance', None)
         _load(project, record_id, event_id, data, repeat_id=repeat_id)
 
