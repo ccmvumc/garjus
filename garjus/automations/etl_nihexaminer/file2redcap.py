@@ -86,7 +86,7 @@ def process_project(
                 logger.debug(f'already uploaded:{subj}:{event}:{cur_field}')
                 continue
 
-            cur_glob = f'{limbo_dir}/{subj_num}/{cur_glob}_Summary_{subj_num}_{sess_num}_*.csv'
+            cur_glob = f'{limbo_dir}/{subj_num}/{cur_name}_Summary_{subj_num}_{sess_num}_*.csv'
             file_list = sorted(glob.glob(cur_glob))
             file_count = len(file_list)
             if file_count <= 0:
