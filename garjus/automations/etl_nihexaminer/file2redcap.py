@@ -100,32 +100,31 @@ def process_project(
             cur_file = file_list[0]
             logger.debug(f'uploading file:{cur_file}')
 
-            if False:
-                try:
-                   result = upload_file(
-                       project,
-                       record_id,
-                       cur_field,
-                       cur_file,
-                       event_id=event)
+            try:
+               result = upload_file(
+                   project,
+                   record_id,
+                   cur_field,
+                   cur_file,
+                   event_id=event)
 
-                   logger.debug(f'uploaded:{subj}:{event}:{cur_file}')
-                except (ValueError) as err:
-                   logger.error(f'error uploading:{cur_file}:{err}')
+               logger.debug(f'uploaded:{subj}:{event}:{cur_file}')
+            except (ValueError) as err:
+               logger.error(f'error uploading:{cur_file}:{err}')
 
-                if not result:
-                   logger.error(f'upload failed:{subj}:{event}')
-                   continue
+            if not result:
+               logger.error(f'upload failed:{subj}:{event}')
+               continue
 
-                logger.debug(f'uploaded:{subj}:{event}')
-                results.append({
-                   'result': 'COMPLETE',
-                   'description': 'edat_limbo2redcap',
-                   'category': 'edat_limbo2redcap',
-                   'subject': subj,
-                   'session': '',
-                   'scan': '',
-                   'event': event,
-                   'field': cur_field})
+            logger.debug(f'uploaded:{subj}:{event}')
+            results.append({
+               'result': 'COMPLETE',
+               'description': 'etl_nihexaminer.file2redcap',
+               'category': 'etl_nihexaminer.file2redcap',
+               'subject': subj,
+               'session': '',
+               'scan': '',
+               'event': event,
+               'field': cur_field})
 
     return results
