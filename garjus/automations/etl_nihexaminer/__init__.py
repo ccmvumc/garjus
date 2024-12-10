@@ -5,7 +5,7 @@ import tempfile
 
 from .process import process
 from ...utils_redcap import download_file, field2events
-
+from .file2redcap import process_project as file2redcap
 
 logger = logging.getLogger('garjus.automations.etl_nihexaminer')
 
