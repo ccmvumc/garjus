@@ -160,10 +160,9 @@ def run(project):
     ]
 
     if 'dot_count_tot' in project.field_names:
-        field.extend(D3_FIELDS)
+        fields.extend(D3_FIELDS)
     else:
         fields.extend(COGD_FIELDS)
-
 
     if 'correct_s' in project.field_names:
         fields.extend([
