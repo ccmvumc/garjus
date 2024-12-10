@@ -279,7 +279,7 @@ def run(project):
                     'brs_8': int(r['nih_impulsivity_v3']),
                     'brs_9': int(r['nih_social_v3']),
                 }
-            else:
+            elif r.get('dot_count_tot', False):
                 manual_values = {
                     'dot_total': int(r['dot_count_tot']),
                     'anti_trial_1': int(r['anti_trial_1']),
@@ -337,7 +337,11 @@ def run(project):
                         'cf2_rep': int(r['repetition_cloth']),
                         'cf2_rv': int(r['rule_vio_cloth'])
                     })
-        except ValueError as err:
+            else:
+                logger.error(f'manual values not found:{record_id}:{event_id}')
+                continue
+
+        except (KeyError, ValueError) as err:
             logger.error(f'value error, cannot load{err}')
             continue
 
