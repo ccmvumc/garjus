@@ -196,7 +196,7 @@ def run(project):
         logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
         # Get values needed for scoring
-        if r['nih_dot_total']:
+        if r.get('nih_dot_total', False):
             manual_values = {
                 'dot_total': int(r['nih_dot_total']),
                 'anti_trial_1': int(r['nih_anti_1']),
@@ -223,7 +223,7 @@ def run(project):
                 'brs_8': int(r['nih_impulsivity']),
                 'brs_9': int(r['nih_social']),
             }
-        elif r['nih_dot_total_v2']:
+        elif r.get('nih_dot_total_v2', False):
             manual_values = {
                 'dot_total': int(r['nih_dot_total_v2']),
                 'anti_trial_1': int(r['nih_anti_1_v2']),
@@ -250,7 +250,7 @@ def run(project):
                 'brs_8': int(r['nih_impulsivity_v2']),
                 'brs_9': int(r['nih_social_v2']),
             }
-        elif r['nih_dot_total_v3']:
+        elif r.get('nih_dot_total_v3', False):
             manual_values = {
                 'dot_total': int(r['nih_dot_total_v3']),
                 'anti_trial_1': int(r['nih_anti_1_v3']),
