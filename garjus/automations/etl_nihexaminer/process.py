@@ -10,7 +10,7 @@ from ...utils_redcap import download_file, field2events
 # In production, will be run by garjus.update.automations
 
 
-logger = logging.getLogger('test_nih_examiner')
+logger = logging.getLogger('garjus.automations.etl_nihexaminer.process')
 
 
 FIELDS = [

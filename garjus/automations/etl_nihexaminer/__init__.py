@@ -7,6 +7,10 @@ from .process import process
 from ...utils_redcap import download_file, field2events
 
 
+logger = logging.getLogger('garjus.automations.etl_nihexaminer')
+
+
+
 def run(project):
     """Process examiner files from REDCap and upload results."""
     data = {}
