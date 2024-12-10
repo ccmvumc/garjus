@@ -11,7 +11,7 @@ import tempfile
 
 from ..utils_redcap import download_file, field2events
 
-import etl_nihexaminer
+from . import etl_nihexaminer
 
 
 # TODO: move slice timing to redcap
