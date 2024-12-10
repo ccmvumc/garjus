@@ -185,164 +185,160 @@ def run(project):
         record_id = r[project.def_field]
         event_id = r['redcap_event_name']
 
-        if r[done_field]:
-            logger.debug(f'already ETL:{record_id}:{event_id}')
-            continue
+        try:
 
-        if not r[cpt_field]:
-            logger.debug(f'no data file:{record_id}:{event_id}')
-            continue
+            if r[done_field]:
+                logger.debug(f'already ETL:{record_id}:{event_id}')
+                continue
 
-        logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
+            if not r[cpt_field]:
+                logger.debug(f'no data file:{record_id}:{event_id}')
+                continue
 
-        # Get values needed for scoring
-        if r.get('nih_dot_total', False):
-            manual_values = {
-                'dot_total': int(r['nih_dot_total']),
-                'anti_trial_1': int(r['nih_anti_1']),
-                'anti_trial_2': int(r['nih_anti_2']),
-                'cf1_corr': int(r['nih_animals_cor']),
-                'cf1_rep': int(r['nih_animal_rep']),
-                'cf1_rv': int(r['nih_animals_rv']),
-                'vf1_corr': int(r['nih_f_total']),
-                'vf1_rep': int(r['nih_f_rep']),
-                'vf1_rv': int(r['nih_f_rv']),
-                'vf2_corr': int(r['nih_l_total']),
-                'vf2_rep': int(r['nih_l_rep']),
-                'vf2_rv': int(r['nih_l_rv']),
-                'cf2_corr': int(r['nih_veg_cor']),
-                'cf2_rep': int(r['nih_veg_rep']),
-                'cf2_rv': int(r['nih_veg_rv']),
-                'brs_1': int(r['nih_agitation']),
-                'brs_2': int(r['nih_stim_bound']),
-                'brs_3': int(r['nih_persev']),
-                'brs_4': int(r['nih_initiation']),
-                'brs_5': int(r['nih_motor']),
-                'brs_6': int(r['nih_distract']),
-                'brs_7': int(r['nih_engage']),
-                'brs_8': int(r['nih_impulsivity']),
-                'brs_9': int(r['nih_social']),
-            }
-        elif r.get('nih_dot_total_v2', False):
-            manual_values = {
-                'dot_total': int(r['nih_dot_total_v2']),
-                'anti_trial_1': int(r['nih_anti_1_v2']),
-                'anti_trial_2': int(r['nih_anti_2_v2']),
-                'cf1_corr': int(r['nih_animals_cor_v2']),
-                'cf1_rep': int(r['nih_animal_rep_v2']),
-                'cf1_rv': int(r['nih_animals_rv_v2']),
-                'vf1_corr': int(r['nih_t_total_v2']),
-                'vf1_rep': int(r['nih_t_rep_v2']),
-                'vf1_rv': int(r['nih_t_rv_v2']),
-                'vf2_corr': int(r['nih_s_total_v2']),
-                'vf2_rep': int(r['nih_s_rep_v2']),
-                'vf2_rv': int(r['nih_s_rv_v2']),
-                'cf2_corr': int(r['nih_fruit_cor_v2']),
-                'cf2_rep': int(r['nih_fruit_rep_v2']),
-                'cf2_rv': int(r['nih_fruit_rv_v2']),
-                'brs_1': int(r['nih_agitation_v2']),
-                'brs_2': int(r['nih_stim_bound_v2']),
-                'brs_3': int(r['nih_persev_v2']),
-                'brs_4': int(r['nih_initiation_v2']),
-                'brs_5': int(r['nih_motor_v2']),
-                'brs_6': int(r['nih_distract_v2']),
-                'brs_7': int(r['nih_engage_v2']),
-                'brs_8': int(r['nih_impulsivity_v2']),
-                'brs_9': int(r['nih_social_v2']),
-            }
-        elif r.get('nih_dot_total_v3', False):
-            manual_values = {
-                'dot_total': int(r['nih_dot_total_v3']),
-                'anti_trial_1': int(r['nih_anti_1_v3']),
-                'anti_trial_2': int(r['nih_anti_2_v3']),
-                'cf1_corr': int(r['nih_animals_cor_v3']),
-                'cf1_rep': int(r['nih_animal_rep_v3']),
-                'cf1_rv': int(r['nih_animals_rv_v3']),
-                'vf1_corr': int(r['nih_r_total_v3']),
-                'vf1_rep': int(r['nih_r_rep_v3']),
-                'vf1_rv': int(r['nih_r_rv_v3']),
-                'vf2_corr': int(r['nih_m_total_v3']),
-                'vf2_rep': int(r['nih_m_rep_v3']),
-                'vf2_rv': int(r['nih_m_rv_v3']),
-                'cf2_corr': int(r['nih_cloth_cor_v3']),
-                'cf2_rep': int(r['nih_cloth_rep_v3']),
-                'cf2_rv': int(r['nih_cloth_rv_v3']),
-                'brs_1': int(r['nih_agitation_v3']),
-                'brs_2': int(r['nih_stim_bound_v3']),
-                'brs_3': int(r['nih_persev_v3']),
-                'brs_4': int(r['nih_initiation_v3']),
-                'brs_5': int(r['nih_motor_v3']),
-                'brs_6': int(r['nih_distract_v3']),
-                'brs_7': int(r['nih_engage_v3']),
-                'brs_8': int(r['nih_impulsivity_v3']),
-                'brs_9': int(r['nih_social_v3']),
-            }
-        else:
-            manual_values = {
-                'dot_total': int(r['dot_count_tot']),
-                'anti_trial_1': int(r['anti_trial_1']),
-                'anti_trial_2': int(r['anti_trial_2']),
-                'cf1_corr': int(r['correct_animal']),
-                'cf1_rep': int(r['repetition_animal']),
-                'cf1_rv': int(r['rule_vio_animal']),
-                'brs_1': int(r['brs_1']),
-                'brs_2': int(r['brs_2']),
-                'brs_3': int(r['brs_3']),
-                'brs_4': int(r['brs_4']),
-                'brs_5': int(r['brs_5']),
-                'brs_6': int(r['brs_6']),
-                'brs_7': int(r['brs_7']),
-                'brs_8': int(r['brs_8']),
-                'brs_9': int(r['brs_9']),
-            }
+            logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
-            if r.get('correct_f', False):
-                # examiner version 0
-                manual_values.update({
-                    'vf1_corr': int(r['correct_f']),
-                    'vf1_rep': int(r['repetition_f']),
-                    'vf1_rv': int(r['rule_vio_f']),
-                    'vf2_corr': int(r['correct_l']),
-                    'vf2_rep': int(r['repetition_l']),
-                    'vf2_rv': int(r['rule_vio_l']),
-                    'cf2_corr': int(r['correct_veg']),
-                    'cf2_rep': int(r['repetition_veg']),
-                    'cf2_rv': int(r['rule_vio_veg'])
-                })
-            elif r.get('correct_t', False):
-                # examiner version 1
-                manual_values.update({
-                    'vf1_corr': int(r['correct_t']),
-                    'vf1_rep': int(r['repetition_t']),
-                    'vf1_rv': int(r['rule_vio_t']),
-                    'vf2_corr': int(r['correct_s']),
-                    'vf2_rep': int(r['repetition_s']),
-                    'vf2_rv': int(r['rule_vio_s']),
-                    'cf2_corr': int(r['correct_fruit']),
-                    'cf2_rep': int(r['repetition_fruit']),
-                    'cf2_rv': int(r['rule_vio_fruit'])
-                })
+            # Get values needed for scoring
+            if r.get('nih_dot_total', False):
+                manual_values = {
+                    'dot_total': int(r['nih_dot_total']),
+                    'anti_trial_1': int(r['nih_anti_1']),
+                    'anti_trial_2': int(r['nih_anti_2']),
+                    'cf1_corr': int(r['nih_animals_cor']),
+                    'cf1_rep': int(r['nih_animal_rep']),
+                    'cf1_rv': int(r['nih_animals_rv']),
+                    'vf1_corr': int(r['nih_f_total']),
+                    'vf1_rep': int(r['nih_f_rep']),
+                    'vf1_rv': int(r['nih_f_rv']),
+                    'vf2_corr': int(r['nih_l_total']),
+                    'vf2_rep': int(r['nih_l_rep']),
+                    'vf2_rv': int(r['nih_l_rv']),
+                    'cf2_corr': int(r['nih_veg_cor']),
+                    'cf2_rep': int(r['nih_veg_rep']),
+                    'cf2_rv': int(r['nih_veg_rv']),
+                    'brs_1': int(r['nih_agitation']),
+                    'brs_2': int(r['nih_stim_bound']),
+                    'brs_3': int(r['nih_persev']),
+                    'brs_4': int(r['nih_initiation']),
+                    'brs_5': int(r['nih_motor']),
+                    'brs_6': int(r['nih_distract']),
+                    'brs_7': int(r['nih_engage']),
+                    'brs_8': int(r['nih_impulsivity']),
+                    'brs_9': int(r['nih_social']),
+                }
+            elif r.get('nih_dot_total_v2', False):
+                manual_values = {
+                    'dot_total': int(r['nih_dot_total_v2']),
+                    'anti_trial_1': int(r['nih_anti_1_v2']),
+                    'anti_trial_2': int(r['nih_anti_2_v2']),
+                    'cf1_corr': int(r['nih_animals_cor_v2']),
+                    'cf1_rep': int(r['nih_animal_rep_v2']),
+                    'cf1_rv': int(r['nih_animals_rv_v2']),
+                    'vf1_corr': int(r['nih_t_total_v2']),
+                    'vf1_rep': int(r['nih_t_rep_v2']),
+                    'vf1_rv': int(r['nih_t_rv_v2']),
+                    'vf2_corr': int(r['nih_s_total_v2']),
+                    'vf2_rep': int(r['nih_s_rep_v2']),
+                    'vf2_rv': int(r['nih_s_rv_v2']),
+                    'cf2_corr': int(r['nih_fruit_cor_v2']),
+                    'cf2_rep': int(r['nih_fruit_rep_v2']),
+                    'cf2_rv': int(r['nih_fruit_rv_v2']),
+                    'brs_1': int(r['nih_agitation_v2']),
+                    'brs_2': int(r['nih_stim_bound_v2']),
+                    'brs_3': int(r['nih_persev_v2']),
+                    'brs_4': int(r['nih_initiation_v2']),
+                    'brs_5': int(r['nih_motor_v2']),
+                    'brs_6': int(r['nih_distract_v2']),
+                    'brs_7': int(r['nih_engage_v2']),
+                    'brs_8': int(r['nih_impulsivity_v2']),
+                    'brs_9': int(r['nih_social_v2']),
+                }
+            elif r.get('nih_dot_total_v3', False):
+                manual_values = {
+                    'dot_total': int(r['nih_dot_total_v3']),
+                    'anti_trial_1': int(r['nih_anti_1_v3']),
+                    'anti_trial_2': int(r['nih_anti_2_v3']),
+                    'cf1_corr': int(r['nih_animals_cor_v3']),
+                    'cf1_rep': int(r['nih_animal_rep_v3']),
+                    'cf1_rv': int(r['nih_animals_rv_v3']),
+                    'vf1_corr': int(r['nih_r_total_v3']),
+                    'vf1_rep': int(r['nih_r_rep_v3']),
+                    'vf1_rv': int(r['nih_r_rv_v3']),
+                    'vf2_corr': int(r['nih_m_total_v3']),
+                    'vf2_rep': int(r['nih_m_rep_v3']),
+                    'vf2_rv': int(r['nih_m_rv_v3']),
+                    'cf2_corr': int(r['nih_cloth_cor_v3']),
+                    'cf2_rep': int(r['nih_cloth_rep_v3']),
+                    'cf2_rv': int(r['nih_cloth_rv_v3']),
+                    'brs_1': int(r['nih_agitation_v3']),
+                    'brs_2': int(r['nih_stim_bound_v3']),
+                    'brs_3': int(r['nih_persev_v3']),
+                    'brs_4': int(r['nih_initiation_v3']),
+                    'brs_5': int(r['nih_motor_v3']),
+                    'brs_6': int(r['nih_distract_v3']),
+                    'brs_7': int(r['nih_engage_v3']),
+                    'brs_8': int(r['nih_impulsivity_v3']),
+                    'brs_9': int(r['nih_social_v3']),
+                }
             else:
-                # examiner version 2
-                manual_values.update({
-                    'vf1_corr': int(r['correct_r']),
-                    'vf1_rep': int(r['repetition_r']),
-                    'vf1_rv': int(r['rule_vio_r']),
-                    'vf2_corr': int(r['correct_m']),
-                    'vf2_rep': int(r['repetition_m']),
-                    'vf2_rv': int(r['rule_vio_m']),
-                    'cf2_corr': int(r['correct_cloth']),
-                    'cf2_rep': int(r['repetition_cloth']),
-                    'cf2_rv': int(r['rule_vio_cloth'])
-                })
+                manual_values = {
+                    'dot_total': int(r['dot_count_tot']),
+                    'anti_trial_1': int(r['anti_trial_1']),
+                    'anti_trial_2': int(r['anti_trial_2']),
+                    'cf1_corr': int(r['correct_animal']),
+                    'cf1_rep': int(r['repetition_animal']),
+                    'cf1_rv': int(r['rule_vio_animal']),
+                    'brs_1': int(r['brs_1']),
+                    'brs_2': int(r['brs_2']),
+                    'brs_3': int(r['brs_3']),
+                    'brs_4': int(r['brs_4']),
+                    'brs_5': int(r['brs_5']),
+                    'brs_6': int(r['brs_6']),
+                    'brs_7': int(r['brs_7']),
+                    'brs_8': int(r['brs_8']),
+                    'brs_9': int(r['brs_9']),
+                }
 
-        for k in manual_values:
-            if r.get(k, '') == '':
-                logger.debug(f'blank value:{record_id}:{event_id}:{k}')
-                has_blank = True
-                break
-
-        if has_blank:
+                if r.get('correct_f', False):
+                    # examiner version 0
+                    manual_values.update({
+                        'vf1_corr': int(r['correct_f']),
+                        'vf1_rep': int(r['repetition_f']),
+                        'vf1_rv': int(r['rule_vio_f']),
+                        'vf2_corr': int(r['correct_l']),
+                        'vf2_rep': int(r['repetition_l']),
+                        'vf2_rv': int(r['rule_vio_l']),
+                        'cf2_corr': int(r['correct_veg']),
+                        'cf2_rep': int(r['repetition_veg']),
+                        'cf2_rv': int(r['rule_vio_veg'])
+                    })
+                elif r.get('correct_t', False):
+                    # examiner version 1
+                    manual_values.update({
+                        'vf1_corr': int(r['correct_t']),
+                        'vf1_rep': int(r['repetition_t']),
+                        'vf1_rv': int(r['rule_vio_t']),
+                        'vf2_corr': int(r['correct_s']),
+                        'vf2_rep': int(r['repetition_s']),
+                        'vf2_rv': int(r['rule_vio_s']),
+                        'cf2_corr': int(r['correct_fruit']),
+                        'cf2_rep': int(r['repetition_fruit']),
+                        'cf2_rv': int(r['rule_vio_fruit'])
+                    })
+                else:
+                    # examiner version 2
+                    manual_values.update({
+                        'vf1_corr': int(r['correct_r']),
+                        'vf1_rep': int(r['repetition_r']),
+                        'vf1_rv': int(r['rule_vio_r']),
+                        'vf2_corr': int(r['correct_m']),
+                        'vf2_rep': int(r['repetition_m']),
+                        'vf2_rv': int(r['rule_vio_m']),
+                        'cf2_corr': int(r['correct_cloth']),
+                        'cf2_rep': int(r['repetition_cloth']),
+                        'cf2_rv': int(r['rule_vio_cloth'])
+                    })
+        except ValueError as err:
+            logger.debug(f'value error, cannot load{err}')
             continue
 
         with tempfile.TemporaryDirectory() as tmpdir:
