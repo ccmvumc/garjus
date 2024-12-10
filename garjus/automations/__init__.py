@@ -11,6 +11,8 @@ import tempfile
 
 from ..utils_redcap import download_file, field2events
 
+import etl_nihexaminer
+
 
 # TODO: move slice timing to redcap
 
@@ -224,7 +226,8 @@ def _run_etl_automation(automation, garjus, project):
     elif automation == 'etl_gaitrite':
         results = _run_etl_gaitrite(project_redcap)
     elif automation == 'etl_nihexaminer':
-        results = _run_etl_nihexaminer(project_redcap)
+        #results = _run_etl_nihexaminer(project_redcap)
+        results = etl_nihexaminer.run(project_redcap)
     elif automation == 'etl_nihtoolbox_drtaylor':
         results = _run_etl_nihtoolbox_drtaylor(project_redcap)
     else:

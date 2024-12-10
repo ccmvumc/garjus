@@ -1,268 +1,232 @@
-"""NIH Examiner data extraction."""
 import logging
+import sys
+import redcap
 import tempfile
-import subprocess
-import os
 
-import pandas as pd
-
-
-# CPT Summary File
-cpt_columns = [
-    'target_corr',
-    'target_errors',
-    'nontarget_corr',
-    'nontarget_errors',
-    'target_mean',
-    'target_median',
-    'target_stdev',
-    'performance_errors']
+from .process import process
+from ...utils_redcap import download_file, field2events
 
 
-# Flanker Summary File
-flank_columns = [
-    'congr_corr',
-    'congr_mean',
-    'congr_median',
-    'congr_stdev',
-    'incongr_corr',
-    'incongr_mean',
-    'incongr_median',
-    'incongr_stdev',
-    'total_corr',
-    'total_mean',
-    'total_median',
-    'total_stdev',
-    'flanker_score',
-    'flanker_error_diff']
-
-
-# N-back Summary File
-nback_columns = [
-    'nb1_score',
-    'nb1_bias',
-    'nb1_corr',
-    'nb1_errors',
-    'nb1_mean',
-    'nb1_median',
-    'nb1_stdev',
-    'nb2_score',
-    'nb2_bias',
-    'nb2_corr',
-    'nb2_errors',
-    'nb2_mean',
-    'nb2_median',
-    'nb2_stdev',
-    'nb2int_corr',
-    'nb2int_errors',
-    'nb2int_mean',
-    'nb2int_median',
-    'nb2int_stdev']
-
-
-# Set-shifting Summary File
-shift_columns = [
-    'color_corr',
-    'color_errors',
-    'color_mean',
-    'color_median',
-    'color_stdev',
-    'shape_corr',
-    'shape_errors',
-    'shape_mean',
-    'shape_median',
-    'shape_stdev',
-    'shift_corr',
-    'shift_errors',
-    'shift_mean',
-    'shift_median',
-    'shift_stdev',
-    'shift_score',
-    'shift_error_diff']
-
-
-# Output columns we want to keep
-scoring_columns = [
-    'executive_composite',
-    'executive_se',
-    'fluency_factor',
-    'fluency_se',
-    'cog_control_factor',
-    'cog_control_se',
-    'working_memory_factor',
-    'working_memory_se']
-
-
-# Columns required by scoring program
-input_columns = [
-    'subject_id',
-    'session_date',
-    'site_id',
-    'session_num',
-    'language',
-    'age',
-    'dot_total',
-    'nb1_score',
-    'nb2_score',
-    'flanker_score',
-    'error_score',
-    'antisacc',
-    'shift_score',
-    'vf1_corr',
-    'vf2_corr',
-    'cf1_corr',
-    'cf2_corr']
-
-
-def process(
-    manual_values,
-    flank_file,
-    cpt_file,
-    nback_file,
-    shift_file,
-):
-    """Process NIH Examiner files and return subset of data."""
-    mv = manual_values
-
-    # Extract data from files
-    flank_data = _extract_onerow_file(flank_file)
-    cpt_data = _extract_onerow_file(cpt_file)
-    nback_data = _extract_onerow_file(nback_file)
-    shift_data = _extract_onerow_file(shift_file)
-
-    antisacc = mv['anti_trial_1'] + mv['anti_trial_2']
-
-    behav_total = 0
-    try:
-        for i in range(9):
-            b = int(mv[f'brs_{i+1}'])
-            if b < 4:
-                behav_total += b
-    except Exception as err:
-        logging.error(err)
-        return
-
-    # Calculate error score
-    error_score = \
-        cpt_data['nontarget_errors'] + \
-        flank_data['flanker_error_diff'] + \
-        shift_data['shift_error_diff'] + \
-        mv['vf1_rep'] + \
-        mv['vf1_rv'] + \
-        mv['vf2_rep'] + \
-        mv['vf2_rv'] + \
-        mv['cf1_rep'] + \
-        mv['cf1_rv'] + \
-        mv['cf2_rep'] + \
-        mv['cf2_rv'] + \
-        behav_total
-
-    # Collect inputs
-    inputs = {
-        'subject_id': '',
-        'session_date': '',
-        'site_id': '',
-        'session_num': '',
-        'language': '1',
-        'age': '',
-        'dot_total': mv['dot_total'],
-        'antisacc': antisacc,
-        'vf1_corr': mv['vf1_corr'],
-        'vf2_corr': mv['vf2_corr'],
-        'cf1_corr': mv['cf1_corr'],
-        'cf2_corr': mv['cf2_corr'],
-        'nb1_score': nback_data['nb1_score'],
-        'nb2_score': nback_data['nb2_score'],
-        'flanker_score': flank_data['flanker_score'],
-        'error_score': error_score,
-        'shift_score': shift_data['shift_score'],
-    }
-
-    # Run the Examiner Scoring Program
-    with tempfile.TemporaryDirectory() as tmpdir:
-        score_data = _scoring(inputs, tmpdir)
-
-    # Transform data for upload
-    return _transform(flank_data, cpt_data, nback_data, shift_data, score_data)
-
-
-def _transform(flank_data, cpt_data, nback_data, shift_data, score_data):
-    """Take data extracted from files and prep for REDCap"""
+def run(project):
+    """Process examiner files from REDCap and upload results."""
     data = {}
-    data.update(_subset(flank_data, flank_columns))
-    data.update(_subset(cpt_data, cpt_columns))
-    data.update(_subset(nback_data, nback_columns))
-    data.update(_subset(shift_data, shift_columns))
-    data.update(_subset(score_data, scoring_columns))
-    return data
+    results = []
+    events = []
+    fields = []
+    records = []
+    flank_field = 'flanker_file'
+    nback_field = 'nback_upload'
+    shift_field = 'set_shifting_file'
+    cpt_field = 'cpt_upload'
+    done_field = 'flanker_score'
 
+    if 'flanker_summfile' in project.field_names:
+        # Alternate file field names
+        flank_field = 'flanker_summfile'
+        nback_field = 'nback_summfile'
+        shift_field = 'set_shifting_summfile'
+        cpt_field = 'cpt_summfile'
 
-def _extract_onerow_file(filename):
-    """Extract data from file that has a header row and one data row"""
-    try:
-        df = pd.read_csv(filename)
-    except:
-        df = pd.read_excel(filename)
+    # Get the fields
+    fields = [
+        project.def_field,
+        done_field,
+        cpt_field,
+        nback_field,
+        shift_field,
+        flank_field,
+        'dot_count_tot',
+        'anti_trial_1',
+        'anti_trial_2',
+        'correct_f',
+        'correct_l',
+        'correct_animal',
+        'correct_veg',
+        'repetition_f',
+        'rule_vio_f',
+        'repetition_l',
+        'rule_vio_l',
+        'repetition_animal',
+        'rule_vio_animal',
+        'repetition_veg',
+        'rule_vio_veg',
+        'brs_1',
+        'brs_2',
+        'brs_3',
+        'brs_4',
+        'brs_5',
+        'brs_6',
+        'brs_7',
+        'brs_8',
+        'brs_9',
+    ]
 
-    if len(df) > 1:
-        logging.warn('multiple rows, using last!')
+    if 'correct_s' in project.field_names:
+        fields.extend([
+            'correct_s', 'rule_vio_s', 'repetition_s',
+            'correct_t', 'rule_vio_t', 'repetition_t',
+            'correct_fruit', 'rule_vio_fruit', 'repetition_fruit',
+            'correct_r', 'rule_vio_r', 'repetition_r',
+            'correct_m', 'rule_vio_m', 'repetition_m',
+            'correct_cloth', 'rule_vio_cloth', 'repetition_cloth',
+        ])
 
-    # Get data from last row
-    return df.iloc[-1].to_dict()
+    # Determine events
+    events = field2events(project, cpt_field)
 
+    # Get records for those events and fields
+    records = project.export_records(fields=fields, events=events)
 
-def _subset(data, columns):
-    """Return subset of key/values based on column or key names specified."""
-    return {k: v for k, v in data.items() if k in columns}
+    for r in records:
+        data = {}
+        record_id = r[project.def_field]
+        event_id = r['redcap_event_name']
 
+        if r[done_field]:
+            logger.debug(f'already ETL:{record_id}:{event_id}')
+            continue
 
-def _scoring(inputs, tmpdir):
-    """Run the Examiner Scoring program and return outputs"""
-    inputfile = f'{tmpdir}/input.csv'
-    outputfile = f'{tmpdir}/output.csv'
+        if not r[cpt_field]:
+            logger.debug(f'no data file:{record_id}:{event_id}')
+            continue
 
-    input_data = [str(inputs.get(x, '')) for x in input_columns]
+        # Check for blanks
+        has_blank = False
+        check_fields = [
+            flank_field,
+            nback_field,
+            shift_field,
+            cpt_field,
+            'dot_count_tot',
+            'anti_trial_1',
+            'anti_trial_2',
+            'correct_f',
+            'correct_l',
+            'correct_animal',
+            'correct_veg',
+            'repetition_f',
+            'rule_vio_f',
+            'repetition_l',
+            'rule_vio_l',
+            'repetition_animal',
+            'rule_vio_animal',
+            'repetition_veg',
+            'rule_vio_veg',
+            'brs_1',
+            'brs_2',
+            'brs_3',
+            'brs_4',
+            'brs_5',
+            'brs_6',
+            'brs_7',
+            'brs_8',
+            'brs_9']
 
-    # Save input file
-    with open(inputfile, 'w') as f:
-        f.write(','.join(input_columns))
-        f.write('\n')
-        f.write(','.join(input_data))
-        f.write('\n')
-        f.write(','.join(input_data))
-        f.write('\n')
+        for k in check_fields:
+            if r[k] == '' and k != done_field:
+                logger.debug(f'blank value:{record_id}:{event_id}:{k}')
+                has_blank = True
+                break
 
-    # Run the scoring program with the input file
-    rwd = os.path.expanduser(
-        '~/git/garjus/garjus/automations/etl_nihexaminer/Scoring')
+        if has_blank:
+            continue
 
-    if not os.path.exists(rwd):
-        rwd = os.path.expanduser(
-            '~/garjus/garjus/automations/etl_nihexaminer/Scoring')
+        logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
-    script = 'examiner_scoring.R'
-    cmd = f'Rscript --vanilla'
-    cmd += f' -e "setwd(\'{rwd}\')"'
-    cmd += f' -e "source(\'{script}\')"'
-    cmd += f' -e "score_file(\'{inputfile}\', \'{outputfile}\')"'
-    res = subprocess.call(cmd, shell=True)
+        # Get values needed for scoring
+        manual_values = {
+            'dot_total': int(r['dot_count_tot']),
+            'anti_trial_1': int(r['anti_trial_1']),
+            'anti_trial_2': int(r['anti_trial_2']),
+            'cf1_corr': int(r['correct_animal']),
+            'cf1_rep': int(r['repetition_animal']),
+            'cf1_rv': int(r['rule_vio_animal']),
+            'brs_1': int(r['brs_1']),
+            'brs_2': int(r['brs_2']),
+            'brs_3': int(r['brs_3']),
+            'brs_4': int(r['brs_4']),
+            'brs_5': int(r['brs_5']),
+            'brs_6': int(r['brs_6']),
+            'brs_7': int(r['brs_7']),
+            'brs_8': int(r['brs_8']),
+            'brs_9': int(r['brs_9']),
+        }
 
-    # Load values from output file
-    return _extract_onerow_file(outputfile)
+        if r['correct_f']:
+            # examiner version 0
+            manual_values.update({
+                'vf1_corr': int(r['correct_f']),
+                'vf1_rep': int(r['repetition_f']),
+                'vf1_rv': int(r['rule_vio_f']),
+                'vf2_corr': int(r['correct_l']),
+                'vf2_rep': int(r['repetition_l']),
+                'vf2_rv': int(r['rule_vio_l']),
+                'cf2_corr': int(r['correct_veg']),
+                'cf2_rep': int(r['repetition_veg']),
+                'cf2_rv': int(r['rule_vio_veg'])
+            })
+        elif r['correct_t']:
+            # examiner version 1
+            manual_values.update({
+                'vf1_corr': int(r['correct_t']),
+                'vf1_rep': int(r['repetition_t']),
+                'vf1_rv': int(r['rule_vio_t']),
+                'vf2_corr': int(r['correct_s']),
+                'vf2_rep': int(r['repetition_s']),
+                'vf2_rv': int(r['rule_vio_s']),
+                'cf2_corr': int(r['correct_fruit']),
+                'cf2_rep': int(r['repetition_fruit']),
+                'cf2_rv': int(r['rule_vio_fruit'])
+            })
+        else:
+            # examiner version 2
+            manual_values.update({
+                'vf1_corr': int(r['correct_r']),
+                'vf1_rep': int(r['repetition_r']),
+                'vf1_rv': int(r['rule_vio_r']),
+                'vf2_corr': int(r['correct_m']),
+                'vf2_rep': int(r['repetition_m']),
+                'vf2_rv': int(r['rule_vio_m']),
+                'cf2_corr': int(r['correct_cloth']),
+                'cf2_rep': int(r['repetition_cloth']),
+                'cf2_rv': int(r['rule_vio_cloth'])
+            })
 
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Get files needed
+            flank_file = f'{tmpdir}/flanker.csv'
+            cpt_file = f'{tmpdir}/cpt.csv'
+            nback_file = f'{tmpdir}/nback.csv'
+            shift_file = f'{tmpdir}/shift.csv'
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        format='%(asctime)s - %(levelname)s:%(module)s:%(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S')
+            try:
+                # Download files from redcap
+                logger.debug(f'download files:{record_id}:{event_id}:{flank_file}')
+                download_file(project, record_id, flank_field, flank_file, event_id=event_id)
+                logger.debug(f'download NBack:{record_id}:{event_id}:{nback_field}')
+                download_file(project, record_id, nback_field, nback_file, event_id=event_id)
+                logger.debug(f'download Shift:{record_id}:{event_id}:{shift_field}')
+                download_file(project, record_id, shift_field, shift_file, event_id=event_id)
+                logger.debug(f'download CPT:{record_id}:{event_id}:{cpt_field}')
+                download_file(project, record_id, cpt_field, cpt_file, event_id=event_id)
+            except Exception as err:
+                logger.error(f'downloading files:{record_id}:{event_id}')
+                continue
 
-    _dir = os.path.expanduser('~/Downloads')
-    flank_file = f'{_dir}/Flanker_Summary_v1187_1_07_14_2021_11h_16m.csv'
-    cpt_file = f'{_dir}/CPT_Summary_v1071_1_07_08_2021_11h_12m.csv'
-    nback_file = f'{_dir}/NBack_Summary_v1071_1_07_08_2021_11h_17m.csv'
-    shift_file = f'{_dir}/SetShifting_Summary_v1071_1_07_08_2021_10h_59m.csv'
-    data = process(mv, flank_file, cpt_file, nback_file, shift_file)
-    import pprint
-    pprint.pprint(data)
-    pprint.pprint(data.keys())
+            try:
+                # Process inputs
+                data = process(
+                    manual_values,
+                    flank_file,
+                    cpt_file,
+                    nback_file,
+                    shift_file)
+            except Exception as err:
+                logger.error(f'processing examiner:{record_id}:{event_id}:{err}')
+                continue
+
+        # Load data back to redcap
+        _load(project, record_id, event_id, data)
+        results.append({'subject': record_id, 'event': event_id})
+
+    return results

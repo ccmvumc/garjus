@@ -8,6 +8,9 @@ from ..utils_redcap import upload_file
 logger = logging.getLogger('garjus.automations.etl_nihexaminer.files2redcap')
 
 
+# Finds NIH examiner summary files and uploads to REDCap.
+
+
 def process_project(
     project,
     limbo_dir,
@@ -23,7 +26,7 @@ def process_project(
     done_field = 'flanker_score'
 
     if 'flanker_summfile' in project.field_names:
-        # Alternate file field names
+        # Alternate file field names used in some old REDCap projects
         flank_field = 'flanker_summfile'
         nback_field = 'nback_summfile'
         shift_field = 'set_shifting_summfile'
@@ -67,61 +70,62 @@ def process_project(
             logger.warn(f'blank subject number:{record_id}')
             continue
 
-        # Check for no raw file
-        if r[raw_field]:
-            logger.debug(f'already uploaded:{subj}:{event}')
-            continue
-
-        # Check for existing converted file
-        if r[tab_field]:
-            logger.debug(f'already converted:{subj}:{event}')
-            continue
-
-        # Find a file for this record
+        # Find files for this record
         logger.debug(f'looking for files:{subj}:{event}')
 
         # Get just the numeric portion of the subject number
         subj_num = re.sub(r'[^0-9]', '', subj)
 
         # Find files for this subject
-        sess_glob = f'{limbo_dir}/{edat_prefix}-{subj_num}-{sess_num}.edat?'
-        file_list = sorted(glob.glob(sess_glob))
-        file_count = len(file_list)
-        if file_count <= 0:
-            logger.debug(f'no file found:{subj}:{event}:{sess_glob}')
-            continue
-        elif file_count > 1:
-            logger.debug(f'too many files:{subj}:{event}:{sess_glob}')
-            continue
+        for cur_field, cur_name in zip(
+            [flank_field, nback_field, shift_field, cpt_field], 
+            ['Flanker', 'SetShifting', 'CPT', 'NBack']):
 
-        # Upload file to redcap
-        edat_file = file_list[0]
-        logger.debug(f'uploading file:{edat_file}')
-        try:
-            result = upload_file(
-                project,
-                record_id,
-                raw_field,
-                edat_file,
-                event_id=event)
+            # Check existing
+            if r[cur_field]:
+                logger.debug(f'already uploaded:{subj}:{event}:{cur_field}')
+                continue
 
-            logger.debug(f'uploaded:{subj}:{event}:{edat_file}')
-        except (ValueError) as err:
-            logger.error(f'error uploading:{edat_file}:{err}')
+            cur_glob = f'{limbo_dir}/{subj_num}/{cur_glob}_Summary_{subj_num}_{sess_num}_*.csv'
+            file_list = sorted(glob.glob(cur_glob))
+            file_count = len(file_list)
+            if file_count <= 0:
+                logger.debug(f'no file found:{subj}:{event}:{cur_glob}')
+                continue
+            elif file_count > 1:
+                logger.debug(f'too many files:{subj}:{event}:{cur_glob}')
+                continue
 
-        if not result:
-            logger.error(f'upload failed:{subj}:{event}')
-            continue
+            #Upload file to redcap
+            cur_file = file_list[0]
+            logger.debug(f'uploading file:{cur_file}')
 
-        logger.debug(f'uploaded:{subj}:{event}')
-        results.append({
-            'result': 'COMPLETE',
-            'description': 'edat_limbo2redcap',
-            'category': 'edat_limbo2redcap',
-            'subject': subj,
-            'session': '',
-            'scan': '',
-            'event': event,
-            'field': raw_field})
+            if False:
+                try:
+                   result = upload_file(
+                       project,
+                       record_id,
+                       cur_field,
+                       cur_file,
+                       event_id=event)
+
+                   logger.debug(f'uploaded:{subj}:{event}:{cur_file}')
+                except (ValueError) as err:
+                   logger.error(f'error uploading:{cur_file}:{err}')
+
+                if not result:
+                   logger.error(f'upload failed:{subj}:{event}')
+                   continue
+
+                logger.debug(f'uploaded:{subj}:{event}')
+                results.append({
+                   'result': 'COMPLETE',
+                   'description': 'edat_limbo2redcap',
+                   'category': 'edat_limbo2redcap',
+                   'subject': subj,
+                   'session': '',
+                   'scan': '',
+                   'event': event,
+                   'field': cur_field})
 
     return results
