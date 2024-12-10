@@ -226,8 +226,16 @@ def _run_etl_automation(automation, garjus, project):
     elif automation == 'etl_gaitrite':
         results = _run_etl_gaitrite(project_redcap)
     elif automation == 'etl_nihexaminer':
-        #results = _run_etl_nihexaminer(project_redcap)
-        results = etl_nihexaminer.run(project_redcap)
+        if 'nih_dot_total' in project_redcap.field_names:
+            limbo = garjus.project_setting(project, 'limbodir')
+            _dir = f'{limbo}/{project}_EXAMINER/data'
+            e2s = garjus.project_setting(project, 'examinermap')
+            print(e2s)
+            results = etl_nihexaminer.file2redcap(project_redcap, _dir, e2s)
+        else:
+            results = []
+
+        results += etl_nihexaminer.run(project_redcap)
     elif automation == 'etl_nihtoolbox_drtaylor':
         results = _run_etl_nihtoolbox_drtaylor(project_redcap)
     else:

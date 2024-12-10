@@ -338,7 +338,7 @@ def run(project):
                         'cf2_rv': int(r['rule_vio_cloth'])
                     })
         except ValueError as err:
-            logger.debug(f'value error, cannot load{err}')
+            logger.error(f'value error, cannot load{err}')
             continue
 
         with tempfile.TemporaryDirectory() as tmpdir:
