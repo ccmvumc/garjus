@@ -336,6 +336,15 @@ def run(project):
                     'cf2_rv': int(r['rule_vio_cloth'])
                 })
 
+        for k in manual_values:
+            if r[k] == '':
+                logger.debug(f'blank value:{record_id}:{event_id}:{k}')
+                has_blank = True
+                break
+
+        if has_blank:
+            continue
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
             flank_file = f'{tmpdir}/flanker.csv'
