@@ -165,6 +165,7 @@ def load_CAARE(garjus):
         'ma_tot',
         'mmse_total',
         'age',
+        'dob',
         'sex_xcount']
 
     C1_BASE_FIELDS = [
@@ -179,6 +180,7 @@ def load_CAARE(garjus):
         'ma_tot',
         'mmse_total',
         'age',
+        'dob',
         'sex_xcount']
 
     C2_BASE_FIELDS = [
@@ -264,7 +266,10 @@ def load_CAARE(garjus):
 
     dataC['PROJECT'] = 'TAYLOR_CAARE'
     dataC['AGE'] = dataC['age']
+    dataC['DOB'] = pd.to_datetime(dataC['dob'])
     dataC['SEX'] = dataC['sex_xcount'].map({'Male': 'M', 'Female': 'F'})
+
+    dataC = dataC[~dataC.DOB.isna()]
 
     return dataC
 
