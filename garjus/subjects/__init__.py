@@ -62,6 +62,7 @@ def load_R21Perfusion(garjus):
         'madrs_same',
         'ma_tot',
         'age',
+        'dob',
         'sex_xcount']
 
     rc = garjus.primary('R21Perfusion')
@@ -123,6 +124,8 @@ def load_R21Perfusion(garjus):
     # Set common fields
     dataR['PROJECT'] = 'R21Perfusion'
     dataR['AGE'] = dataR['age']
+    dataR = dataR[~dataR.dob.isna()]
+    dataR['DOB'] = pd.to_datetime(dataR['dob'])
     dataR['SEX'] = dataR['sex_xcount'].map({'Male': 'M', 'Female': 'F'})
 
     return dataR
