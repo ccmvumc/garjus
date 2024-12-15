@@ -92,6 +92,7 @@ DISABLE_STATTYPES = [
     'EEG-EGI-preproc_v2',
     'synbold_v1',
     'fmri_rest_schaef_conn_v1',
+    'FS7thalamus_v1',
 ]
 
 COLUMNS = {
