@@ -100,7 +100,7 @@ def process_project(
             logger.error(f'upload failed:{subj}:{event}')
             continue
 
-        logger.debug(f'uploaded:{subj}:{event}')
+        logger.debug(f'uploaded:{subj}:{event}:{raw_field}')
         results.append({
             'result': 'COMPLETE',
             'description': 'edat_limbo2redcap',
