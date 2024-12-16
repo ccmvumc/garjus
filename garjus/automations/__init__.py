@@ -194,10 +194,10 @@ def _run_edat_automations(automations, garjus, project):
                     logger.error(f'error loading modules:{err}')
                     return
 
-        # Upload results to garjus
-        for r in results:
-            r.update({'project': project})
-            garjus.add_activity(**r)
+    # Upload results to garjus
+    for r in results:
+        r.update({'project': project})
+        garjus.add_activity(**r)
 
 
 def _parse_scanmap(scanmap):
