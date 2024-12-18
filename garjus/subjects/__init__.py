@@ -297,6 +297,11 @@ def load_MDDHx():
     df['AGE'] = age
     df['SEX'] = 'F'
 
+    # Finish up
+    df = df.sort_values('ID')
+    df = df.drop_duplicates()
+    df = df.set_index('ID')
+
     return df
 
 
