@@ -211,3 +211,33 @@ def _get_bag(garjus, project):
             s.SESSION,
             s.ASSR,
             {'bag_age_gap': s.bag_age_gap})
+
+
+def _get_bag_nodob(garjus, project):
+    subjects = garjus.subjects(project)
+
+    # Get BAG stats
+    stats = garjus.stats(project, proctypes=['BrainAgeGap_v2'])
+
+    if stats.empty:
+        return
+
+    stats = pd.merge(
+        stats, subjects[['AGE']], left_on='SUBJECT', right_index=True)
+
+    if 'bag_age_gap' in stats:
+        # Only rows without existing bag_age_gap
+        stats = stats[stats.bag_age_gap.isna()]
+
+    stats['bag_age_gap'] = (stats['bag_age_pred'].astype(float) - stats['AGE'].astype(float))
+
+    # Batch upload new stats
+    for i, s in stats.iterrows():
+        logger.debug(f'set bag_age_gap:{s.ASSR}')
+        garjus.set_stats(
+            project,
+            s.SUBJECT,
+            s.SESSION,
+            s.ASSR,
+            {'bag_age_gap': s.bag_age_gap})
+
