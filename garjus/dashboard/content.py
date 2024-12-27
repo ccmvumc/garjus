@@ -72,10 +72,13 @@ def _footer_content(include_logout=False):
 
 
 def get_content(include_logout=False):
-    has_xnat = _xnat_found()
+    #has_xnat = _xnat_found()
+    has_xnat = True
     has_redcap = _redcap_found()
     tabs = ''
     content = ''
+
+    logger.debug(f'{has_xnat=}, {has_redcap=}')
 
     if has_xnat and has_redcap:
         # include all tabs
