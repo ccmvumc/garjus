@@ -157,6 +157,122 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
         shutil.copy(zip_file, filename)
 
 
+def make_statshot(
+    garjus,
+    projects,
+    analysis,
+    proctypes,
+    sesstypes,
+    sessions,
+    subjects):
+    """Export stats and upload results as a new analysis."""
+    stats = pd.DataFrame()
+    subj = pd.DataFrame()
+
+    if analysis and not subjects:
+        # Get the list of subjects for specified analysis and apply as filter
+        logger.info(f'{analysis=}')
+
+        # Get the subject list from the analysis
+        a = garjus.load_analysis(projects[0], analysis)
+
+        subjects = a['SUBJECTS'].splitlines()
+        logger.info(f'applying subject filter to include:{subjects}')
+        #df = df[df.SUBJECT.isin(subjects)]
+
+        # Append rows for missing subjects and resort
+        #_subj = df.SUBJECT.unique()
+        #missing_subjects = [x for x in subjects if x not in _subj]
+        #if missing_subjects:
+        #    logger.info(f'{missing_subjects=}')
+        #    df = pd.concat([
+        #        df,
+        #        pd.DataFrame(
+        #            missing_subjects,
+        #            columns=['SUBJECT']
+        #        )
+        #    ]).sort_values('SUBJECT')
+
+    #if sessions:
+    #    df = df[df.SESSION.isin(sessions)]
+    #    logger.info(f'filter sessions:{sessions}')
+
+    if proctypes is not None and not isinstance(proctypes, list):
+        proctypes = proctypes.split(',')
+
+    if sesstypes is not None and not isinstance(sesstypes, list):
+        sesstypes = sesstypes.split(',')
+
+    if sessions is not None and not isinstance(sessions, list):
+        sessions = sessions.split(',')
+
+    for p in sorted(projects):
+        # Load project subjects
+        psubjects = garjus.subjects(p).reset_index()
+
+        # Load project stats
+        pstats = garjus.stats(p, proctypes=proctypes, sesstypes=sesstypes)
+
+        # Check for empty
+        if len(pstats) == 0:
+            logger.info(f'no stats for project:{p}')
+            continue
+
+        # Append to total
+        subj = pd.concat([subj, psubjects])
+        stats = pd.concat([stats, pstats])
+
+    # Filter duplicate GUID to handle same subject in multiple projects
+    subj = subj[(subj['GUID'] == '') | (subj['GUID'].isna()) | ~subj.duplicated(subset='GUID')]
+
+    # Only include specifc subset of columns
+    subj = subj[SUBJECTS_COLUMNS]
+
+    # Pivot table to count occurrences of each type for each subject
+    dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
+    valid_subjects = dfp[(dfp > 0).all(axis=1)].index
+    subj = subj[subj.ID.isin(valid_subjects)]
+
+    # Only stats for subjects in subjects
+    stats = stats[stats.SUBJECT.isin(subj.ID.unique())]
+
+    # Make PITT be UPMC
+    stats['SITE'] = stats['SITE'].replace({'PITT': 'UPMC'})
+    if 'SITE' in subj.columns:
+        subj['SITE'] = subj['SITE'].replace({'PITT': 'UPMC'})
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pdf_file = os.path.join(tmpdir, 'report.pdf')
+        make_export_report(pdf_file, garjus, subj, stats)
+
+        # Save subjects csv
+        csv_file = os.path.join(tmpdir, f'subjects.csv')
+        logger.info(f'saving subjects csv:{csv_file}')
+        subj.to_csv(csv_file, index=False)
+
+        # Save a csv for each proc type
+        for proctype in stats.PROCTYPE.unique():
+            # Get the data for this processing type
+            dft = stats[stats.PROCTYPE == proctype]
+
+            dft = dft.dropna(axis=1, how='all')
+
+            dft = dft.sort_values('ASSR')
+
+            # Save file for this type
+            csv_file = os.path.join(tmpdir, f'{proctype}.csv')
+            logger.info(f'saving csv:{proctype}:{csv_file}')
+            dft.to_csv(csv_file, index=False)
+
+        # Creates new analysis on redcap with files uploaded to xnat
+        upload_analysis(garjus, projects[0], tmpdir)
+
+
+def upload_analysis(garjus, project, analysis_dir):
+    # Create new record analysis
+    analysis_id = garjus.add_analysis(project, analysis_dir)
+
+
 def make_stats_csv(
     garjus,
     projects,

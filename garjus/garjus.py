@@ -26,7 +26,7 @@ from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
 from .progress import update as update_progress
-from .progress import make_project_report, make_stats_csv, make_export_zip
+from .progress import make_project_report, make_stats_csv, make_export_zip, make_statshot
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -296,6 +296,87 @@ class Garjus:
             df = df[df.DATETIME >= startdate]
 
         return df
+
+    def add_analysis(self, project, analysis_dir):
+        """Add an analysis record."""
+        analysis_id = None
+        analysis_output = None
+        analysis_datetime  = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        record = {
+            self._rc.def_field: project,
+            'analysis_name': 'stats'
+            'analysis_processor': 'statshot',
+            'redcap_repeat_instrument': 'analyses',
+            'redcap_repeat_instance': 'new',
+            'analysis_output': analysis_datetime,
+        }
+
+        # Add new record
+        try:
+            logger.debug(f'importing record:{record}')
+            _response = self._rc.import_records([record])
+            assert 'count' in _response
+            logger.debug('analysis record created')
+        except (ValueError, RedcapError, AssertionError) as err:
+            logger.error(f'error uploading:{err}')
+            return None
+
+        # Find the new record to get the analysis id
+        logger.debug('locating new record')
+
+        try:
+            _ids = utils_redcap.match_repeat(
+                self._rc,
+                project,
+                'analyses',
+                'analysis_output',
+                analysis_datetime)
+
+            analysis_id = _ids[-1]
+
+        except Exception as err:
+            logger.error('failed to match new record')
+            return None
+
+        _id = str(analysis_id).zfill(3)
+        analysis_output = f'{project}_A{_id}_{analysis_datetime}'
+
+        # Create new resource folder on xnat
+        try:
+            xnat_project = self.xnat().select_project(project)
+            logger.debug(xnat_project.label())
+            xnat_resource = xnat_project.resource(analysis_output)
+            logger.debug(xnat_resource.label())
+            xnat_resource.create()
+        except Exception as err:
+            logger.error('failed to create resource on xnat')
+            return None
+
+        # Upload files to xnat
+        files = [f for f in os.listdir(analysis_dir) if not f.startswith('.')]
+        for f in files:
+            cur = f'{analysis_dir}/{f}'
+            if os.path.isdir(cur):
+                utils_xnat.upload_dirzip(cur, xnat_resource)
+            else:
+                utils_xnat.upload_file(cur, xnat_resource)
+
+        # Finalize analysis on redcap
+        record = {
+            self._rc.def_field: project,
+            'redcap_repeat_instrument': 'analyses',
+            'redcap_repeat_instance': analysis_id,
+            'analysis_output': analysis_output,
+        }
+        try:
+            _response = self._rc.import_records([record])
+            assert 'count' in _response
+            logger.debug('analysis record finalized')
+        except (ValueError, RedcapError, AssertionError) as err:
+            logger.error(f'error uploading:{err}')
+            return None
+
+        return analysis_id
 
     def add_activity(
         self,
@@ -2002,6 +2083,25 @@ class Garjus:
         make_export_zip(
             self, filename, projects, proctypes, sesstypes, sessions
         )
+
+    def statshot(
+        self,
+        project,
+        analysis,
+        proctypes=None,
+        sesstypes=None,
+        sessions=None,
+        subjects=None):
+        """ Exports stats and save as new analysis on project."""
+        make_statshot(
+            self,
+            project,
+            analysis,
+            proctypes, 
+            sesstypes,
+            sessions,
+            subjects
+    )
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""
