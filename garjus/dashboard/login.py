@@ -33,6 +33,7 @@ server = Flask(__name__, template_folder=templates)
 @server.before_request
 def check_login():
     # TODO: use dash pages module to return pages based on user access level
+    logger.debug('checking login')
     if request.method == 'GET':
         if request.path in ['/login', '/logout']:
             # nothing to check here
@@ -68,6 +69,7 @@ def login(message=""):
                 try:
                     # Get the xnat alias token
                     from ..garjus import Garjus
+                    logger.debug('Garjus login')
                     Garjus.login(hostname, username, password)
 
                     login_user(User(username, hostname))
@@ -81,6 +83,7 @@ def login(message=""):
                         return redirect(url)
                     else:
                         # redirect to home
+                        logger.debug('redirecting to home')
                         return redirect('/')
                 except Exception as err:
                     logger.debug(f'login failed:{err}')
@@ -89,6 +92,7 @@ def login(message=""):
             if current_user:
                 if current_user.is_authenticated:
                     try:
+                        logger.debug('redirecting to /')
                         return redirect('/')
                     except Exception as err:
                         logger.debug(f'cannot log in, try again:{err}')
@@ -97,6 +101,7 @@ def login(message=""):
         logger.error(f'login error, route to logout:{err}')
         return logout()
 
+    logger.debug('rendering login.html')
     return render_template('login.html', message=message)
 
 
@@ -149,10 +154,13 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(username):
     """This function loads the user by user id."""
+    logger.debug(f'loading user:{username}')
     return User(username)
 
 # Set the main content
 app.layout = content.get_content(include_logout=True)
+
+logger.debug(f'{app.layout}')
 
 if __name__ == "__main__":
     app.run_server(debug=True)
