@@ -303,8 +303,8 @@ class Garjus:
         analysis_output = None
         analysis_datetime  = datetime.now().strftime("%Y-%m-%d-%H%M%S")
         record = {
-            self._rc.def_field: project,
-            'analysis_name': 'stats'
+            self._rcq.def_field: project,
+            'analysis_name': 'stats',
             'analysis_processor': 'statshot',
             'redcap_repeat_instrument': 'analyses',
             'redcap_repeat_instance': 'new',
@@ -314,7 +314,7 @@ class Garjus:
         # Add new record
         try:
             logger.debug(f'importing record:{record}')
-            _response = self._rc.import_records([record])
+            _response = self._rcq.import_records([record])
             assert 'count' in _response
             logger.debug('analysis record created')
         except (ValueError, RedcapError, AssertionError) as err:
@@ -326,7 +326,7 @@ class Garjus:
 
         try:
             _ids = utils_redcap.match_repeat(
-                self._rc,
+                self._rcq,
                 project,
                 'analyses',
                 'analysis_output',
@@ -363,13 +363,13 @@ class Garjus:
 
         # Finalize analysis on redcap
         record = {
-            self._rc.def_field: project,
+            self._rcq.def_field: project,
             'redcap_repeat_instrument': 'analyses',
             'redcap_repeat_instance': analysis_id,
             'analysis_output': analysis_output,
         }
         try:
-            _response = self._rc.import_records([record])
+            _response = self._rcq.import_records([record])
             assert 'count' in _response
             logger.debug('analysis record finalized')
         except (ValueError, RedcapError, AssertionError) as err:
