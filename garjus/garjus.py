@@ -1257,10 +1257,14 @@ class Garjus:
             statsrc = self._stats_redcap(project)
             rec = statsrc.export_records(forms=['stats'])
 
-            # Filter out FS6 if found
-            rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
         except:
             return pd.DataFrame(columns=['ASSR', 'PROCTYPE', 'SESSTYPE'])
+
+        # Filter out FS6 if found
+        rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
+
+        # Filter out old FS7 if found
+        rec = [x for x in rec if not x['stats_name'].startswith('fs7_')]
 
         # Make a dataframe of columns we need
         df = pd.DataFrame(
@@ -2086,16 +2090,20 @@ class Garjus:
 
     def statshot(
         self,
-        project,
+        projects,
         analysis,
         proctypes=None,
         sesstypes=None,
         sessions=None,
         subjects=None):
         """ Exports stats and save as new analysis on project."""
+
+        if not '_' in analysis:
+            analysis = f'{projects[0]}_{analysis}'
+
         make_statshot(
             self,
-            project,
+            projects,
             analysis,
             proctypes, 
             sesstypes,

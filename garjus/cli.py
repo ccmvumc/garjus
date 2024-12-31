@@ -358,6 +358,13 @@ def export(filename, projects, proctypes, sesstypes, analysis, sessions):
 @click.option('--subjects', '-j', 'subjects', required=False)
 def statshot(projects, analysis, proctypes, sesstypes, sessions, subjects):
     click.echo('garjus! statshot')
+
+    # Split projects into lists    
+    projects = [x.split(',') for x in projects]
+
+    # Flatten to single list
+    projects = sum(projects, [])
+
     Garjus().statshot(
         projects,
         analysis,

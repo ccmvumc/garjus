@@ -171,14 +171,14 @@ def make_statshot(
 
     if analysis and not subjects:
         # Get the list of subjects for specified analysis and apply as filter
-        logger.info(f'{analysis=}')
+        logger.debug(f'loading:{analysis=}')
 
         # Get the subject list from the analysis
-        a = garjus.load_analysis(projects[0], analysis)
+        analysis_project, analysis_analysis = analysis.split('_')
+        a = garjus.load_analysis(analysis_project, analysis_analysis)
 
         subjects = a['SUBJECTS'].splitlines()
-        logger.info(f'applying subject filter to include:{subjects}')
-        #df = df[df.SUBJECT.isin(subjects)]
+        logger.debug(f'applying subject filter to include:{subjects}')
 
         # Append rows for missing subjects and resort
         #_subj = df.SUBJECT.unique()
