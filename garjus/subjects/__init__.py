@@ -6,6 +6,18 @@ import numpy as np
 
 logger = logging.getLogger('garjus.subjects')
 
+IDENTIFIER_FIELDS = [
+        'record_id',
+        'care_subject_number',
+        'acoba_subject_number',
+        'r21_subject_number',
+        'depressedmind_subject_number',
+        'rem_subject_number',
+        'depmind2_subject_number',
+        'depmind3_subject_number',
+        'd3_subject_number',
+        'guid'
+    ]
 
 def load_gait_data(rc):
     def_field = rc.def_field
@@ -306,42 +318,71 @@ def load_MDDHx():
 
 
 def load_COGD(garjus):
+    def_field = 'record_id'
     dob_field = 'backg_dob'
     sex_field = 'backg_sex'
     date_field = 'mri_date'
-    fields = [dob_field, sex_field, date_field]
 
     project_redcap = garjus.primary('COGD')
 
-    rec = project_redcap.export_records(fields=fields, raw_or_label='label')
+    _fields = [dob_field, sex_field, date_field]
+    rec = project_redcap.export_records(fields=_fields, raw_or_label='label')
 
     try:
         rec = [x for x in rec if x[dob_field]]
     except KeyError as err:
         logger.debug(f'cannot access dob:{dob_field}:{err}')
 
-    df = pd.DataFrame(rec, columns=fields + ['redcap_event_name'])
+    _fields = [def_field, dob_field, sex_field, 'redcap_event_name',  'backg_sex___1', 'backg_sex___2']
+    df = pd.DataFrame(rec, columns=_fields)
+  
+    df['SEX'] = 'UNKNOWN'
+    df.loc[df['backg_sex___1'] == 'Checked', 'SEX'] = 'M'
+    df.loc[df['backg_sex___2'] == 'Checked' , 'SEX'] = 'F'
 
     # all are depressed
     df['GROUP'] = 'Depress'
+    df['PROJECT'] = 'COGD'
+    df['ID'] = df[def_field]
+
+    # Load MRI records to get first date
+    fields = [def_field, date_field]
+    rec = project_redcap.export_records(fields=fields, raw_or_label='label')
+    rec = [x for x in rec if x[date_field]]
+    dfm = pd.DataFrame(rec, columns=fields)
+    dfm = dfm.astype(str)
+    dfm = dfm.sort_values(date_field)
+    dfm = dfm.drop_duplicates(subset=[def_field], keep='first')
+
+    # Merge in date
+    df = pd.merge(df, dfm, how='left', on=def_field)
+
+    # Drop intermediate columns
+    drop_columns = [def_field, 'redcap_event_name', 'backg_sex___1', 'backg_sex___2', sex_field]
+    drop_columns = [x for x in drop_columns if x and x in df.columns]
+    df = df.drop(columns=drop_columns)
+
+    # Exclude incomplete data
+    df = df.dropna()
+
+    # Calculate age at baseline
+    df[dob_field] = pd.to_datetime(df[dob_field])
+    df[date_field] = pd.to_datetime(df[date_field])
+    df['AGE'] = (
+        df[date_field] - df[dob_field]
+    ).values.astype('<m8[Y]').astype('int').astype('str')
+
+    df['DOB'] = df[dob_field]
 
     return df
 
 
-def load_subjects(garjus, project, include_dob=False):
+def load_standard(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
-
-    if project == 'NewhouseMDDHx':
-        return load_MDDHx()
 
     if not project_redcap:
         logger.debug(f'project redcap not found:{project}')
         return pd.DataFrame([], columns=['ID', 'PROJECT', 'GROUP'])
-
-    if project == 'R21Perfusion':
-        return load_R21Perfusion(garjus)        
-    elif project == 'TAYLOR_CAARE':
-        return load_CAARE(garjus)
 
     def_field = project_redcap.def_field
     sec_field = project_redcap.export_project_info()['secondary_unique_field']
@@ -369,8 +410,6 @@ def load_subjects(garjus, project, include_dob=False):
         sex_field = 'dems_sex'
     elif 'sex_demo' in field_names:
         sex_field = 'sex_demo'
-    elif 'backg_sex' in field_names:
-        sex_field = 'backg_sex'
 
     if 'mri_date' in field_names:
         date_field = 'mri_date'
@@ -415,7 +454,7 @@ def load_subjects(garjus, project, include_dob=False):
     # Determine group
     df['GROUP'] = 'UNKNOWN'
 
-    if project in ['DepMIND2', 'DepMIND3', 'COGD']:
+    if project in ['DepMIND2', 'DepMIND3']:
         # All are depressed
         df['GROUP'] = 'Depress'
     elif project == 'D3':
@@ -467,15 +506,15 @@ def load_subjects(garjus, project, include_dob=False):
         if include_dob:
             df['DOB'] = df[dob_field]
 
-    # Exclude incomplete data
-    df = df.dropna()
-
     if sex_field:
         df['SEX'] = df[sex_field].map({
             'Male': 'M',
             'Female': 'F',
             'UNKNOWN': 'U'
         })
+
+    # Exclude incomplete data
+    df = df.dropna()
 
     if guid_field:
         df['GUID'] = df[guid_field]
@@ -494,5 +533,60 @@ def load_subjects(garjus, project, include_dob=False):
     df = df.sort_values('ID')
     df = df.drop_duplicates()
     df = df.set_index('ID')
+
+    return df
+
+
+def load_subjects(garjus, project, include_dob=False):
+    if project == 'COGD':
+        df = load_COGD(garjus)
+    elif project == 'NewhouseMDDHx':
+        df = load_MDDHx()
+    elif project == 'R21Perfusion':
+        df = load_R21Perfusion(garjus)        
+    elif project == 'TAYLOR_CAARE':
+        df = load_CAARE(garjus)
+    else:
+        df = load_standard(garjus, project, include_dob)
+
+    try:
+        # Get identifier database record id
+        logger.info(f'getting identifier database:{project}')
+        rc = garjus.identifier_database()
+        logger.info(f'loading records from identifier database:{project}')
+        rec = rc.export_records(fields=IDENTIFIER_FIELDS)
+        logger.info(f'handling records from identifier database:{project}')
+        dfi = pd.DataFrame(rec)
+
+        # Set the ID data to match based on project
+        if project == 'REMBRANDT':
+            dfi['ID'] = dfi['rem_subject_number']
+        elif project == 'TAYLOR_CAARE':
+            dfi['ID'] = dfi['care_subject_number']
+        elif project == 'ACOBA':
+            dfi['ID'] = dfi['acoba_subject_number']
+        elif project == 'R21Perfusion':
+            dfi['ID'] = dfi['r21_subject_number']
+        elif project == 'DepMIND':
+            dfi['ID'] = dfi['depressedmind_subject_number']
+        elif project == 'DepMIND2':
+            dfi['ID'] = dfi['depmind2_subject_number']
+        elif project == 'DepMIND3':
+            dfi['ID'] = dfi['depmind3_subject_number']
+        elif project == 'D3':
+            dfi['ID'] = dfi['d3_subject_number']
+        else:
+            raise Exception('could not match project to identifer database column')
+
+        # Set the identifier id as redcap record id
+        dfi['identifier_id'] = dfi['record_id']
+
+        # Get just the identifiers without duplicates
+        dfi = dfi[['identifier_id', 'ID']].drop_duplicates(subset=['ID'], keep='first')
+
+        # Merge the subjects with identifier records
+        df = pd.merge(df, dfi, how='left', on='ID', validate="1:1")
+    except Exception as err:
+        logger.info(f'failed to load identifier database:{project}:{err}')
 
     return df

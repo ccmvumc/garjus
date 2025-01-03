@@ -309,6 +309,8 @@ class Garjus:
             'redcap_repeat_instrument': 'analyses',
             'redcap_repeat_instance': 'new',
             'analysis_output': analysis_datetime,
+            'analysis_status': 'RUNNING',
+            'analyses_complete': '1',
         }
 
         # Add new record
@@ -341,6 +343,8 @@ class Garjus:
         _id = str(analysis_id).zfill(3)
         analysis_output = f'{project}_A{_id}_{analysis_datetime}'
 
+        logger.info(f'uploading new analysis:{analysis_output}')
+
         # Create new resource folder on xnat
         try:
             xnat_project = self.xnat().select_project(project)
@@ -367,6 +371,9 @@ class Garjus:
             'redcap_repeat_instrument': 'analyses',
             'redcap_repeat_instance': analysis_id,
             'analysis_output': analysis_output,
+            'analysis_status': 'READY',
+            'analyses_complete': '2',
+            'analysis_descrip': 'statshot',
         }
         try:
             _response = self._rcq.import_records([record])
@@ -2091,24 +2098,14 @@ class Garjus:
     def statshot(
         self,
         projects,
-        analysis,
         proctypes=None,
-        sesstypes=None,
-        sessions=None,
-        subjects=None):
+        sesstypes=None):
         """ Exports stats and save as new analysis on project."""
-
-        if not '_' in analysis:
-            analysis = f'{projects[0]}_{analysis}'
-
         make_statshot(
             self,
             projects,
-            analysis,
             proctypes, 
-            sesstypes,
-            sessions,
-            subjects
+            sesstypes
     )
 
     def compare(self, project):
@@ -2719,6 +2716,18 @@ class Garjus:
             secondary_redcap = None
 
         return secondary_redcap
+
+    def identifier_database(self):
+        """Connect to the identifier database redcap for this project."""
+        identifier_redcap = None
+
+        try:
+            identifier_redcap = utils_redcap.get_identifier_redcap()
+        except Exception as err:
+            logger.info(f'failed to load identifier database redcap:{project}:{err}')
+            identifier_redcap = None
+
+        return identifier_redcap
 
     def alternate(self, project_id):
         """Connect to the alternate redcap with this ID."""

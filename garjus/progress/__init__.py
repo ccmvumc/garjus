@@ -160,51 +160,17 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
 def make_statshot(
     garjus,
     projects,
-    analysis,
     proctypes,
-    sesstypes,
-    sessions,
-    subjects):
+    sesstypes):
     """Export stats and upload results as a new analysis."""
     stats = pd.DataFrame()
     subj = pd.DataFrame()
-
-    if analysis and not subjects:
-        # Get the list of subjects for specified analysis and apply as filter
-        logger.debug(f'loading:{analysis=}')
-
-        # Get the subject list from the analysis
-        analysis_project, analysis_analysis = analysis.split('_')
-        a = garjus.load_analysis(analysis_project, analysis_analysis)
-
-        subjects = a['SUBJECTS'].splitlines()
-        logger.debug(f'applying subject filter to include:{subjects}')
-
-        # Append rows for missing subjects and resort
-        #_subj = df.SUBJECT.unique()
-        #missing_subjects = [x for x in subjects if x not in _subj]
-        #if missing_subjects:
-        #    logger.info(f'{missing_subjects=}')
-        #    df = pd.concat([
-        #        df,
-        #        pd.DataFrame(
-        #            missing_subjects,
-        #            columns=['SUBJECT']
-        #        )
-        #    ]).sort_values('SUBJECT')
-
-    #if sessions:
-    #    df = df[df.SESSION.isin(sessions)]
-    #    logger.info(f'filter sessions:{sessions}')
 
     if proctypes is not None and not isinstance(proctypes, list):
         proctypes = proctypes.split(',')
 
     if sesstypes is not None and not isinstance(sesstypes, list):
         sesstypes = sesstypes.split(',')
-
-    if sessions is not None and not isinstance(sessions, list):
-        sessions = sessions.split(',')
 
     for p in sorted(projects):
         # Load project subjects
@@ -222,16 +188,23 @@ def make_statshot(
         subj = pd.concat([subj, psubjects])
         stats = pd.concat([stats, pstats])
 
-    # Filter duplicate GUID to handle same subject in multiple projects
-    subj = subj[(subj['GUID'] == '') | (subj['GUID'].isna()) | ~subj.duplicated(subset='GUID')]
-
-    # Only include specifc subset of columns
-    subj = subj[SUBJECTS_COLUMNS]
-
     # Pivot table to count occurrences of each type for each subject
     dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
     valid_subjects = dfp[(dfp > 0).all(axis=1)].index
     subj = subj[subj.ID.isin(valid_subjects)]
+
+     # Filter duplicate GUID to handle same subject in multiple projects
+    logger.info(f'before filtering duplicate GUID:{len(subj)} subjects')
+    subj = subj[(subj['GUID'] == '') | (subj['GUID'].isna()) | ~subj.duplicated(subset='GUID')]
+    logger.info(f'after filtering duplicate GUID:{len(subj)} subjects')
+
+    # Use identifier database to filter out duplicates
+    logger.info(f'before filtering duplicate identifier database id:{len(subj)} subjects')
+    subj = subj[(subj['identifier_id'] == '') | (subj['identifier_id'].isna()) | ~subj.duplicated(subset='identifier_id')]
+    logger.info(f'after filtering duplicate identifier database id:{len(subj)} subjects')
+
+    # Only include specifc subset of columns
+    subj = subj[SUBJECTS_COLUMNS]
 
     # Only stats for subjects in subjects
     stats = stats[stats.SUBJECT.isin(subj.ID.unique())]

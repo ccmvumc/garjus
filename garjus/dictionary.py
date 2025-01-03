@@ -190,10 +190,32 @@ PROCLIB = {
         'stats_subset': ['cblmwm_suvr', 'compositegm_suvr', 'cblmgm_suvr'],
     },
     'FS7_v1': {
-        'short_descrip': 'FreeSurfer 7 recon-all - whole brain parcellation, surfaces, cortical thickness.',
+        'short_descrip': 'FreeSurfer 7 recon-all - whole brain parcellation of cortical and sub-cortical.\n\
+Outputs for cortical regions are volumes, thickness average, and surface area of 34 parcels:\n\
+bankssts, caudal anterior cingulate, caudal middle frontal, cuneus, entorhinal, frontal pole, \
+fusiform, inferior parietal, inferior temporal, insula, isthmus cingulate, lateral occipital, \
+lateral orbitofrontal, lingual, medial orbitofrontal, middle temporal, paracentral, \
+parahippocampal, pars opercularis, pars orbitalis, pars triangularis, pericalcarine, \
+postcentral, posterior cingulate, precentral, precuneus, rostral anterior cingulate, \
+rostral middle frontal, superiorfrontal, superior parietal, superior temporal, \
+supramarginal, temporal pole, transverse temporal.\n\
+Outputs for subcortical structures are volumes for left and right hemispheres of 7 regions:\n\
+accumbens area, amygdala, caudate, hippocampus, pallidum, putamen, thalamus, and \
+ventraldc.\n\
+The white matter hyperinsity volume (wmh) is whole brain.\n\
+See examples.',
         'inputs_descrip': 'T1w MRI',
         'procurl': 'https://github.com/bud42/FS7',
-        'stats_subset': ['hippocampus_lh_volume', 'hippocampus_rh_volume', 'superiorfrontal_lh_volume', 'superiorfrontal_rh_volume'],
+        'stats_subset': [
+            'hippocampus_lh_volume',
+            'hippocampus_rh_volume',
+            'superiorfrontal_lh_surfarea',
+            'superiorfrontal_rh_surfarea',
+            'superiorfrontal_lh_thickavg',
+            'superiorfrontal_rh_thickavg',
+            'superiorfrontal_lh_volume',
+            'superiorfrontal_rh_volume',
+        ],
     },
     'FS7HPCAMG_v1': {
         'short_descrip': 'FreeSurfer 7 hippocampus & amygdala sub-region volumes.',
@@ -277,39 +299,12 @@ STATLIB = {
     'FS7_v1': {
         'hippocampus_lh_volume': 'Hippocampus Volume Left Hemisphere',
         'hippocampus_rh_volume': 'Hippocampus Volume Right Hemisphere',
-        'caudalanteriorcingulate_>h_surfarea,*_thickavg,*_volume': 'Caudal Anterior Cingulate',
-        'caudalmiddlefrontal_?h_surfarea,*_thickavg,*_volume': 'Caudal Middle Frontal',
-        'cuneus_?h_surfarea,*_thickavg,*_volume': 'Cunues',
-        'entorhinal_?h_surfarea,*_thickavg,*_volume': 'Entorhinal',
-        'frontalpole_?h_surfarea,*_thickavg,*_volume': 'Frontal Pole',
-        'fusiform_?h_surfarea,*_thickavg,*_volume': 'Fusiform Gyrus',
-        'inferiorparietal_?h_surfarea,*_thickavg,*_volume': 'Inferior Parietal',
-        'inferiortemporal_?h_surfarea,*_thickavg,*_volume': 'Inferior Temporal',
-        'insula_?h_surfarea,*_thickavg,*_volume': 'Insula',
-        'isthmuscingulate_?h_surfarea,*_thickavg,*_volume': 'Isthmus of Cingulate',
-        'lateraloccipital_?h_surfarea,*_thickavg,*_volume': 'Lateral Occipital',
-        'lateralorbitofrontal_?h_surfarea,*_thickavg,*_volume': 'Lateral OrbitoFrontal',
-        'lingual_?h_surfarea,*_thickavg,*_volume': 'Lingual',
-        'medialorbitofrontal_?h_surfarea,*_thickavg,*_volume': 'Medial OrbitoFrontal',
-        'middletemporal_?h_surfarea,*_thickavg,*_volume': 'Middle Temporal',
-        'paracentral_?h_surfarea,*_thickavg,*_volume': 'Paracentral',
-        'parahippocampal_?h_surfarea,*_thickavg,*_volume': 'Parahippocampal',
-        'parsopercularis_?h_surfarea,*_thickavg,*_volume': 'Pars Opercularis',
-        'parsorbitalis_?h_surfarea,*_thickavg,*_volume': 'Pars Orbitalis',
-        'parstriangularis_?h_surfarea,*_thickavg,*_volume': 'Pars Triangularis',
-        'pericalcarine_?h_surfarea,*_thickavg,*_volume': 'Pericalcarine',
-        'postcentral_?h_surfarea,*_thickavg,*_volume': 'Postcentral',
-        'posteriorcingulate_?h_surfarea,*_thickavg,*_volume': 'Posterior Cingulate',
-        'precentral_?h_surfarea,*_thickavg,*_volume': 'Precentral',
-        'precuneus_?h_surfarea,*_thickavg,*_volume': 'Precuneus',
-        'rostralanteriorcingulate_?h_surfarea,*_thickavg,*_volume': 'Rostral Anterior Cingulate',
-        'rostralmiddlefront_?h_surfarea,*_thickavg,*_volume': 'Rostral Middle Frontal',
-        'superiorfrontal_?h_surfarea,*_thickavg,*_volume': 'Superior Frontal', 
-        'superiorparietal_?h_surfarea,*_thickavg,*_volume': 'Superior Parietal',
-        'superiortemporal_?h_surfarea,*_thickavg,*_volume': 'Superior Temporal',
-        'supramarginal_?h_surfarea,*_thickavg,*_volume': 'Supramarginal',
-        'temporalpole_?h_surfarea,*_thickavg,*_volume': 'Temporal Pole',
-        'transversetemporal_?h_surfarea,*_thickavg,*_volume': 'Tranverse Temporal',
+        'superiorfrontal_lh_surfarea': 'Superior Frontal Surface Area Left Hemisphere',
+        'superiorfrontal_rh_surfarea': 'Superior Frontal Surface Area Right Hemisphere',
+        'superiorfrontal_lh_thickavg': 'Superior Frontal Thickness Average Left Hemisphere',
+        'superiorfrontal_rh_thickavg': 'Superior Frontal Thickness Average Right Hemisphere',
+        'superiorfrontal_lh_volume': 'Superior Frontal Volume Left Hemisphere',
+        'superiorfrontal_rh_volume': 'Superior Frontal Volume Right Hemisphere',
     },
     'FEOBVQA_v2': {
         'antcing_suvr': 'Anterior Cingulate SUVR normalized by Supra-ventricular White Matter',
