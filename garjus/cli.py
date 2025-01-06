@@ -247,18 +247,6 @@ def tasks():
     pprint.pprint(g.tasks())
 
 
-@cli.command('q2d')
-def q2d():
-    click.echo('garjus! q2d')
-    Garjus().queue2dax()
-
-
-@cli.command('d2q')
-def d2q():
-    click.echo('garjus! d2q')
-    Garjus().dax2queue()
-
-
 @cli.command('update')
 @click.argument(
     'choice',

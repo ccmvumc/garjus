@@ -134,3 +134,4 @@ DATA/
 *.xlsx
 stats.csv
 *.token
+.DS_Store

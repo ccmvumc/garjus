@@ -15,7 +15,7 @@ Test your credentials by running a garjus command such as garjus quicktest which
 
 
 How to get stats data with garjus:
-*need access for the study project in REDCap, stats project in REDCap, garjus project in redcap and study project in XNAT.
+*need access for the study project in REDCap, garjus project in redcap and study project in XNAT.
 *open dashboard from command-line run: garjus dashboard to load and view stats
 *export from dashboard or use command-line to get stats .csv
 

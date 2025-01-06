@@ -205,4 +205,12 @@ garjus dashboard
 
 This should open a new tab in your web browser at the dashboard main page http://localhost:8050 .
 Choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
+
+
+## NDA image03 upload
+[nda](docs/nda.md)
+
+-
+
+
 Find a problem? Please report an issue. Got an idea? Open a Discussion. Thanks!
