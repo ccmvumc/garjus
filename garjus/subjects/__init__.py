@@ -532,7 +532,7 @@ def load_standard(garjus, project, include_dob=False):
     # Finish up
     df = df.sort_values('ID')
     df = df.drop_duplicates()
-    df = df.set_index('ID')
+    df = df.set_index('ID').astype(object)
 
     return df
 
