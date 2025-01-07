@@ -232,7 +232,6 @@ Choose one or more projects from the drop down. The options should include all p
 * [analyses - project-level processing](docs/analyses.md)
 
 
--
-
+---
 
 Find a problem? Report an issue. Got an idea? Open a discussion. Thanks!
