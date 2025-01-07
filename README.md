@@ -8,6 +8,10 @@ REDCap to store it's own settings and tracking data. Anytime we want to
 access these data in REDCap or XNAT in python or CLI, we use Garjus in between.
 Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
 
+Garjus can be utlized in python scripts or via the command-line interface.
+
+
+### using garjus in python
 
 The main Garjus class provides these data access methods that 
 all return a Pandas DataFrame:
@@ -50,34 +54,33 @@ stats_assessors(project)
 stats_projects()
 ```
 
-Command-line interface subcommands:
+## Command-line interface subcommands:
 ```
 activity - display activity
 analyses - display analyses
 compare - run data entry comparison
 copysess - copy an imaging session from one project to another
-d2q - apply updates from dax queue on local disk to garjus task queue in REDCap
+copyscan - copy an imaging scan from one session to another
 dashboard - start a dashboard server and browse to it in a new local web browser tab
 delete - delete a proctype from a project
 getinputs - download inputs for an analysis
 image03csv - create an NDA image03 formatted csv file for a project and date range
 image03download - download all images for an NDA image03 csv file
-importdicom - import DICOM into XNAT from local file or remote URL
-issues - display issues
-pdf
-processing
-progress
-q2d - apply updates from garjus REDCap queue to dax local disk queue by writing new batch scripts
+importdicom - import DICOM into XNAT from local file or remote URL such as gstudy
+importnifti - import NIFTI into XNAT from local file
+issues - display current issues
+processing - display current processing
+progress - display list of progress reports
 quicktest - test connections
-report - creates a summary PDF
+report - create a summary PDF of a project
 retry - find jobs that have run once an run them again
-run
-setsesstype
-setsite
-stats
-subjects
-tasks
-update
+run - run a dax analysis locally
+setsesstype - set the SessionType field of a session
+setsite - set the Site field of a session
+stats - export stats to csv
+subjects - display subjects of a project
+tasks - show currently running task jobs
+update - run automations, update caches, check for issues
 ```
 
 ### Scanning Automations:
