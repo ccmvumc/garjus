@@ -11,7 +11,7 @@ Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
 Garjus can be utlized in python scripts or via the command-line interface.
 
 
-### using garjus in python
+## using garjus in python
 
 ```
 from garjus import Garjus
@@ -91,6 +91,10 @@ subjects - display subjects of a project
 tasks - show currently running task jobs
 update - run automations, update caches, check for issues
 ```
+# Automations
+
+Garjus runs various automations to process data in XNAT and REDCap. These are run when a scheduled garjus update runs. The automations help synchronize data between the systems, apply curation rules, end perform data ETL.
+
 
 ### Scanning Automations:
 
@@ -115,12 +119,12 @@ update - run automations, update caches, check for issues
 
   - examiner_etl - extract and load NIH Examiner outputs
 
-### Issues
+## Issues
 Any issues or errors encountered by garjus are recorded in REDCap.
 Issues are automatically resolved when the error or issues is no longer found.
 Resolved issues are deleted one week after resolution.
 
-### Activity
+## Activity
 Each complete automation is recorded in activity.
 
 
@@ -220,11 +224,12 @@ Choose one or more projects from the drop down. The options should include all p
 
 
 ## Other useful garjus tools
-[image03 - NDA repository upload](docs/nda.md)
 
-[stats - imaging measurements export](docs/stats.md)
+* [image03 - NDA repository upload](docs/nda.md)
 
-[analyses - project-level processing](docs/analyses.md)
+* [stats - imaging measurements export](docs/stats.md)
+
+* [analyses - project-level processing](docs/analyses.md)
 
 
 -
