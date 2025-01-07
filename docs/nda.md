@@ -24,7 +24,6 @@ To create the csv for the upload (dates are inclusive):
 
 ```
 garjus image03csv -p PROJECT -s STARTDATE -e ENDDATE
-
 ```
 
 To download the images for the upload:

@@ -58,7 +58,6 @@ To filter by the subjects from an previous analysis:
 
 ```
 garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline -a 17
-
 ```
 
 This will read the list of subjects from the analysis record in REDCap.
