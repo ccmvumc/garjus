@@ -9,7 +9,6 @@ The cache is updated when your scheduled garjus update runs, but can also be run
 
 ```
 garjus update stats
-
 ```
 
 
@@ -17,7 +16,6 @@ To limit updates by project:
 
 ```
 garjus update stats -p REMBRANDT
-
 ```
 
 
@@ -25,7 +23,6 @@ To also by limit by processing assessor type, for example FreeSurfer:
 
 ```
 garjus update stats -p REMBRANDT -t FS7_v1
-
 ```
 
 
@@ -40,7 +37,6 @@ We can use the dashboard to export a csv or use the command-line. You must speci
 
 ```
 garjus stats -p REMBRANDT out.csv
-
 ```
 
 
@@ -48,7 +44,6 @@ To also by limit by processing assessor type, for example FreeSurfer:
 
 ```
 garjus stats -p REMBRANDT -t FS7_v1 out.csv
-
 ```
 
 
@@ -56,7 +51,6 @@ To limit by session type, for example to only include baseline scans:
 
 ```
 garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline
-
 ```
 
 
@@ -83,11 +77,12 @@ garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline -e 12345a
 Use statshot to store exported csv files as a new analysis. A csv file will be uploaded per processing type across all projects. By default, the output will also include a csv with subject demographics and a report PDF.
 
 ```
-  garjus statshot -p REMBRANDT,D3,DepMIND2,NewhouseMDDHx,R21Perfusion,TAYLOR_CAARE --t FS7_v1,Multi_Atlas_v3
+garjus statshot -p REMBRANDT,D3,DepMIND2,NewhouseMDDHx,R21Perfusion,TAYLOR_CAARE --t FS7_v1,Multi_Atlas_v3
 ```
 
 
 To filter the included subjects using an existing analysis:
+
 ```
 garjus statshot -p REMBRANDT,DepMIND2,NewhouseMDDHx,D3,COGD,TAYLOR_CAARE,R21Perfusion -t FS7_v1,Multi_Atlas_v3 -a REMBRANDT_17 -s Baseline
 ```

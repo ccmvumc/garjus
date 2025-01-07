@@ -15,20 +15,22 @@ garjus run -p REMBRANDT  -r ~/git/ccmvumc-analyses -d ~/TEST-OUTPUT  -y ~/git/cc
 
 
 You can limit included subjects which is useful for quicker testing:
+
 ```
  garjus run -p REMBRANDT  -r ~/git/ccmvumc-analyses -d ~/TEST-OUTPUT  -s 12345,6789,09876
 ```
 
 
 To include a local covariates csv file
+
 ```
- garjus run -p REMBRANDT  -r ~/git/ccmvumc-analyses -d ~/TEST-OUTPUT  -c covariates.csv
- ```
+garjus run -p REMBRANDT  -r ~/git/ccmvumc-analyses -d ~/TEST-OUTPUT  -c covariates.csv
+```
 
 
 ## Running with dax
 
-To run an analysis in dax, you create an entry in the analyses form.
+To run an analysis in dax, you create an entry in the analyses form for the primary project. The records are autonumbered.
 
 
 ## dashboard
