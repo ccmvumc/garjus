@@ -13,48 +13,57 @@ Garjus can be utlized in python scripts or via the command-line interface.
 
 ### using garjus in python
 
-The main Garjus class provides these data access methods that 
-all return a Pandas DataFrame:
+```
+from garjus import Garjus
+
+g = Garjus()
 
 ```
-activity()
-analyses()
-assessors()
-automations()
-issues()
-phantoms()
-processing_protocols()
-progress()
-scans()
-subjects()
-subject_assessors()
-stats(project)
-tasks()
+
+The main Garjus class provides data access methods that 
+all return a Pandas DataFrame.
+
+```
+g.activity()
+g.analyses()
+g.assessors()
+g.automations()
+g.issues()
+g.phantoms()
+g.processing_protocols()
+g.progress()
+g.scans()
+g.subjects()
+g.subject_assessors()
+g.stats(project)
+g.tasks()
 ```
 
 
 To get the columns in each dataframe:
 
 ```
-column_names(type)
+g.column_names(type)
 e.g. 
-column_names('issues')
+g.column_names('issues')
 or
-column_names('scans')
+g.column_names('scans')
 ```
 
 
 These Garjus methods returns names in a list:
 
 ```
-stattypes(project)
-scantypes(project)
-proctypes(project)
-stats_assessors(project)
-stats_projects()
+g.stattypes(project)
+g.scantypes(project)
+g.proctypes(project)
+g.stats_assessors(project)
+g.stats_projects()
 ```
 
 ## Command-line interface subcommands:
+The garjus command-line interface provides mulitple subcommands each with specific options/arguments.
+
 ```
 activity - display activity
 analyses - display analyses

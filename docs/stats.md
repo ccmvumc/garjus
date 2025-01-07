@@ -1,6 +1,19 @@
 # stats
 
+
 Garjus allows quick access to imaging measurements stored in XNAT assessors by maintaing a cache in REDCap. We refer to these measurements as "stats" as they are stored in an XNAT assessor resource named STATS.
+
+
+## credentials
+
+To use garjus command-line tools, you will need to create credential files for both REDCap and XNAT. Your XNAT user name and password must be stored in a .netrc file in your home directory. For REDCap, you will need the Project ID and API Key for the garjus project (also known as ccmutils) as well as each study project you want to access.
+
+Configure XNAT credentials for garjus: The .netrc file uses the same format as DAX. If you already have credentials for DAX, you can use the same for garjus. The format of each entry is: machine value login value password value
+
+Configure REDCap credentials for garjus: Your REDCap keys must be stored in a file in your home directory named .redcap.txt. Each line has three values separated by comma. The first value is the Project ID, the second value is the key, and the third value is the name. The name field is actually optional, but one entry should be named "main". This will be used as the main garjus REDCap project.
+
+Test your credentials by running garjus quicktest.
+
 
 
 ## Updating stats cache
