@@ -1,4 +1,4 @@
-### NDA image upload with garjus
+## NDA image upload with garjus
 
 
 ### credentials
@@ -41,7 +41,7 @@ vtcmd CSVFILE -b -l DOWNLOADDIR -c COLLECTION -d DATASET -t DATASET -u USER
 
 
 
-A Full example:
+## Full example:
 
 ```
 cd /tmp
@@ -52,6 +52,4 @@ garjus image03csv -p REMBRANDT -s 2022-01-01 -e 2022-06-30 --site VUMC
 garjus image03download image03.csv image03 -p REMBRANDT
 vtcmd /tmp/${DATASET}/image03.csv -b -l /tmp/${DATASET}/image03 -c 3413 -d ${DATASET} -t ${DATASET} -u bdboyd42
 ```
-
-
 

@@ -207,10 +207,15 @@ This should open a new tab in your web browser at the dashboard main page http:/
 Choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
 
 
-## NDA image03 upload
-[nda](docs/nda.md)
+## Other useful garjus tools
+[image03 - NDA repository upload](docs/nda.md)
+
+[stats - imaging measurements export](docs/stats.md)
+
+[analyses - project-level processing](docs/analyses.md)
+
 
 -
 
 
-Find a problem? Please report an issue. Got an idea? Open a Discussion. Thanks!
+Find a problem? Report an issue. Got an idea? Open a discussion. Thanks!
