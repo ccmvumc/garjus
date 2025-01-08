@@ -115,9 +115,15 @@ Garjus runs various automations to process data in XNAT and REDCap. These are ru
 
   - edat_etl - extract data from files uploaded to redcap, transform (calculate accuracy, times), load to redcap
 
+### Other ETL:
+
   - nihtoolbox_etl - extract and load NIH toolbox outputs
 
   - examiner_etl - extract and load NIH Examiner outputs
+
+  - gaitrite_etl - extract and load gaitrite walkway outputs
+
+
 
 ## Issues
 Any issues or errors encountered by garjus are recorded in REDCap.

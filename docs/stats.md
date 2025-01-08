@@ -63,14 +63,14 @@ garjus stats -p REMBRANDT -t FS7_v1 out.csv
 To limit by session type, for example to only include baseline scans:
 
 ```
-garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline
+garjus stats -p REMBRANDT -t FS7_v1 out.csv -s Baseline
 ```
 
 
 To filter by the subjects from an previous analysis:
 
 ```
-garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline -a 17
+garjus stats -p REMBRANDT -t FS7_v1 out.csv -s Baseline -a 17
 ```
 
 This will read the list of subjects from the analysis record in REDCap.
@@ -79,7 +79,7 @@ This will read the list of subjects from the analysis record in REDCap.
 To limit to specific sessions:
 
 ```
-garjus stats -p REMBRANDT -t FS7_v1 out.csv  -s Baseline -e 12345a
+garjus stats -p REMBRANDT -t FS7_v1 out.csv -s Baseline -e 12345a
 ```
 
 
