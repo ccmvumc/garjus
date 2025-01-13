@@ -1,5 +1,7 @@
 # analyses
 
+A DAX analysis is configured with a yaml file where we select inputs, specify scripts to run and containers to use for running the scripts.
+
 garjus can run a dax analyses locally. This is helpful for testing your analysis before making it a dax analysis. 
 You must specify a project, one or more subjects, the local code repository, and the output directory.
 
@@ -30,7 +32,8 @@ garjus run -p REMBRANDT  -r ~/git/ccmvumc-analyses -d ~/TEST-OUTPUT  -c covariat
 
 ## Running with dax
 
-To run an analysis in dax, you create an entry in the analyses form for the primary project. The records are autonumbered.
+To run an analysis in dax, you create an entry in the analyses form for the primary project. The records are autonumbered. When you're ready to let DAX run the analysis, set the status to QUEUED or Q.
+
 
 
 ## dashboard

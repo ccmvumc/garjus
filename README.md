@@ -1,15 +1,29 @@
 # garjus
 
-Garjus processes imaging data stored in REDCap and XNAT. All related settings are stored in REDCap. Each automation that runs is logged in REDCap. Any issues encountered are recorded in REDCap. Progress snapshots are stored in REDCap. Current views are in the dashboard.
+Garjus manages and processes neuroimaging data stored in REDCap and XNAT. Integration with [DAX](https://github.com/VUIIS/dax) allows subject and session level [processing](docs/processing.md) pipelines as well as group-level multi-project [analyses](docs/analyses.md). All related [settings](docs/settings.md) are stored in REDCap. [Activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) snapshots are stored in REDCap.
+
+If you have data in both XNAT and REDCAp, garjus will likely be useful. For maximum utility, data will be curated to include consistent session types and scan types. Garjus provides tools to help automate this curation process. Typically, a garjus update will be run on an automated scheduled process with cron. An update usually takes a few minutes unless there are new image sessions to import.
+
+Garjus maintains a [stats](docs/stats.md) database of imaging measurements for quick-access and dynamic export.
+
+Other tools include double data entry with [compare](docs/compare.md) and [image03](docs/nda.md) that handles exporting and uploading to the NDA repository. 
+
+All can be utilized in python scripts or via the [command-line interface](docs/cli.md). A current view can be had in the [dashboard](docs/dashboard.md) which provides a single point of access to data in XNAT/REDCap.
+
+At CCMVUMC, garjus is used to automate EEG/MRI/PET image processing as well as related data including Eprime, gaitrite, NIH Toolbox, NIH Examiner, Fitbit. Automations are initially triggered when a user enters the scan identifier from the scanner and continue all the way through to analysis.
 
 
-Garjus is the interface to everything that's stored in XNAT/REDCap. It uses
-REDCap to store it's own settings and tracking data. Anytime we want to
-access these data in REDCap or XNAT in python or CLI, we use Garjus in between.
-Creating a Garjus instance means setting up the interfaces with XNAT/REDCap.
+## Quickstart
 
-Garjus can be utlized in python scripts or via the command-line interface.
+If you have data in REDCap and XNAT, but have not configured them for garjus follow the steps in [setup](docs/setup.md). 
 
+To use an existing garjus system, you will simply need to configure your [credentials](docs/credentials.md).
+
+The latest release can be installed from PYPI.
+
+```
+pip install garjus
+```
 
 ## using garjus in python
 
@@ -17,7 +31,6 @@ Garjus can be utlized in python scripts or via the command-line interface.
 from garjus import Garjus
 
 g = Garjus()
-
 ```
 
 The main Garjus class provides data access methods that 
@@ -43,10 +56,7 @@ g.tasks()
 To get the columns in each dataframe:
 
 ```
-g.column_names(type)
-e.g. 
 g.column_names('issues')
-or
 g.column_names('scans')
 ```
 
@@ -61,183 +71,38 @@ g.stats_assessors(project)
 g.stats_projects()
 ```
 
-## Command-line interface subcommands:
+## Command-line interface subcommands
 The garjus command-line interface provides mulitple subcommands each with specific options/arguments.
 
-```
-activity - display activity
-analyses - display analyses
-compare - run data entry comparison
-copysess - copy an imaging session from one project to another
-copyscan - copy an imaging scan from one session to another
-dashboard - start a dashboard server and browse to it in a new local web browser tab
-delete - delete a proctype from a project
-getinputs - download inputs for an analysis
-image03csv - create an NDA image03 formatted csv file for a project and date range
-image03download - download all images for an NDA image03 csv file
-importdicom - import DICOM into XNAT from local file or remote URL such as gstudy
-importnifti - import NIFTI into XNAT from local file
-issues - display current issues
-processing - display current processing
-progress - display list of progress reports
-quicktest - test connections
-report - create a summary PDF of a project
-retry - find jobs that have run once an run them again
-run - run a dax analysis locally
-setsesstype - set the SessionType field of a session
-setsite - set the Site field of a session
-stats - export stats to csv
-subjects - display subjects of a project
-tasks - show currently running task jobs
-update - run automations, update caches, check for issues
-```
-# Automations
-
-Garjus runs various automations to process data in XNAT and REDCap. These are run when a scheduled garjus update runs. The automations help synchronize data between the systems, apply curation rules, end perform data ETL.
-
-
-### Scanning Automations:
-
-  - xnat\_auto\_archive - archives scans in XNAT
-
-  - xnat\_session\_relabel - modifies labels in XNAT based on a set of rules to set the site and session type
-
-  - xnat\_scan\_relabel - relabels scan type in XNAT using a simple map of input to output labels
-
-
-### EDAT Automations:
-
-  - edat_convert - convert files, input is from redcap file field, outputs to redcap file field
-
-  - edat_limbo2redcap - load files from a local folder
-
-  - edat_redcap2xnat - copy edat files from REDCap to XNAT
-
-  - edat_etl - extract data from files uploaded to redcap, transform (calculate accuracy, times), load to redcap
-
-### Other ETL:
-
-  - nihtoolbox_etl - extract and load NIH toolbox outputs
-
-  - examiner_etl - extract and load NIH Examiner outputs
-
-  - gaitrite_etl - extract and load gaitrite walkway outputs
-
-
-
-## Issues
-Any issues or errors encountered by garjus are recorded in REDCap.
-Issues are automatically resolved when the error or issues is no longer found.
-Resolved issues are deleted one week after resolution.
-
-## Activity
-Each complete automation is recorded in activity.
-
-
-
-## Set up
-
-Create a new Garjus main REDCap project:
-
-  - upload from zip (see misc folder)
-  - click user rights, enable API export/import, save changes
-  - refresh, click API, click Generate API Token, click Copy
-  - go to ~/.redcap.txt
-  - paste key, copy & paste PID from gui, name it "main"
-
-Create first stats REDCap project:
-
-  - upload from zip (see misc folder)
-  - click user rights, check enable API export/import, click save changes
-  - Refresh page, click API, click Generate API Token, click Copy
-  - Go to ~/.redcap.txt
-  - Paste key, copy & paste ID, name
-  - Paste ID into ccmutils under Main > Project Stats
-
-Create additional stats REDCap projects:
-
-  - Copy an existing project in gui under Other Functionality, click Copy Project
-  - Change the project name
-  - Confirm checkboxes for Users, Folder
-  - Click Copy Project (should take you to new project)
-  - In the new project, click user rights, check enable API export/import, click save changes
-  - Refresh page, click API, click Generate API Token, click Copy
-  - Go to ~/.redcap.txt
-  - Paste key, copy & paste ID, name main
-  - Paste ID into ccmutils under Main > Project Stats
-
-
-Add a new primary REDCap project to link individual study to garjus:
-  
-  - Copy PID, key to ~/.redcap.txt, name PROJECT primary
-  - paste ID into ccmutils under Main > Project Primary
-
-
-Add a new secondary REDCap project for double entry comparison:
-  
-  - Copy PID, key to ~/.redcap.txt, name PROJECT secondary 
-  - paste ID into ccmutils under Main > Project Secondary
-
-## Quickstart
-
-pip install garjus
-
-or
-
-pip install git+https://github.com/bud42/garjus.git
-
-or
-
-pip install git+https://github.com/bud42/garjus.git@v1.0.0
-
-## QA Dashboard without REDCap, only XNAT
-
-
-The garjus QA dashboard can be used with only XNAT access. First, you'll need credentials in
-your home directory. The same as dax, you need a .netrc file in your home directory with machine, login, and password in plain text. This file should only be readable by the owner.
-```
-machine xnat.vanderbilt.edu
-login XNAT_USERNAME
-password XNAT_PASSWORD
-```
-Then install garjus and launch the dashboard. To install in a new python 3 environment:
-```
-python -m venv venv-garjus
-```
-Then load the new virtual environment with:
-```
-source venv-garjus/bin/activate
-```
-Always good to upgrade pip:
-```
-pip install pip -U
-```
-And then install garjus in the venv with:
-```
-pip install garjus
-```
-If you encounter an error with scikit learn, you can bypass it with:
-```
-export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True && pip install garjus
-```
-After garjus is successfully installed, you can launch a dashboard with:
-```
-garjus dashboard
-```
-
-This should open a new tab in your web browser at the dashboard main page http://localhost:8050 .
-Choose one or more projects from the drop down. The options should include all projects that are accessible to your XNAT account using the credentials in your .netrc file.
-
-
-## Other useful garjus tools
-
-* [image03 - NDA repository upload](docs/nda.md)
-
-* [stats - imaging measurements export](docs/stats.md)
-
-* [analyses - project-level processing](docs/analyses.md)
-
-
+* activity - display activity
+* analyses - display analyses
+* compare - data entry comparison
+* copyscan - copy an imaging scan from one session to another
+* copysess - copy an imaging session from one project to another
+* dashboard - start a dashboard server and browse to it in a new local web browser tab
+* delete - delete a proctype from a project
+* download - download files from XNAT assessors
+* export - extract stats to csv files
+* image03csv - create an NDA image03 formatted csv file for a project and date range
+* image03download - download all images for an NDA image03 csv file
+* importdicom - import DICOM into XNAT from local file or remote URL such as gstudy
+* importnifti - import NIFTI into XNAT from local file
+* issues - display current issues
+* orphans - find and display assessors without parents
+* processing - display current processing
+* progress - display list of progress reports
+* quicktest - test connections
+* report - create a summary PDF of a project
+* retry - find jobs that have run once an run them again
+* run - run a dax analysis locally
+* setsesstype - set the SessionType field of a session
+* setsite - set the Site field of a session
+* stats - export stats to csv
+* statshot - export stats to csv files and save output as new analysis
+* subjects - display subjects of a project
+* switch - batch change status of assessors
+* tasks - show currently running task jobs
+* update - run automations, update caches, check for issues
 ---
 
 Find a problem? Report an issue. Got an idea? Open a discussion. Thanks!

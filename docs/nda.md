@@ -1,24 +1,30 @@
-## NDA image upload with garjus
+# NDA image upload with garjus
 
+Garjus can export XNAT/REDCap data in preparation for upload the NDA repository. Appropriate credentials are required including a REDCap key for each study project.
 
-### credentials
-To use garjus command-line tools or to open a local dashboard, you will need to create credential files for both REDCap and XNAT. Your XNAT user name and password must be stored in a .netrc file in your home directory. For REDCap, you will need the Project ID and API Key for the garjus project (also known as ccmutils) as well as each study project you want to access.
+To upload image to NDA, run two garjus commands to prepare the files to upload and then use the NIH tools to do the upload.
 
+The csv follows the NIH [image03 template](https://nda.nih.gov/api/datadictionary/v2/datastructure/image03/template). The first line of the file must be "image03", the second line contains the column headers, and then subsequent rows are data. Images are exported in DICOM format with a single zip file per scan. 
 
-Configure XNAT credentials for garjus:
-The .netrc file uses the same format as DAX. If you already have credentials for DAX, you can use the same for garjus. The format of each entry is:
-machine value login value password value
+As required for DICOM format, these are the columns completed in the csv:
 
+```
+subjectkey, src_subject_id, interview_date, interview_age, sex, image_file, image_description, scan_type, scan_object, image_file_format, image_modality, transformation_performed
+```
 
-Configure REDCap credentials for garjus:
-Your REDCap keys must be stored in a file in your home directory named .redcap.txt. Each line has three values separated by comma. The first value is the Project ID, the second value is the key, and the third value is the name. The name field is actually optional, but one entry should be named "main". This will be used as the main garjus REDCap project.
+For functional task scans, the ```experiment_id``` column is also completed.
 
-Test:
-Test your credentials by running a garjus command such as garjus quicktest which will test all credentials. You can also open a dashboard in your browser with garjus dashboard where you can select a project to confirm access.
+For diffusion scans, the ```bvek_bval_files``` column is set to Yes.
 
+To complete the experiment type and scan type fields, garjus pulls from the main REDCap to map XNAT scan types to image03 experiment types and data types. See [setup](docs/setup.md) for more.
+
+In addition to garjus, you will need to install the NDA python package [nda-tools](https://github.com/NDAR/nda-tools).
+
+```
+pip install nih-tools
+```
 
 ### upload
-To upload image to NDA, run two garjus commands to prepare the files to upload and then use the NIH tools to do the upload.
 
 To create the csv for the upload (dates are inclusive):
 
@@ -26,13 +32,15 @@ To create the csv for the upload (dates are inclusive):
 garjus image03csv -p PROJECT -s STARTDATE -e ENDDATE
 ```
 
+This will export a csv with one row per scan. Note this not per session, you will have multiple rows per session, for e.g. a row for T1, fMRI and DTI scans.
+
 To download the images for the upload:
 
 ```
 garjus image03download -p PROJECT CSVFILE DOWNLOADDIR
 ```
 
-And finally upload to NDA:
+Now we have exported the csv and DICOM.zip files locally. The final step is to fun upload with the nda-tools command:
 
 ```
 vtcmd CSVFILE -b -l DOWNLOADDIR -c COLLECTION -d DATASET -t DATASET -u USER
