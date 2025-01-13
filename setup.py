@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="garjus",
-    version="1.1.3",
+    version="1.2.1",
     author="Brian D. Boyd",
     author_email="brian.d.boyd@vumc.org",
-    description="Python package for managing imaging data in REDCap and XNAT",
+    description="Python package for managing imaging research projects in REDCap and XNAT",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/ccmvumc/garjus",
