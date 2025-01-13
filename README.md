@@ -1,6 +1,6 @@
 # garjus
 
-Garjus manages and processes neuroimaging data stored in REDCap and XNAT. Integration with [DAX](https://github.com/VUIIS/dax) allows subject and session level [processing](docs/processing.md) pipelines as well as group-level multi-project [analyses](docs/analyses.md). All related [settings](docs/settings.md) are stored in REDCap. [Activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) snapshots are stored in REDCap.
+Garjus manages neuroimaging research projects stored in REDCap and XNAT. Integration with [DAX](https://github.com/VUIIS/dax) allows subject-level [processing](docs/processing.md) as well as group-level multi-project [analyses](docs/analyses.md). All required [settings](docs/settings.md) are stored in REDCap. [Activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) reports and snapshots are stored in REDCap.
 
 If you have data in both XNAT and REDCAp, garjus will likely be useful. For maximum utility, data will be curated to include consistent session types and scan types. Garjus provides tools to help automate this curation process. Typically, a garjus update will be run on an automated scheduled process with cron. An update usually takes a few minutes unless there are new image sessions to import.
 
@@ -10,7 +10,7 @@ Other tools include double data entry with [compare](docs/compare.md) and [image
 
 All can be utilized in python scripts or via the [command-line interface](docs/cli.md). A current view can be had in the [dashboard](docs/dashboard.md) which provides a single point of access to data in XNAT/REDCap.
 
-At CCMVUMC, garjus is used to automate EEG/MRI/PET image processing as well as related data including Eprime, gaitrite, NIH Toolbox, NIH Examiner, Fitbit. Automations are initially triggered when a user enters the scan identifier from the scanner and continue all the way through to analysis.
+At CCMVUMC, garjus is used to automate EEG/MRI/PET image processing as well as management of related data including Eprime, gaitrite, NIH Toolbox, NIH Examiner, Fitbit. Automations are initially triggered when a user enters the scan identifier from the scanner and continue all the way through to analysis.
 
 
 ## Quickstart
