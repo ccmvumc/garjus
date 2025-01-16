@@ -1,6 +1,6 @@
 # analyses
 
-A DAX analysis is configured with a yaml file where we select inputs, specify scripts to run and containers to use for running the scripts.
+A DAX analysis connects processing code from github with inputs from XNAT. An analysis is configured with a yaml file where we select inputs, specify scripts to run and containers to use for running the scripts.
 
 garjus can run a dax analyses locally. This is helpful for testing your analysis before making it a dax analysis. 
 You must specify a project, one or more subjects, the local code repository, and the output directory.

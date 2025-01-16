@@ -1,16 +1,16 @@
 # garjus
 
-Garjus manages neuroimaging research projects stored in REDCap and XNAT. Integration with [DAX](https://github.com/VUIIS/dax) allows subject-level [processing](docs/processing.md) as well as group-level multi-project [analyses](docs/analyses.md). All required [settings](docs/settings.md) are stored in REDCap. [Activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) reports and snapshots are stored in REDCap.
+Garjus manages neuroimaging research projects stored in [REDCap](https://project-redcap.org) and [XNAT](https://www.xnat.org).  Integration with [DAX](https://github.com/VUIIS/dax) allows subject-level [processing](docs/processing.md) as well as group-level multi-project [analyses](docs/analyses.md). [Automations](docs/automations.md) provide data curation, extraction and transformation. All required [settings](docs/settings.md) are stored in REDCap. Automation [activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) reports and snapshots are stored in REDCap.
 
-If you have data in both XNAT and REDCAp, garjus will likely be useful. For maximum utility, data will be curated to include consistent session types and scan types. Garjus provides tools to help automate this curation process. Typically, a garjus update will be run on an automated scheduled process with cron. An update usually takes a few minutes unless there are new image sessions to import.
+If you have data in both XNAT and REDCap, garjus will likely be useful. For maximum utility, data will be curated to include consistent session types and scan types. Garjus provides tools to help [automate](automations) this curation process. Typically, a garjus update will run as a scheduled process. An update usually takes a few minutes unless there are new image sessions to import.
 
 Garjus maintains a [stats](docs/stats.md) database of imaging measurements for quick-access and dynamic export.
 
-Other tools include double data entry with [compare](docs/compare.md) and [image03](docs/nda.md) that handles exporting and uploading to the NDA repository. 
+Other tools include double data entry with [compare](docs/compare.md) and [image03](docs/nda.md) to handle uploads to the NDA repository.
 
 All can be utilized in python scripts or via the [command-line interface](docs/cli.md). A current view can be had in the [dashboard](docs/dashboard.md) which provides a single point of access to data in XNAT/REDCap.
 
-At CCMVUMC, garjus is used to automate EEG/MRI/PET image processing as well as management of related data including Eprime, gaitrite, NIH Toolbox, NIH Examiner, Fitbit. Automations are initially triggered when a user enters the scan identifier from the scanner and continue all the way through to analysis.
+At CCMVUMC, garjus is used to automate EEG/MRI/PET image processing as well as manage related data including E-Prime, Gaitrite, NIH Toolbox, NIH Examiner, Fitbit, LifeData, ARC app, etc. Automations are initially triggered when a user enters the scan identifier from the scanner and continue all the way through to analysis.
 
 
 ## Quickstart
