@@ -1,5 +1,38 @@
 # Dashboard
-The dashboard is built with the dash package.
+
+The garjus dashboard provides a single point of access to data stored between XNAT and REDCap. The webapp can be run locally or on a server. It is built with the [dash](https://dash.plotly.com) python package and can run as a Flask app.
+
+The main dashboard interface is a set of tabs that each contain a table. Some tabs also can show graphs.
+
+When a user logs into the dashboard, the name and password are used to obtain a temporary access key from the XNAT API. The key is then used to query the XNAT API for the logged in users available projects. Those projects are in then available for querying in the QA tab.
+
+Each tab corresponds to a different view into the data in XNAT/REDCap.
+
+
+## QA
+
+The QA table displays scans and assesors queried from XNAT. The table can also can be viewed by session, subject, or project. 
+
+Demographics can optionally be included in the view. These are pulled from REDCap and must be configured per project.
+
+## Analyses
+
+The Analyses table is a direct view of the Analyses instrument in the DAX REDCap. 
+
+## Processors
+
+
+## Stats
+
+
+## Reports
+
+
+
+## Issues
+
+## Activity
+
 
 ## QA Dashboard without REDCap, only XNAT
 
