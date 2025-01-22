@@ -17,6 +17,7 @@
 
 import logging
 import re
+import os
 import itertools
 
 import pandas as pd
@@ -604,8 +605,15 @@ def load_data(projects=[], refresh=False, hidetypes=True):
 
 
 def load_options(df):
-    garjus = Garjus()
-    projects = garjus.projects()
+    demodir = os.path.expanduser("~/.garjus/DashboardDemoUser/DATA")
+    if os.path.exists(demodir):
+        fname = f'{demodir}/qadata.pkl'
+        projects = data.read_data(fname).PROJECT.unique()
+        logger.info(f'{projects=}')
+    else:
+        garjus = Garjus()
+        projects = garjus.projects()
+    
     sesstypes = []
     proctypes = []
     scantypes = []
@@ -983,6 +991,7 @@ def update_qa(
     elif selected_pivot == 'scan':
         # Drop non scans
         df = df.dropna(subset='SCANTYPE')
+        df = df[df.SCANTYPE != '']
 
         # Order matters here for display of columns
         selected_cols = [
@@ -1045,6 +1054,7 @@ def update_qa(
     elif selected_pivot == 'assr':
         # Drop non-assessors
         df = df.dropna(subset='PROCTYPE')
+        df = df[df.PROCTYPE != '']
 
         df['STATUS'] = df['STATUS'].replace({
             'P': '✅',

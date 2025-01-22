@@ -103,65 +103,73 @@ def update_data(projects):
 
 
 def load_data(projects=[], refresh=False, maxmins=60, hidetypes=True):
-    fname = get_filename()
-
-    if not os.path.exists(fname):
-        refresh = True
-    elif file_age(fname) > maxmins:
-        logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
-        refresh = True
-
-    if refresh:
-        df = run_refresh(projects)
-    elif set(projects) != set(read_data(fname).PROJECT.unique()):
-        logger.debug('updating data')
-        # Different projects selected, update
-        df = update_data(projects)
-    else:
+    demodir = os.path.expanduser("~/.garjus/DashboardDemoUser/DATA")
+    if os.path.exists(demodir):
+        # We are in a demo
+        fname = f'{demodir}/qadata.pkl'
+        logger.info(f'reading demo data:{fname}')
         df = read_data(fname)
+    else:
+        fname = get_filename()
 
-    if df.empty:
-        return df
+        if not os.path.exists(fname):
+            refresh = True
+        elif file_age(fname) > maxmins:
+            logger.info(f'refreshing, file age limit reached:{maxmins} minutes')
+            refresh = True
 
-    if hidetypes:
-        logger.debug('applying autofilter to hide unused types')
-        scantypes = None
-        assrtypes = None
+        if refresh:
+            df = run_refresh(projects)
+        elif set(projects) != set(read_data(fname).PROJECT.unique()):
+            logger.debug('updating data')
+            # Different projects selected, update
+            df = update_data(projects)
+        else:
+            df = read_data(fname)
 
-        garjus = Garjus()
+        if df.empty:
+            return df
 
-        if garjus.redcap_enabled():
-            # Load types
-            logger.debug('loading scan/assr types')
-            scantypes = garjus.all_scantypes()
-            assrtypes = garjus.all_proctypes()
+        if hidetypes:
+            logger.debug('applying autofilter to hide unused types')
+            scantypes = None
+            assrtypes = None
 
-            # Make the lists unique
-            scantypes = list(set(scantypes))
-            assrtypes = list(set(assrtypes))
+            garjus = Garjus()
 
-            if not scantypes and not df.empty:
-                # Get list of scan types based on assessor inputs
-                logger.debug('loading used scan types')
-                scantypes = garjus.used_scantypes(
-                    df[df.TYPE == 'ASSR'],
-                    df[df.TYPE == 'SCAN']
-                )
+            if garjus.redcap_enabled():
+                # Load types
+                logger.debug('loading scan/assr types')
+                scantypes = garjus.all_scantypes()
+                assrtypes = garjus.all_proctypes()
 
-            # Apply filter
-            alltypes = scantypes + assrtypes
+                # Make the lists unique
+                scantypes = list(set(scantypes))
+                assrtypes = list(set(assrtypes))
 
-            if alltypes is not None:
-                logger.debug(f'filtering by types:{len(df)}')
-                df = df[df.TYPE.isin(alltypes)]
+                if not scantypes and not df.empty:
+                    # Get list of scan types based on assessor inputs
+                    logger.debug('loading used scan types')
+                    scantypes = garjus.used_scantypes(
+                        df[df.TYPE == 'ASSR'],
+                        df[df.TYPE == 'SCAN']
+                    )
 
-        logger.debug(f'done filtering by types:{len(df)}')
+                # Apply filter
+                alltypes = scantypes + assrtypes
+
+                if alltypes is not None:
+                    logger.debug(f'filtering by types:{len(df)}')
+                    df = df[df.TYPE.isin(alltypes)]
+
+            logger.debug(f'done filtering by types:{len(df)}')
 
     # Filter projects
     df = df[df['PROJECT'].isin(projects)]
 
     # Must have type
     df = df.dropna(subset=['TYPE'])
+    df = df[df.TYPE != '']
 
     return df
 

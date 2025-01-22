@@ -439,11 +439,14 @@ def delete(project, proctype, procstatus=None, qcstatus=None):
 @cli.command('dashboard')
 @click.option('--auth', 'auth_file', required=False)
 @click.option('--login', required=False, is_flag=True)
-def dashboard(auth_file=None, login=False):
+@click.option('--demo', required=False, is_flag=True)
+def dashboard(auth_file=None, login=False, demo=False):
     import webbrowser
     url = 'http://localhost:8050'
 
-    if login:
+    if demo:
+        from .dashboard.demo import app
+    elif login:
         from .dashboard.login import app
     else:
         from .dashboard.index import app
