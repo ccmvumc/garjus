@@ -63,11 +63,11 @@ def update_project(garjus, project, autos_include=None, autos_exclude=None):
 
     if garjus.xnat_enabled():
         scan_autos = garjus.scan_automations(project)
-        edat_autos = garjus.edat_automation_choices()
     else:
-        logging.debug(f'no xnat, disable scan and edat automations')
+        logging.debug(f'no xnat, disable scan automations')
         scan_autos = []
-        edat_autos = []
+
+    edat_autos = garjus.edat_automation_choices()
 
     if autos_include:
         # Apply include filter
@@ -160,7 +160,7 @@ def _run_edat_automations(automations, garjus, project):
                 e['edat_convfield'],
                 convertdir)
 
-        if 'edat_redcap2xnat' in edat_autos:
+        if 'edat_redcap2xnat' in edat_autos and garjus.xnat_enabled():
             results += edat_redcap2xnat.process_project(
                 garjus.xnat(),
                 primary_redcap,
