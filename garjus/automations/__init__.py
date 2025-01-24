@@ -99,13 +99,16 @@ def _run_edat_automations(automations, garjus, project):
     scanp = garjus.scanning_protocols(project)
     primary_redcap = garjus.primary(project)
     limbo = garjus.project_setting(project, 'limbodir')
-    scans = garjus.scans(projects=[project]).to_dict('records')
+    scans = []
     convertdir = garjus.project_setting(project, 'convertdir')
     event2sess = {}
 
     if primary_redcap is None:
         logger.debug(f'primary redcap not found, check keys:{project}')
         return
+
+    if garjus.xnat_enabled():
+        scans = garjus.scans(projects=[project]).to_dict('records')
 
     # Only MRI
     logger.debug(f'{scanp=}')
