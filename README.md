@@ -2,6 +2,8 @@
 
 Garjus manages neuroimaging research projects stored in [REDCap](https://project-redcap.org) and [XNAT](https://www.xnat.org).  Integration with [DAX](https://github.com/VUIIS/dax) allows subject-level [processing](docs/processing.md) as well as group-level multi-project [analyses](docs/analyses.md). [Automations](docs/automations.md) provide data curation, extraction and transformation. All required [settings](docs/settings.md) are stored in REDCap. Automation [activity](docs/activity.md) is logged in REDCap. Any [issues](docs/issues.md) encountered are recorded in REDCap. [Progress](docs/progress.md) reports and snapshots are stored in REDCap.
 
+[Try dashboard](https://garjus.pythonanywhere.com)
+
 If you have data in both XNAT and REDCap, garjus will likely be useful. For maximum utility, data will be curated to include consistent session types and scan types. Garjus provides tools to help [automate](automations) this curation process. Typically, a garjus update will run as a scheduled process. An update usually takes a few minutes unless there are new image sessions to import.
 
 Garjus maintains a [stats](docs/stats.md) database of imaging measurements for quick-access and dynamic export.
