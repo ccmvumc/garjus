@@ -78,8 +78,8 @@ def process_project(
 
         # Find files for this subject
         for cur_field, cur_name in zip(
-            [flank_field, nback_field, shift_field, cpt_field], 
-            ['Flanker', 'SetShifting', 'CPT', 'NBack']):
+            [cpt_field, nback_field, flank_field, shift_field], 
+            ['CPT', 'NBack', 'Flanker', 'SetShifting']):
 
             # Check existing
             if r[cur_field]:
