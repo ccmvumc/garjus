@@ -248,7 +248,6 @@ def _run_etl_automation(automation, garjus, project):
             _dir = f'{limbo}/{project}_EXAMINER/data'
             e2s = garjus.project_setting(project, 'examinermap')
             e2s = _parse_map(e2s)
-            print(e2s)
             results = etl_nihexaminer.file2redcap(project_redcap, _dir, e2s)
         else:
             results = []

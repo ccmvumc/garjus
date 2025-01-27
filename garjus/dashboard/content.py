@@ -71,7 +71,7 @@ def _footer_content(include_logout=False):
     return content
 
 
-def get_content(include_logout=False, demo=True):
+def get_content(include_logout=False, demo=False):
 
     if demo:
         return demo_content()

@@ -435,13 +435,6 @@ def load_standard(garjus, project, include_dob=False):
     if sec_field:
         rec = [x for x in rec if x[sec_field]]
 
-    # Must have dob to calc age
-    if dob_field:
-        try:
-            rec = [x for x in rec if x[dob_field]]
-        except KeyError as err:
-            logger.debug(f'cannot access dob:{dob_field}:{err}')
-
     # Make data frame
     if project_redcap.is_longitudinal:
         df = pd.DataFrame(rec, columns=fields + ['redcap_event_name'])
@@ -471,6 +464,8 @@ def load_standard(garjus, project, include_dob=False):
             'Screening (Arm 4: UPMC Never Depressed)': 'Control',
             'Screening (Arm 3: UPMC Currently Depressed)': 'Depress',
         })
+
+        df = df[df.GROUP.isin(['Depress', 'Control'])]
     elif project == 'REMBRANDT':
         # Use arm/events names to determine which arm
         df['GROUP'] = df['redcap_event_name'].map({
@@ -493,15 +488,15 @@ def load_standard(garjus, project, include_dob=False):
 
         df[sex_field] = df[sex_field].fillna('UNKNOWN')
 
-        # Exclude incomplete data
-        df = df.dropna()
-
         # Calculate age at baseline
         df[dob_field] = pd.to_datetime(df[dob_field])
         df[date_field] = pd.to_datetime(df[date_field])
         df['AGE'] = (
             df[date_field] - df[dob_field]
         ).values.astype('<m8[Y]').astype('int').astype('str')
+
+        # Replace sentinel value with blank
+        df.loc[df.AGE.astype('int') < 0, 'AGE'] = ''
 
         if include_dob:
             df['DOB'] = df[dob_field]
@@ -512,9 +507,6 @@ def load_standard(garjus, project, include_dob=False):
             'Female': 'F',
             'UNKNOWN': 'U'
         })
-
-    # Exclude incomplete data
-    df = df.dropna()
 
     if guid_field:
         df['GUID'] = df[guid_field]
