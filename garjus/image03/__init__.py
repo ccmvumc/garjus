@@ -264,7 +264,11 @@ def get_image03_df(mr_scans, pet_scans, type_map, exp_map):
     df = pd.read_csv(IMAGE03_TEMPLATE, skiprows=1)
 
     # Append our records
-    df = pd.concat([df, pd.DataFrame(data)])
+    if len(data) > 0:
+        if len(df) > 0:
+            df = pd.concat([df, pd.DataFrame(data)])
+        else:
+            df = pd.DataFrame(data, columns=df.columns)
 
     return df
 
