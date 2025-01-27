@@ -376,10 +376,13 @@ def _make_image03_csv(
         enddate=enddate)
 
     # merge in subject data
-    mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_index=True)
-    pscans = pd.merge(pscans, dfs, left_on='SUBJECT', right_index=True)
+    mscans = pd.merge(mscans, dfs, left_on='SUBJECT', right_on='ID')
+    pscans = pd.merge(pscans, dfs, left_on='SUBJECT', right_on='ID')
 
     if 'DOB' in mscans:
+        mscans.DOB = pd.to_datetime(mscans.DOB)
+        pscans.DOB = pd.to_datetime(pscans.DOB)
+
         # Calculate Scan age in integer of months as a string
         mscans['SCANAGE'] = (mscans['DATE'] + pd.DateOffset(days=15)) - mscans['DOB']
         mscans['SCANAGE'] = mscans['SCANAGE'].values.astype('<m8[M]').astype('int').astype('str') 
