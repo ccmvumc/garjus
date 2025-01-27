@@ -190,7 +190,7 @@ def _get_bag(garjus, project):
         return
 
     # Merge in DOB
-    subjecs['SUBJECT'] = subjects['ID']
+    subjects['SUBJECT'] = subjects['ID']
     stats = pd.merge(stats, subjects[['SUBJECT','DOB']], on='SUBJECT')
     if 'bag_age_gap' in stats:
         # Only rows without existing bag_age_gap
