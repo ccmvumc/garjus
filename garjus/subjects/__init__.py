@@ -450,6 +450,11 @@ def load_standard(garjus, project, include_dob=False):
     if project in ['DepMIND2', 'DepMIND3']:
         # All are depressed
         df['GROUP'] = 'Depress'
+
+        # Subset of events where demographics are found
+        df = df[df.redcap_event_name.isin([
+            'Screening (Arm 1: Blinded Phase)',
+        ])]
     elif project == 'D3':
         # Load gait velocity
         dfg = load_gait_data(project_redcap)
