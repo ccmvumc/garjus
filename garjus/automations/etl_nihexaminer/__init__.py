@@ -342,7 +342,7 @@ def run(project):
                 continue
 
         except (KeyError, ValueError) as err:
-            logger.error(f'value error, cannot load{err}')
+            logger.error(f'value error, cannot load:{record_id}:{event_id}:{err}')
             continue
 
         if not r.get(nback_field, False):
