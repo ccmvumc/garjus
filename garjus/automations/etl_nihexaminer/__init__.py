@@ -345,6 +345,10 @@ def run(project):
             logger.error(f'value error, cannot load{err}')
             continue
 
+        if not r.get(nback_field, False):
+            logger.info(f'File Not Found NBack:{record_id}:{event_id}')
+            continue
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
             flank_file = f'{tmpdir}/flanker.csv'
