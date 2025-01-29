@@ -46,6 +46,20 @@ Now we have exported the csv and DICOM.zip files locally. The final step is to f
 vtcmd CSVFILE -b -l DOWNLOADDIR -c COLLECTION -d DATASET -t DATASET -u USER
 ```
 
+### Common Problems
+You must set your credentials for NDA with keyring in python with:
+
+```
+import keyring
+keyring(system,name,password)
+```
+
+Also, your keychain must be unlocked from command-line before running vtcmd, with:
+
+```
+security unlock-keychain
+```
+
 
 
 ## Full example:
