@@ -192,9 +192,13 @@ def _get_bag(garjus, project):
     # Merge in DOB
     subjects['SUBJECT'] = subjects['ID']
     stats = pd.merge(stats, subjects[['SUBJECT','DOB']], on='SUBJECT')
+
     if 'bag_age_gap' in stats:
         # Only rows without existing bag_age_gap
         stats = stats[stats.bag_age_gap.isna()]
+
+    # Only rows with DOB
+    stats = stats[~stats.DOB.isna()]
 
     # Calculate age at scan
     stats['SCANDAYS'] = pd.to_datetime(stats['DATE']) - stats['DOB']
