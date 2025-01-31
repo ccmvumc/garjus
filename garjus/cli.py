@@ -341,7 +341,10 @@ def export(filename, projects, proctypes, sesstypes, analysis, sessions):
 @click.option('--projects', '-p', 'projects', required=True, multiple=True)
 @click.option('--proctypes', '-t', 'proctypes', required=False)
 @click.option('--sesstypes', '-s', 'sesstypes', required=False)
-def statshot(projects, proctypes, sesstypes):
+@click.option('--exclude', '-x', 'exclude', required=False)
+@click.option('--guid/--no-guid', default=False)
+@click.option('--ident/--no-ident', default=False)
+def statshot(projects, proctypes, sesstypes, exclude, guid, ident):
     click.echo('garjus! statshot')
 
     # Split projects into lists    
@@ -353,7 +356,10 @@ def statshot(projects, proctypes, sesstypes):
     Garjus().statshot(
         projects,
         proctypes,
-        sesstypes)
+        sesstypes,
+        exclude,
+        guid=guid,
+        ident=ident)
 
 @cli.command('compare')
 @click.option('--project', '-p', 'project', required=True)

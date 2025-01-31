@@ -161,7 +161,10 @@ def make_statshot(
     garjus,
     projects,
     proctypes,
-    sesstypes):
+    sesstypes,
+    exclude,
+    guid_filter=False,
+    id_filter=False):
     """Export stats and upload results as a new analysis."""
     stats = pd.DataFrame()
     subj = pd.DataFrame()
@@ -171,6 +174,9 @@ def make_statshot(
 
     if sesstypes is not None and not isinstance(sesstypes, list):
         sesstypes = sesstypes.split(',')
+
+    if exclude is not None and not isinstance(exclude, list):
+        exclude = exclude.split(',')
 
     for p in sorted(projects):
         # Load project subjects
@@ -184,6 +190,12 @@ def make_statshot(
             logger.info(f'no stats for project:{p}')
             continue
 
+        if len(psubjects) == 0:
+            logger.info('no subject data found, using list from stats')
+            psubjects = pd.DataFrame({'ID': pstats.SUBJECT.unique()})
+            psubjects['PROJECT'] = p
+            psubjects['GROUP'] = 'UNKNOWN'
+
         # Append to total
         subj = pd.concat([subj, psubjects])
         stats = pd.concat([stats, pstats])
@@ -193,17 +205,29 @@ def make_statshot(
     valid_subjects = dfp[(dfp > 0).all(axis=1)].index
     subj = subj[subj.ID.isin(valid_subjects)]
 
-     # Filter duplicate GUID to handle same subject in multiple projects
-    logger.info(f'before filtering duplicate GUID:{len(subj)} subjects')
-    subj = subj[(subj['GUID'] == '') | (subj['GUID'].isna()) | ~subj.duplicated(subset='GUID')]
-    logger.info(f'after filtering duplicate GUID:{len(subj)} subjects')
+    # Exclude specified subjects
+    if exclude:
+        logger.debug(f'before exclude:{len(subj)}')
+        subj = subj[~subj.ID.isin(exclude)]
+        logger.debug(f'after exclude:{len(subj)}')
 
-    # Use identifier database to filter out duplicates
-    logger.info(f'before filtering duplicate identifier database id:{len(subj)} subjects')
-    subj = subj[(subj['identifier_id'] == '') | (subj['identifier_id'].isna()) | ~subj.duplicated(subset='identifier_id')]
-    logger.info(f'after filtering duplicate identifier database id:{len(subj)} subjects')
+    if guid_filter:
+        # Filter duplicate GUID to handle same subject in multiple projects
+        logger.info(f'before filtering duplicate GUID:{len(subj)} subjects')
+        subj = subj[(subj['GUID'] == '') | (subj['GUID'].isna()) | ~subj.duplicated(subset='GUID')]
+        logger.info(f'after filtering duplicate GUID:{len(subj)} subjects')
+    else:
+        logger.info('filtering duplicates by guid is disabled')
+    
+    if id_filter:
+        # Use identifier database to filter out duplicates
+        logger.info(f'before filtering duplicate identifier database id:{len(subj)} subjects')
+        subj = subj[(subj['identifier_id'] == '') | (subj['identifier_id'].isna()) | ~subj.duplicated(subset='identifier_id')]
+        logger.info(f'after filtering duplicate identifier database id:{len(subj)} subjects')
+    else:
+        logger.info('filtering duplicates by identifer db is disabled')
 
-    # Only include specifc subset of columns
+    # Only include specific subset of columns
     subj = subj[SUBJECTS_COLUMNS]
 
     # Only stats for subjects in subjects
@@ -239,7 +263,6 @@ def make_statshot(
 
         # Creates new analysis on redcap with files uploaded to xnat
         upload_analysis(garjus, projects[0], tmpdir)
-
 
 def upload_analysis(garjus, project, analysis_dir):
     # Create new record analysis

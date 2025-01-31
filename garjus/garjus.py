@@ -2103,14 +2103,21 @@ class Garjus:
         self,
         projects,
         proctypes=None,
-        sesstypes=None):
+        sesstypes=None,
+        exclude=None,
+        guid=False,
+        ident=False
+    ):
         """ Exports stats and save as new analysis on project."""
         make_statshot(
             self,
             projects,
             proctypes, 
-            sesstypes
-    )
+            sesstypes,
+            exclude,
+            guid_filter=guid,
+            id_filter=ident,
+        )
 
     def compare(self, project):
         """Create a PDF report of Double Entry Comparison."""

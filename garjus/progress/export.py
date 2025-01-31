@@ -173,6 +173,8 @@ def _draw_counts(pdf, subjects):
 
         # Show the group
         _txt = cur_group
+        if _txt == 'UNKNOWN':
+            _txt = '?'
 
         if len(_txt) > 6:
             pdf.set_font('helvetica', size=12)
@@ -296,6 +298,8 @@ def _draw_demog(pdf, subjects):
 
 def _draw_proc(pdf, stats):
     common_count = len(stats.dropna(axis=1).columns)
+    if common_count == 0:
+        common_count = 8 # ASSR,PROJECT,SUBJECT,SESSION,SESSTYPE,SITE,DATE,PROCTYPE
 
     # Draw heading
     pdf.set_font('helvetica', size=14)
@@ -353,8 +357,11 @@ def _add_first_page(pdf, info):
     pdf.ln(0.2)
 
     # Show demographics table
-    _draw_demog(pdf, subjects)
-    pdf.ln(0.2)
+    if not subjects.isna().any().any():
+        _draw_demog(pdf, subjects)
+        pdf.ln(0.2)
+    else:
+        logger.info('missing Demographics')
 
     # Show processing types table
     _draw_proc(pdf, stats)
