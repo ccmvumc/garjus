@@ -298,7 +298,7 @@ def _draw_demog(pdf, subjects):
 
 def _draw_proc(pdf, stats):
     common_count = len(stats.dropna(axis=1).columns)
-    if common_count == 0:
+    if common_count == len(stats.columns):
         common_count = 8 # ASSR,PROJECT,SUBJECT,SESSION,SESSTYPE,SITE,DATE,PROCTYPE
 
     # Draw heading
