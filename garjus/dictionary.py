@@ -225,7 +225,7 @@ See examples.\n',
             'putamen_rh_volume',
             'thalamus_lh_volume',
             'thalamus_rh_volume',
-            'entorhinal_lh_surfarea'
+            'entorhinal_lh_surfarea',
             'entorhinal_rh_surfarea',
             'entorhinal_lh_thickavg',
             'entorhinal_rh_thickavg',
