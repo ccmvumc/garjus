@@ -345,7 +345,7 @@ def _add_first_page(pdf, info):
     pdf.set_font('helvetica', size=12)
 
     # Show settings for proctypes, sesstypes, projects, etc.
-    _text = 'Subject data in subjects.csv, processing data in stats/[TYPE].csv\n'
+    _text = 'Subject data in subjects.csv, processing data in [TYPE].csv, e.g.g FS7_v1.csv\n'
     _text += f'XNAT: {info.get("xnat")}\n'
     _text +=f'REDCap:{info.get("redcap")}\n'
     _text += f'Session Types: '

@@ -191,7 +191,8 @@ PROCLIB = {
     },
     'FS7_v1': {
         'short_descrip': 'FreeSurfer 7 recon-all - whole brain parcellation of cortical and sub-cortical.\n\
-Outputs for cortical regions are volumes, thickness average, and surface area of 34 parcels:\n\
+\n\
+Outputs for cortical regions are volumes, thickness average, and surface area of left and right hemisphere for 34 parcels:\n\
 bankssts, caudal anterior cingulate, caudal middle frontal, cuneus, entorhinal, frontal pole, \
 fusiform, inferior parietal, inferior temporal, insula, isthmus cingulate, lateral occipital, \
 lateral orbitofrontal, lingual, medial orbitofrontal, middle temporal, paracentral, \
@@ -199,16 +200,49 @@ parahippocampal, pars opercularis, pars orbitalis, pars triangularis, pericalcar
 postcentral, posterior cingulate, precentral, precuneus, rostral anterior cingulate, \
 rostral middle frontal, superiorfrontal, superior parietal, superior temporal, \
 supramarginal, temporal pole, transverse temporal.\n\
-Outputs for subcortical structures are volumes for left and right hemispheres of 7 regions:\n\
+\n\
+Outputs for subcortical structures are volumes for left and right hemispheres of 8 regions:\n\
 accumbens area, amygdala, caudate, hippocampus, pallidum, putamen, thalamus, and \
 ventraldc.\n\
+\n\
 The white matter hyperinsity volume (wmh) is whole brain.\n\
-See examples.',
-        'inputs_descrip': 'T1w MRI',
+\n\
+See examples.\n',
+        'inputs_descrip': 'T1w MRI\n',
         'procurl': 'https://github.com/bud42/FS7',
         'stats_subset': [
+            'amygdala_lh_volume',
+            'amygdala_rh_volume',
+            'accumbensarea_lh_volume',
+            'accumbensarea_rh_volume',
+            'caudate_lh_volume',
+            'caudate_rh_volume',
             'hippocampus_lh_volume',
             'hippocampus_rh_volume',
+            'pallidum_lh_volume',
+            'pallidum_rh_volume',
+            'putamen_lh_volume',
+            'putamen_rh_volume',
+            'thalamus_lh_volume',
+            'thalamus_rh_volume',
+            'entorhinal_lh_surfarea'
+            'entorhinal_rh_surfarea',
+            'entorhinal_lh_thickavg',
+            'entorhinal_rh_thickavg',
+            'entorhinal_lh_volume',
+            'entorhinal_rh_volume',
+            'frontalpole_lh_surfarea',
+            'frontalpole_lh_thickavg',
+            'frontalpole_lh_volume',
+            'frontalpole_rh_surfarea',
+            'frontalpole_rh_thickavg',
+            'frontalpole_rh_volume',
+            'insula_lh_surfarea',
+            'insula_rh_surfarea',
+            'insula_lh_thickavg',
+            'insula_rh_thickavg',
+            'insula_lh_volume',
+            'insula_rh_volume',
             'superiorfrontal_lh_surfarea',
             'superiorfrontal_rh_surfarea',
             'superiorfrontal_lh_thickavg',
@@ -299,6 +333,8 @@ STATLIB = {
     'FS7_v1': {
         'hippocampus_lh_volume': 'Hippocampus Volume Left Hemisphere',
         'hippocampus_rh_volume': 'Hippocampus Volume Right Hemisphere',
+        'amygdala_lh_volume': 'Amygdala Volume Left Hemisphere',
+        'amygdala_rh_volume': 'Amygdala Volume Right Hemisphere',
         'superiorfrontal_lh_surfarea': 'Superior Frontal Surface Area Left Hemisphere',
         'superiorfrontal_rh_surfarea': 'Superior Frontal Surface Area Right Hemisphere',
         'superiorfrontal_lh_thickavg': 'Superior Frontal Thickness Average Left Hemisphere',
