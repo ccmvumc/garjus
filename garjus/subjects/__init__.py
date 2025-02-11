@@ -477,6 +477,11 @@ def load_standard(garjus, project, include_dob=False):
             'Screening (Arm 3: Longitudinal Phase: Remitted)': 'Depress',
             'Screening (Arm 2: Longitudinal Phase: Never Depressed)': 'Control',
         })
+    elif project == 'CHAMP':
+        # Subset of events where demographics are found
+        df = df[df.redcap_event_name.isin([
+            'Screening (Arm 1: Screening)',
+        ])]
 
     # Load MRI records to get first date
     if dob_field and date_field:
