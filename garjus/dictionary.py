@@ -93,6 +93,7 @@ DISABLE_STATTYPES = [
     'synbold_v1',
     'fmri_rest_schaef_conn_v1',
     'FS7thalamus_v1',
+    't1t2_ratio_v1',
 ]
 
 COLUMNS = {
@@ -145,7 +146,7 @@ PROCLIB = {
         'procurl': 'https://pubmed.ncbi.nlm.nih.gov/32948749/',
     },
     'DnSeg_v1': {
-        'short_descrip': 'Basal Forebrain labeling',
+        'short_descrip': 'Basal Forebrain labeling.',
         'inputs_descrip': 'T1w MRI',
         'procurl': 'https://github.com/DerekDoss/DnSeg',
     },
@@ -173,7 +174,7 @@ PROCLIB = {
         'procurl': 'https://github.com/REMBRANDT-study/fmri_rest',
     },
     'fmri_roi_v2': {
-        'short_descrip': 'Regional measures of functional connectivity',
+        'short_descrip': 'Regional measures of functional connectivity.',
         'inputs_descrip': 'Resting State fMRI processed with fmri_rest_v2',
         'procurl': 'https://github.com/REMBRANDT-study/fmri_roi',
     },
@@ -188,6 +189,16 @@ PROCLIB = {
         'inputs_descrip': 'T1w MRI processed with FreeSurfer (FS7_v1), FEOBV PET',
         'procurl': 'https://github.com/ccmvumc/FEOBVQA',
         'stats_subset': ['cblmwm_suvr', 'compositegm_suvr', 'cblmgm_suvr'],
+    },
+    'NMQA_v2': {
+        'short_descrip': 'Neuromelanin contrast ratio (CR), Substantia Nigra (SN) to Crus Cerebri (CC).',
+        'inputs_descrip': 'T1w MRI, Neuromelanin MRI',
+        'procurl': 'https://github.com/bud42/NMQA',
+    },
+    'assemblynet_v1': {
+        'short_descrip': 'AssemblyNet whole brain parcellation.',
+        'inputs_descrip': 'T1w MRI',
+        'procurl': 'https://github.com/volBrain/AssemblyNet',
     },
     'FS7_v1': {
         'short_descrip': 'FreeSurfer 7 recon-all - whole brain parcellation of cortical and sub-cortical.\n\
@@ -391,5 +402,13 @@ STATLIB = {
     'FS7hypothal_v1': {
         'whole left': 'whole left Hypothalamus',
         'whole right': 'whole right Hypothalamus',
+    },
+    'NMQA_v2': {
+        'cr_mean': 'Contrast Ratio total mean',
+        'cr_left': 'Contrast Ratio left hemisphere',
+        'cr_right': 'Contrast Ratio right hemisphere',
+    },
+    'assemblynet_v1': {
+        'icv': 'Intracranial Cavity Volume',
     },
 }
