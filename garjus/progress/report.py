@@ -1518,7 +1518,8 @@ def make_pdf(info, filename):
     _add_settings_page(pdf, info)
 
     # NDA
-    _add_nda_page(pdf, info)
+    if False:
+        _add_nda_page(pdf, info)
 
     # Analyses
     _add_analyses_page(pdf, info)
