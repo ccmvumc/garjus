@@ -93,7 +93,7 @@ DISABLE_STATTYPES = [
     'synbold_v1',
     'fmri_rest_schaef_conn_v1',
     'FS7thalamus_v1',
-    't1t2_ratio_v1',
+    't1t2ratio_v1',
 ]
 
 COLUMNS = {
