@@ -287,7 +287,7 @@ def _draw_demog(pdf, subjects):
     pdf.cell(**_kwargs_s, text='Age')
 
     for cur_proj in project_list:
-        cur_age = subjects[subjects.PROJECT == cur_proj].AGE.astype(float).mean()
+        cur_age = subjects[(subjects.PROJECT == cur_proj) & (subjects.AGE != '')].AGE.astype(float).mean()
         pdf.cell(**_kwargs, text=str(int(cur_age)))
 
     # End by going to next line
@@ -406,6 +406,35 @@ def _add_stats(pdf, stats, plot_title=None):
 
     # this returns a PIL Image object
     image = plot_stats(stats, plot_title)
+    tot_width, tot_height = image.size
+
+    # Split horizontal image into chunks of width to fit on
+    # letter-sized page with crop((left, top, right, bottom))
+    chunk_h = 500
+    chunk_w = 998
+    rows_per_page = 3  # 3 rows per page
+    page_count = math.ceil(tot_width / (rows_per_page * chunk_w))
+
+    for p in range(page_count):
+        for c in range(rows_per_page):
+            # Calculate the starting x for this chunk
+            chunk_x = (c * chunk_w) + (p * chunk_w * rows_per_page)
+            if chunk_x > tot_width - 10:
+                # out of bounds
+                continue
+
+            # Get the image from the cropped section
+            _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
+
+            # Draw the image on the PDF
+            pdf.image(_img, x=0.75, h=3.1)
+
+    return pdf
+
+
+def _add_covar(pdf, covar,  plot_title=None):
+    # this returns a PIL Image object
+    image = plot_covar(covar, plot_title)
     tot_width, tot_height = image.size
 
     # Split horizontal image into chunks of width to fit on
@@ -563,6 +592,125 @@ def plot_stats(df, plot_title=None):
     return image
 
 
+def plot_covar(df, plot_title=None):
+    """Plot one boxlplot per var."""
+    box_width = 250
+    min_box_count = 4
+
+    logger.debug(f'plot_covar:{len(df)}')
+
+    # Check for empty data
+    if len(df) == 0:
+        logger.debug('empty data, using empty figure')
+        fig = go.Figure()
+        _png = fig.to_image(format="png")
+        image = Image.open(io.BytesIO(_png))
+        return image
+
+    # Filter var list to only include those that have data
+    var_list = [x for x in df.columns if not pd.isnull(df[x]).all()]
+
+    # Filter var list to no hidden variables
+    var_list = [x for x in var_list if x not in HIDECOLS]
+
+    # Filter var list to only variables that can be plotted as float
+    var_list = [x for x in var_list if _plottable(df[x])]
+
+    # Determine how many boxplots we're making, depends on how many vars, use
+    # minimum so graph doesn't get too small
+    box_count = len(var_list)
+    site_count = len(df['SITE'].unique())
+
+    if box_count < 3:
+        box_width = 500
+        min_box_count = 2
+    elif box_count < 6:
+        box_width = 333
+        min_box_count = 3
+
+    if site_count > 3:
+        box_width = 500
+        min_box_count = 2
+
+    if box_count < min_box_count:
+        box_count = min_box_count
+
+    graph_width = box_width * box_count
+
+    # Horizontal spacing cannot be greater than (1 / (cols - 1))
+    hspacing = 1 / (box_count * 4)
+
+    logger.debug(f'{box_count}, {min_box_count}, {graph_width}, {hspacing}')
+
+    # Make the figure with 1 row and a column for each var we are plotting
+    var_titles = [x[:22] for x in var_list]
+    fig = plotly.subplots.make_subplots(
+        rows=1,
+        cols=box_count,
+        horizontal_spacing=hspacing,
+        subplot_titles=var_titles)
+
+    # Add box plot for each variable
+    for i, var in enumerate(var_list):
+
+        # Create boxplot for this var and add to figure
+        logger.debug('plotting var:{}'.format(var))
+
+        _row = 1
+        _col = i + 1
+
+        fig.append_trace(
+            go.Box(
+                y=df[var].replace('', np.nan).dropna().str.strip('%').astype(float),
+                x=df['SITE'],
+                boxpoints='all',
+                boxmean=True,
+            ),
+            _row,
+            _col)
+
+        # Plot horizontal line at median
+        _median = df[var].replace('', np.nan).dropna().str.strip('%').astype(float).median()
+        fig.add_trace(
+            go.Scatter(
+                x=df['SITE'],
+                y=[_median] * len(df),
+                mode='lines',
+                name='',
+                fillcolor='red',
+                line_color='grey'),
+            _row, _col)
+
+        fig.update_yaxes(autorange=True)
+
+        if var.startswith('con_') or var.startswith('inc_'):
+            logger.debug('setting beta range:{}'.format(var))
+            _yaxis = 'yaxis{}'.format(i + 1)
+            fig['layout'][_yaxis].update(range=[-1, 1], autorange=False)
+        else:
+            pass
+
+    # Move the subtitles to bottom instead of top of each subplot
+    if len(df['SITE'].unique()) < 4:
+        for i in range(len(fig.layout.annotations)):
+            fig.layout.annotations[i].update(y=-.15)
+
+    if plot_title:
+        fig.update_layout(
+            title={'text': plot_title, 'x': 0.5, 'xanchor': 'center'})
+
+    # Customize figure to hide legend and fit the graph
+    fig.update_layout(
+        showlegend=False,
+        autosize=False,
+        width=graph_width,
+        margin=dict(l=20, r=40, t=40, b=80, pad=0))
+
+    _png = fig.to_image(format="png")
+    image = Image.open(io.BytesIO(_png))
+    return image
+
+
 def _add_stats_pages(pdf, info):
     proclib = info['proclib']
     stats = info['stats']
@@ -615,7 +763,24 @@ def _add_stats_pages(pdf, info):
             pdf.cell(text=_url, link=_url)
 
 
-def make_export_report(filename, garjus, subjects, stats):
+def _add_covar_pages(pdf, info):
+    covariates = info['covariates']
+
+    for k, values in covariates.items():
+        logger.debug(f'add covar page:{k}')
+
+        # Now make the page
+        pdf.add_page()
+        pdf.set_font('helvetica', size=14)
+        _text = f'{k} (n={len(values)})'
+        pdf.cell(text=_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        covar_data = values
+
+        _add_covar(pdf, covar_data)
+
+
+def make_export_report(filename, garjus, subjects, stats, covar):
     # Initialize a new PDF letter size and shaped
     pdf = blank_letter()
     pdf.set_filename(filename)
@@ -639,12 +804,16 @@ def make_export_report(filename, garjus, subjects, stats):
     info['stats'] = stats
     info['stattypes'] = stats.PROCTYPE.unique()
     info['statlib'] = garjus.stats_library()
+    info['covariates'] = covar
 
     logger.debug('adding first page')
     _add_first_page(pdf, info)
 
     logger.debug('adding stats pages')
     _add_stats_pages(pdf, info)
+
+    logger.debug('adding covariate pages')
+    _add_covar_pages(pdf, info)
 
     # Save to file
     print(f'saving pdf:{pdf.filename}')

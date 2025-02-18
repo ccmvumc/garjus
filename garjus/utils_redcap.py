@@ -211,3 +211,22 @@ def field2events(project, field_id):
         events = []
 
     return events
+
+
+def secondary_map(project):
+    def_field = project.def_field
+    sec_field = secondary(project)
+
+    if not sec_field:
+        return {}
+
+    # Get the secondary values
+    rec = project.export_records(fields=[def_field, sec_field])
+
+    # Build the map
+    id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
+
+    return id2subj
+
+def secondary(project):
+    return project.export_project_info()['secondary_unique_field']

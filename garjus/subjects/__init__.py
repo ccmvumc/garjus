@@ -34,8 +34,6 @@ def load_gait_data(rc):
         'baseline_arm_4'
     ]
 
-    data = []
-
     rec = rc.export_records(fields=fields)
 
     # Only gaitrite records

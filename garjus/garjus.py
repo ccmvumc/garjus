@@ -22,6 +22,7 @@ from flask_login import current_user
 from dax.XnatUtils import get_interface
 
 from .subjects import load_subjects
+from .subjects.covariates import export as covariates_export
 from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
@@ -2098,6 +2099,10 @@ class Garjus:
         make_export_zip(
             self, filename, projects, proctypes, sesstypes, sessions
         )
+
+    def export_covariates(self, tmpdir, subj):
+        '''Export covariates for subjects in subj to csv files in tmpdir'''
+        return covariates_export(self, tmpdir, subj)
 
     def statshot(
         self,

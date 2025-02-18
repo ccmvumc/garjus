@@ -123,16 +123,19 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
         data_dir = os.path.join(tmpdir, 'data')
         zip_file = os.path.join(tmpdir, 'data.zip')
         stats_dir = os.path.join(data_dir, 'stats')
-        pdf_file = os.path.join(data_dir, 'report.pdf')
         os.mkdir(data_dir)
         os.mkdir(stats_dir)
-
-        make_export_report(pdf_file, garjus, subjects, stats)
 
         # Save subjects csv
         csv_file = os.path.join(data_dir, f'subjects.csv')
         logger.info(f'saving subjects csv:{csv_file}')
         subjects.to_csv(csv_file, index=False)
+
+        # Save other csv data types stored in REDCap
+        covar = garjus.export_covariates(data_dir, subjects)
+
+        pdf_file = os.path.join(data_dir, 'report.pdf')
+        make_export_report(pdf_file, garjus, subjects, stats, covar)
 
         # Save a csv for each proc type
         for proctype in stats.PROCTYPE.unique():
@@ -164,8 +167,10 @@ def make_statshot(
     sesstypes,
     exclude,
     guid_filter=False,
-    id_filter=False):
+    id_filter=False,
+    complete_filter=False):
     """Export stats and upload results as a new analysis."""
+    # complete_filter = True will filter to only include complete records, i.e. subjects with data for all proctypes
     stats = pd.DataFrame()
     subj = pd.DataFrame()
 
@@ -200,10 +205,11 @@ def make_statshot(
         subj = pd.concat([subj, psubjects])
         stats = pd.concat([stats, pstats])
 
-    # Pivot table to count occurrences of each type for each subject
-    dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
-    valid_subjects = dfp[(dfp > 0).all(axis=1)].index
-    subj = subj[subj.ID.isin(valid_subjects)]
+    if complete_filter:
+        # Pivot table to count occurrences of each type for each subject
+        dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
+        valid_subjects = dfp[(dfp > 0).all(axis=1)].index
+        subj = subj[subj.ID.isin(valid_subjects)]
 
     # Exclude specified subjects
     if exclude:
@@ -239,13 +245,16 @@ def make_statshot(
         subj['SITE'] = subj['SITE'].replace({'PITT': 'UPMC'})
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        pdf_file = os.path.join(tmpdir, 'report.pdf')
-        make_export_report(pdf_file, garjus, subj, stats)
-
         # Save subjects csv
         csv_file = os.path.join(tmpdir, f'subjects.csv')
         logger.info(f'saving subjects csv:{csv_file}')
         subj.to_csv(csv_file, index=False)
+
+        # Save other csv data types stored in REDCap
+        covar = garjus.export_covariates(tmpdir, subj)
+
+        pdf_file = os.path.join(tmpdir, 'report.pdf')
+        make_export_report(pdf_file, garjus, subj, stats, covar)
 
         # Save a csv for each proc type
         for proctype in stats.PROCTYPE.unique():
