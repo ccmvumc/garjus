@@ -100,7 +100,8 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
         stats = pd.concat([stats, pstats])
 
     # Filter duplicate GUID to handle same subject in multiple projects
-    subjects = subjects[(subjects['GUID'] == '') | (subjects['GUID'].isna()) | ~subjects.duplicated(subset='GUID')]
+    if 'GUID' in subjects.columns:
+        subjects = subjects[(subjects['GUID'] == '') | (subjects['GUID'].isna()) | ~subjects.duplicated(subset='GUID')]
 
     # Only include specifc subset of columns
     subjects = subjects[SUBJECTS_COLUMNS]

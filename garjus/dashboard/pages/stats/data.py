@@ -84,6 +84,8 @@ def get_data(projects):
 
     # Concat project stats list of stats
     assessors = garjus.assessors(projects)
+    assessors = pd.concat([assessors, garjus.subject_assessors(projects=projects)])
+
     for p in sorted(projects):
         # Load stats
         stats = garjus.stats(p, assessors)
@@ -94,6 +96,11 @@ def get_data(projects):
         df['SESSTYPE'] = df['SESSTYPE'].fillna('UNKNOWN')
     else:
         df['SESSTYPE'] = 'UNKNOWN'
+
+    if 'SITE' in df.columns:
+        df['SITE'] = df['SITE'].fillna('UNKNOWN')
+    else:
+        df['SITE'] = 'UNKNOWN'
 
     if 'DATE' in df:
         # Format as string to drop the time portion

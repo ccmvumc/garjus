@@ -84,6 +84,36 @@ def update_project(garjus, project, proctypes):
             logger.info('waiting a minute')
             os.sleep(60)
 
+    # Subject Assessors
+    dfa = garjus.subject_assessors([project], proctypes)
+    logger.debug(f'total sgp assessors:{len(dfa)}')
+
+    # Filter to remove already uploaded
+    dfa = dfa[~dfa['ASSR'].isin(existing)]
+    logger.debug(f'subject assessors after filtering out already uploaded:{len(dfa)}')
+
+    # Filter to only COMPLETE
+    dfa = dfa[dfa['PROCSTATUS'] == 'COMPLETE']
+    logger.debug(f'subject assessors after filtering only COMPLETE:{len(dfa)}')
+
+    # Filter to not Failed
+    dfa = dfa[dfa['QCSTATUS'] != 'Failed']
+    logger.debug(f'subject assessors after filtering out QC Failed:{len(dfa)}')
+
+    # Iterate xnat assessors
+    for r in dfa.sort_values('ASSR').to_dict('records'):
+        try:
+            update_subject_assessor(
+                garjus,
+                r['PROJECT'],
+                r['SUBJECT'],
+                r['ASSR'],
+            )
+        except ConnectionError as err:
+            logger.info(err)
+            logger.info('waiting a minute')
+            os.sleep(60)
+
 
 def update_assessor(garjus, proj, subj, sess, assr):
     """Update assessor stats."""
@@ -97,6 +127,24 @@ def update_assessor(garjus, proj, subj, sess, assr):
 
         _stats = transform_stats(_dir)
         garjus.set_stats(proj, subj, sess, assr, _stats)
+
+
+def update_subject_assessor(garjus, proj, subj, assr):
+    """Update subject assessor stats."""
+    logger.debug(f'uploading subject assessor stats:{assr}')
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        try:    
+            logger.debug(f'{proj}:{subj}:{assr}:{tmpdir}')
+            _dir = garjus.get_sgp_source_stats(proj, subj, assr, tmpdir)
+        except Exception as err:
+            logger.warn(f'could not get stats:{assr}:{err}')
+            import traceback
+            traceback.print_exc()
+            return
+
+        _stats = transform_stats(_dir)
+        garjus.set_sgp_stats(proj, subj, assr, _stats)
 
 
 def transform_stats(stats_dir):

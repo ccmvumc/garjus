@@ -22,6 +22,7 @@ TYPE2PROJECTS = {
     'plasma': ['D3'],
     'gaitrite': ['D3'],
     'toolbox': ['D3'],
+    'fallypride': ['D3'],
 }
 
 
@@ -50,6 +51,8 @@ def _load_toolbox(rc):
 
     # Filter by selected events
     rec = [x for x in rec if x['redcap_event_name'] in events]
+
+    rec = [x for x in rec if x['toolbox_picseqtest_uncstd']]
 
     # Format as dataframe of strings dropping any dupes
     df = pd.DataFrame(rec, columns=fields)
@@ -112,6 +115,8 @@ def _load_examiner(rc):
 
     # Filter by selected events
     rec = [x for x in rec if x['redcap_event_name'] in events]
+
+    rec = [x for x in rec if x['executive_composite']]
 
     # Format as dataframe of strings dropping any dupes
     df = pd.DataFrame(rec, columns=fields)
@@ -203,6 +208,8 @@ def _load_plasma(rc):
     # TODO: is this necessary?
     rec = [x for x in rec if x['redcap_event_name'] in events]
 
+    rec = [x for x in rec if x['plasma_hscrp']]
+
     # Format as dataframe of strings dropping any dupes
     df = pd.DataFrame(rec, columns=fields)
     df = df.astype(str)
@@ -218,6 +225,33 @@ def _load_plasma(rc):
         df['ID'] = df[def_field]
 
     return df[['ID','plasma_hscrp']]
+
+
+def _load_fallypride(rc):
+    df = pd.DataFrame()
+    def_field = rc.def_field
+    fields = [def_field, 'fallypride_accumbens', 'fallypride_amygdala', 'fallypride_caudate', 'fallypride_pallidum', 'fallypride_putamen', 'fallypride_thalamus']
+    events = field2events(rc, 'fallypride_accumbens')
+
+    rec = rc.export_records(fields=fields, events=events)
+    rec = [x for x in rec if x['redcap_event_name'] in events]
+    rec = [x for x in rec if x['fallypride_accumbens']]
+
+    # Format as dataframe of strings dropping any dupes
+    df = pd.DataFrame(rec, columns=fields)
+    df = df.astype(str)
+    df = df.drop_duplicates(subset=[def_field], keep='first')
+
+    # Set subject
+    sec_field = secondary(rc)
+    if sec_field:
+        # Get the secondary field values to set the subject ID
+        sec_map = secondary_map(rc)
+        df['ID'] = df[def_field].map(sec_map)
+    else:
+        df['ID'] = df[def_field]
+
+    return df[['ID', 'fallypride_accumbens', 'fallypride_amygdala', 'fallypride_caudate', 'fallypride_pallidum', 'fallypride_putamen', 'fallypride_thalamus']]
 
 
 def _proctype_projects(proctype, projects):
@@ -359,6 +393,39 @@ def _export_plasma(garjus, tmpdir, subjects_df):
     return df
 
 
+def _export_fallypride(garjus, tmpdir, subjects_df):
+    df = pd.DataFrame()
+    proctype = 'fallypride'
+    projects = _proctype_projects(proctype, subjects_df.PROJECT.unique())
+
+    logger.info(f'loading {proctype} for projects:{projects}')
+
+    for p in projects:
+        # Load data for project
+        logger.info(f'loading {proctype}:{p}')
+        _df = _load_fallypride(garjus.primary(p))
+
+        # Filter by subjects
+        subjects = subjects_df[subjects_df['PROJECT'] == p].ID.unique()
+        _df = _df[_df.ID.isin(subjects)]
+
+        # Append to whole
+        _df['PROJECT'] = p
+        df = pd.concat([df, _df], ignore_index=True)
+
+    if len(df) > 0:
+        # Save to csv
+        _file = f'{tmpdir}/{proctype}.csv'
+        logger.info(f'saving to csv:{_file}')
+        _cols = ['ID', 'PROJECT'] + [x for x in df.columns if x not in ['ID', 'PROJECT']]
+        df = df.sort_values(['PROJECT', 'ID'])
+        df.to_csv(_file, index=False, columns=_cols)
+    else:
+        logger.info(f'no {proctype} data to save')
+
+    return df
+
+
 def export_clinical():
     df = pd.DataFrame()
 
@@ -394,26 +461,32 @@ def export(garjus, tmpdir, subjects_df):
 
     # Save csv for each type filtered by subject list
     _data = _export_examiner(garjus, tmpdir, subjects_df)
-    _data['SITE'] = 'VUMC'
-    _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-    data['examiner'] = _data
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
+        data['NIH Examiner'] = _data
 
     _data = _export_gaitrite(garjus, tmpdir, subjects_df)
-    _data['SITE'] = 'VUMC'
-    _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-    data['gaitrite'] = _data 
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
+        data['Gaitrite/Walkway'] = _data 
 
     _data = _export_plasma(garjus, tmpdir, subjects_df)
-    _data['SITE'] = 'VUMC'
-    _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-    data['plasma'] = _data
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
+        data['Plasma'] = _data
 
     _data = _export_toolbox(garjus, tmpdir, subjects_df)
-    _data['SITE'] = 'VUMC'
-    _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-    data['toolbox'] = _data
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
+        data['NIH Toolbox'] = _data
 
-
-
+    _data = _export_fallypride(garjus, tmpdir, subjects_df)
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        data['Fallypride Uptake'] = _data
 
     return data

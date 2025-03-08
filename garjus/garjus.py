@@ -1296,6 +1296,11 @@ class Garjus:
 
         if assessors is None:
             assessors = self.assessors(projects=[project], proctypes=proctypes)
+            assessors = pd.concat([assessors, self.subject_assessors(projects=[project], proctypes=proctypes)])
+
+        # Filter out failed
+        logger.debug(f'filtering out Failed assessors')
+        assessors = assessors[~assessors.QCSTATUS.isin(['Failed'])]
 
         # Merge with assessors
         df = pd.merge(
@@ -2367,6 +2372,23 @@ class Garjus:
         except (ValueError, RedcapError) as err:
             logger.error(f'error uploading:{err}')
 
+    def get_sgp_source_stats(self, project, subject, assessor, stats_dir):
+        """Download stats files to directory."""
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
+        resource = 'STATS'
+
+        xpath = f'/projects/{project}/subjects/{subject}/experiments/{assessor}/resources/{resource}'
+
+        logger.debug(f'selecting sgp:{xpath}')
+
+        xnat_resource = self._xnat.select(xpath)
+    
+        xnat_resource.get(stats_dir, extract=True)
+
+        return f'{stats_dir}/STATS'
+
     def get_source_stats(self, project, subject, session, assessor, stats_dir):
         """Download stats files to directory."""
         if not self.xnat_enabled():
@@ -2454,6 +2476,43 @@ class Garjus:
             logger.info('wait a minute')
             import time
             time.sleep(60)
+
+    def set_sgp_stats(self, project, subject, assessor, data):
+        """Upload stats to redcap."""
+
+        if len(data.keys()) > self.max_stats:
+            logger.debug('found too many, specify subset')
+            return
+
+        # Create list of stat records
+        rec = [{'stats_name': k, 'stats_value': v} for k, v in data.items()]
+
+        # Build out the records
+        for r in rec:
+            r['subject_id'] = subject
+            r['stats_assr'] = assessor
+            r['redcap_repeat_instrument'] = 'stats'
+            r['redcap_repeat_instance'] = 'new'
+            r['stats_complete'] = 2
+
+        # Now upload
+        logger.debug(f'uploading to redcap:{project}')
+        statsrc = self._stats_redcap(project)
+        logger.debug(f'{statsrc=}')
+
+        try:
+            logger.debug('importing records')
+            response = statsrc.import_records(rec)
+            assert 'count' in response
+            logger.debug('stats record created')
+        except AssertionError as err:
+            logger.error(f'upload failed:{err}')
+        except ConnectionError as err:
+            logger.error(err)
+            logger.info('wait a minute')
+            import time
+            time.sleep(60)
+
 
     def set_scan_stats(self, project, subject, session, scan, data):
         """Upload to redcap."""
