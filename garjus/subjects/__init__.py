@@ -475,6 +475,7 @@ def load_standard(garjus, project, include_dob=False):
             'Screening (Arm 3: Longitudinal Phase: Remitted)': 'Depress',
             'Screening (Arm 2: Longitudinal Phase: Never Depressed)': 'Control',
         })
+        df = df[df.GROUP.isin(['Depress', 'Control'])]
     elif project == 'CHAMP':
         # Subset of events where demographics are found
         df = df[df.redcap_event_name.isin([
