@@ -98,7 +98,9 @@ DISABLE_STATTYPES = [
     'FEOBVQA_v4',
     'fmri_conn_CHAMP_v1',
     'FEOBVQA_USC_v4',
+    'FEOBVQA_USC_NOPVC_v4',
 ]
+
 
 COLUMNS = {
     'activity': [
