@@ -95,7 +95,9 @@ DISABLE_STATTYPES = [
     'FS7thalamus_v1',
     't1t2ratio_v1',
     'AMYLOIDQA_v4',
-    'FEOBVQA_v4'
+    'FEOBVQA_v4',
+    'fmri_conn_CHAMP_v1',
+    'FEOBVQA_USC_v4',
 ]
 
 COLUMNS = {
