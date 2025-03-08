@@ -94,6 +94,8 @@ DISABLE_STATTYPES = [
     'fmri_rest_schaef_conn_v1',
     'FS7thalamus_v1',
     't1t2ratio_v1',
+    'AMYLOIDQA_v4',
+    'FEOBVQA_v4'
 ]
 
 COLUMNS = {
@@ -191,6 +193,11 @@ PROCLIB = {
         'stats_subset': ['cblmwm_suvr', 'compositegm_suvr', 'cblmgm_suvr'],
     },
     'NMQA_v2': {
+        'short_descrip': 'Neuromelanin contrast ratio (CR), Substantia Nigra (SN) to Crus Cerebri (CC).',
+        'inputs_descrip': 'T1w MRI, Neuromelanin MRI',
+        'procurl': 'https://github.com/bud42/NMQA',
+    },
+    'NMQA_v3': {
         'short_descrip': 'Neuromelanin contrast ratio (CR), Substantia Nigra (SN) to Crus Cerebri (CC).',
         'inputs_descrip': 'T1w MRI, Neuromelanin MRI',
         'procurl': 'https://github.com/bud42/NMQA',
@@ -304,6 +311,9 @@ See examples.\n',
         'inputs_descrip': 'T1w processed with FreeSurfer (FS7_v1)',
         'procurl': 'https://surfer.nmr.mgh.harvard.edu/fswiki/HypothalamicSubunits',
         'stats_subset': ['whole left', 'whole right'],
+    },
+    'examiner': {
+        'short_descrip': 'NIH Examiner',
     }
 }
 
@@ -408,7 +418,18 @@ STATLIB = {
         'cr_left': 'Contrast Ratio left hemisphere',
         'cr_right': 'Contrast Ratio right hemisphere',
     },
+    'NMQA_v3': {
+        'cr_mean': 'Contrast Ratio total mean',
+        'cr_mean_lh': 'Contrast Ratio left hemisphere',
+        'cr_mean_rh': 'Contrast Ratio right hemisphere',
+        'cr_mean_sn1': 'Contrast Ratio Substantia Nigra region 1',
+        'cr_mean_sn2': 'Contrast Ratio Substantia Nigra region 2',
+        'cr_mean_sn3': 'Contrast Ratio Substantia Nigra region 3',
+    },
     'assemblynet_v1': {
         'icv': 'Intracranial Cavity Volume',
+    },
+    'examiner': {
+
     },
 }
