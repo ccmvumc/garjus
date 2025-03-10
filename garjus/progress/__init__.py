@@ -239,7 +239,7 @@ def make_statshot(
     stats = stats[stats.SUBJECT.isin(subj.ID.unique())]
 
     # Only subjects with stats
-    subjects = subjects[subjects.ID.isin(stats.SUBJECT.unique())]
+    subj = subj[subj.ID.isin(stats.SUBJECT.unique())]
 
     # Make PITT be UPMC
     stats['SITE'] = stats['SITE'].replace({'PITT': 'UPMC'})
