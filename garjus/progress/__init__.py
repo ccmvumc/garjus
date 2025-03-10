@@ -106,13 +106,11 @@ def make_export_zip(garjus, filename, projects, proctypes, sesstypes, sessions):
     # Only include specifc subset of columns
     subjects = subjects[SUBJECTS_COLUMNS]
 
-    # Pivot table to count occurrences of each type for each subject
-    dfp = stats.pivot_table(index='SUBJECT', columns='PROCTYPE', aggfunc='size', fill_value=0)
-    valid_subjects = dfp[(dfp > 0).all(axis=1)].index
-    subjects = subjects[subjects.ID.isin(valid_subjects)]
-
     # Only stats for subjects in subjects
     stats = stats[stats.SUBJECT.isin(subjects.ID.unique())]
+
+    # Only subjects with stats
+    subjects = subjects[subjects.ID.isin(stats.SUBJECT.unique())]
 
     # Make PITT be UPMC
     stats['SITE'] = stats['SITE'].replace({'PITT': 'UPMC'})
@@ -239,6 +237,9 @@ def make_statshot(
 
     # Only stats for subjects in subjects
     stats = stats[stats.SUBJECT.isin(subj.ID.unique())]
+
+    # Only subjects with stats
+    subjects = subjects[subjects.ID.isin(stats.SUBJECT.unique())]
 
     # Make PITT be UPMC
     stats['SITE'] = stats['SITE'].replace({'PITT': 'UPMC'})
