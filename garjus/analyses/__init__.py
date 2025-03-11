@@ -1,6 +1,7 @@
 """Analyses."""
 import logging
 import os
+import re
 import shutil
 import tempfile
 import subprocess as sb
@@ -93,9 +94,9 @@ class Analysis(object):
     def download_covars(self, garjus, inputs_dir):
         try:
             df = garjus.subjects(self._project)
-            print('renaming')
+            #print('renaming')
             df.index.name = 'id'
-            print(df)
+            #print(df)
             df.to_csv(f'{inputs_dir}/covariates.csv')
         except Exception as err:
             logger.error(f'downloading:{err}')
@@ -158,7 +159,7 @@ class Analysis(object):
 
         # Copy covars
         if self._csvfile and os.path.exists(self._csvfile):
-            print('copy csv')
+            #print('copy csv')
             shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
         else:
             # Download covars
@@ -322,6 +323,12 @@ class Analysis(object):
                 repodir
             )
 
+
+def parse_list(csv_string):
+    """
+    Split string on commas including any leading/trailing spaces with split
+    """
+    return re.split(r'\s*,\s*', csv_string)
 
 def _download_zip(xnat, uri, zipfile):
     # Build the uri to download
@@ -1098,7 +1105,12 @@ def _download_session(
                     for fmatch in res_spec['fmatch'].split(','):
 
                         # Where shall we save it?
-                        dst = f'{sess_dir}/assessors/{assr}/{fmatch}'
+                        if 'fdest' in res_spec:
+                            print(f'{_fdest=}')
+                            _fdest = res_spec['fdest']
+                            dst = f'{sess_dir}/assessors/{assr}/{_fdest}'
+                        else:
+                            dst = f'{sess_dir}/assessors/{assr}/{fmatch}'
 
                         # Have we already downloaded it?
                         if os.path.exists(dst):
