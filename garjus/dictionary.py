@@ -76,31 +76,6 @@ REPORTS_RENAME = {
     'ndaimage03_csvfile': 'DATA',
 }
 
-DISABLE_STATTYPES = [
-    'fmri_rest_v2',
-    'fmri_rest_v4',
-    'fmri_rest_v5',
-    'fmri_roi_v1',
-    'struct_preproc_noflair_v1',
-    'fmri_nback_v2',
-    'fmri_roi_v2',
-    'NMQA_v1',
-    'francois_schaefer200_v1',
-    'francois_schaefer400_v1',
-    'dtiQA_synb0_v7',
-    'EEG-EGI-wavelet_v1',
-    'EEG-EGI-preproc_v2',
-    'synbold_v1',
-    'fmri_rest_schaef_conn_v1',
-    'FS7thalamus_v1',
-    't1t2ratio_v1',
-    'AMYLOIDQA_v4',
-    'FEOBVQA_v4',
-    'fmri_conn_CHAMP_v1',
-    'FEOBVQA_USC_v4',
-    'FEOBVQA_USC_NOPVC_v4',
-]
-
 
 COLUMNS = {
     'activity': [

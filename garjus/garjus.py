@@ -36,7 +36,7 @@ from .issues import update as update_issues
 from .import_dicom import import_dicom_zip, import_dicom_url, import_dicom_dir
 from .dictionary import COLUMNS, PROCLIB, STATLIB
 from .dictionary import ACTIVITY_RENAME, PROCESSING_RENAME, ISSUES_RENAME, REPORTS_RENAME
-from .dictionary import TASKS_RENAME, ANALYSES_RENAME, DISABLE_STATTYPES
+from .dictionary import TASKS_RENAME, ANALYSES_RENAME
 from .tasks import update as update_tasks
 from .analyses import run_analysis, download_resources, download_scan_resources
 from .scans import update as update_scans
@@ -1476,8 +1476,6 @@ class Garjus:
             if ptype not in types:
                 logger.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
-
-        types = [x for x in types if x not in DISABLE_STATTYPES]
 
         return types
 

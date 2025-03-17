@@ -99,7 +99,8 @@ def update_project(garjus, project, proctypes):
     logger.debug(f'loading sgp resource list:{project}')
     assessor_resources = garjus.subject_assessor_resources(project)
     dfa['RESOURCES'] = dfa.apply(lambda x: assessor_resources.get(x.ASSR, ''), axis=1)
-    dfa = dfa[dfa.RESOURCES.str.contains('STATS')]
+    if not dfa.empty:
+        dfa = dfa[dfa.RESOURCES.str.contains('STATS')]
     logger.debug(f'assessors after filtering out no STATS:{len(dfa)}')
 
     # Filter to remove already uploaded
@@ -215,6 +216,11 @@ def _load_stats_tall(filename):
     try:
         with open(filename) as f:
             rows = f.readlines()
+
+        if len(rows) == 1 and rows[0].startswith('excess_spikes') and 'spike_count' in rows[0]:
+            _tmp = rows[0]
+            rows[0] = _tmp.split('spike_count')[0]
+            rows.append('spike_count' + _tmp.split('spike_count')[1])
 
         for r in rows:
             (k, v) = r.strip().replace('=', ',').split(',')
