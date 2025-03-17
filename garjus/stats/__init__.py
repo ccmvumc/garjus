@@ -57,6 +57,13 @@ def update_project(garjus, project, proctypes):
     dfa = garjus.assessors([project], proctypes)
     logger.debug(f'total assessors:{len(dfa)}')
 
+    # Remove any without stats resource
+    logger.debug(f'loading assessor resource list:{project}')
+    assessor_resources = garjus.assessor_resources(project, '')
+    dfa['RESOURCES'] = dfa.apply(lambda x: assessor_resources.get(x.ASSR, ''), axis=1)
+    dfa = dfa[dfa.RESOURCES.str.contains('STATS')]
+    logger.debug(f'assessors after filtering out no STATS:{len(dfa)}')
+
     # Filter to remove already uploaded
     dfa = dfa[~dfa['ASSR'].isin(existing)]
     logger.debug(f'assessors after filtering out already uploaded:{len(dfa)}')
@@ -87,6 +94,13 @@ def update_project(garjus, project, proctypes):
     # Subject Assessors
     dfa = garjus.subject_assessors([project], proctypes)
     logger.debug(f'total sgp assessors:{len(dfa)}')
+
+    # Remove any without stats resource
+    logger.debug(f'loading sgp resource list:{project}')
+    assessor_resources = garjus.subject_assessor_resources(project)
+    dfa['RESOURCES'] = dfa.apply(lambda x: assessor_resources.get(x.ASSR, ''), axis=1)
+    dfa = dfa[dfa.RESOURCES.str.contains('STATS')]
+    logger.debug(f'assessors after filtering out no STATS:{len(dfa)}')
 
     # Filter to remove already uploaded
     dfa = dfa[~dfa['ASSR'].isin(existing)]

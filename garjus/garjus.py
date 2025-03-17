@@ -495,6 +495,13 @@ class Garjus:
 
         return data
 
+    def subject_assessor_resources(self, project):
+        """Query XNAT and return dict"""
+
+        data = self._load_sgp_res_data(project)
+
+        return data
+
     def delete_proctype(self, project, proctype, procstatus=None, qcstatus=None):
         msg = f'deleting assessors:{project=}:{proctype=}:{procstatus=}:{qcstatus=}'
         logger.info(msg)
@@ -1688,6 +1695,28 @@ class Garjus:
         for r in result:
             assr = r.get('proc:genprocdata/label', '')
             res = r.get('proc:genprocdata/out/file/label', '')
+            if not res:
+                continue
+
+            if assr in data.keys():
+                # Append to list of resources
+                data[assr] += ',' + res
+            else:
+                data[assr] = res
+
+        return data
+
+
+    def _load_sgp_res_data(self, project):
+        data = {}
+        uri = self.sgp_uri + ',proc:subjgenprocdata/resources/resource/label'
+        uri += f'&project={project}'
+
+        result = self._get_result(uri)
+
+        for r in result:
+            assr = r.get('proc:subjgenprocdata/label', '')
+            res = r.get('proc:subjgenprocdata/resources/resource/label', '')
             if not res:
                 continue
 
