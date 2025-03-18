@@ -550,11 +550,11 @@ def load_subjects(garjus, project, include_dob=False):
 
     try:
         # Get identifier database record id
-        logger.info(f'getting identifier database:{project}')
+        logger.debug(f'getting identifier database:{project}')
         rc = garjus.identifier_database()
-        logger.info(f'loading records from identifier database:{project}')
+        logger.debug(f'loading records from identifier database:{project}')
         rec = rc.export_records(fields=IDENTIFIER_FIELDS)
-        logger.info(f'handling records from identifier database:{project}')
+        logger.debug(f'handling records from identifier database:{project}')
         dfi = pd.DataFrame(rec)
 
         # Set the ID data to match based on project
@@ -586,6 +586,6 @@ def load_subjects(garjus, project, include_dob=False):
         # Merge the subjects with identifier records
         df = pd.merge(df, dfi, how='left', on='ID', validate="1:1")
     except Exception as err:
-        logger.info(f'failed to load identifier database:{project}:{err}')
+        logger.debug(f'failed to load identifier database:{project}:{err}')
 
     return df
