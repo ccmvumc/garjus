@@ -149,6 +149,12 @@ PROCLIB = {
         'procurl': 'https://github.com/REMBRANDT-study/fmri_msit',
         'stats_subset': ['con_amyg_mean', 'inc_amyg_mean', 'med_pct_outliers', 'con_bnst_mean', 'inc_bnst_mean'],
     },
+    'fmri_msit_v4': {
+        'short_descrip': 'fMRI MSIT task pre-processing and 1st-Level analysis.',
+        'inputs_descrip': 'T1w MRI, MSIT fMRI, E-prime EDAT',
+        'procurl': 'https://github.com/REMBRANDT-study/fmri_msit',
+        'stats_subset': ['amyg', 'antins', 'ba46', 'bnst', 'dacc', 'pcc', 'postins', 'pvn', 'sgacc', 'vmpfc'],
+    },
     'fmri_rest_v4': {
         'short_descrip': 'fMRI Resting State pre-processing.',
         'inputs_descrip': 'T1w MRI, Resting State fMRI',
@@ -293,6 +299,10 @@ See examples.\n',
     },
     'examiner': {
         'short_descrip': 'NIH Examiner',
+    },
+    'msit_vitals': {
+        'short_descrip': 'MSIT Vitals',
+        'stats_subset': ['msit_pulse', 'rest_pulse', 'msit_sbp', 'rest_sbp', 'chg_sbp', 'chg_pulse'],
     }
 }
 
@@ -410,5 +420,25 @@ STATLIB = {
     },
     'examiner': {
 
+    },
+    'fmri_msit_v4': {
+        'amyg': 'mean contrast estimate in Amygdala',
+        'antins': 'mean contrast estimate in Anterior Insula',
+        'ba46': 'mean contrast estimate in Brodmann Area 46',
+        'bnst': 'mean contrast estimate in Bed Nucleus of the Stria Terminalis  (BNST)',
+        'dacc': 'mean contrast estimate in Dorsal Anterior Cingulate (dACC)',
+        'pcc': 'mean contrast estimate in Posterior Cingulate Cortex (PCC)',
+        'postins': 'mean contrast estimate in Posterior Insula',
+        'pvn': 'mean contrast estimate in Para-Ventricular Nucleus (PVN)',
+        'sgacc': 'mean contrast estimate in sub-genual Anterior Cingulate Cortex (sgACC)',
+        'vmpfc': 'mean contrast estimate in ventromedial Prefrontal Cortex (vmPFC)',
+    },
+    'msit_vitals': {
+        'msit_pulse': 'Pulse during stress task',
+        'rest_pulse': 'Pulse before stress task',
+        'chg_pulse': 'Change in Pulse during stress task (MSIT)',
+        'msit_sbp': 'Systolic Blood Pressure during stress task',
+        'rest_sbp': 'Systolic Blood Pressure before stress task',
+        'chg_sbp': 'Change in Systolic Blood Pressure during stress task (MSIT)',
     },
 }
