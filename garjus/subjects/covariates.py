@@ -23,6 +23,7 @@ TYPE2PROJECTS = {
     'gaitrite': ['D3'],
     'toolbox': ['D3'],
     'fallypride': ['D3'],
+    'msit_vitals': ['REMBRANDT'],
 }
 
 
@@ -254,6 +255,75 @@ def _load_fallypride(rc):
     return df[['ID', 'fallypride_accumbens', 'fallypride_amygdala', 'fallypride_caudate', 'fallypride_pallidum', 'fallypride_putamen', 'fallypride_thalamus']]
 
 
+def _load_msit_vitals(rc):
+    df = pd.DataFrame()
+    def_field = rc.def_field
+    fields = [
+        def_field,
+        't1_pulse2', 't1_pulse3',
+        't1_sys2', 't1_sys3',
+        't1_dia2', 't1_dia3',
+        'msit_pulse1',  'msit_pulse2',  'msit_pulse3',  'msit_pulse4',
+        'msit_dia1', 'msit_dia2', 'msit_dia3', 'msit_dia4',
+        'msit_sys1', 'msit_sys2', 'msit_sys3', 'msit_sys4',
+    ]
+    events = field2events(rc, 'msit_pulse1')
+
+    # TODO: get this dynamically, these are REMBRANDT events
+    events = [
+        'baselinemonth_0_arm_2',
+        'baselinemonth_0_arm_3',
+    ]
+
+    rec = rc.export_records(fields=fields, events=events)
+    rec = [x for x in rec if x['redcap_event_name'] in events]
+    rec = [x for x in rec if x['msit_pulse1']]
+
+    df = pd.DataFrame(rec, columns=fields + ['redcap_event_name'])
+
+    # Set subject
+    sec_field = secondary(rc)
+    if sec_field:
+        # Get the secondary field values to set the subject ID
+        sec_map = secondary_map(rc)
+        df['ID'] = df[def_field].map(sec_map)
+    else:
+        df['ID'] = df[def_field]
+
+    df = df.replace('', np.nan).dropna(how='any', axis=0)
+
+    df['rest_dbp'] = (df['t1_dia2'].astype('float') + df['t1_dia3'].astype('float')) / 2
+    df['rest_pulse'] = (df['t1_pulse2'].astype('float') + df['t1_pulse3'].astype('float')) / 2
+    df['rest_sbp'] = (df['t1_sys2'].astype('float') + df['t1_sys3'].astype('float')) / 2
+
+    df['msit_dbp'] = (
+        df['msit_dia1'].astype('float') + \
+        df['msit_dia2'].astype('float') + \
+        df['msit_dia3'].astype('float') + \
+        df['msit_dia4'].astype('float')) / 4
+    
+    df['msit_pulse'] = (
+        df['msit_pulse1'].astype('float') + \
+        df['msit_pulse2'].astype('float') + \
+        df['msit_pulse3'].astype('float') + \
+        df['msit_pulse4'].astype('float')) / 4
+
+    df['msit_sbp'] = (
+        df['msit_sys1'].astype('float') + \
+        df['msit_sys2'].astype('float') + \
+        df['msit_sys3'].astype('float') + \
+        df['msit_sys4'].astype('float')) / 4
+
+    df['chg_pulse'] = df['msit_pulse'] - df['rest_pulse']
+    df['chg_sbp'] = df['msit_sbp'] - df['rest_sbp']
+
+    df = df.sort_values(['ID', 'redcap_event_name'])
+
+    df.drop('record_id', axis=1)
+
+    return df
+
+
 def _proctype_projects(proctype, projects):
     proctype_projects = TYPE2PROJECTS.get(proctype, [])
     return list(set(projects) & set(proctype_projects))
@@ -426,6 +496,40 @@ def _export_fallypride(garjus, tmpdir, subjects_df):
     return df
 
 
+def _export_msit_vitals(garjus, tmpdir, subjects_df):
+    df = pd.DataFrame()
+    proctype = 'msit_vitals'
+    projects = _proctype_projects(proctype, subjects_df.PROJECT.unique())
+
+    logger.info(f'loading {proctype} for projects:{projects}')
+
+    for p in projects:
+        # Load data for project
+        logger.info(f'loading {proctype}:{p}')
+        _df = _load_msit_vitals(garjus.primary(p))
+
+        # Filter by subjects
+        subjects = subjects_df[subjects_df['PROJECT'] == p].ID.unique()
+        _df = _df[_df.ID.isin(subjects)]
+
+        # Append to whole
+        _df['PROJECT'] = p
+        df = pd.concat([df, _df], ignore_index=True)
+
+    if len(df) > 0:
+        # Save to csv
+        _file = f'{tmpdir}/{proctype}.csv'
+        logger.info(f'saving to csv:{_file}')
+        _cols = ['ID', 'PROJECT'] + [x for x in df.columns if x not in ['ID', 'PROJECT']]
+        df = df.sort_values(['PROJECT', 'ID'])
+        df.to_csv(_file, index=False, columns=_cols)
+    else:
+        logger.info(f'no {proctype} data to save')
+
+    return df
+
+
+
 def export_clinical():
     df = pd.DataFrame()
 
@@ -464,29 +568,36 @@ def export(garjus, tmpdir, subjects_df):
     if not _data.empty:
         _data['SITE'] = 'VUMC'
         _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-        data['NIH Examiner'] = _data
+        data['examiner'] = _data
 
     _data = _export_gaitrite(garjus, tmpdir, subjects_df)
     if not _data.empty:
         _data['SITE'] = 'VUMC'
         _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-        data['Gaitrite/Walkway'] = _data 
+        data['gaitrite'] = _data 
 
     _data = _export_plasma(garjus, tmpdir, subjects_df)
     if not _data.empty:
         _data['SITE'] = 'VUMC'
         _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-        data['Plasma'] = _data
+        data['plasma'] = _data
 
     _data = _export_toolbox(garjus, tmpdir, subjects_df)
     if not _data.empty:
         _data['SITE'] = 'VUMC'
         _data.loc[_data.ID.str.startswith('P'), 'SITE'] = 'UPMC'
-        data['NIH Toolbox'] = _data
+        data['toolbox'] = _data
 
     _data = _export_fallypride(garjus, tmpdir, subjects_df)
     if not _data.empty:
         _data['SITE'] = 'VUMC'
-        data['Fallypride Uptake'] = _data
+        data['fallypride'] = _data
+
+    _data = _export_msit_vitals(garjus, tmpdir, subjects_df)
+    if not _data.empty:
+        _data['SITE'] = 'VUMC'
+        _data.loc[_data.ID.str.startswith('2'), 'SITE'] = 'UPMC'
+        _data.loc[_data.ID.str.startswith('3'), 'SITE'] = 'UIC'
+        data['msit_vitals'] = _data
 
     return data

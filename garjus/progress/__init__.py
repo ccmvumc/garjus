@@ -267,6 +267,9 @@ def make_statshot(
 
             dft = dft.sort_values('ASSR')
 
+            if proctype == 'fmri_msit_v4':
+                dft = _get_msit(dft)
+
             # Save file for this type
             csv_file = os.path.join(tmpdir, f'{proctype}.csv')
             logger.info(f'saving csv:{proctype}:{csv_file}')
@@ -274,6 +277,20 @@ def make_statshot(
 
         # Creates new analysis on redcap with files uploaded to xnat
         upload_analysis(garjus, projects[0], tmpdir)
+
+
+def _get_msit(df):
+    rois = ['amyg', 'antins', 'ba46', 'bnst', 'dacc', 'lhpostins', 'pcc', 'pvn', 'rhpostins', 'sgacc', 'vmpfc']
+
+    for r in rois:
+        # Incongruent minus Congruent
+        df[r] = (df['inc_' + r + '_mean'].astype('float') - df['con_' + r + '_mean'].astype('float')).round(6)
+
+    # Averge postins
+    df['postins'] = ((df['lhpostins'] + df['rhpostins']) / 2).round(6)
+
+    return df
+
 
 def upload_analysis(garjus, project, analysis_dir):
     # Create new record analysis

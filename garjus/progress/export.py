@@ -432,7 +432,7 @@ def _add_stats(pdf, stats, plot_title=None):
     return pdf
 
 
-def _add_covar(pdf, covar,  plot_title=None):
+def _add_covar(pdf, covar, plot_title=None):
     # this returns a PIL Image object
     image = plot_covar(covar, plot_title)
     tot_width, tot_height = image.size
@@ -463,7 +463,7 @@ def _add_covar(pdf, covar,  plot_title=None):
 
 def _plottable(var):
     try:
-        _ = var.replace('', np.nan).dropna().str.strip('%').astype(float)
+        _ = var.astype(str).replace('', np.nan).dropna().str.strip('%').astype(float)
         return True
     except Exception:
         return False
@@ -541,7 +541,7 @@ def plot_stats(df, plot_title=None):
 
         fig.append_trace(
             go.Box(
-                y=df[var].replace('', np.nan).dropna().str.strip('%').astype(float),
+                y=df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float),
                 x=df['SITE'],
                 boxpoints='all',
                 text=df['ASSR'],
@@ -551,7 +551,7 @@ def plot_stats(df, plot_title=None):
             _col)
 
         # Plot horizontal line at median
-        _median = df[var].replace('', np.nan).dropna().str.strip('%').astype(float).median()
+        _median = df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float).median()
         fig.add_trace(
             go.Scatter(
                 x=df['SITE'],
@@ -652,7 +652,6 @@ def plot_covar(df, plot_title=None):
 
     # Add box plot for each variable
     for i, var in enumerate(var_list):
-
         # Create boxplot for this var and add to figure
         logger.debug('plotting var:{}'.format(var))
 
@@ -661,7 +660,7 @@ def plot_covar(df, plot_title=None):
 
         fig.append_trace(
             go.Box(
-                y=df[var].replace('', np.nan).dropna().str.strip('%').astype(float),
+                y=df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float),
                 x=df['SITE'],
                 boxpoints='all',
                 boxmean=True,
@@ -670,7 +669,7 @@ def plot_covar(df, plot_title=None):
             _col)
 
         # Plot horizontal line at median
-        _median = df[var].replace('', np.nan).dropna().str.strip('%').astype(float).median()
+        _median = df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float).median()
         fig.add_trace(
             go.Scatter(
                 x=df['SITE'],
@@ -711,6 +710,19 @@ def plot_covar(df, plot_title=None):
     return image
 
 
+def _get_msit(df):
+    rois = ['amyg', 'antins', 'ba46', 'bnst', 'dacc', 'lhpostins', 'pcc', 'pvn', 'rhpostins', 'sgacc', 'vmpfc']
+
+    for r in rois:
+        # Incongruent minus Congruent
+        df[r] = (df['inc_' + r + '_mean'].astype('float') - df['con_' + r + '_mean'].astype('float')).round(6)
+
+    # Averge postins
+    df['postins'] = ((df['lhpostins'] + df['rhpostins']) / 2).round(6)
+
+    return df
+
+
 def _add_stats_pages(pdf, info):
     proclib = info['proclib']
     stats = info['stats']
@@ -719,6 +731,8 @@ def _add_stats_pages(pdf, info):
     for proctype in stattypes:
         # Limit the data to this proctype
         stat_data = stats[stats.PROCTYPE == proctype]
+
+        stat_data = _get_msit(stat_data)
 
         if stat_data.empty:
             logger.debug(f'no stats for proctype:{proctype}')
@@ -733,7 +747,7 @@ def _add_stats_pages(pdf, info):
         _subset = proc_info.get('stats_subset', None)
         if _subset:
             stat_data = stat_data[_subset + ['SITE', 'ASSR']]
-
+       
         # Now make the page
         pdf.add_page()
         pdf.set_font('helvetica', size=14)
@@ -765,9 +779,24 @@ def _add_stats_pages(pdf, info):
 
 def _add_covar_pages(pdf, info):
     covariates = info['covariates']
+    proclib = info['proclib']
 
     for k, values in covariates.items():
         logger.debug(f'add covar page:{k}')
+
+        covar_data = values
+
+        if covar_data.empty:
+            logger.debug(f'no stats for proctype:{k}')
+            continue
+
+        # Get descriptions for this processing type
+        proc_info = proclib.get(k, {})
+
+        # use proclib to filter stats variable names
+        _subset = proc_info.get('stats_subset', None)
+        if _subset:
+            covar_data = covar_data[_subset + ['SITE']]
 
         # Now make the page
         pdf.add_page()
@@ -775,9 +804,23 @@ def _add_covar_pages(pdf, info):
         _text = f'{k} (n={len(values)})'
         pdf.cell(text=_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-        covar_data = values
-
         _add_covar(pdf, covar_data)
+
+        # Build the description
+        _text = proc_info.get('short_descrip', '') + '\n'
+
+        # Append stats descriptions
+        for s, t in info['statlib'].get(k, {}).items():
+            _text += f'{s}: {t}\n'
+
+        # Show the descriptions
+        pdf.set_font('helvetica', size=12)
+        pdf.multi_cell(0, 0.25, _text, border='LBTR', align="L", new_x=XPos.RIGHT, new_y=YPos.NEXT)
+
+        _url = proc_info.get('procurl', '')
+        if _url:
+            pdf.set_font('helvetica', size=10)
+            pdf.cell(text=_url, link=_url)
 
 
 def make_export_report(filename, garjus, subjects, stats, covar):
