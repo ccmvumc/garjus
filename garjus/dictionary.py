@@ -303,7 +303,22 @@ See examples.\n',
     'msit_vitals': {
         'short_descrip': 'MSIT Vitals',
         'stats_subset': ['msit_pulse', 'rest_pulse', 'msit_sbp', 'rest_sbp', 'chg_sbp', 'chg_pulse'],
-    }
+    },
+    'dtiQA_synb0_v7': {
+        'short_descrip': 'PreQual DTI pre-processing and Quality Report',
+        'stats_subset': [
+            'Uncinate_fasciculus_R_med_fa',
+            'Uncinate_fasciculus_L_med_fa',
+            'Cingulum_cingulate_gyrus_R_med_fa',
+            'Cingulum_cingulate_gyrus_L_med_fa',
+            'Cingulum_hippocampus_R_med_fa',
+            'Cingulum__hippocampus_L_med_fa',
+            'eddy_avg_abs_displacement',
+            'eddy_avg_rel_displacement',
+        ],
+        'inputs_descrip': 'T1w MRI, Diffusion MRI',
+        'procurl': 'https://github.com/MASILab/PreQual',
+    },
 }
 
 STATLIB = {

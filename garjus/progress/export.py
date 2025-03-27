@@ -710,19 +710,6 @@ def plot_covar(df, plot_title=None):
     return image
 
 
-def _get_msit(df):
-    rois = ['amyg', 'antins', 'ba46', 'bnst', 'dacc', 'lhpostins', 'pcc', 'pvn', 'rhpostins', 'sgacc', 'vmpfc']
-
-    for r in rois:
-        # Incongruent minus Congruent
-        df[r] = (df['inc_' + r + '_mean'].astype('float') - df['con_' + r + '_mean'].astype('float')).round(6)
-
-    # Averge postins
-    df['postins'] = ((df['lhpostins'] + df['rhpostins']) / 2).round(6)
-
-    return df
-
-
 def _add_stats_pages(pdf, info):
     proclib = info['proclib']
     stats = info['stats']
@@ -731,8 +718,6 @@ def _add_stats_pages(pdf, info):
     for proctype in stattypes:
         # Limit the data to this proctype
         stat_data = stats[stats.PROCTYPE == proctype]
-
-        stat_data = _get_msit(stat_data)
 
         if stat_data.empty:
             logger.debug(f'no stats for proctype:{proctype}')

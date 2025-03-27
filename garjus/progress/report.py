@@ -648,6 +648,17 @@ def _add_graph_page(pdf, info):
         else:
             graph.add_node(pydot.Node(scan, color='orange'))
 
+    print(proctypes)
+
+    if 'centiloids_pib_v1' in proctypes:
+        graph.add_node(pydot.Node('PiB', color='chocolate'))
+        graph.add_node(pydot.Node('AMYLOIDQA_v4', color='lightgreen'))
+        graph.add_node(pydot.Node('centiloids_pib_v1', color='lightgreen'))
+        graph.add_edge(pydot.Edge('PiB', 'AMYLOIDQA_v4'))
+        graph.add_edge(pydot.Edge('FS7_v1', 'AMYLOIDQA_v4'))
+        graph.add_edge(pydot.Edge('PiB', 'centiloids_pib_v1'))
+        graph.add_edge(pydot.Edge('T1', 'centiloids_pib_v1'))
+
     if 'fMRI_NBACK' in scantypes:
         graph.add_node(pydot.Node('NBACK', color='violet'))
 
@@ -674,6 +685,8 @@ def _add_graph_page(pdf, info):
     graph.add_node(pydot.Node('LST_v1', color='lightgreen'))
     graph.add_node(pydot.Node('SAMSEG_v1', color='lightgreen'))
     graph.add_node(pydot.Node('DnSeg_v1', color='lightgreen'))
+    graph.add_node(pydot.Node('FS7sclimbic_v0', color='lightgreen'))
+    graph.add_node(pydot.Node('FS7hypothal_v1', color='lightgreen'))
 
     graph.add_edge(pydot.Edge('T1', 'DnSeg_v1'))
     graph.add_edge(pydot.Edge('T1', 'LST_v1'))
@@ -682,13 +695,15 @@ def _add_graph_page(pdf, info):
     graph.add_edge(pydot.Edge('FS7_v1', 'FS7HPCAMG_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'LST_v1'))
     graph.add_edge(pydot.Edge('FLAIR', 'SAMSEG_v1'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'FS7sclimbic_v0'))
+    graph.add_edge(pydot.Edge('FS7_v1', 'FS7hypothal_v1'))
 
-    if 'fmri_msit_v3' in proctypes:
+    if 'fmri_msit_v4' in proctypes:
         graph.add_node(pydot.Node('EDAT', color='violet'))
-        graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v3'))
-        graph.add_edge(pydot.Edge('T1', 'fmri_msit_v3'))
-        graph.add_node(pydot.Node('fmri_msit_v3', color='lightgreen'))
-        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v3'))
+        graph.add_edge(pydot.Edge('EDAT', 'fmri_msit_v4'))
+        graph.add_edge(pydot.Edge('T1', 'fmri_msit_v4'))
+        graph.add_node(pydot.Node('fmri_msit_v4', color='lightgreen'))
+        graph.add_edge(pydot.Edge('fMRI_MSIT', 'fmri_msit_v4'))
 
     if 'fmri_bct_v2' in proctypes:
         graph.add_node(pydot.Node('struct_preproc_v1', color='lightgreen'))
@@ -716,10 +731,6 @@ def _add_graph_page(pdf, info):
         graph.add_edge(pydot.Edge('FS7_v1', 'FEOBVQA_v2'))
         graph.add_node(pydot.Node('FEOBVQA_v2', color='lightgreen'))
 
-    if 'FS7sclimbic_v0' in proctypes:
-        graph.add_edge(pydot.Edge('T1', 'FS7sclimbic_v0'))
-        graph.add_node(pydot.Node('FS7sclimbic_v0', color='lightgreen'))
-
     if 'AMYVIDQA_v2' in proctypes:
         graph.add_edge(pydot.Edge('AMYVID', 'AMYVIDQA_v2'))
         graph.add_edge(pydot.Edge('FS7_v1', 'AMYVIDQA_v2'))
@@ -731,7 +742,7 @@ def _add_graph_page(pdf, info):
         graph.add_edge(pydot.Edge('T1', 'Multi_Atlas_v3'))
         graph.add_edge(pydot.Edge('Multi_Atlas_v3', 'BrainAgeGap_v2'))
 
-    if 'francois_schaefer200_v1' in proctypes:
+    if 'dtiQA_synb0_v7' in proctypes:
         graph.add_node(pydot.Node('dtiQA_synb0_v7', color='lightgreen'))
         graph.add_node(pydot.Node('francois_schaefer200_v1', color='lightblue'))
         graph.add_edge(pydot.Edge('T1', 'dtiQA_synb0_v7'))
@@ -1251,7 +1262,7 @@ def plot_qa(dfp):
 
 def _plottable(var):
     try:
-        _ = var.replace('', np.nan).dropna().str.strip('%').astype(float)
+        _ = var.astype(str).replace('', np.nan).dropna().str.strip('%').astype(float)
         return True
     except Exception:
         return False
@@ -1329,7 +1340,7 @@ def plot_stats(df, plot_title=None):
 
         fig.append_trace(
             go.Box(
-                y=df[var].replace('', np.nan).dropna().str.strip('%').astype(float),
+                y=df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float),
                 x=df['SITE'],
                 boxpoints='all',
                 text=df['ASSR'],
@@ -1339,7 +1350,7 @@ def plot_stats(df, plot_title=None):
             _col)
 
         # Plot horizontal line at median
-        _median = df[var].replace('', np.nan).dropna().str.strip('%').astype(float).median()
+        _median = df[var].astype(str).replace('', np.nan).dropna().str.strip('%').astype(float).median()
         fig.add_trace(
             go.Scatter(
                 x=df['SITE'],
@@ -1401,11 +1412,15 @@ def _add_stats_pages(pdf, info):
         # use proclib to filter stats variable names
         _subset = proc_info.get('stats_subset', None)
         if _subset:
-            stat_data = stat_data[_subset + ['SITE', 'ASSR']]
+            try:
+                stat_data = stat_data[_subset + ['SITE', 'ASSR']]
+            except Exception as err:
+                logger.error(f'subset failed:{_subset}, skipping page:{proctype}')
+                return
 
         # Now make the page
         pdf.add_page()
-        pdf.set_font('helvetica', size=14)
+        pdf.set_font('helvetica', size=16)
         pdf.cell(text=proctype, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         if proctype == 'fmriqa_v4':

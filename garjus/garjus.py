@@ -45,6 +45,9 @@ from .scans import update as update_scans
 logger = logging.getLogger('garjus')
 
 
+DISABLED_STATS = ['dti_PSMD_v1', 'fmri_rest_v4', 'fmri_rest_v5', 'struct_preproc_noflair_v1']
+
+
 class Garjus:
     """
     Handles data in xnat and redcap.
@@ -1279,7 +1282,7 @@ class Garjus:
         except:
             return pd.DataFrame(columns=['ASSR', 'PROCTYPE', 'SESSTYPE'])
 
-        # Filter out FS6 if found
+        # Filter out FS6 if found, old
         rec = [x for x in rec if 'FS6_v1' not in x['stats_assr']]
 
         # Filter out old FS7 if found
@@ -1335,7 +1338,11 @@ class Garjus:
             # Pivot to row per subject
             df = _subject_pivot(df)
 
+        if 'fmri_msit_v4' in list(df.PROCTYPE.unique()):
+            df = _get_msit(df)
+
         return df
+
 
     def stats_assessors(self, project, proctypes=None):
         """Get list of assessors already in stats archive."""
@@ -1476,6 +1483,8 @@ class Garjus:
             if ptype not in types:
                 logger.debug(f'appending proctype:{ptype}')
                 types.append(ptype)
+
+        types = [x for x in types if x not in DISABLED_STATS]
 
         return types
 
@@ -3509,6 +3518,19 @@ def _subject_pivot(df):
     dfp = dfp.reset_index()
 
     return dfp
+
+
+def _get_msit(df):
+    rois = ['amyg', 'antins', 'ba46', 'bnst', 'dacc', 'lhpostins', 'pcc', 'pvn', 'rhpostins', 'sgacc', 'vmpfc']
+
+    for r in rois:
+        # Incongruent minus Congruent
+        df[r] = (df['inc_' + r + '_mean'].astype('float') - df['con_' + r + '_mean'].astype('float')).round(6)
+
+    # Averge postins
+    df['postins'] = ((df['lhpostins'] + df['rhpostins']) / 2).round(6)
+
+    return df
 
 
 if __name__ == "__main__":

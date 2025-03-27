@@ -267,9 +267,6 @@ def make_statshot(
 
             dft = dft.sort_values('ASSR')
 
-            if proctype == 'fmri_msit_v4':
-                dft = _get_msit(dft)
-
             # Save file for this type
             csv_file = os.path.join(tmpdir, f'{proctype}.csv')
             logger.info(f'saving csv:{proctype}:{csv_file}')

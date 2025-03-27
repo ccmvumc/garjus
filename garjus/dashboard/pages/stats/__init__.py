@@ -139,7 +139,7 @@ def get_stats_graph(df, var_list, pivot=None):
 
         fig.append_trace(
             go.Box(
-                y=df[var].str.strip('%').astype(float),
+                y=df[var].astype(str).str.strip('%').astype(float),
                 x=_xvalues,
                 boxpoints='all',
                 text=df['ASSR'],
@@ -442,7 +442,7 @@ def update_stats(
     # format floats so they sort in the table
     for c in list(df.columns):
         if _plottable(df[c]):
-            df[c] = df[c].str.strip('%').astype(float)
+            df[c] = df[c].astype(str).str.strip('%').astype(float)
 
     # Apply pivot
     if selected_pivot == 'subj':
