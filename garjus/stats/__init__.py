@@ -265,6 +265,9 @@ def _get_bag(garjus, project):
         # Only rows without existing bag_age_gap
         stats = stats[stats.bag_age_gap.isna()]
 
+    # Only rows with DATE
+    stats = stats[~stats.DATE.isna()]
+
     # Only rows with DOB
     stats = stats[~stats.DOB.isna()]
 
