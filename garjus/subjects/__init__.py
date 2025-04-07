@@ -4,6 +4,9 @@ import logging
 import pandas as pd
 import numpy as np
 
+from . import covariates
+
+
 logger = logging.getLogger('garjus.subjects')
 
 IDENTIFIER_FIELDS = [
@@ -18,6 +21,11 @@ IDENTIFIER_FIELDS = [
         'd3_subject_number',
         'guid'
     ]
+
+
+def load_fallypride_data(rc):
+    return covariates._load_fallypride(rc)
+
 
 def load_gait_data(rc):
     def_field = rc.def_field
@@ -460,6 +468,9 @@ def load_standard(garjus, project, include_dob=False):
         # Merge in gait data
         df = pd.merge(df, dfg, how='left', on=def_field)
 
+        # Load fallypride roi data
+        dfr = load_fallypride_data(project_redcap)
+
         # Use arm/events names to determine group
         df['GROUP'] = df['redcap_event_name'].map({
             'Screening (Arm 2: VUMC Never Depressed)': 'Control',
@@ -469,6 +480,10 @@ def load_standard(garjus, project, include_dob=False):
         })
 
         df = df[df.GROUP.isin(['Depress', 'Control'])]
+
+        # Merge in fallypride data
+        df = pd.merge(df, dfr, how='left', left_on=sec_field, right_on='ID')
+        print(df)
     elif project == 'REMBRANDT':
         # Use arm/events names to determine which arm
         df['GROUP'] = df['redcap_event_name'].map({

@@ -61,6 +61,11 @@ def process_project(
             logger.debug(f'missing:{subj}:{event}')
             continue
 
+        # Check for zip
+        if r[raw_field].endswith('.zip'):
+            logger.error(f'zip was uploaded:{subj}:{event}:{raw_field}')
+            continue
+
         # Download to the convert dir
         basename = f'{subj}_{event}_{raw_field}.edat2'
         raw_file = f'{convert_dir}/{basename}'

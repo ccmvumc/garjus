@@ -80,7 +80,10 @@ def subjects(ctx, project, csv):
     pd.set_option('display.max_rows', None)
     subjects = g.subjects(project)
     if csv:
-        subjects.to_csv(csv)
+        subjects = subjects.set_index('ID')
+        columns = subjects.columns
+        columns = [x for x in columns if x not in ['identifier_id', 'GUID']]
+        subjects[columns].to_csv(csv)
     else:
         pprint.pprint(subjects)
 
