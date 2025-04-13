@@ -647,6 +647,7 @@ class Garjus:
         else:
             projects = self.projects()
 
+        # Load task records
         rec = self._rcq.export_records(
             records=projects,
             forms=['taskqueue'],
@@ -661,7 +662,16 @@ class Garjus:
         if df.empty:
             return pd.DataFrame(columns=self.column_names('tasks'))
 
+        # Load instance names 
+        rec2 = self._rcq.export_records(
+            records=projects,
+            fields=[def_field, 'gen_daxinstance'],
+            raw_or_label='label')
+
+        project2user = {x[def_field]: x['gen_daxinstance'] for x in rec2 if x['gen_daxinstance']}
+
         df['PROJECT'] = df[def_field]
+        df['USER'] = df['PROJECT'].map(project2user)
         df['ID'] = df['redcap_repeat_instance'].astype(str)
 
         # Make ID link back to redcap

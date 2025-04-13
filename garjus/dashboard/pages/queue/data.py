@@ -30,7 +30,6 @@ def get_data(proj_filter, hidedone=True):
     df = df[df.STATUS != 'NEED_INPUTS']
 
     df.reset_index(inplace=True)
-    df['USER'] = 'vuiis_daily_singularity'
     df['LABEL'] = df['ASSESSOR']
 
     df = df.apply(_get_proctype, axis=1)
