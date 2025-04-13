@@ -445,6 +445,13 @@ def delete(project, proctype, procstatus=None, qcstatus=None):
         qcstatus=qcstatus)
 
 
+@cli.command('cleanup')
+def cleanup():
+    click.echo('garjus! cleanup')
+    g = Garjus()
+    g.delete_bad_tasks()
+
+
 @cli.command('dashboard')
 @click.option('--auth', 'auth_file', required=False)
 @click.option('--login', required=False, is_flag=True)

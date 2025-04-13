@@ -789,13 +789,31 @@ class Garjus:
 
             # Append to list if more than requested days
             if days_old >= days:
-                _main = r[def_field],
+                _main = r[def_field]
                 _id = r['redcap_repeat_instance']
                 logger.debug(f'{_main}:{_id}:{days_old} days old')
                 old_issues.append(r)
 
         # Apply delete to list of old issues
         self.delete_issues(old_issues)
+
+    def delete_bad_tasks(self):
+        def_field = self._rcq.def_field
+        instrument = 'taskqueue'
+
+        if not self.redcap_enabled():
+            logger.info('cannot delete bad tasks, redcap not enabled')
+            return None
+
+        rec = self._rcq.export_records(forms=[instrument], fields=[def_field])
+
+        rec = [x for x in rec if x['redcap_repeat_instrument'] == instrument]
+
+        # Tasks with no name set to running are created when a deleted task gets updated
+        rec = [x for x in rec if x['task_assessor'] == '' and x['task_status'] == 'RUNNING']
+
+        logger.info(f'deleting {len(rec)} bad tasks')
+        self.delete_tasks(rec)
 
     def import_dicom(self, src, dst):
         """Import dicom source to destination."""
@@ -2991,7 +3009,7 @@ class Garjus:
 
         try:
             for i in issues:
-                _main = i[def_field],
+                _main = i[def_field]
                 _id = i['redcap_repeat_instance']
                 logger.debug(f'deleting:issue:{_main}:{_id}')
                 # https://redcap.vanderbilt.edu/api/help/?content=del_records
@@ -3006,6 +3024,32 @@ class Garjus:
                     'format': 'json'}
 
                 self._rc._call_api(_payload, 'del_record')
+        except Exception as err:
+            logger.error(f'failed to delete records:{err}')
+
+    def delete_tasks(self, tasks):
+        """Delete in REDCap."""
+        def_field = self._rcq.def_field
+        instrument = 'taskqueue'
+        token = self._rcq.token
+
+        try:
+            for i in tasks:
+                _main = i[def_field]
+                _id = i['redcap_repeat_instance']
+                logger.debug(f'deleting:{instrument}:{_main}:{_id}')
+                # https://redcap.vanderbilt.edu/api/help/?content=del_records
+                _payload = {
+                    'action': 'delete',
+                    'returnFormat': 'json',
+                    'records[0]': _main,
+                    'instrument': instrument,
+                    'repeat_instance': _id,
+                    'content': 'record',
+                    'token': token,
+                    'format': 'json'}
+
+                self._rcq._call_api(_payload, 'del_record')
         except Exception as err:
             logger.error(f'failed to delete records:{err}')
 
