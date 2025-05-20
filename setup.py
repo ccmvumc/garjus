@@ -27,6 +27,7 @@ setup(
         "plotly",
         "dash_bootstrap_components",
         "dash_bootstrap_templates",
+        "dash<3.0.0",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
 )
