@@ -31,4 +31,5 @@ setup(
         "flask_login",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
+    include_package_data=True,
 )
