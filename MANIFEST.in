@@ -1,1 +1,1 @@
-include dashboard/templates/*.html
+include garjus/dashboard/templates/*.html
