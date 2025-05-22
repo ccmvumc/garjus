@@ -8,6 +8,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 
+import garjus
 from ..garjus import Garjus
 from .pages import qa
 from .pages import activity
@@ -26,8 +27,9 @@ from . import content
 logger = logging.getLogger('garjus.dashboard.login')
 
 # Connect to an underlying flask server so we can configure it for auth
-templates = os.path.expanduser('~/git/garjus/garjus/dashboard/templates')
+templates = os.path.join(os.path.dirname(garjus.__file__), 'dashboard/templates')
 server = Flask(__name__, template_folder=templates)
+
 
 
 @server.before_request
@@ -114,7 +116,7 @@ def logout():
 
 # Prep the configs for the app
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-assets_path = os.path.expanduser('~/git/garjus/garjus/dashboard/assets')
+assets_path = os.path.join(os.path.dirname(garjus.__file__), 'dashboard/assets')
 darkmode = True
 
 if darkmode:
