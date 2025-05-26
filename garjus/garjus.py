@@ -77,14 +77,14 @@ class Garjus:
         self._rcq = (rcq_project or self._default_rcq())
 
         if not self._rc:
-            logger.info('main REDCap disabled')
+            logger.debug('main REDCap disabled')
         else:
-            logger.info(f'main REDCap:{self._rc.pid}')
+            logger.debug(f'main REDCap:{self._rc.export_project_info(['project_id'])}')
 
         if not self._rcq:
-            logger.info('rcq REDCap disabled')
+            logger.debug('rcq REDCap disabled')
         else:
-            logger.info(f'rcq REDCap:{self._rcq.pid}')
+            logger.debug(f'rcq REDCap:{self._rcq.export_project_info(['project_id'])}')
 
         try:
             if current_user.is_authenticated:
