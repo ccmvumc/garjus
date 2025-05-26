@@ -236,6 +236,19 @@ class Garjus:
         except Exception:
             return False
 
+
+    @staticmethod
+    def rcq_found():
+        from .utils_redcap import get_rcq_redcap
+        try:
+            rcq = get_rcq_redcap()
+            if rcq:
+                return True
+            else:
+                return False
+        except Exception:
+            return False
+
     @staticmethod
     def xnat_found():
         try:
