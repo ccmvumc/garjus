@@ -73,6 +73,18 @@ class Garjus:
         self._rc = None
         self._rcq = None
         self._user = 'UnknownUser'
+        self._rc = (redcap_project or self._default_redcap())
+        self._rcq = (rcq_project or self._default_rcq())
+
+        if not self._rc:
+            logger.debug('main REDCap disabled')
+        else:
+            logger.debug(f'main REDCap:{self._rc.export_project_info()["project_id"]}')
+
+        if not self._rcq:
+            logger.debug('rcq REDCap disabled')
+        else:
+            logger.debug(f'rcq REDCap:{self._rcq.export_project_info()["project_id"]}')
 
         try:
             if current_user.is_authenticated:
@@ -94,22 +106,12 @@ class Garjus:
                 except Exception as err2:
                     logger.debug(f'could not connect to XNAT:{err2}')
 
+        logger.debug(f'user:{self._user}')
+
         if self._user == 'admin':
             # Prevent xnat admin user from accessing redcap
             logger.debug('refusing to connect xnat admin to garjus redcap')
             self._rc = None
-        else:
-            try:
-                self._rc = (redcap_project or self._default_redcap())
-            except FileNotFoundError as err:
-                logger.debug(err)
-                logger.debug('REDCap credentials not found in ~/.redcap.txt')
-
-        try:
-            self._rcq = (rcq_project or self._default_rcq())
-        except FileNotFoundError as err:
-            logger.debug(err)
-            logger.debug('REDCap credentials not found in ~/.redcap.txt')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
@@ -202,18 +204,48 @@ class Garjus:
 
     @staticmethod
     def _default_redcap():
-        return utils_redcap.get_main_redcap()
+        rc = None 
+
+        try:
+            rc = utils_redcap.get_main_redcap()
+        except FileNotFoundError as err:
+            logger.debug(err)
+
+        return rc
 
     @staticmethod
     def _default_rcq():
-        return utils_redcap.get_rcq_redcap()
+        rcq = None 
+
+        try:
+            rcq = utils_redcap.get_rcq_redcap()
+        except FileNotFoundError as err:
+            logger.debug(err)
+
+        return rcq
 
     @staticmethod
     def redcap_found():
         from .utils_redcap import get_main_redcap
         try:
-            get_main_redcap()
-            return True
+            _main = get_main_redcap()
+            if _main:
+                return True
+            else:
+                return False
+        except Exception:
+            return False
+
+
+    @staticmethod
+    def rcq_found():
+        from .utils_redcap import get_rcq_redcap
+        try:
+            rcq = get_rcq_redcap()
+            if rcq:
+                return True
+            else:
+                return False
         except Exception:
             return False
 
@@ -241,6 +273,9 @@ class Garjus:
 
     def cachedir(self):
         return self._cachedir
+
+    def rcq_enabled(self):
+        return (self._rcq is not None)
 
     def redcap_enabled(self):
         return (self._rc is not None)
@@ -1054,7 +1089,7 @@ class Garjus:
             redcap_names = [x[self._rc.def_field] for x in _records]
             logger.debug(f'redcap projects={redcap_names}')
         else:
-            logger.info('redcap not available')
+            logger.debug('redcap not available')
             redcap_names = None
 
         # Get list of projects in xnat
@@ -1068,7 +1103,7 @@ class Garjus:
                 xnat_names = utils_xnat.get_my_projects(self.xnat())
                 logger.debug(f'xnat projects={xnat_names}')
         else:
-            logger.info('xnat not available')
+            logger.debug('xnat not available')
             xnat_names = None
 
         self._xnat_projects = xnat_names
@@ -1167,7 +1202,7 @@ class Garjus:
         data = []
         def_field = self._rcq.def_field
 
-        if not self.redcap_enabled():
+        if not self.rcq_enabled():
             logger.info('cannot load analyses, redcap not enabled')
             return None
 

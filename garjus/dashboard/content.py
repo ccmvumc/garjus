@@ -28,6 +28,10 @@ def _xnat_found():
     return Garjus.xnat_found()
 
 
+def _rcq_found():
+    return Garjus.rcq_found()
+
+
 def _footer_content(include_logout=False):
     content = []
 
@@ -79,12 +83,13 @@ def get_content(include_logout=False, demo=False):
     #has_xnat = _xnat_found()
     has_xnat = True
     has_redcap = _redcap_found()
+    has_rcq = _rcq_found()
     tabs = ''
     content = ''
 
     logger.debug(f'{has_xnat=}, {has_redcap=}')
 
-    if has_xnat and has_redcap:
+    if has_xnat and has_redcap and has_rcq:
         # include all tabs
         tabs = dbc.Tabs([
             #dbc.Tab(
@@ -106,7 +111,7 @@ def get_content(include_logout=False, demo=False):
                 label='Queue',
                 tab_id='tab-queue',
                 children=queue.get_content(),
-             ),
+            ),
             dbc.Tab(
                 label='Activity',
                 tab_id='tab-activity',
@@ -133,6 +138,61 @@ def get_content(include_logout=False, demo=False):
                children=analyses.get_content(),
             )
             ],
+            active_tab="tab-qa",
+        )
+    elif has_xnat and has_redcap and not has_rcq:
+        # include all tabs
+        tabs = dbc.Tabs([
+            dbc.Tab(
+                label='QA',
+                tab_id='tab-qa',
+                children=qa.get_content(),
+            ),
+            dbc.Tab(
+                label='Issues',
+                tab_id='tab-issues',
+                children=issues.get_content(),
+            ),
+            dbc.Tab(
+                label='Activity',
+                tab_id='tab-activity',
+                children=activity.get_content(),
+            ),
+            dbc.Tab(
+                label='Stats',
+                tab_id='tab-stats',
+                children=stats.get_content(),
+            ),
+            dbc.Tab(
+                label='Reports',
+                tab_id='tab-reports',
+                children=reports.get_content(),
+            )],
+            active_tab="tab-qa",
+        )
+    elif has_xnat and not has_redcap and has_rcq:
+        # include all tabs
+        tabs = dbc.Tabs([
+            dbc.Tab(
+                label='QA',
+                tab_id='tab-qa',
+                children=qa.get_content(),
+            ),
+            dbc.Tab(
+                label='Processors',
+                tab_id='tab-processors',
+                children=processors.get_content(),
+            ),
+            dbc.Tab(
+                label='Analyses',
+                tab_id='tab-analyses',
+               children=analyses.get_content(),
+            ),
+            dbc.Tab(
+                label='Queue',
+                tab_id='tab-queue',
+                children=queue.get_content(),
+            )],
             active_tab="tab-qa",
         )
     elif has_xnat and not has_redcap:

@@ -159,6 +159,9 @@ def get_main_redcap():
     project_id = get_projectid('main', keyfile)
     api_key = get_projectkey(project_id, keyfile)
 
+    if not api_key:
+        return None
+
     return redcap.Project(api_url, api_key)
 
 
@@ -172,6 +175,9 @@ def get_rcq_redcap():
 
     project_id = get_projectid('rcq', keyfile)
     api_key = get_projectkey(project_id, keyfile)
+
+    if not api_key:
+        return None
 
     return redcap.Project(api_url, api_key)
 

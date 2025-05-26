@@ -58,8 +58,8 @@ def save_data(df, filename):
 def get_data(projects):
     g = Garjus()
 
-    if not g.redcap_enabled():
-        logger.debug('redcap not enabled, no data')
+    if not g.rcq_enabled():
+        logger.debug('rcq not enabled, no analyses data')
         return pd.DataFrame(columns=g.column_names('analyses'))
 
     # Load
