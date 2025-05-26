@@ -464,6 +464,7 @@ def dashboard(auth_file=None, login=False, demo=False):
         from .dashboard.demo import app
     elif login:
         from .dashboard.login import app
+        url += '/login'
     else:
         from .dashboard.index import app
 
