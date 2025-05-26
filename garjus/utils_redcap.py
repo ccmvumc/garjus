@@ -160,7 +160,6 @@ def get_main_redcap():
     api_key = get_projectkey(project_id, keyfile)
 
     if not api_key:
-        print('REDCap credentials for main, not found in ~/.redcap.txt')
         return None
 
     return redcap.Project(api_url, api_key)
@@ -178,7 +177,6 @@ def get_rcq_redcap():
     api_key = get_projectkey(project_id, keyfile)
 
     if not api_key:
-        print('REDCap credentials for rcq, not found in ~/.redcap.txt')
         return None
 
     return redcap.Project(api_url, api_key)
