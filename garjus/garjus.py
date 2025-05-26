@@ -1202,7 +1202,7 @@ class Garjus:
         data = []
         def_field = self._rcq.def_field
 
-        if not self.redcap_enabled():
+        if not self.rcq_enabled():
             logger.info('cannot load analyses, redcap not enabled')
             return None
 
