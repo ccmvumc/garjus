@@ -1076,7 +1076,7 @@ class Garjus:
             redcap_names = [x[self._rc.def_field] for x in _records]
             logger.debug(f'redcap projects={redcap_names}')
         else:
-            logger.info('redcap not available')
+            logger.debug('redcap not available')
             redcap_names = None
 
         # Get list of projects in xnat
@@ -1090,7 +1090,7 @@ class Garjus:
                 xnat_names = utils_xnat.get_my_projects(self.xnat())
                 logger.debug(f'xnat projects={xnat_names}')
         else:
-            logger.info('xnat not available')
+            logger.debug('xnat not available')
             xnat_names = None
 
         self._xnat_projects = xnat_names
