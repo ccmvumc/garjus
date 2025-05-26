@@ -46,7 +46,7 @@ def get_data(proj_filter):
     g = Garjus()
 
     if not g.redcap_enabled():
-        logger.debug('redcap not enabled, no data')
+        logger.debug('redcap not enabled, no activity data')
         return pd.DataFrame(columns=g.column_names('activity'))
 
     logger.info(f'loading activity:startdate={startdate}')

@@ -27,7 +27,7 @@ def get_data():
     g = Garjus()
 
     if not g.redcap_enabled():
-        logger.debug('redcap not enabled, no data')
+        logger.debug('redcap not enabled, no issues data')
         return pd.DataFrame(columns=g.column_names('issues'))
 
     pid = g.redcap_pid()

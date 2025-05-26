@@ -56,8 +56,14 @@ def save_data(df, filename):
 
 
 def get_data(projects):
+    g = Garjus()
+
+    if not g.rcq_enabled():
+        logger.debug('rcq not enabled, no processing data')
+        return pd.DataFrame(columns=g.column_names('processing'))
+
     # Load
-    df = Garjus().processing_protocols(projects)
+    df = g.processing_protocols(projects)
 
     df['FILE'] = df['FILE'].apply(os.path.basename)
 

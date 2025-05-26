@@ -73,6 +73,18 @@ class Garjus:
         self._rc = None
         self._rcq = None
         self._user = 'UnknownUser'
+        self._rc = (redcap_project or self._default_redcap())
+        self._rcq = (rcq_project or self._default_rcq())
+
+        if not self._rc:
+            logger.info('main REDCap disabled')
+        else:
+            logger.info(f'main REDCap:{self._rc.pid}')
+
+        if not self._rcq:
+            logger.info('rcq REDCap disabled')
+        else:
+            logger.info(f'rcq REDCap:{self._rcq.pid}')
 
         try:
             if current_user.is_authenticated:
@@ -94,22 +106,12 @@ class Garjus:
                 except Exception as err2:
                     logger.debug(f'could not connect to XNAT:{err2}')
 
+        logger.info(f'user:{self._user}')
+
         if self._user == 'admin':
             # Prevent xnat admin user from accessing redcap
             logger.debug('refusing to connect xnat admin to garjus redcap')
             self._rc = None
-        else:
-            try:
-                self._rc = (redcap_project or self._default_redcap())
-            except FileNotFoundError as err:
-                logger.debug(err)
-                logger.debug('REDCap credentials not found in ~/.redcap.txt')
-
-        try:
-            self._rcq = (rcq_project or self._default_rcq())
-        except FileNotFoundError as err:
-            logger.debug(err)
-            logger.debug('REDCap credentials not found in ~/.redcap.txt')
 
         self.scan_uri = utils_xnat.SCAN_URI
         self.assr_uri = utils_xnat.ASSR_URI
@@ -212,8 +214,11 @@ class Garjus:
     def redcap_found():
         from .utils_redcap import get_main_redcap
         try:
-            get_main_redcap()
-            return True
+            _main = get_main_redcap()
+            if _main:
+                return True
+            else:
+                return False
         except Exception:
             return False
 
@@ -241,6 +246,9 @@ class Garjus:
 
     def cachedir(self):
         return self._cachedir
+
+    def rcq_enabled(self):
+        return (self._rcq is not None)
 
     def redcap_enabled(self):
         return (self._rc is not None)

@@ -24,8 +24,13 @@ def get_filename():
 
 
 def get_data(proj_filter, hidedone=True):
+    g = Garjus()
 
-    df = Garjus().tasks(hidedone=hidedone)
+    if not g.rcq_enabled():
+        logger.debug('rcq not enabled, no data')
+        return pd.DataFrame(columns=g.column_names('tasks'))
+
+    df = g.tasks(hidedone=hidedone)
 
     df = df[df.STATUS != 'NEED_INPUTS']
 
