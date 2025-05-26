@@ -218,7 +218,7 @@ class Garjus:
         rcq = None 
 
         try:
-            rc = utils_redcap.get_rcq_redcap()
+            rcq = utils_redcap.get_rcq_redcap()
         except FileNotFoundError as err:
             logger.debug(err)
 
