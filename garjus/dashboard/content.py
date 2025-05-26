@@ -111,7 +111,7 @@ def get_content(include_logout=False, demo=False):
                 label='Queue',
                 tab_id='tab-queue',
                 children=queue.get_content(),
-             ),
+            ),
             dbc.Tab(
                 label='Activity',
                 tab_id='tab-activity',
@@ -143,11 +143,6 @@ def get_content(include_logout=False, demo=False):
     elif has_xnat and has_redcap and not has_rcq:
         # include all tabs
         tabs = dbc.Tabs([
-            #dbc.Tab(
-            #    label='Home',
-            #    tab_id='tab-home',
-            #    children=hub.get_content(),
-            #),
             dbc.Tab(
                 label='QA',
                 tab_id='tab-qa',
@@ -157,7 +152,7 @@ def get_content(include_logout=False, demo=False):
                 label='Issues',
                 tab_id='tab-issues',
                 children=issues.get_content(),
-             ),
+            ),
             dbc.Tab(
                 label='Activity',
                 tab_id='tab-activity',
@@ -172,8 +167,32 @@ def get_content(include_logout=False, demo=False):
                 label='Reports',
                 tab_id='tab-reports',
                 children=reports.get_content(),
+            )],
+            active_tab="tab-qa",
+        )
+    elif has_xnat and not has_redcap and has_rcq:
+        # include all tabs
+        tabs = dbc.Tabs([
+            dbc.Tab(
+                label='QA',
+                tab_id='tab-qa',
+                children=qa.get_content(),
             ),
-            ],
+            dbc.Tab(
+                label='Processors',
+                tab_id='tab-processors',
+                children=processors.get_content(),
+            ),
+            dbc.Tab(
+                label='Analyses',
+                tab_id='tab-analyses',
+               children=analyses.get_content(),
+            ),
+            dbc.Tab(
+                label='Queue',
+                tab_id='tab-queue',
+                children=queue.get_content(),
+            )],
             active_tab="tab-qa",
         )
     elif has_xnat and not has_redcap:
