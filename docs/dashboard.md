@@ -59,4 +59,4 @@ To enable garjus data in the dashboard, store your REDCap credentials in ~/redca
 999999,XXXXXXXXXXXXXXXXXXX,main
 ```
 
-The dashboard will have additional tabs for [Issues](docs/issues.md), [Activity](docs/activity.md), [Stats](docs/stats.md), and [Reports](docs/progress.md).
+The dashboard will have additional tabs for [Issues](issues.md), [Activity](activity.md), [Stats](stats.md), and [Reports](progress.md).
