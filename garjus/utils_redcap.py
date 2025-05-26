@@ -156,14 +156,11 @@ def get_main_redcap():
     api_url = os.environ.get('REDCAP_API_URL', api_url)
     keyfile = os.environ.get('REDCAP_API_KEYFILE', keyfile)
 
-    try:
-        project_id = get_projectid('main', keyfile)
-        api_key = get_projectkey(project_id, keyfile)
-    except FileNotFoundError as err:
-        logger.debug(err)
+    project_id = get_projectid('main', keyfile)
+    api_key = get_projectkey(project_id, keyfile)
 
     if not api_key:
-        logger.debug('REDCap credentials for main, not found in ~/.redcap.txt')
+        print('REDCap credentials for main, not found in ~/.redcap.txt')
         return None
 
     return redcap.Project(api_url, api_key)
@@ -177,14 +174,11 @@ def get_rcq_redcap():
     api_url = os.environ.get('REDCAP_API_URL', api_url)
     keyfile = os.environ.get('REDCAP_API_KEYFILE', keyfile)
 
-    try:
-        project_id = get_projectid('rcq', keyfile)
-        api_key = get_projectkey(project_id, keyfile)
-    except FileNotFoundError as err:
-        logger.debug(err)
+    project_id = get_projectid('rcq', keyfile)
+    api_key = get_projectkey(project_id, keyfile)
 
     if not api_key:
-        logger.debug('REDCap credentials for rcq, not found in ~/.redcap.txt')
+        print('REDCap credentials for rcq, not found in ~/.redcap.txt')
         return None
 
     return redcap.Project(api_url, api_key)

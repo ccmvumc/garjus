@@ -204,11 +204,25 @@ class Garjus:
 
     @staticmethod
     def _default_redcap():
-        return utils_redcap.get_main_redcap()
+        rc = None 
+
+        try:
+            rc = utils_redcap.get_main_redcap()
+        except FileNotFoundError as err:
+            logger.debug(err)
+
+        return rc
 
     @staticmethod
     def _default_rcq():
-        return utils_redcap.get_rcq_redcap()
+        rcq = None 
+
+        try:
+            rc = utils_redcap.get_rcq_redcap()
+        except FileNotFoundError as err:
+            logger.debug(err)
+
+        return rcq
 
     @staticmethod
     def redcap_found():
