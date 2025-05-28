@@ -76,22 +76,13 @@ class Garjus:
         self._rc = (redcap_project or self._default_redcap())
         self._rcq = (rcq_project or self._default_rcq())
 
-        if not self._rc:
-            logger.debug('main REDCap disabled')
-        else:
-            logger.debug(f'main REDCap:{self._rc.export_project_info()["project_id"]}')
-
-        if not self._rcq:
-            logger.debug('rcq REDCap disabled')
-        else:
-            logger.debug(f'rcq REDCap:{self._rcq.export_project_info()["project_id"]}')
-
         try:
             if current_user.is_authenticated:
                 hostname = current_user.hostname
                 self._user = current_user.id
-                self._xnat = self._alias_xnat(hostname, self._user)
                 logger.debug(f'current user is:{self._user}')
+
+                self._xnat = self._alias_xnat(hostname, self._user)
             else:
                 raise Exception('user not authenticated')
         except Exception as err:
@@ -106,7 +97,6 @@ class Garjus:
                 except Exception as err2:
                     logger.debug(f'could not connect to XNAT:{err2}')
 
-        logger.debug(f'user:{self._user}')
 
         if self._user == 'admin':
             # Prevent xnat admin user from accessing redcap
@@ -139,6 +129,18 @@ class Garjus:
             os.makedirs(self._cachedir)
         except FileExistsError:
             pass
+
+        logger.debug(f'user:{self._user}')
+
+        if not self._rc:
+            logger.debug('main REDCap disabled')
+        else:
+            logger.debug(f'main REDCap:{self._rc.export_project_info()["project_id"]}')
+
+        if not self._rcq:
+            logger.debug('rcq REDCap disabled')
+        else:
+            logger.debug(f'rcq REDCap:{self._rcq.export_project_info()["project_id"]}')
 
     def __del__(self):
         """Close connectinons we opened."""
@@ -204,7 +206,7 @@ class Garjus:
 
     @staticmethod
     def _default_redcap():
-        rc = None 
+        rc = None
 
         try:
             rc = utils_redcap.get_main_redcap()
@@ -215,7 +217,7 @@ class Garjus:
 
     @staticmethod
     def _default_rcq():
-        rcq = None 
+        rcq = None
 
         try:
             rcq = utils_redcap.get_rcq_redcap()
@@ -226,27 +228,26 @@ class Garjus:
 
     @staticmethod
     def redcap_found():
-        from .utils_redcap import get_main_redcap
         try:
-            _main = get_main_redcap()
+            _main = utils_redcap.get_main_redcap()
             if _main:
                 return True
             else:
                 return False
-        except Exception:
+        except Exception as err:
+            logger.debug(err)
             return False
-
 
     @staticmethod
     def rcq_found():
-        from .utils_redcap import get_rcq_redcap
         try:
-            rcq = get_rcq_redcap()
+            rcq = utils_redcap.get_rcq_redcap()
             if rcq:
                 return True
             else:
                 return False
-        except Exception:
+        except Exception as err:
+            logger.debug(err)
             return False
 
     @staticmethod
@@ -1098,10 +1099,11 @@ class Garjus:
                 logger.debug('loading admin projects')
                 xnat_names = utils_xnat.get_admin_projects(self._xnat)
             else:
-                logger.debug(f'not admin:{self._xnat._user}')
+                logger.debug(f'not admin, loading user projects:{self._user}')
                 # Load from xnat
                 xnat_names = utils_xnat.get_my_projects(self.xnat())
-                logger.debug(f'xnat projects={xnat_names}')
+
+            logger.debug(f'xnat projects={xnat_names}')
         else:
             logger.debug('xnat not available')
             xnat_names = None

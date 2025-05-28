@@ -64,9 +64,14 @@ def login(message=""):
     try:
         if request.method == 'POST':
             if request.form:
-                hostname = 'https://xnat.vanderbilt.edu/xnat'
+                hostname = request.form['hostname']
                 username = request.form['username']
                 password = request.form['password']
+
+                # TODO: store these in the dashboard somehow and pass through every time instead of storing. 
+                # Do this after updgrade to dash 3
+                #daxkey = request.form['daxkey']
+                #garjuskey = request.form['garjuskey']
 
                 try:
                     # Get the xnat alias token

@@ -87,7 +87,7 @@ def get_content(include_logout=False, demo=False):
     tabs = ''
     content = ''
 
-    logger.debug(f'{has_xnat=}, {has_redcap=}')
+    logger.debug(f'{has_xnat=}, {has_redcap=}, {has_rcq=}')
 
     if has_xnat and has_redcap and has_rcq:
         # include all tabs
