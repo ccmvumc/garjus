@@ -268,8 +268,13 @@ class Analysis(object):
             # Get the container name or path
             container = precommand['container']
             for c in processor['containers']:
+                # Find a match on name
                 if c['name'] == container:
-                    container = c['source']
+                    # Found a match now set based on command mode
+                    if command_mode == 'docker':
+                        container = c['source']
+                    else:
+                        container = c['path']
 
             extraopts = precommand.get('extraopts', '')
             args = precommand.get('args', '')
@@ -293,10 +298,15 @@ class Analysis(object):
         # And now the main command must run
         container = command['container']
         for c in processor['containers']:
+            # Find a match on name
             if c['name'] == container:
-                if 'source' in c:
-                    container = c['source']
-                else:
+                # Found a match now set based on command mode
+                try:
+                    if command_mode == 'docker':
+                        container = c['source']
+                    else:
+                        container = c['path']
+                except:
                     raise Exception('cannot run in this environment.')
 
         logger.debug(f'command mode is {command_mode}')
@@ -326,8 +336,13 @@ class Analysis(object):
             # Get the container name or path
             container = post['container']
             for c in processor['containers']:
+                # Find a match
                 if c['name'] == container:
-                    container = c['source']
+                    # Set base on command mode
+                    if command_mode == 'docker':
+                        container = c['source']
+                    else:
+                        container = c['path']
 
             extraopts = post.get('extraopts', '')
             args = post.get('args', '')
@@ -408,11 +423,11 @@ def _run_command(
 
     # Build the command string
     if command_mode == 'docker':
+        cmd = 'docker'
+
         if container.startswith('docker://'):
             # Remove docker prefix
             container = container.split('docker://')[1]
-
-        cmd = 'docker'
 
         if extraopts:
             extraopts = extraopts.replace('-B', '-v')
@@ -428,10 +443,6 @@ def _run_command(
         cmd += f' -v {repodir}:/REPO'
         cmd += f' {extraopts} {container} {args}'
     elif command_mode == 'singularity':
-        if container.startswith('docker://'):
-            # Remove docker prefix
-            container = container.split('docker://')[1]
-
         if command_type == 'singularity_exec':
             cmd = 'singularity exec'
         else:
