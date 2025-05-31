@@ -429,6 +429,7 @@ def run_analysis(
     # That is all
     logger.info(f'analysis done!')
 
+
 def _sessions_from_scans(scans):
     return scans[[
         'PROJECT',

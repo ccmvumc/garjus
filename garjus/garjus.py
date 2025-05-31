@@ -1199,7 +1199,7 @@ class Garjus:
             logger.info(f'setting REDCap attributes:{project}:{task_id}:{newstatus}')
             self.set_task_status(project, task_id, newstatus)
 
-    def analyses(self, projects, download=True):
+    def analyses(self, projects=None, download=True):
         """Return analyses."""
         data = []
         def_field = self._rcq.def_field

@@ -82,6 +82,17 @@ def get_content():
             columns[i]['presentation'] = 'markdown'
 
     content = [
+        dbc.Row([
+            dbc.Col(
+                dbc.Button(
+                    'Refresh Data',
+                    id='button-analyses-refresh',
+                    outline=True,
+                    color='primary',
+                    size='sm',
+                ),
+            ),
+        ]),
         dbc.Row(
             dbc.Col(
                 dcc.Dropdown(
@@ -146,12 +157,8 @@ def get_content():
     return content
 
 
-def load_analyses(projects=[]):
-
-    if projects is None:
-        projects = []
-
-    return data.load_data(projects, refresh=True)
+def load_analyses(refresh=False):
+    return data.load_data(refresh=refresh)
 
 
 @callback(
@@ -164,19 +171,31 @@ def load_analyses(projects=[]):
      Output('label-analyses-rowcount2', 'children'),
     ],
     [
+     Input('button-analyses-refresh', 'n_clicks'),
      Input('dropdown-analyses-proj', 'value'),
      Input('dropdown-analyses-lead', 'value'),
      Input('dropdown-analyses-status', 'value'),
     ])
 def update_analyses(
+    n_clicks,
     selected_proj,
     selected_lead,
     selected_status,
 ):
-    logger.debug('update_all')
+    refresh = False
+
+    logger.debug('update_analyses')
 
     # Load selected data with refresh if requested
-    df = load_analyses(selected_proj)
+    if utils.was_triggered('button-analyses-refresh'):
+        logger.debug(f'analyses refresh:clicks={n_clicks}')
+        refresh = True
+
+    df = load_analyses(refresh=refresh)
+
+    print(f'{selected_proj=}')
+    if selected_proj:
+        df = df[df.PROJECT.isin(selected_proj)]
 
     # Truncate NOTES
     if 'NOTES' in df:
@@ -223,13 +242,17 @@ def update_analyses(
         _link = r['LOGLINK']
         r['LOG'] = f'[📄]({_link})'
 
-         # Make pdf a link
-        _link = r['PDFLINK']
-        r['PDF'] = f'[📊]({_link})'
+        if r['STATUS'] == 'READY':
+             # Make pdf a link
+            _link = r['PDFLINK']
+            r['PDF'] = f'[📊]({_link})'
 
-        # Make pbs a link
-        _link = r['PBSLINK']
-        r['PBS'] = f'[📋]({_link})'
+            # Make pbs a link
+            _link = r['PBSLINK']
+            r['PBS'] = f'[📋]({_link})'
+        else:
+            r['PDF'] = ''
+            r['PBS'] = ''
 
         # Make a link
         if not r['OUTPUT']:
@@ -260,6 +283,8 @@ def update_analyses(
                 r['PROCESSOR'] = f'[{_text}]({_link})'
             except Exception as err:
                 logger.error(f'failed to parse processor:{r["PROCESSOR"]}')
+
+
 
     # Count how many rows are in the table
     rowcount = '{} rows'.format(len(records))

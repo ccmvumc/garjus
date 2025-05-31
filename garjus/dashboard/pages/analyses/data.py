@@ -20,8 +20,8 @@ def get_filename():
     return filename
 
 
-def run_refresh(filename, projects):
-    df = get_data(projects)
+def run_refresh(filename):
+    df = get_data()
 
     save_data(df, filename)
 
@@ -35,13 +35,13 @@ def load_options():
     return proj_options
 
 
-def load_data(projects, refresh=False):
+def load_data(refresh=False):
     filename = get_filename()
 
     if refresh or not os.path.exists(filename):
-        run_refresh(filename, projects)
+        run_refresh(filename)
 
-    logger.info('reading data from file:{}'.format(filename))
+    logger.info(f'reading data from file:{filename}')
     return read_data(filename)
 
 
@@ -55,7 +55,7 @@ def save_data(df, filename):
     df.to_pickle(filename)
 
 
-def get_data(projects):
+def get_data():
     g = Garjus()
 
     if not g.rcq_enabled():
@@ -63,7 +63,7 @@ def get_data(projects):
         return pd.DataFrame(columns=g.column_names('analyses'))
 
     # Load
-    df = g.analyses(projects, download=False)
+    df = g.analyses(download=False)
 
     # Pad with zeros
     df['ID'] = df['ID'].astype(str).str.zfill(3)
