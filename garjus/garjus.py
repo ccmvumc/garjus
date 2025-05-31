@@ -3408,8 +3408,8 @@ class Garjus:
     def image03download(self, project, image03_csv, download_dir):
         download_image03(self, project, image03_csv, download_dir)
 
-    def run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile):
-        run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile)
+    def run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir):
+        run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir)
 
     def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None, analysis_id=None, sessinclude=None):
         download_resources(self, project, download_dir, proctype, resources, files, sesstypes, analysis_id, sessinclude)

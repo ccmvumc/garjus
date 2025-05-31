@@ -26,11 +26,12 @@ logger = logging.getLogger('garjus.analyses')
 
 
 class Analysis(object):
-    def __init__(self, project, subjects, repo, csvfile=None, yamlfile=None):
+    def __init__(self, project, subjects, repo, csvfile=None, yamlfile=None, imagedir=None):
         self._project = project
         self._subjects = subjects
         self._csvfile = csvfile
         self._repo = repo
+        self._imagedir = imagedir
 
         if yamlfile:
             self._yamlfile = yamlfile
@@ -230,12 +231,27 @@ class Analysis(object):
         logger.debug('done!')
 
     def run_commands(self, jobdir, repodir=None):
-        command_mode = 'docker'
+        command_mode = None
+        command = None
+        precommand = None
+        post = None
+        container = None
+        extraopts = None
+        args = None
+        command_type = None
         processor = self._processor
 
-        # Check for docker command
-        if not shutil.which('docker'):
-            logger.error('docker not found, cannot run containers')
+        # Find container command
+        if shutil.which('docker'):
+            command_mode = 'docker'
+        elif shutil.which('singularity'):
+            command_mode = 'singularity'
+        else:
+            logger.error('docker/singularity not found, cannot run containers')
+            return
+
+        if command_mode is None:
+            logger.debug('no command mode found')
             return
 
         command = processor.get('command', None)
@@ -260,6 +276,9 @@ class Analysis(object):
             command_type = precommand.get('type', '')
 
             logger.info(f'running analysis pre-command:{precommand=}')
+
+            if self._imagedir:
+                container = f'{self._imagedir}/{container}'
 
             _run_command(
                 container,
@@ -286,6 +305,9 @@ class Analysis(object):
         args = command.get('args', '')
         command_type = command.get('type', '')
 
+        if self._imagedir:
+            container = f'{self._imagedir}/{container}'
+
         logger.info(f'running main command:{command=}')
 
         _run_command(
@@ -310,6 +332,9 @@ class Analysis(object):
             extraopts = post.get('extraopts', '')
             args = post.get('args', '')
             command_type = post.get('type', '')
+
+            if self._imagedir:
+                container = f'{self._imagedir}/{container}'
 
             logger.info(f'running post command:{post=}')
 
@@ -402,6 +427,20 @@ def _run_command(
         cmd += f' -v {jobdir}/OUTPUTS:/OUTPUTS'
         cmd += f' -v {repodir}:/REPO'
         cmd += f' {extraopts} {container} {args}'
+    elif command_mode == 'singularity':
+        if container.startswith('docker://'):
+            # Remove docker prefix
+            container = container.split('docker://')[1]
+
+        if command_type == 'singularity_exec':
+            cmd += 'singularity exec'
+        else:
+            cmd += 'singularity run'
+
+        cmd += f' -B {jobdir}/INPUTS:/INPUTS'
+        cmd += f' -B {jobdir}/OUTPUTS:/OUTPUTS'
+        cmd += f' -B {repodir}:/REPO'
+        cmd += f' {extraopts} {container} {args}'
 
     if not cmd:
         logger.debug('invalid command')
@@ -419,11 +458,12 @@ def run_analysis(
     repo,
     jobdir,
     csv=None,
-    yamlfile=None
+    yamlfile=None,
+    imagedir=None,
 ):
     # Run it
     logger.info(f'running analysis')
-    Analysis(project, subjects, repo, csv, yamlfile).run(
+    Analysis(project, subjects, repo, csv, yamlfile, imagedir).run(
         garjus, jobdir)
 
     # That is all

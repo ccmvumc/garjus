@@ -223,13 +223,14 @@ def switch_status(
 @click.option('--subjects', '-s', 'subjects', required=False, multiple=True)
 @click.option('--repo', '-r', 'repo', required=True)
 @click.option('--dir', '-d', 'jobdir', type=click.Path(), required=True)
+@click.option('--imagedir', '-i', 'imagedir', type=click.Path(), required=False)
 @click.option('--csv', '-c', 'csv', required=False)
 @click.option('--yaml', '-y', 'yamlfile', type=click.Path(), required=False)
 def run(project, subjects, repo, jobdir, csv, yamlfile):
     click.echo('garjus! run')
 
     g = Garjus()
-    g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile)
+    g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile, imagedir)
 
 
 @cli.command('finish')
