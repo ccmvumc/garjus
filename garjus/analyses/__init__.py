@@ -541,6 +541,9 @@ def _download_sgp_resource_zip(xnat, project, subject, assessor, resource, outdi
     respath = 'data/projects/{}/subjects/{}/experiments/{}/resources/{}/files'
     respath = respath.format(project, subject, assessor, resource)
 
+    # Make the folders
+    _make_dirs(outdir)
+
     logger.debug(f'download zip:{respath}:{reszip}')
 
     # Download the resource as a zip file
@@ -823,7 +826,6 @@ def _make_dirs(dirname):
 
 
 def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
-
     sgp = sgp[sgp.SUBJECT == subj]
 
     for k, a in sgp.iterrows():
@@ -879,7 +881,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
                             raise err
                 else:
                     # Download whole resource
-                    dst = subj_dir
+                    dst = f'{subj_dir}/assessors/{assr}'
 
                     # Have we already downloaded it?
                     if os.path.exists(os.path.join(dst, assr, res)):
