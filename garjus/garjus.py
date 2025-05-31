@@ -3409,6 +3409,9 @@ class Garjus:
         download_image03(self, project, image03_csv, download_dir)
 
     def run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir):
+        if subjects is not None and not isinstance(subjects, list):
+            subjects = subjects.split(',')
+    
         run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir)
 
     def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None, analysis_id=None, sessinclude=None):
