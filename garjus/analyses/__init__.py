@@ -433,9 +433,9 @@ def _run_command(
             container = container.split('docker://')[1]
 
         if command_type == 'singularity_exec':
-            cmd += 'singularity exec'
+            cmd = 'singularity exec'
         else:
-            cmd += 'singularity run'
+            cmd = 'singularity run'
 
         cmd += f' -B {jobdir}/INPUTS:/INPUTS'
         cmd += f' -B {jobdir}/OUTPUTS:/OUTPUTS'
