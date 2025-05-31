@@ -226,7 +226,7 @@ def switch_status(
 @click.option('--imagedir', '-i', 'imagedir', type=click.Path(), required=False)
 @click.option('--csv', '-c', 'csv', required=False)
 @click.option('--yaml', '-y', 'yamlfile', type=click.Path(), required=False)
-def run(project, subjects, repo, jobdir, csv, yamlfile):
+def run(project, subjects, repo, jobdir, csv, yamlfile, imagedir):
     click.echo('garjus! run')
 
     g = Garjus()
