@@ -471,10 +471,11 @@ def run_analysis(
     csv=None,
     yamlfile=None,
     imagedir=None,
+    exclude=None,
 ):
     # Run it
     logger.info(f'running analysis')
-    Analysis(project, subjects, repo, csv, yamlfile, imagedir).run(
+    Analysis(project, subjects, repo, csv, yamlfile, imagedir, exclude).run(
         garjus, jobdir)
 
     # That is all
