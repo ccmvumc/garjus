@@ -3412,7 +3412,7 @@ class Garjus:
         if subjects is not None and not isinstance(subjects, list):
             subjects = subjects.split(',')
 
-         if exclude is not None and not isinstance(exclude, list):
+        if exclude is not None and not isinstance(exclude, list):
             exclude = exclude.split(',')
     
         run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude)
