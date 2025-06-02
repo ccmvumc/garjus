@@ -175,6 +175,7 @@ class Analysis(object):
         processor = self._processor
         project = self._project
         subjects = self._subjects
+        exclude = self.__exclude
 
         logger.info('loading project data')
         assessors = garjus.assessors(projects=[project])
