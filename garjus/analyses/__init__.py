@@ -198,15 +198,10 @@ class Analysis(object):
         logger.debug(f'subject spec={subj_spec}')
 
         for subj in subjects:
-            logger.debug(f'subject={subj}')
-
-            # Make the Subject download folder
-            subj_dir = f'{inputs_dir}/{subj}'
-            _make_dirs(subj_dir)
-
             # Download the subject as specified in subj_spec
             try:
-                logger.info(f'_download_subject={subj}')
+                logger.info(f'downloading subject={subj}')
+                subj_dir = f'{inputs_dir}/{subj}'
                 _download_subject(
                     garjus,
                     subj_dir,
