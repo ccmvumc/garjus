@@ -192,6 +192,7 @@ class Analysis(object):
             subjects = list(sessions.SUBJECT.unique())
 
         if exclude:
+            logger.info(f'excluding={exclude}')
             subjects = [x for x in subjects if x not in exclude]
 
         logger.info(f'subjects={subjects}')
