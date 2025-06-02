@@ -26,12 +26,13 @@ logger = logging.getLogger('garjus.analyses')
 
 
 class Analysis(object):
-    def __init__(self, project, subjects, repo, csvfile=None, yamlfile=None, imagedir=None):
+    def __init__(self, project, subjects, repo, csvfile=None, yamlfile=None, imagedir=None, exclude=None):
         self._project = project
         self._subjects = subjects
         self._csvfile = csvfile
         self._repo = repo
         self._imagedir = imagedir
+        self._exclude = exclude
 
         if yamlfile:
             self._yamlfile = yamlfile
@@ -189,6 +190,9 @@ class Analysis(object):
         if not subjects:
             # Default to all subjects
             subjects = list(sessions.SUBJECT.unique())
+
+        if exclude:
+            subjects = [x for x in subjects if x not in exclude]
 
         logger.info(f'subjects={subjects}')
 
