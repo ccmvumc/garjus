@@ -830,6 +830,9 @@ def _make_dirs(dirname):
 def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
     sgp = sgp[sgp.SUBJECT == subj]
 
+    # Filter to only complete assessors
+    sgp = [x for x in sgp if x['PROCSTATUS'] == 'COMPLETE']
+
     for k, a in sgp.iterrows():
 
         assr = a.ASSR
@@ -1133,6 +1136,9 @@ def _download_session(
 
     # get the assessors for this session
     sess_assessors = assessors[assessors.SESSION == sess]
+
+    # Filter to only complete assessors
+    sess_assessors = [x for x in sess_assessors if x['PROCSTATUS'] == 'COMPLETE']
 
     for k, a in sess_assessors.iterrows():
         assr = a.ASSR
