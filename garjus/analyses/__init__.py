@@ -197,8 +197,9 @@ class Analysis(object):
             logger.info(f'excluding={exclude}')
             subjects = [x for x in subjects if x not in exclude]
 
-        covar_subjects = csv_subjects('/INPUTS/covariates.csv')
+        covar_subjects = csv_subjects(f'{inputs_dir}/covariates.csv')
         if covar_subjects:
+            logger.info('filtering csv subjects')
             subjects = [x for x in subjects if x in covar_subjects]
 
         logger.info(f'subjects={subjects}')
