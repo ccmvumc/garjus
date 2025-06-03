@@ -924,7 +924,6 @@ def _download_subject(
     #  subject-level assessors
     sgp_spec = subj_spec.get('assessors', None)
     if sgp_spec:
-        logger.info(f'download_sgp={subj_dir}')
         _download_subject_assessors(
             garjus,
             subj_dir,
