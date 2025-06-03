@@ -831,7 +831,7 @@ def _download_subject_assessors(garjus, subj_dir, sgp_spec, proj, subj, sgp):
     sgp = sgp[sgp.SUBJECT == subj]
 
     # Filter to only complete assessors
-    sgp = [x for x in sgp if x['PROCSTATUS'] == 'COMPLETE']
+    sgp = sgp[sgp.PROCSTATUS == 'COMPLETE']
 
     for k, a in sgp.iterrows():
 
@@ -1138,7 +1138,7 @@ def _download_session(
     sess_assessors = assessors[assessors.SESSION == sess]
 
     # Filter to only complete assessors
-    sess_assessors = [x for x in sess_assessors if x['PROCSTATUS'] == 'COMPLETE']
+    sess_assessors = [sess_assessors.PROCSTATUS == 'COMPLETE']
 
     for k, a in sess_assessors.iterrows():
         assr = a.ASSR
