@@ -144,6 +144,14 @@ class Analysis(object):
         _make_dirs(inputs_dir)
         _make_dirs(outputs_dir)
 
+        # Copy covars
+        if self._csvfile and os.path.exists(self._csvfile):
+            #print('copy csv')
+            shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
+        else:
+            # Download covars
+            self.download_covars(garjus, inputs_dir)
+
         # Download inputs
         logger.info(f'downloading analysis inputs to {inputs_dir}')
         self.download_inputs(garjus, inputs_dir)
@@ -159,13 +167,6 @@ class Analysis(object):
             logger.info('downloading repo')
             self.download_repo(repo_dir)
 
-        # Copy covars
-        if self._csvfile and os.path.exists(self._csvfile):
-            #print('copy csv')
-            shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
-        else:
-            # Download covars
-            self.download_covars(garjus, inputs_dir)
 
         # Run all commands
         self.run_commands(jobdir, repo_dir)
@@ -195,6 +196,10 @@ class Analysis(object):
         if exclude:
             logger.info(f'excluding={exclude}')
             subjects = [x for x in subjects if x not in exclude]
+
+        covar_subjects = csv_subjects('/INPUTS/covariates.csv')
+        if covar_subjects:
+            subjects = [x for x in subjects if x in covar_subjects]
 
         logger.info(f'subjects={subjects}')
 
@@ -363,6 +368,17 @@ class Analysis(object):
                 jobdir,
                 repodir
             )
+
+
+def csv_subjects(filename):
+    subjects = None
+
+    try:
+        subjects = list(pd.read_csv(filename).ID.unique())
+    except:
+        pass 
+
+    return subjects
 
 
 def parse_list(csv_string):
