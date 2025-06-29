@@ -363,6 +363,9 @@ def load_assr_data(garjus, project_filter):
     # Create shorthand status
     dfa['STATUS'] = dfa['QCSTATUS'].map(ASSR_STATUS_MAP).fillna('Q')
 
+    # Handle uploading jobs
+    dfa.loc[dfa.PROCSTATUS == 'UPLOADING', 'STATUS'] = 'R'
+
     # Handle failed jobs
     dfa.loc[dfa.PROCSTATUS == 'JOB_FAILED', 'STATUS'] = 'X'
 

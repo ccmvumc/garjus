@@ -45,7 +45,7 @@ from .scans import update as update_scans
 logger = logging.getLogger('garjus')
 
 
-DISABLED_STATS = ['dti_PSMD_v1', 'fmri_rest_v4', 'fmri_rest_v5', 'struct_preproc_noflair_v1']
+DISABLED_STATS = ['dti_PSMD_v1', 'fmri_rest_v4', 'fmri_rest_v5', 'struct_preproc_noflair_v1', 'francois_schaefer200', 'francois_schaefer400']
 
 
 class Garjus:

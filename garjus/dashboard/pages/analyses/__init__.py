@@ -66,7 +66,7 @@ COLUMNS = [
     'LOG',
     'OUTPUT',
     'SUBJECTS',
-    'INVESTIGATOR',
+    #'INVESTIGATOR',
     'PROCESSOR',
     'NOTES'
 ]
@@ -129,13 +129,14 @@ def get_content():
         dt.DataTable(
             columns=columns,
             data=[],
+            filter_action='native',
             page_action='none',
-            sort_action='none',
+            sort_action='native',
             id='datatable-analyses',
             style_cell={
                 'textAlign': 'center',
                 'height': 'auto',
-                'padding': '15px 5px 15px 5px',
+                'padding': '1px 5px 0px 5px',
             },
             style_header={
                 'fontWeight': 'bold',

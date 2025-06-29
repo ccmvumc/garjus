@@ -1154,7 +1154,7 @@ def _download_session(
     sess_assessors = assessors[assessors.SESSION == sess]
 
     # Filter to only complete assessors
-    sess_assessors = [sess_assessors.PROCSTATUS == 'COMPLETE']
+    sess_assessors = sess_assessors[sess_assessors.PROCSTATUS == 'COMPLETE']
 
     for k, a in sess_assessors.iterrows():
         assr = a.ASSR
