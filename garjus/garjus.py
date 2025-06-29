@@ -45,7 +45,7 @@ from .scans import update as update_scans
 logger = logging.getLogger('garjus')
 
 
-DISABLED_STATS = ['dti_PSMD_v1', 'fmri_rest_v4', 'fmri_rest_v5', 'struct_preproc_noflair_v1', 'francois_schaefer200', 'francois_schaefer400']
+DISABLED_STATS = ['dti_PSMD_v1', 'fmri_rest_v4', 'fmri_rest_v5', 'struct_preproc_noflair_v1', 'francois_schaefer200_v1', 'francois_schaefer400_v1']
 
 
 class Garjus:
@@ -3458,7 +3458,7 @@ class Garjus:
 
         return detected
 
-    def retry(self, project):
+    def retry(self, project, proctype=None):
         '''Delete outputs on xnat, set to job running, reset on redcap'''
         SKIP_LIST = ['OLD', 'EDITS']
         records = []
@@ -3467,6 +3467,8 @@ class Garjus:
         # get tasks with status of fail, failcount blank or 0
         df = self.tasks(hidedone=False)
         df = df[df.PROJECT == project]
+        if proctype:
+            df = df[df.PROCTYPE == proctype]
         failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
 
         logger.info('deleting files from failed tasks')

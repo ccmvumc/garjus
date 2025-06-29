@@ -416,10 +416,11 @@ def image03csv(project, startdate, enddate, site):
 
 @cli.command('retry')
 @click.option('--project', '-p', 'project', required=True)
-def retry(project):
+@click.option('--type', '-t', 'proctype', required=False)
+def retry(project, proctype=None):
     click.echo('garjus! retry')
     g = Garjus()
-    g.retry(project)
+    g.retry(project, proctype)
 
 
 @cli.command('image03download')
