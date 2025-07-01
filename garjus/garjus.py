@@ -3467,13 +3467,19 @@ class Garjus:
         # get tasks with status of fail, failcount blank or 0
         df = self.tasks(hidedone=False)
         df = df[df.PROJECT == project]
-        if proctype:
-            df = df[df.PROCTYPE == proctype]
         failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
 
         logger.info('deleting files from failed tasks')
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
+
+            if proctype:
+                if is_sgp_assessor(t['ASSESSOR']):
+                    if assr.split('-x-')[2] != proctype:
+                        continue
+                else:
+                    if assr.split('-x-')[3] != proctype:
+                        continue
 
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
@@ -3525,6 +3531,14 @@ class Garjus:
 
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
+
+            if proctype:
+                if is_sgp_assessor(t['ASSESSOR']):
+                    if assr.split('-x-')[2] != proctype:
+                        continue
+                else:
+                    if assr.split('-x-')[3] != proctype:
+                        continue
 
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
