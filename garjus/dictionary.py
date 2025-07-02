@@ -83,7 +83,7 @@ COLUMNS = {
         'DATETIME', 'EVENT', 'REPEAT', 'FIELD', 'CATEGORY', 'RESULT', 'STATUS', 'SOURCE'],
     'assessors': [
         'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'NOTE', 'DATE', 'SITE',
-        'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'TIMEUSED', 'MEMUSED',
+        'ASSR', 'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'TIMEUSED', 'MEMUSED', 'JOBNODE',
         'QCSTATUS', 'QCDATE', 'QCBY', 'XSITYPE', 'INPUTS', 'MODALITY', 'full_path'],
     'issues': [
         'ID', 'DATETIME', 'PROJECT', 'CATEGORY',
@@ -103,7 +103,9 @@ COLUMNS = {
         'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 'FAILCOUNT', 'USER'],
     'analyses': ['PROJECT', 'ID', 'NAME', 'STATUS', 'EDIT', 'NOTES', 'SUBJECTS', 'PROCESSOR', 'INVESTIGATOR', 'OUTPUT'],
     'processors': ['ID', 'PROJECT', 'TYPE', 'EDIT', 'FILE', 'FILTER', 'ARGS'],
-    'sgp': ['PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE'],
+    'sgp': [
+        'PROJECT', 'SUBJECT', 'ASSR', 'PROCSTATUS', 'PROCTYPE', 'QCSTATUS', 'INPUTS', 'DATE', 'XSITYPE',
+        'JOBDATE', 'TIMEUSED', 'MEMUSED', 'JOBNODE'],
     'reports': ['PROJECT', 'TYPE', 'ID', 'VIEW', 'NAME', 'DATE', 'PDF', 'DATA'],
 }
 

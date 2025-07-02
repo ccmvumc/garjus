@@ -1078,6 +1078,7 @@ def update_qa(
             'JOBDATE',
             'TIMEUSED',
             'MEMUSED',
+            'JOBNODE',
         ]
 
         # Format as column names and record dictionaries for dash table

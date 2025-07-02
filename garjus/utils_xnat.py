@@ -57,6 +57,7 @@ proc:genprocdata/validation/validated_by,\
 proc:genprocdata/jobstartdate,\
 proc:genprocdata/walltimeused,\
 proc:genprocdata/memused,\
+proc:genprocdata/jobnode,\
 last_modified,\
 proc:genprocdata/inputs'
 
@@ -71,6 +72,10 @@ proc:subjgenprocdata/procstatus,\
 proc:subjgenprocdata/proctype,\
 proc:subjgenprocdata/validation/status,\
 proc:subjgenprocdata/inputs,\
+proc:subjgenprocdata/jobstartdate,\
+proc:subjgenprocdata/walltimeused,\
+proc:subjgenprocdata/memused,\
+proc:subjgenprocdata/jobnode,\
 last_modified'
 
 
@@ -110,6 +115,7 @@ ASSR_RENAME = {
     'proc:genprocdata/inputs': 'INPUTS',
     'proc:genprocdata/walltimeused': 'TIMEUSED',
     'proc:genprocdata/memused': 'MEMUSED',
+    'proc:genprocdata/jobnode': 'JOBNODE',
 }
 
 SGP_RENAME = {
@@ -120,7 +126,12 @@ SGP_RENAME = {
     'proc:subjgenprocdata/procstatus': 'PROCSTATUS',
     'proc:subjgenprocdata/proctype': 'PROCTYPE',
     'proc:subjgenprocdata/validation/status': 'QCSTATUS',
-    'proc:subjgenprocdata/inputs': 'INPUTS'}
+    'proc:subjgenprocdata/inputs': 'INPUTS',
+    'proc:subjgenprocdata/jobstartdate': 'JOBDATE',
+    'proc:subjgenprocdata/walltimeused': 'TIMEUSED',
+    'proc:subjgenprocdata/memused': 'MEMUSED',
+    'proc:subjgenprocdata/jobnode': 'JOBNODE',
+}
 
 XSI2MOD = {
     'xnat:eegSessionData': 'EEG',

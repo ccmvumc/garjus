@@ -1176,10 +1176,8 @@ class Garjus:
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
                 xsitype = 'proc:subjgenprocdata'
-                assessor = self.xnat().select_sgp_assessor(
-                    project,
-                    assr.split('-x-')[1],
-                    assr)
+                _subj = assr.split('-x-')[1]
+                assessor = self.xnat().select(f'/projects/{project}/subjects/{_subj}/experiment/{assr}')
             else:
                 xsitype = 'proc:genprocdata'
                 assessor = self.xnat().select_assessor(
@@ -3469,12 +3467,21 @@ class Garjus:
         df = df[df.PROJECT == project]
         failed_tasks = df[(df.STATUS == 'JOB_FAILED') & (df.FAILCOUNT == '')]
 
-        logger.info('deleting files from failed tasks')
+        if len(failed_tasks) == 0:
+            logger.info('no failed tasks found')
+            return
+
+        logger.debug(f'deleting files from failed tasks:{len(failed_tasks)}')
+
+        dfa = self.assessors(projects=[project])
+        dfs = self.subject_assessors(projects=[project])
+
         for i, t in failed_tasks.iterrows():
             assr = t['ASSESSOR']
+            is_sgp = is_sgp_assessor(t['ASSESSOR'])
 
             if proctype:
-                if is_sgp_assessor(t['ASSESSOR']):
+                if is_sgp:
                     if assr.split('-x-')[2] != proctype:
                         continue
                 else:
@@ -3482,12 +3489,10 @@ class Garjus:
                         continue
 
             # Connect to the assessor on xnat
-            if is_sgp_assessor(t['ASSESSOR']):
+            if is_sgp:
                 xsitype = 'proc:subjgenprocdata'
-                assessor = self.xnat().select_sgp_assessor(
-                    project,
-                    assr.split('-x-')[1],
-                    assr)
+                _subj = assr.split('-x-')[1]
+                assessor = self.xnat().select(f'/projects/{project}/subjects/{_subj}/experiment/{assr}')
             else:
                 xsitype = 'proc:genprocdata'
                 assessor = self.xnat().select_assessor(
@@ -3500,25 +3505,39 @@ class Garjus:
                 logger.debug(f'assessor not found on xnat:{assr}')
                 continue
 
-            # Clear previous results
-            logger.debug('clearing xnat attributes')
-            assessor.attrs.mset({
-                f'{xsitype}/validation/status': 'Job Pending',
-                f'{xsitype}/jobid': ' ',
-                f'{xsitype}/memused': ' ',
-                f'{xsitype}/walltimeused': ' ',
-                f'{xsitype}/jobnode': ' ',
-            })
+            # Check for already cleared
+            try:
+                if is_sgp:
+                    _status = list(dfs[dfs.ASSR == assr].QCSTATUS).pop()
+                else:
+                    _status = list(dfa[dfa.ASSR == assr].QCSTATUS).pop()
+            except Exception as err:
+                logger.info(f'get status from xnat:{assr}')
+                _status = assessor.attrs.get(f'{xsitype}/validation/status')
 
-            resources = assessor.out_resources()
-            resources = [x for x in resources if x.label() not in SKIP_LIST]
-            logger.debug('deleting xnat resources')
-            for res in resources:
-                try:
-                    res.delete()
-                except Exception:
-                    logger.error('deleting xnat resource')
+            if _status == 'Job Pending':
+                logger.info(f'already cleared xnat:{assr}')
+            else:
+                # Clear previous results
+                logger.info(f'clearing xnat attributes:{assr}')
+                assessor.attrs.mset({
+                    f'{xsitype}/validation/status': 'Job Pending',
+                    f'{xsitype}/jobid': ' ',
+                    f'{xsitype}/memused': ' ',
+                    f'{xsitype}/walltimeused': ' ',
+                    f'{xsitype}/jobnode': ' ',
+                })
 
+                resources = assessor.resources()
+                resources = [x for x in resources if x.label() not in SKIP_LIST]
+                for res in resources:
+                    logger.info(f'deleting xnat resource:{assr}:{res.label()}')
+                    try:
+                        res.delete()
+                    except Exception:
+                        logger.error('deleting xnat resource')
+
+            # Append new record for redcap
             records.append({
                 def_field: project,
                 'redcap_repeat_instrument': 'taskqueue',
@@ -3543,10 +3562,8 @@ class Garjus:
             # Connect to the assessor on xnat
             if is_sgp_assessor(t['ASSESSOR']):
                 xsitype = 'proc:subjgenprocdata'
-                assessor = self.xnat().select_sgp_assessor(
-                    project,
-                    assr.split('-x-')[1],
-                    assr)
+                _subj = assr.split('-x-')[1]
+                assessor = self.xnat().select(f'/projects/{project}/subjects/{_subj}/experiment/{assr}')
             else:
                 xsitype = 'proc:genprocdata'
                 assessor = self.xnat().select_assessor(

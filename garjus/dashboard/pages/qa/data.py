@@ -40,7 +40,7 @@ QA_COLS = [
     'SITE', 'NOTE', 'DATE', 'TYPE', 'STATUS',
     'ARTTYPE', 'SCANTYPE', 'PROCTYPE', 'XSITYPE', 'SESSTYPE', 'MODALITY',
     'FRAMES', 'DURATION', 'TR', 'THICK', 'SENSE', 'MB', 'RESOURCES',
-    'JOBDATE', 'TIMEUSED', 'MEMUSED'
+    'JOBDATE', 'TIMEUSED', 'MEMUSED', 'JOBNODE'
 ]
 
 
@@ -206,7 +206,6 @@ def get_data(projects):
         assr_df = load_assr_data(garjus, projects)
         logger.debug(f'load sgp data:{projects}')
         subj_df = load_sgp_data(garjus, projects)
-
         logger.debug(f'load subjects:{projects}')
         if garjus.redcap_enabled():
             subjects = load_subjects(garjus, projects)
@@ -236,9 +235,8 @@ def get_data(projects):
         assr_df[x] = None
         subj_df[x] = None
 
-    for x in ['JOBDATE', 'TIMEUSED', 'MEMUSED']:
+    for x in ['JOBDATE', 'TIMEUSED', 'MEMUSED', 'JOBNODE']:
         scan_df[x] = None
-        subj_df[x] = None
 
     assr_df['RESOURCES'] = ''
     subj_df['RESOURCES'] = ''
@@ -385,7 +383,7 @@ def load_sgp_data(garjus, project_filter):
     # Get subset of columns
     df = df[[
         'PROJECT', 'SUBJECT', 'DATE', 'ASSR', 'QCSTATUS', 'XSITYPE',
-        'PROCSTATUS', 'PROCTYPE']]
+        'PROCSTATUS', 'PROCTYPE', 'JOBDATE', 'TIMEUSED', 'MEMUSED', 'JOBNODE']]
 
     df.drop_duplicates(inplace=True)
 
