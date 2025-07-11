@@ -74,23 +74,25 @@ def get_data():
             # ID is same as subject number for this project
             pass
 
-    # Make project link
-    df['PROJECTLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
-        '/index.php?pid=' + df['PROJECTPID']
+    # Make links
+    rc_url = g.redcap_url()
+    rc_ver = g.redcap_version()
+    if rc_url.endswith('/api/'):
+        rc_url = rc_url[:-5]
 
-    # Make record link
-    df['IDLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
-        'DataEntry/index.php?' + \
+    # link to primary redcap project for record
+    df['PROJECTLINK'] = rc_url + '/redcap_v' + rc_ver + '/index.php?pid=' + df['PROJECTPID']
+
+    df['IDLINK'] = rc_url + '/redcap_v'  + rc_ver + \
+        '/DataEntry/index.php?' + \
         'pid=' + str(pid) + \
         '&page=issues&id=' + \
         df['PROJECT'] + \
         '&instance=' + \
         df['ID'].astype(str)
 
-    # TODO: not able to work yet, need more redcap ids to get to page
-    #  Make field link
-    df['FIELDLINK'] = 'https://redcap.vanderbilt.edu/redcap_v14.2.2/' + \
-        '/index.php?pid=' + df['PROJECTPID']
+    # TODO: not able to work yet, need more redcap ids to get to page. Make field link
+    df['FIELDLINK'] = rc_url + '/redcap_v' + rc_ver + '/index.php?pid=' + df['PROJECTPID']
 
     return df
 

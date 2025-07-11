@@ -3047,7 +3047,7 @@ class Garjus:
                 _main = i[def_field]
                 _id = i['redcap_repeat_instance']
                 logger.debug(f'deleting:issue:{_main}:{_id}')
-                # https://redcap.vanderbilt.edu/api/help/?content=del_records
+                # /api/help/?content=del_records
                 _payload = {
                     'action': 'delete',
                     'returnFormat': 'json',
@@ -3073,7 +3073,7 @@ class Garjus:
                 _main = i[def_field]
                 _id = i['redcap_repeat_instance']
                 logger.debug(f'deleting:{instrument}:{_main}:{_id}')
-                # https://redcap.vanderbilt.edu/api/help/?content=del_records
+                # /api/help/?content=del_records
                 _payload = {
                     'action': 'delete',
                     'returnFormat': 'json',

@@ -99,10 +99,16 @@ def get_data():
     df = g.reports()
 
     # Make pdf link
-    df['VIEW'] = 'https://redcap.vanderbilt.edu/redcap_v14.0.0/DataEntry/index.php?' + \
-    'pid=' + str(pid) + \
-    '&page=' + df.TYPE.str.lower() + \
-    '&id=' + df['PROJECT'] + \
-    '&instance=' + df['ID'].astype(str)
+    rc_url = g.redcap_url()
+    rc_ver = g.redcap_version()
+    if rc_url.endswith('/api/'):
+        rc_url = rc_url[:-5]
+
+    df['VIEW'] = rc_url + '/redcap_v' + rc_ver + \
+        '/DataEntry/index.php?' + \
+        'pid=' + str(pid) + \
+        '&page=' + df.TYPE.str.lower() + \
+        '&id=' + df['PROJECT'] + \
+        '&instance=' + df['ID'].astype(str)
 
     return df
