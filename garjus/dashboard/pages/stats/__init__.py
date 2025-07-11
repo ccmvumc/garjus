@@ -224,6 +224,11 @@ def get_content():
                         multi=True,
                         placeholder='Select Session Type(s)'
                     ),
+                    dcc.Dropdown(
+                        id='dropdown-stats-meas',
+                        multi=True,
+                        placeholder='Select Measure(s)'
+                    ),
                 ]),
                 width=5,
             ),
@@ -380,6 +385,7 @@ def _session_pivot(df):
     [Output('dropdown-stats-proc', 'options'),
      Output('dropdown-stats-proj', 'options'),
      Output('dropdown-stats-sess', 'options'),
+     Output('dropdown-stats-meas', 'options'),
      Output('datatable-stats', 'data'),
      Output('datatable-stats', 'columns'),
      Output('tabs-stats', 'children'),
@@ -390,6 +396,7 @@ def _session_pivot(df):
      Input('dropdown-stats-proc', 'value'),
      Input('dropdown-stats-proj', 'value'),
      Input('dropdown-stats-sess', 'value'),
+     Input('dropdown-stats-meas', 'value'),
      Input('dropdown-stats-time', 'value'),
      Input('radio-stats-pivot', 'value'),
      Input('button-stats-refresh', 'n_clicks'),
@@ -398,6 +405,7 @@ def update_stats(
     selected_proc,
     selected_proj,
     selected_sess,
+    selected_meas,
     selected_time,
     selected_pivot,
     n_clicks
@@ -430,11 +438,24 @@ def update_stats(
     # Get session types from unfiltered data
     if not df.empty:
         sess = utils.make_options(df.SESSTYPE.unique())
+        meas = utils.make_options(df.columns)
     else:
         sess = []
+        meas = []
 
     # Filter data based on dropdown values
     df = data.filter_data(df, selected_proc, selected_time, selected_sess)
+
+    # Get columns from filtered data
+    if not df.empty:
+        _cols = [x for x in df.columns if x not in HIDECOLS]
+        meas = utils.make_options(_cols)
+    else:
+        meas = []
+
+    if selected_meas:
+        logger.debug(f'filtering measure columns:{selected_meas}')
+        df = df[HIDECOLS + selected_meas]
 
     # Get the graph content in tabs (currently only one tab)
     tabs = get_graph_content(df, selected_pivot)
@@ -475,4 +496,4 @@ def update_stats(
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')
-    return [proc, proj, sess, records, columns, tabs, rowcount, rowcount]
+    return [proc, proj, sess, meas, records, columns, tabs, rowcount, rowcount]
