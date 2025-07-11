@@ -40,7 +40,7 @@ def get_stats(xnat, fullpath):
         comment='#',
         header=None,
         names=aparc_columns,
-        sep='\s+',
+        sep=r'\s+',
         index_col='StructName'
     )
 
@@ -159,7 +159,7 @@ def get_stats(xnat, fullpath):
         comment='#',
         header=None,
         names=aparc_columns,
-        sep='\s+',
+        sep=r'\s+',
         index_col='StructName'
     )
 
@@ -278,7 +278,7 @@ def get_stats(xnat, fullpath):
         comment='#',
         header=None,
         names=aseg_columns,
-        sep='\s+',
+        sep=r'\s+',
         index_col='StructName'
     )
 
@@ -311,14 +311,16 @@ def get_stats(xnat, fullpath):
 
 g = Garjus()
 
-df = g.assessors(projects=['REMBRANDT'])
+df = g.assessors(projects=['REMBRANDT'], proctypes=['FS7_v1'])
 
-df = df[df.PROCTYPE == 'FS7_v1']
-
-df = df.sort_values('ASSR')
+df = df.sort_values('ASSR').reset_index()
 
 for i, row in df.iterrows():
     print(i, row['full_path'])
+
+    if i < 365:
+        continue
+
     stats = get_stats(g.xnat(), row['full_path'])
     print('set stats')
     g.set_stats(row['PROJECT'], row['SUBJECT'], row['SESSION'], row['ASSR'], stats)
