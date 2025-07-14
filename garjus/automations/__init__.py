@@ -29,15 +29,12 @@ D3_SLICE_TIMING = [
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
 
 DM2_SLICE_TIMING = [
-    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
-    0.325,
-    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
-    0.325,
-    0.0, 0.65, 0.065, 0.7150000000000001, 0.13, 0.78, 0.195, 0.845, 0.26, 0.91,
-    1.235, 0.585, 1.17, 0.52, 1.105, 0.455, 1.04, 0.39, 0.9750000000000001,
-    0.325]
+    0.000, 0.650, 0.065, 0.715, 0.130, 0.780, 0.195, 0.845, 0.260, 0.910,
+    1.235, 0.585, 1.170, 0.520, 1.105, 0.455, 1.040, 0.390, 0.975, 0.325,
+    0.000, 0.650, 0.065, 0.715, 0.130, 0.780, 0.195, 0.845, 0.260, 0.910,
+    1.235, 0.585, 1.170, 0.520, 1.105, 0.455, 1.040, 0.390, 0.975, 0.325,
+    0.000, 0.650, 0.065, 0.715, 0.130, 0.780, 0.195, 0.845, 0.260, 0.910,
+    1.235, 0.585, 1.170, 0.520, 1.105, 0.455, 1.040, 0.390, 0.975, 0.325]
 
 REMBRANDT_SLICE_TIMING = [
     0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
@@ -46,6 +43,30 @@ REMBRANDT_SLICE_TIMING = [
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
     0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
     1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
+
+COGD_REST_SLICE_TIMING = [
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40,
+    0.00, 0.80, 0.08, 0.88, 0.16, 0.96, 0.24, 1.04, 0.32, 1.12,
+    1.52, 0.72, 1.44, 0.64, 1.36, 0.56, 1.28, 0.48, 1.20, 0.40]
+
+#tr = 3.0
+#slices = 60
+#orders = list(range(0, slices, 2)) + list(range(1, slices, 2))
+#one_time = tr/slices
+#times = [i * one_time for i in range(slices)]
+#slice_times = [0] * slices
+#for i, num in enumerate(orders):
+#    slice_times[num] = times[i]
+COGD_NBACK_SLICE_TIMING = [
+    0.00, 1.50, 0.05, 1.55, 0.10, 1.60, 0.15, 1.65, 0.20, 1.70, 
+    0.25, 1.75, 0.30, 1.80, 0.35, 1.85, 0.40, 1.90, 0.45, 1.95,
+    0.50, 2.00, 0.55, 2.05, 0.60, 2.10, 0.65, 2.15, 0.70, 2.20,
+    0.75, 2.25, 0.80, 2.30, 0.85, 2.35, 0.90, 2.40, 0.95, 2.45,
+    1.00, 2.50, 1.05, 2.55, 1.10, 2.60, 1.15, 2.65, 1.20, 2.70,
+    1.25, 2.75, 1.30, 2.80, 1.35, 2.85, 1.40, 2.90, 1.45, 2.95]
 
 
 def update(garjus, projects, autos_include=None, autos_exclude=None):
@@ -752,7 +773,7 @@ def _run_scan_automations(automations, garjus, project):
     project_redcap = garjus.primary(project)
 
     # Add slice timing
-    if project in ['REMBRANDT', 'COGD']:
+    if project == ['REMBRANDT']:
         logger.debug(f'running add_slicetiming:{project}')
 
         slicetiming = importlib.import_module(
@@ -760,8 +781,31 @@ def _run_scan_automations(automations, garjus, project):
         results += slicetiming.process_project(
             garjus,
             project,
-            D3_SLICE_TIMING,
+            REMBRANDT_SLICE_TIMING,
             ['fMRI_REST1', 'fMRI_REST2'],
+            sites=['VUMC'],
+        )
+    elif project ==  'COGD':
+        logger.debug(f'running add_slicetiming:{project}')
+
+        slicetiming = importlib.import_module(
+            'garjus.automations.xnat_add_slicetiming')
+
+        # Run resting state
+        results += slicetiming.process_project(
+            garjus,
+            project,
+            COGD_REST_SLICE_TIMING,
+            ['fMRI_REST1', 'fMRI_REST2'],
+            sites=['VUMC'],
+        )
+
+        # Then run nback
+        results += slicetiming.process_project(
+            garjus,
+            project,
+            COGD_NBACK_SLICE_TIMING,
+            ['fMRI_NBACK'],
             sites=['VUMC'],
         )
     elif project == 'D3':
