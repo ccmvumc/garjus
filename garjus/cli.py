@@ -392,6 +392,15 @@ def import_nifti(src, dst, modality):
     g.import_nifti(src, dst, modality=modality)
 
 
+@cli.command('importedat')
+@click.argument('src', required=True)
+@click.argument('dst', required=True)
+def import_edat(src, dst):
+    click.echo('garjus! importedat')
+    g = Garjus()
+    g.import_edat(src, dst)
+
+
 @cli.command('pdf')
 @click.argument('src', required=True)
 @click.option('--project', '-p', 'project', required=True)

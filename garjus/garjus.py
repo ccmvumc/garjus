@@ -889,7 +889,7 @@ class Garjus:
         if dst.count('/') == 4:
             (proj, subj, sess, scan, scantype) = dst.split('/')
             logger.debug(f'uploading to:{proj},{subj},{sess},{scan},{scantype}')
-            return self.upload_nifti(src, proj, subj, sess, scan, scantype, modality)
+            self.upload_nifti(src, proj, subj, sess, scan, scantype, modality)
         else:
             logger.error(f'invalid dst:{dst}')
             return
@@ -899,6 +899,28 @@ class Garjus:
             project=proj,
             category='import_nifti',
             description=src,
+            subject=subj,
+            session=sess,
+            scan=scan,
+            result='COMPLETE')
+
+    def import_edat(self, src, dst):
+        """Import edat source to destination."""
+        logger.debug(f'uploading from:{src}')
+
+        if dst.count('/') == 3:
+            (proj, subj, sess, scan) = dst.split('/')
+            logger.debug(f'uploading to:{proj},{subj},{sess},{scan}')
+            self.upload_edat(src, proj, subj, sess, scan)
+        else:
+            logger.error(f'invalid dst:{dst}')
+            return
+
+        logger.debug(f'adding activity:{src}')
+        self.add_activity(
+            project=proj,
+            category='import_edat',
+            description=f'{src}:{dst}',
             subject=subj,
             session=sess,
             scan=scan,
@@ -3258,6 +3280,9 @@ class Garjus:
         # Upload the NIFTIs
         utils_xnat.upload_files([nifti], scan_object.resource('NIFTI'))
 
+    def _upload_edat(self, edat_file, scan_object):
+        utils_xnat.upload_files([edat_file], scan_object.resource('EDAT'))
+
     def upload_session(self, session_dir, project, subject, session):
         # session dir - should only contain a subfolder for each series
         # as created by rename_dicom()
@@ -3366,6 +3391,30 @@ class Garjus:
             scan_datatype = 'xnat:mrScanData'
         self._upload_nifti(nifti, scan_object, scantype, scan_datatype)
         logger.info(f'finished uploading nifti:{nifti}')
+
+    def upload_edat(self, edat_file, project, subject, session, scan):
+        if not self.xnat_enabled():
+            raise Exception('xnat not enabled')
+
+        # Check that subject exists, create as needed
+        subject_object = self._xnat.select_subject(project, subject)
+        if not subject_object.exists():
+            logger.info(f'subject does not exist:{subject}')
+            raise Exception(f'subject does not exist on xnat')
+
+        session_object = subject_object.experiment(session)
+        if not session_object.exists():
+            logger.info(f'session does not exist')
+            raise Exception(f'session does not exist on xnat')
+
+        scan_object = session_object.scan(scan)
+        if not scan_object.exists():
+            logger.info(f'scan does not exist')
+            raise Exception(f'scan does not exist on xnat')
+
+        logger.info(f'uploading edat:{edat_file}')
+        self._upload_edat(edat_file, scan_object)
+        logger.info(f'finished uploading edat:{edat_file}')
 
     def import_dicom_xnat(self, src, proj, subj, sess):
         if not self.xnat_enabled():
