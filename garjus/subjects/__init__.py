@@ -377,8 +377,8 @@ def load_COGD(garjus):
     df['AGE'] = (
         df[date_field] - df[dob_field]
     ).values.astype('<m8[Y]').astype('int').astype('str')
-
     df['DOB'] = df[dob_field]
+    df = df.drop(columns=[dob_field, date_field])
 
     return df
 

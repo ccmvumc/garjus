@@ -82,7 +82,7 @@ def subjects(ctx, project, csv):
     if csv:
         subjects = subjects.set_index('ID')
         columns = subjects.columns
-        columns = [x for x in columns if x not in ['identifier_id', 'GUID']]
+        columns = [x for x in columns if x not in ['identifier_id', 'GUID', 'DOB']]
         subjects[columns].to_csv(csv)
     else:
         pprint.pprint(subjects)
