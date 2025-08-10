@@ -40,6 +40,9 @@ class Analysis(object):
         else:
             self._processor = self.load_processor()
 
+        if self._processor is None:
+            raise Exception('failed to load processor')
+
     def load_yaml(self):
         # Load yaml contents
         yaml_file = self._yamlfile
@@ -65,16 +68,20 @@ class Analysis(object):
             base = 'https://raw.githubusercontent.com'
 
             p = self._repo.replace(':', '/').split('/')
-            if len(p) != 2:
+            if len(p) < 2 or len(p) > 3:
                 logger.error(f'failed to parse:{self._repo}')
                 return None
 
             user = p[0]
             repo = p[1]
 
-            logger.info(f'loading:{user=}:{repo=}')
-
-            url = f'{base}/{user}/{repo}/main/{filename}'
+            if len(p) == 3:
+                subd = p[2]
+                logger.info(f'loading:{user=}:{repo=}:{subd}')
+                url = f'{base}/{user}/{repo}/main/processors/{subd}/{filename}'
+            else:
+                logger.info(f'loading:{user=}:{repo=}')
+                url = f'{base}/{user}/{repo}/main/{filename}'
 
             logger.info(f'{url=}')
 
@@ -134,6 +141,19 @@ class Analysis(object):
         with zipfile.ZipFile(repo_zip, 'r') as z:
             z.extractall(repo_dir)
 
+        top_dir = os.path.join(repo_dir, os.listdir(repo_dir)[0])
+        print(f'{top_dir=}')
+
+        for d in os.listdir(top_dir):
+            src = os.path.join(top_dir, d)
+            dst = os.path.join(repo_dir, d)
+            try:
+                shutil.move(src, dst)
+                print(f'Moved:{src}:{dst}')
+            except shutil.Error as err:
+                print(f'Failed to move:{src}:{dst}:{err}')
+
+
     def run(self, garjus, jobdir):
         jobdir = os.path.abspath(jobdir)
 
@@ -165,6 +185,7 @@ class Analysis(object):
             # Download repository
             repo_dir = f'{jobdir}/REPO'
             logger.info('downloading repo')
+            _make_dirs(repo_dir)
             self.download_repo(repo_dir)
 
 
