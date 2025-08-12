@@ -154,27 +154,32 @@ class Analysis(object):
                 print(f'Failed to move:{src}:{dst}:{err}')
 
 
-    def run(self, garjus, jobdir):
+    def run(self, garjus, jobdir, reuse_inputs=False):
         jobdir = os.path.abspath(jobdir)
-
         inputs_dir = f'{jobdir}/INPUTS'
         outputs_dir = f'{jobdir}/OUTPUTS'
 
-        logger.info(f'creating INPUTS and OUTPUTS in:{jobdir}')
-        _make_dirs(inputs_dir)
-        _make_dirs(outputs_dir)
-
-        # Copy covars
-        if self._csvfile and os.path.exists(self._csvfile):
-            #print('copy csv')
-            shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
+        if reuse_inputs:
+            logger.info(f'using existing inputs in:{jobdir}/INPUTS')
         else:
-            # Download covars
-            self.download_covars(garjus, inputs_dir)
+            logger.info(f'creating INPUTS in:{jobdir}')
+            _make_dirs(inputs_dir)
 
-        # Download inputs
-        logger.info(f'downloading analysis inputs to {inputs_dir}')
-        self.download_inputs(garjus, inputs_dir)
+            # Copy covars
+            if self._csvfile and os.path.exists(self._csvfile):
+                print('copying covariates csv')
+                shutil.copy(self._csvfile, f'{jobdir}/INPUTS/covariates.csv')
+            else:
+                # Download covars
+                print('downloading covariates csv')
+                self.download_covars(garjus, inputs_dir)
+
+            # Download inputs
+            logger.info(f'downloading analysis inputs to {inputs_dir}')
+            self.download_inputs(garjus, inputs_dir)
+
+        logger.info(f'creating OUTPUTS in:{jobdir}')
+        _make_dirs(outputs_dir)
 
         # Get the code
         logger.info(f'repo={self._repo}')
@@ -188,8 +193,8 @@ class Analysis(object):
             _make_dirs(repo_dir)
             self.download_repo(repo_dir)
 
-
         # Run all commands
+        logger.info('running commands')
         self.run_commands(jobdir, repo_dir)
 
     def download_inputs(self, garjus, inputs_dir):
@@ -511,11 +516,12 @@ def run_analysis(
     yamlfile=None,
     imagedir=None,
     exclude=None,
+    reuse_inputs=False,
 ):
     # Run it
     logger.info(f'running analysis')
     Analysis(project, subjects, repo, csv, yamlfile, imagedir, exclude).run(
-        garjus, jobdir)
+        garjus, jobdir, reuse_inputs=reuse_inputs)
 
     # That is all
     logger.info(f'analysis done!')

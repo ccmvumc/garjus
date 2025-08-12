@@ -227,11 +227,12 @@ def switch_status(
 @click.option('--imagedir', '-i', 'imagedir', type=click.Path(), required=False)
 @click.option('--csv', '-c', 'csv', required=False)
 @click.option('--yaml', '-y', 'yamlfile', type=click.Path(), required=False)
-def run(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude):
+@click.option('--reuse', required=False, is_flag=True)
+def run(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude, reuse):
     click.echo('garjus! run')
 
     g = Garjus()
-    g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude)
+    g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude, reuse_inputs=reuse)
 
 
 @cli.command('finish')
