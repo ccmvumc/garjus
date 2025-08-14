@@ -318,7 +318,7 @@ df = df.sort_values('ASSR').reset_index()
 for i, row in df.iterrows():
     print(i, row['full_path'])
 
-    if i < 365:
+    if row['SESSION'] not in ['12345']:
         continue
 
     stats = get_stats(g.xnat(), row['full_path'])
