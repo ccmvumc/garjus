@@ -235,6 +235,20 @@ def run(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude, reuse
     g.run_analysis(project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude, reuse_inputs=reuse)
 
 
+@cli.command('spin')
+@click.option('--project', '-p', 'project', required=True)
+@click.option('--subject', '-s', 'subject', required=True)
+@click.option('--yaml', '-y', 'yamlfile', type=click.Path(), required=True)
+@click.option('--dir', '-d', 'jobdir', type=click.Path(), required=True)
+@click.option('--imagedir', '-i', 'imagedir', type=click.Path(), required=False)
+@click.option('--reuse', required=False, is_flag=True)
+def spin(project, subject, jobdir, yamlfile, imagedir, reuse):
+    click.echo('garjus! spin')
+
+    g = Garjus()
+    g.run_spin(project, subject, jobdir, yamlfile, imagedir, reuse_inputs=reuse)
+
+
 @cli.command('finish')
 @click.argument('analysis_id', required=True)
 @click.argument('analysis_dir', required=True)

@@ -40,6 +40,7 @@ from .dictionary import TASKS_RENAME, ANALYSES_RENAME
 from .tasks import update as update_tasks
 from .analyses import run_analysis, download_resources, download_scan_resources
 from .scans import update as update_scans
+from .spin import run_spin
 
 
 logger = logging.getLogger('garjus')
@@ -3463,6 +3464,10 @@ class Garjus:
             exclude = exclude.split(',')
     
         run_analysis(self, project, subjects, repo, jobdir, csv, yamlfile, imagedir, exclude, reuse_inputs=reuse_inputs)
+
+
+    def run_spin(self, project, subject, jobdir, yamlfile, imagedir, reuse_inputs=False):
+        run_spin(self, project, subject, jobdir, yamlfile, imagedir, reuse_inputs=reuse_inputs)
 
     def download_proctype(self, project, download_dir, proctype, resources, files, sesstypes=None, analysis_id=None, sessinclude=None):
         download_resources(self, project, download_dir, proctype, resources, files, sesstypes, analysis_id, sessinclude)
