@@ -356,11 +356,10 @@ def _download_subject(
 
             sess = subj_mris.SESSION.iloc[0]
 
-            sess_dir = f'{subj_dir}/{sess}'
-            logger.info(f'download_session={sess_dir}')
+            logger.info(f'download_session={sess}:{subj_dir}')
             _download_session(
                 garjus,
-                sess_dir,
+                subj_dir,
                 sess_spec,
                 proj,
                 subj,
@@ -381,11 +380,10 @@ def _download_subject(
                     logger.debug(f'skip session, no match={sess}:{s.SESSTYPE}')
                     continue
 
-                sess_dir = f'{subj_dir}/{sess}'
-                logger.info(f'download_session={sess_dir}')
+                logger.info(f'download_session={sess}:{subj_dir}')
                 _download_session(
                     garjus,
-                    sess_dir,
+                    subj_dir,
                     sess_spec,
                     proj,
                     subj,
@@ -398,11 +396,10 @@ def _download_subject(
             for j, s in sessions[sessions.SUBJECT == subj].iterrows():
                 sess = s.SESSION
 
-                sess_dir = f'{subj_dir}/{sess}'
-                logger.info(f'{i}:{j}:download_session={sess_dir}')
+                logger.info(f'{i}:{j}:download_session={sess}:{subj_dir}')
                 _download_session(
                     garjus,
-                    sess_dir,
+                    subj_dir,
                     sess_spec,
                     proj,
                     subj,
@@ -481,7 +478,7 @@ def _download_scans(
                             continue
 
                         # Download it
-                        logger.info(f'download:{sess}:{scan}:{res}:{m}')
+                        logger.info(f'download:{sess}:{scan}:{res}:{m}:{dst}')
                         try:
                             _download_scan_file(
                                 garjus,
@@ -499,7 +496,7 @@ def _download_scans(
 
                 elif fdest and not fmatch:
                     logger.debug(f'getting fdest:{fdest}')
-                    dst = f'{os.path.dirname(sess_dir)}/{fdest}'
+                    dst = f'{sess_dir}/{fdest}'
 
                     # Have we already downloaded it?
                     if os.path.exists(dst):
@@ -507,7 +504,7 @@ def _download_scans(
                         continue
 
                     # Download it
-                    logger.info(f'download:{sess}:{scan}:{res}')
+                    logger.info(f'download:{sess}:{scan}:{res}:{dst}')
                     try:
                         _download_scan_first_file(
                             garjus,
@@ -518,7 +515,7 @@ def _download_scans(
                             res,
                             dst)
                     except Exception as err:
-                        logger.error(f'{sess}:{scan}:{res}:first:{err}')
+                        logger.error(f'{sess}:{scan}:{res}:{err}')
                         raise err
                 elif fmatch and not fdest:
                     # Download files
@@ -533,7 +530,7 @@ def _download_scans(
                             continue
 
                         # Download it
-                        logger.info(f'download:{sess}:{scan}:{res}:{f}')
+                        logger.info(f'download:{sess}:{scan}:{res}:{f}:{dst}')
                         try:
                             _download_scan_file(
                                 garjus,
@@ -546,7 +543,7 @@ def _download_scans(
                                 dst
                             )
                         except Exception as err:
-                            logger.error(f'{sess}:{scan}:{res}:{f}:{err}')
+                            logger.error(f'{sess}:{scan}:{res}:{f}:{dst}:{err}')
                             raise err
                 else:
                     # Download whole resource
@@ -670,7 +667,7 @@ def _download_session(
                 elif fdest and not fmatch:
                     fdest = res_spec['fdest']
                     logger.debug(f'setting fdest:{fdest}')
-                    dst = f'{os.path.dirname(sess_dir)}/{fdest}'
+                    dst = f'{sess_dir}/{fdest}'
 
                     # Have we already downloaded it?
                     if os.path.exists(dst):
