@@ -557,7 +557,7 @@ def _download_scans(
                         continue
 
                     # Download it
-                    logger.info(f'download resource:{sess}:{scan}:{res}')
+                    logger.info(f'download resource:{sess}:{scan}:{res}:{dst}')
                     try:
                         _download_scan_resource(
                             garjus,
@@ -675,7 +675,7 @@ def _download_session(
                         continue
 
                     # Download it
-                    logger.info(f'download:{sess}:{assr}:{res}')
+                    logger.info(f'download:{sess}:{assr}:{res}:{dst}')
                     try:
                         _download_assessor_first_file(
                             garjus,
@@ -686,7 +686,7 @@ def _download_session(
                             res,
                             dst)
                     except Exception as err:
-                        logger.error(f'{sess}:{assr}:{res}:{err}')
+                        logger.error(f'{sess}:{assr}:{res}:{dst}:{err}')
                         raise err
                 elif fmatch and not fdest:
                     # Download files
@@ -700,7 +700,7 @@ def _download_session(
                             continue
 
                         # Download it
-                        logger.info(f'download file:{proj}:{subj}:{sess}:{assr}:{res}:{fmatch}')
+                        logger.info(f'download file:{proj}:{subj}:{sess}:{assr}:{res}:{fmatch}:{dst}')
                         try:
                             _download_file(
                                 garjus,
@@ -727,7 +727,7 @@ def _download_session(
                         continue
 
                     # Download it
-                    logger.info(f'download resource:{proj}:{subj}:{sess}:{assr}:{res}')
+                    logger.info(f'download resource:{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
                     try:
                         _download_resource(
                             garjus,
