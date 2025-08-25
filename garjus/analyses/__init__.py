@@ -769,6 +769,12 @@ def download_resources(
                         raise err
             else:
                 logger.debug(f'{proj}:{subj}:{sess}:{assr}:{res}:{dst}')
+
+                # Have we already downloaded it?
+                if os.path.exists(os.path.join(dst, res)):
+                    logger.debug(f'exists:{dst}')
+                    continue
+
                 try:
                     _download_resource(garjus, proj, subj, sess, assr, res, dst)
                 except Exception as err:
