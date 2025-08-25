@@ -483,7 +483,7 @@ def load_standard(garjus, project, include_dob=False):
 
         # Merge in fallypride data
         df = pd.merge(df, dfr, how='left', left_on=sec_field, right_on='ID')
-        print(df)
+
     elif project == 'REMBRANDT':
         # Use arm/events names to determine which arm
         df['GROUP'] = df['redcap_event_name'].map({
