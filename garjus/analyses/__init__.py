@@ -772,7 +772,7 @@ def download_resources(
 
                 # Have we already downloaded it?
                 if os.path.exists(os.path.join(dst, res)):
-                    logger.debug(f'exists:{dst}')
+                    logger.debug(f'exists:{dst}/{res}')
                     continue
 
                 try:
