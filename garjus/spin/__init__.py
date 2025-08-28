@@ -17,7 +17,7 @@ class Spin(object):
     def __init__(self, project, subject, yamlfile, imagedir=None):
         self._project = project
         self._subject = subject
-        self._imagedir = imagedir # optional, used with singularity, not docker
+        self._imagedir = imagedir # optional, used with singularity, not docker/podman
         self._yamlfile = yamlfile
         self._processor = self.load_yaml()
 
@@ -119,12 +119,14 @@ class Spin(object):
         processor = self._processor
 
         # Find container command
-        if shutil.which('docker'):
+        if shutil.which('podman'):
+            command_mode = 'podman'
+        elif shutil.which('docker'):
             command_mode = 'docker'
         elif shutil.which('singularity'):
             command_mode = 'singularity'
         else:
-            logger.error('docker/singularity not found, cannot run containers')
+            logger.error('podman/docker/singularity not found, cannot run containers')
             return
 
         if command_mode is None:
@@ -148,7 +150,7 @@ class Spin(object):
                 # Find a match on name
                 if c['name'] == container:
                     # Found a match now set based on command mode
-                    if command_mode == 'docker':
+                    if command_mode in ['podman', 'docker']:
                         container = c['source']
                     else:
                         container = c['path']
@@ -180,7 +182,7 @@ class Spin(object):
             if c['name'] == container:
                 # Found a match now set based on command mode
                 try:
-                    if command_mode == 'docker':
+                    if command_mode in ['podman', 'docker']:
                         container = c['source']
                     else:
                         container = c['path']
@@ -216,7 +218,7 @@ class Spin(object):
                 # Find a match
                 if c['name'] == container:
                     # Set base on command mode
-                    if command_mode == 'docker':
+                    if command_mode in ['podman', 'docker']:
                         container = c['source']
                     else:
                         container = c['path']
@@ -251,8 +253,8 @@ def _run_command(
     cmd = None
 
     # Build the command string
-    if command_mode == 'docker':
-        cmd = 'docker'
+    if command_mode in ['podman', 'docker']:
+        cmd = command_mode
 
         if container.startswith('docker://'):
             # Remove docker prefix
