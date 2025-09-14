@@ -817,7 +817,7 @@ def _run_scan_automations(automations, garjus, project):
             garjus,
             project,
             D3_SLICE_TIMING,
-            ['fMRI_REST1', 'fMRI_REST2'],
+            ['fMRI_REST1', 'fMRI_REST2', 'fMRI_MIDT1', 'fMRI_MIDT2', 'fMRI_EEfRT1', 'fMRI_EEfRT2', 'fMRI_EEfRT3'],
             sites=['VUMC'],
         )
     elif project in ['DepMIND2', 'DepMIND3']:

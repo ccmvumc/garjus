@@ -1217,6 +1217,7 @@ def _download_session(
                     continue
 
                 if 'fmatch' in res_spec:
+                    # TODO: handle wildcards
                     # Download files
                     for fmatch in res_spec['fmatch'].split(','):
 
