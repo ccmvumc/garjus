@@ -35,7 +35,7 @@ class Spin(object):
         jobdir = os.path.abspath(jobdir)
         inputs_dir = f'{jobdir}/INPUTS'
         outputs_dir = f'{jobdir}/OUTPUTS'
-        var2val = {'subject': self._subject}
+        var2val = {'subject': self._subject, 'session': self._subject}
 
         if reuse_inputs:
             logger.info(f'using existing inputs in:{jobdir}/INPUTS')
