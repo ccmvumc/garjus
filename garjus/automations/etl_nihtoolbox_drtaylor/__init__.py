@@ -28,12 +28,12 @@ def _transform(regdata, scoredata):
 
     # Start with the registration data
     data.update({
-        'toolbox_pin': regdata['PIN'],
-        'toolbox_deviceid': regdata['DeviceID'],
-        'toolbox_age': regdata['Age'],
-        'toolbox_education': regdata['Education'],
-        'toolbox_gender': regdata['Gender'],
-        'toolbox_handedness': regdata['Handedness'],
+        'toolbox_pin': regdata.get('PIN', ''),
+        'toolbox_deviceid': regdata.get('DeviceID', ''),
+        'toolbox_age': regdata.get('Age', ''),
+        'toolbox_education': regdata.get('Education', ''),
+        'toolbox_gender': regdata.get('Gender', ''),
+        'toolbox_handedness': regdata.get('Handedness', ),
         'toolbox_race': regdata['Race'],
         'toolbox_ethnicity': regdata['Ethnicity'],
         'toolbox_assessment': regdata['Assessment Name'],
@@ -45,34 +45,34 @@ def _transform(regdata, scoredata):
             picseqtest = scoredata[i]
 
     # Load the other tests
-    listsorttest = scoredata['NIH Toolbox List Sorting Working Memory Test Age 7+ v2.1']
-    patterntest = scoredata['NIH Toolbox Pattern Comparison Processing Speed Test Age 7+ v2.1']
-    picvocabtest = scoredata['NIH Toolbox Picture Vocabulary Test Age 3+ v2.1']
-    oralrecogtest = scoredata['NIH Toolbox Oral Reading Recognition Test Age 3+ v2.1']
+    listsorttest = scoredata.get('NIH Toolbox List Sorting Working Memory Test Age 7+ v2.1', {})
+    patterntest = scoredata.get('NIH Toolbox Pattern Comparison Processing Speed Test Age 7+ v2.1', {})
+    picvocabtest = scoredata.get('NIH Toolbox Picture Vocabulary Test Age 3+ v2.1', {})
+    oralrecogtest = scoredata.get('NIH Toolbox Oral Reading Recognition Test Age 3+ v2.1', {})
 
     # Get the individual scores
     data.update({
-        'toolbox_listsorttest_raw': listsorttest['RawScore'],
-        'toolbox_patterntest_raw': patterntest['RawScore'],
-        'toolbox_picseqtest_raw': picseqtest['RawScore'],
-        'toolbox_oralrecogtest_theta': oralrecogtest['Theta'],
-        'toolbox_picseqtest_theta': picseqtest['Theta'],
-        'toolbox_picvocabtest_theta': picvocabtest['Theta'],
-        'toolbox_listsorttest_uncstd': listsorttest['Uncorrected Standard Score'],
-        'toolbox_oralrecogtest_uncstd': oralrecogtest['Uncorrected Standard Score'],
-        'toolbox_patterntest_uncstd': patterntest['Uncorrected Standard Score'],
-        'toolbox_picseqtest_uncstd': picseqtest['Uncorrected Standard Score'],
-        'toolbox_picvocabtest_uncstd': picvocabtest['Uncorrected Standard Score'],
-        'toolbox_listsorttest_agestd': listsorttest['Age-Corrected Standard Score'],
-        'toolbox_oralrecogtest_agestd': oralrecogtest['Age-Corrected Standard Score'],
-        'toolbox_patterntest_agestd': patterntest['Age-Corrected Standard Score'],
-        'toolbox_picseqtest_agestd': picseqtest['Age-Corrected Standard Score'],
-        'toolbox_picvocabtest_agestd': picvocabtest['Age-Corrected Standard Score'],
-        'toolbox_listsorttest_tscore': listsorttest['Fully-Corrected T-score'],
-        'toolbox_oralrecogtest_tscore': oralrecogtest['Fully-Corrected T-score'],
-        'toolbox_patterntest_tscore': patterntest['Fully-Corrected T-score'],
-        'toolbox_picseqtest_tscore': picseqtest['Fully-Corrected T-score'],
-        'toolbox_picvocabtest_tscore': picvocabtest['Fully-Corrected T-score'],
+        'toolbox_listsorttest_raw': listsorttest.get('RawScore', ''),
+        'toolbox_patterntest_raw': patterntest.get('RawScore', ''),
+        'toolbox_picseqtest_raw': picseqtest.get('RawScore', ''),
+        'toolbox_oralrecogtest_theta': oralrecogtest.get('Theta', ''),
+        'toolbox_picseqtest_theta': picseqtest.get('Theta', ''),
+        'toolbox_picvocabtest_theta': picvocabtest.get('Theta', ''),
+        'toolbox_listsorttest_uncstd': listsorttest.get('Uncorrected Standard Score', ''),
+        'toolbox_oralrecogtest_uncstd': oralrecogtest.get('Uncorrected Standard Score', ''),
+        'toolbox_patterntest_uncstd': patterntest.get('Uncorrected Standard Score', ''),
+        'toolbox_picseqtest_uncstd': picseqtest.get('Uncorrected Standard Score', ''),
+        'toolbox_picvocabtest_uncstd': picvocabtest.get('Uncorrected Standard Score', ''),
+        'toolbox_listsorttest_agestd': listsorttest.get('Age-Corrected Standard Score', ''),
+        'toolbox_oralrecogtest_agestd': oralrecogtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_patterntest_agestd': patterntest.get('Age-Corrected Standard Score', ''),
+        'toolbox_picseqtest_agestd': picseqtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_picvocabtest_agestd': picvocabtest.get('Age-Corrected Standard Score', ''),
+        'toolbox_listsorttest_tscore': listsorttest.get('Fully-Corrected T-score', ''),
+        'toolbox_oralrecogtest_tscore': oralrecogtest.get('Fully-Corrected T-score', ''),
+        'toolbox_patterntest_tscore': patterntest.get('Fully-Corrected T-score', ''),
+        'toolbox_picseqtest_tscore': picseqtest.get('Fully-Corrected T-score', ''),
+        'toolbox_picvocabtest_tscore': picvocabtest.get('Fully-Corrected T-score', ''),
     })
 
     cogcrystalcomp = scoredata.get('Cognition Crystallized Composite v1.1', None)
@@ -85,9 +85,9 @@ def _transform(regdata, scoredata):
 
     if cogcrystalcomp:
         data.update({
-            'toolbox_cogcrystalcomp_uncstd': cogcrystalcomp['Uncorrected Standard Score'],
-            'toolbox_cogcrystalcomp_agestd': cogcrystalcomp['Age-Corrected Standard Score'],
-            'toolbox_cogcrystalcomp_tscore': cogcrystalcomp['Fully-Corrected T-score'],
+            'toolbox_cogcrystalcomp_uncstd': cogcrystalcomp.get('Uncorrected Standard Score', ''),
+            'toolbox_cogcrystalcomp_agestd': cogcrystalcomp.get('Age-Corrected Standard Score', ''),
+            'toolbox_cogcrystalcomp_tscore': cogcrystalcomp.get('Fully-Corrected T-score', ''),
         })
 
     return data
