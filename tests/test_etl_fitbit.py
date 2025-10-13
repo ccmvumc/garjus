@@ -19,7 +19,7 @@ if __name__ == "__main__":
         datefmt='%Y-%m-%d %H:%M:%S')
 
     logging.info('connecting to redcap')
-    api_url = 'https://redcap.vumg.org/api/'
+    api_url = 'https://redcap.vumc.org/api/'
     api_key = sys.argv[1]
     rc = redcap.Project(api_url, api_key)
 
