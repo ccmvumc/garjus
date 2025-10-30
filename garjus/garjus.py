@@ -41,6 +41,7 @@ from .tasks import update as update_tasks
 from .analyses import run_analysis, download_resources, download_scan_resources
 from .scans import update as update_scans
 from .spin import run_spin
+from .petmatch import match_pets
 
 
 logger = logging.getLogger('garjus')
@@ -1540,6 +1541,11 @@ class Garjus:
         """Return subjects for project."""
 
         return load_subjects(self, project, include_dob)
+
+    def petmatch(self, project):
+        """Return PETs matched to MRIs for project."""
+
+        return match_pets(self, project)
 
     def orphans(self, project):
         """Return orphaned assessors for project."""

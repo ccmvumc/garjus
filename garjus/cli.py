@@ -88,6 +88,22 @@ def subjects(ctx, project, csv):
         pprint.pprint(subjects)
 
 
+@cli.command('petmatch')
+@click.option('--project', '-p', 'project', required=True)
+@click.option('--csv', '-c', 'csv', required=False)
+@click.pass_context
+def petmatch(ctx, project, csv):
+    click.echo('garjus! petmatch')
+    g = Garjus()
+    import pandas as pd
+    pd.set_option('display.max_rows', None)
+    pets = g.petmatch(project)
+    if csv:
+        pets.to_csv(csv, index=False)
+    else:
+        pprint.pprint(pets)
+
+
 @cli.command('orphans')
 @click.option('--project', '-p', 'project')
 @click.option('--delete/--no-delete', default=False)

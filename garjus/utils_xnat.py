@@ -27,6 +27,7 @@ xnat:imagesessiondata/date,\
 tracer_name,\
 xnat:imagesessiondata/acquisition_site,\
 xnat:imagesessiondata/label,\
+xnat:imageSessionData/dcmPatientId,\
 xnat:imagescandata/id,\
 xnat:imagescandata/type,\
 xnat:imagescandata/quality,\
@@ -34,9 +35,9 @@ xnat:imagescandata/frames,\
 xnat:imagescandata/file/label'
 
 
-# The scan URI is a hacky way to get a row for each assessor. We do
+# The assessor URI is a hacky way to get a row for each assessor. We do
 # not try to get a row per resource because that query takes too long.
-# The column name is: proc:genprocdata/out/file/label
+# The column name for that is: proc:genprocdata/out/file/label
 ASSR_URI = '/REST/experiments?xsiType=xnat:imagesessiondata\
 &columns=\
 project,\
@@ -340,37 +341,6 @@ CT_SCAN_ATTRS = [
     'xnat:imageScanData/scanner/manufacturer',
     'xnat:imageScanData/scanner/model'
 ]
-
-
-def check_attributes(src_obj, dest_obj, dtype=None):
-    '''Check that attributes on dest match those on src'''
-
-    if dtype is None:
-        dtype = src_obj.datatype()
-
-    if dtype == 'xnat:mrSessionData':
-        attr_list = MR_EXP_ATTRS
-    elif dtype == 'xnat:mrScanData':
-        attr_list = MR_SCAN_ATTRS
-    elif dtype == 'xnat:scScanData':
-        attr_list = SC_SCAN_ATTRS
-    elif dtype == 'xnat:petScanData':
-        attr_list = PET_SCAN_ATTRS
-    elif dtype == 'xnat:ctScanData':
-        attr_list = CT_SCAN_ATTRS
-    elif dtype == 'xnat:otherDicomScanData':
-        attr_list = OTHER_DICOM_SCAN_ATTRS
-    else:
-        logger.warning(f'unknown Type:{dtype}')
-        return
-
-    for a in attr_list:
-        src_v = src_obj.attrs.get(a)
-        src_v = src_v.replace("\\", "|")
-        dest_v = dest_obj.attrs.get(a)
-        if src_v != dest_v:
-            logger.warning('mismatch:{a}:src={src_v}, dst={dest_v}')
-            dest_obj.attrs.set(a, src_v)
 
 
 def copy_attrs(src_obj, dest_obj, attr_list):
