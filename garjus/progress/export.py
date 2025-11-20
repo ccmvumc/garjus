@@ -349,7 +349,7 @@ def _add_first_page(pdf, info):
     _text += f'XNAT: {info.get("xnat")}\n'
     _text +=f'REDCap:{info.get("redcap")}\n'
     _text += f'Session Types: '
-    _text += ','.join(sorted(list(stats.SESSTYPE.unique())))
+    _text += ','.join(sorted(list(stats.SESSTYPE.dropna().unique())))
     pdf.multi_cell(0, 0.25, text=_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
     # Show subject counts by project
@@ -714,6 +714,7 @@ def _add_stats_pages(pdf, info):
     proclib = info['proclib']
     stats = info['stats']
     stattypes = info['stattypes']
+    print(stattypes)
 
     for proctype in stattypes:
         # Limit the data to this proctype
@@ -738,7 +739,7 @@ def _add_stats_pages(pdf, info):
         pdf.set_font('helvetica', size=14)
         pdf.cell(text=proctype, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-        if proctype == 'fmriqa_v4':
+        if False and proctype == 'fmriqa_v4':
             # stats by scan type using inputs field to map to scan
             _add_stats_fmriqa(pdf, stat_data, info)
         else:
@@ -830,7 +831,8 @@ def make_export_report(filename, garjus, subjects, stats, covar):
     info['proclib'] = garjus.processing_library()
     info['subjects'] = subjects
     info['stats'] = stats
-    info['stattypes'] = stats.PROCTYPE.unique()
+    info['stattypes'] = stats.PROCTYPE.dropna().unique()
+    info['stattypes'] = [x for x in info['stattypes'] if x != '']
     info['statlib'] = garjus.stats_library()
     info['covariates'] = covar
 
