@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+import numpy as np
 import plotly
 import plotly.graph_objs as go
 import plotly.subplots
@@ -45,7 +46,7 @@ def _plottable(var):
         return False
 
 
-def get_graph_content(df, selected_pivot):
+def get_graph_content(df, selected_pivot, selected_xvar=None):
     tabs_content = []
     tab_value = 0
     hidecols = HIDECOLS
@@ -74,10 +75,15 @@ def get_graph_content(df, selected_pivot):
 
     # Filter var list to only stats can be plotted as float
     var_list = [x for x in var_list if _plottable(df[x])]
+    var_list = [x for x in var_list if x != selected_xvar]
 
     # Append the tab
     _label = 'ALL'
-    _graph = get_stats_graph(df, var_list)
+    if selected_xvar:
+        _graph = get_xvar_graph(df, var_list, selected_xvar)
+    else:
+        _graph = get_stats_graph(df, var_list)
+    
     _tab = dcc.Tab(label=_label, value=str(tab_value), children=[_graph])
     tabs_content.append(_tab)
 
@@ -90,13 +96,101 @@ def get_graph_content(df, selected_pivot):
 
         tab_value += 1
         _label = 'By ' + p
-        _graph = get_stats_graph(df, var_list, p)
+        if selected_xvar:
+            _graph = get_xvar_graph(df, var_list, selected_xvar, p)
+        else:
+            _graph = get_stats_graph(df, var_list, p)
+
         _tab = dcc.Tab(label=_label, value=str(tab_value), children=[_graph])
         tabs_content.append(_tab)
 
     # Return the tabs
     return tabs_content
 
+
+def get_xvar_graph(df, var_list, xvar, pivot=None):
+    plot_width = 500
+    min_plot_count = 2
+
+    logger.debug(f'get_xvar_graph:{pivot}')
+
+    # Determine how many plots we're making, depends on how many vars
+    # Use minimum so graph doesn't get too small
+    plot_count = len(var_list)
+    if plot_count < min_plot_count:
+        plot_count = min_plot_count
+
+    graph_width = plot_width * plot_count
+
+    # Horizontal spacing cannot be greater than (1 / (cols - 1))
+    hspacing = 1 / (plot_count * 4)
+
+    # Make the figure with 1 row and a column for each var we are plotting
+    var_titles = [x[:22] for x in var_list]
+    fig = plotly.subplots.make_subplots(
+        rows=1,
+        cols=plot_count,
+        horizontal_spacing=hspacing,
+        subplot_titles=var_titles
+    )
+
+    # Draw plots by adding traces to figure
+    for i, var in enumerate(var_list):
+        _row = 1
+        _col = i + 1
+
+        # Create boxplot for this var and add to figure
+        logger.debug(f'plotting var:{var}')
+
+        # Create plot for this var and add to figure
+        _xvalues = df[xvar].astype(float)
+        if pivot:
+            colors_map=dict(zip(df[pivot].unique(), np.linspace(0,1,df[pivot].nunique())))
+            marker_colors = df[pivot].map(colors_map)
+            fig.append_trace(
+                go.Scatter(
+                    x=_xvalues,
+                    y=df[var].astype(str).str.strip('%').astype(float),
+                    mode='markers',
+                    name=var,
+                    text=df['SESSION'],
+                    marker=dict(
+                        color=marker_colors,
+                        colorscale='rainbow_r',
+                    ),
+                ),
+                _row,
+                _col)
+        else:
+            fig.append_trace(
+                go.Scatter(
+                    x=_xvalues,
+                    y=df[var].astype(str).str.strip('%').astype(float),
+                    mode='markers',
+                    name=var,
+                    text=df['SESSION'],
+                ),
+                _row,
+                _col)
+
+        fig.update_xaxes(title_text=xvar)
+
+    # Customize figure to hide legend and fit the graph
+    fig.update_layout(
+        showlegend=False,
+        autosize=False,
+        width=graph_width,
+        margin=dict(l=20, r=40, t=40, b=80, pad=0)
+    )
+
+    # We set the graph to overflow and then limit the size to 1000px, this
+    # makes the graph stay in a scrollable section
+    graph = html.Div(
+        dcc.Graph(figure=fig, style={'overflow': 'scroll'}),
+        style={'width': f'{GWIDTH}px'})
+
+    # Return the graph
+    return graph
 
 def get_stats_graph(df, var_list, pivot=None):
     box_width = 250
@@ -217,7 +311,7 @@ def get_content():
                     dcc.Dropdown(
                         id='dropdown-stats-proc',
                         multi=True,
-                        placeholder='Select Type(s)'
+                        placeholder='Select Processing Type(s)'
                     ),
                     dcc.Dropdown(
                         id='dropdown-stats-sess',
@@ -228,6 +322,11 @@ def get_content():
                         id='dropdown-stats-meas',
                         multi=True,
                         placeholder='Select Measure(s)'
+                    ),
+                    dcc.Dropdown(
+                        id='dropdown-stats-xvar',
+                        multi=False,
+                        placeholder='Select x variable'
                     ),
                 ]),
                 width=5,
@@ -386,6 +485,7 @@ def _session_pivot(df):
      Output('dropdown-stats-proj', 'options'),
      Output('dropdown-stats-sess', 'options'),
      Output('dropdown-stats-meas', 'options'),
+     Output('dropdown-stats-xvar', 'options'),
      Output('datatable-stats', 'data'),
      Output('datatable-stats', 'columns'),
      Output('tabs-stats', 'children'),
@@ -397,6 +497,7 @@ def _session_pivot(df):
      Input('dropdown-stats-proj', 'value'),
      Input('dropdown-stats-sess', 'value'),
      Input('dropdown-stats-meas', 'value'),
+     Input('dropdown-stats-xvar', 'value'),
      Input('dropdown-stats-time', 'value'),
      Input('radio-stats-pivot', 'value'),
      Input('button-stats-refresh', 'n_clicks'),
@@ -406,6 +507,7 @@ def update_stats(
     selected_proj,
     selected_sess,
     selected_meas,
+    selected_xvar,
     selected_time,
     selected_pivot,
     n_clicks
@@ -438,10 +540,8 @@ def update_stats(
     # Get session types from unfiltered data
     if not df.empty:
         sess = utils.make_options(df.SESSTYPE.unique())
-        meas = utils.make_options(df.columns)
     else:
         sess = []
-        meas = []
 
     # Filter data based on dropdown values
     df = data.filter_data(df, selected_proc, selected_time, selected_sess)
@@ -450,15 +550,22 @@ def update_stats(
     if not df.empty:
         _cols = [x for x in df.columns if x not in HIDECOLS]
         meas = utils.make_options(_cols)
+        xvar = utils.make_options(_cols)
     else:
         meas = []
+        xvar = []
 
     if selected_meas:
-        logger.debug(f'filtering measure columns:{selected_meas}')
-        df = df[HIDECOLS + selected_meas]
+        _cols = HIDECOLS + selected_meas
+        if selected_xvar and selected_xvar not in selected_meas:
+            _cols += [selected_xvar]
+
+        logger.debug(f'filtering measure columns:{_cols}')
+        df = df[_cols]
 
     # Get the graph content in tabs (currently only one tab)
-    tabs = get_graph_content(df, selected_pivot)
+    if not selected_xvar:
+        tabs = get_graph_content(df, selected_pivot, selected_xvar)
 
     # format floats so they sort in the table
     for c in list(df.columns):
@@ -470,6 +577,10 @@ def update_stats(
         df = _subject_pivot(df)
     elif selected_pivot == 'sess':
         df = _session_pivot(df)
+
+    # Get the graph from pivoted data
+    if selected_xvar:
+        tabs = get_graph_content(df, selected_pivot, selected_xvar)
 
     # Get the records and columns for DataTable
     _cols = [x for x in list(df.columns) if x not in ['SESSIONLINK']]
@@ -496,4 +607,4 @@ def update_stats(
 
     # Return table, figure, dropdown options
     logger.debug('update_all:returning data')
-    return [proc, proj, sess, meas, records, columns, tabs, rowcount, rowcount]
+    return [proc, proj, sess, meas, xvar, records, columns, tabs, rowcount, rowcount]
