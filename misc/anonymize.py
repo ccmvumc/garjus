@@ -6,7 +6,7 @@ import pydicom
 import garjus
 
 
-# These tags are deleted
+# These tags are deleted in addition to all private tags
 DELETE_FIELDS = [
     0x00101010,  # PatientsAge
     0x00100030,  # PatientBirthDate
