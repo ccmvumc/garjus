@@ -42,7 +42,9 @@ def load_link(rc_pre, rc_anon):
 def check_dicom(in_path, value):
     d = pydicom.dcmread(in_path)
     matches = _check_dicom(d, value)
-    print(matches)
+    if matches:
+        print(matches)
+
     return matches
 
 
@@ -53,66 +55,50 @@ def _check_dicom(dicom, value, matches=[], indent=''):
 
         if cur.VR == "SQ":
             for c in cur.value:
-                _check_dicom(c, value, matches, f'{indent}\t')
+                _check_dicom(c, value, matches=matches, indent=f'{indent}\t')
                 
     return matches
 
 
-def check_scan(out_dir, anon_subject, anon_session, mri_date):
+def check_scan(out_dir, mri_date):
     for i, d in enumerate(sorted(os.listdir(out_dir))):
         out_dicom = f'{out_dir}/{i}.dcm'
         os.makedirs(os.path.dirname(out_dicom), exist_ok=True)
-        d = check_dicom(out_dicom, anon_subject, anon_session, mri_date)
-        check_dicom(
-            out_dicom,
-            mri_date
-        )
+        check_dicom(out_dicom, mri_date)
 
 
-def check_session(out_dir, anon_subject, anon_session, mri_date):
-    for scan in os.listdir(out_dir):
+def check_session(out_dir, mri_date):
+    for scan in sorted(os.listdir(out_dir)):
         if scan.startswith('.'):
                 continue
 
         scan_out_dir = f'{out_dir}/{scan}/DICOM'
-        check_scan(
-            scan_out_dir,
-            anon_subject,
-            anon_session,
-            mri_date
-        )
+        check_scan(scan_out_dir, mri_date)
 
 
 def check_project(out_dir, df):
-    for i, subject in enumerate(sorted(os.listdir(out_dir))):
+    for subject in sorted(os.listdir(out_dir)):
         if subject.startswith('.'):
                 continue
 
-        for j, session in enumerate(sorted(os.listdir(f'{out_dir}/{subject}'))):
+        for session in sorted(os.listdir(f'{out_dir}/{subject}')):
             if session.startswith('.'):
                 continue
 
             try:
-                rec = df[df['ID'] == subject].iloc[0]
+                rec = df[df['anon_id'] == subject].iloc[0]
             except Exception as err:
                 print(f'No match found for subject:{subject}:{err}')
                 continue
 
-            anon_subject = rec['anon_id']
-            anon_session = f'{anon_subject}a'
             mri_date = f'{rec["mri_date"]}'
-            sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
-            check_session(
-                sess_out_dir,
-                anon_subject,
-                anon_session,
-                mri_date
-            )
+            sess_out_dir = f'{out_dir}/{subject}/{session}'
+            check_session(sess_out_dir, mri_date)
 
 
 if __name__ == '__main__':
     # Get top-level directory from command-line
-    root_out_dir = sys.argv[2]
+    root_out_dir = sys.argv[1]
 
     # Get table of old id, new id, old date, new date
     print('Loading link from REDCap')
@@ -121,7 +107,4 @@ if __name__ == '__main__':
     df = load_link(rc_pre, rc_anon)
 
     print('Checking anonymization to DICOM')
-    check_project(
-        root_out_dir,
-        df
-    )
+    check_project(root_out_dir, df)
