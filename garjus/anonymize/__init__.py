@@ -156,7 +156,7 @@ def anonymize_scan(in_dir, out_dir, anon_subject, anon_session, anon_date):
 
 def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
     # Mirror scan folder names
-    for scan in os.listdir(in_dir):
+    for scan in sorted(os.listdir(in_dir)):
         if scan.startswith('.'):
                 continue
 
@@ -172,11 +172,12 @@ def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
 
 
 def anonymize_project(in_dir, out_dir, df):
-    for i, subject in enumerate(sorted(os.listdir(in_dir))):
+    for subject in sorted(os.listdir(in_dir)):
+        print(subject)
         if subject.startswith('.'):
                 continue
 
-        for j, session in enumerate(sorted(os.listdir(f'{in_dir}/{subject}'))):
+        for session in sorted(os.listdir(f'{in_dir}/{subject}')):
             if session.startswith('.'):
                 continue
 
