@@ -197,7 +197,7 @@ def anonymize_project(in_dir, out_dir, df):
 
             sess_suffix = get_session_suffix(subject, session)
             anon_subject = rec['anon_id']
-            anon_session = f'{anon_subject}{session_suffix}'
+            anon_session = f'{anon_subject}{sess_suffix}'
             anon_date = f'{rec["anon_date"]}'
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
             anonymize_session(
