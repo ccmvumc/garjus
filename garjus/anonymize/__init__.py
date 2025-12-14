@@ -47,6 +47,8 @@ DATETIME_FIELDS = [
 # Map of redcap vent name to xnat session label suffix
 SUFFIX = {
     'baseline_arm_1': 'a',
+    'baseline_arm_2': 'a',
+    'phase1_8wk_arm_1': 'b'
 }
 
 
@@ -150,8 +152,7 @@ def anonymize_scan(in_dir, out_dir, anon_subject, anon_session, anon_date):
         out_dicom = f'{out_dir}/{i}.dcm'
         os.makedirs(os.path.dirname(out_dicom), exist_ok=True)
         d = anon_dicom(in_dicom, out_dicom, anon_subject, anon_session, anon_date)
-        if i == 0 and anon_session == '100002a':
-            print(d)
+
 
 def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
     # Mirror scan folder names
@@ -186,7 +187,8 @@ def anonymize_project(in_dir, out_dir, df):
                 continue
 
             anon_subject = rec['anon_id']
-            anon_session = f'{anon_subject}a'
+            session_suffix = SUFFIX.get(rec['redcap_event_name'])
+            anon_session = f'{anon_subject}{session_suffix}'
             anon_date = f'{rec["anon_date"]}'
             sess_in_dir = f'{in_dir}/{subject}/{session}'
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
@@ -210,8 +212,8 @@ def check_dicom(in_path, value):
 
 def _check_dicom(dicom, value, matches=[]):
     for cur in dicom:
-        if cur.value == value:
-            matches.append(f'{cur.keyword}:{cur.tag}')
+        if str(value) in str(cur.value):
+            matches.append(f'{cur.keyword}:{cur.tag}:{cur.value}')
 
         if cur.VR == "SQ":
             for c in cur.value:
