@@ -10,8 +10,8 @@ if __name__ == '__main__':
 
     # Get table of old id, new id, old date, new date
     print('Loading link from REDCap')
-    rc_pre = get_redcap('220310')
-    rc_anon = get_redcap('222564')
+    rc_pre = get_redcap('222462')
+    rc_anon = get_redcap('222566')
     link_data = load_link(rc_pre, rc_anon)
 
     print('Checking anonymization to DICOM')
