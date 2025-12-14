@@ -192,7 +192,7 @@ def anonymize_project(in_dir, out_dir, df):
             try:
                 rec = df[(df['ID'] == subject) & (df['mri_date'] == sess_date)].iloc[0]
             except Exception as err:
-                print(f'No match found for session:{subject}:{sess_date}:{err}')
+                print(f'No match found for session:{subject}:{session}:{sess_date}')
                 continue
 
             sess_suffix = get_session_suffix(subject, session)
@@ -255,14 +255,20 @@ def check_project(out_dir, df):
             if session.startswith('.'):
                 continue
 
+            sess_date = get_session_date(sess_in_dir)
+            sess_dir = f'{out_dir}/{subject}/{session}'
+
+            # Find a match for the anon'd session date
             try:
-                rec = df[df['anon_id'] == subject].iloc[0]
+                rec = df[(df['anon_id'] == subject) & (df['anon_date'] == sess_date)].iloc[0]
             except Exception as err:
-                print(f'No match found for subject:{subject}:{err}')
+                print(f'No match found:{subject}:{session}:{sess_date}')
                 continue
 
+            # Get the original mri date form the matched recor
             mri_date = f'{rec["mri_date"]}'
-            sess_out_dir = f'{out_dir}/{subject}/{session}'
-            check_session(sess_out_dir, mri_date)
+
+            # Try to find the original date in the anonymized dicom files
+            check_session(sess_dir, mri_date)
 
     print('Finished checking project.')
