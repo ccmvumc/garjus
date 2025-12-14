@@ -1,7 +1,7 @@
 import sys
 
 from garjus.anonymize import load_link, check_project
-from gajus.utils_redcap import get_redcap
+from garjus.utils_redcap import get_redcap
 
 
 if __name__ == '__main__':
