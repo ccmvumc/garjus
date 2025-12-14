@@ -48,15 +48,15 @@ def check_dicom(in_path, value):
     return matches
 
 
-def _check_dicom(dicom, value, matches=[], indent=''):
+def _check_dicom(dicom, value, matches=[]):
     for cur in dicom:
         if cur.value == value:
-            matches.append(f'{indent}:{cur.keyword}:{cur.tag}')
+            matches.append(f'{cur.keyword}:{cur.tag}')
 
         if cur.VR == "SQ":
             for c in cur.value:
-                _check_dicom(c, value, matches=matches, indent=f'{indent}\t')
-                
+                _check_dicom(c, value, matches=matches)
+
     return matches
 
 
@@ -94,6 +94,8 @@ def check_project(out_dir, df):
             mri_date = f'{rec["mri_date"]}'
             sess_out_dir = f'{out_dir}/{subject}/{session}'
             check_session(sess_out_dir, mri_date)
+
+    print('Finished checking project.')
 
 
 if __name__ == '__main__':
