@@ -44,13 +44,6 @@ DATETIME_FIELDS = [
     0x0008002A  # AcquisitionDateTime
 ]
 
-# Map of redcap vent name to xnat session label suffix
-SUFFIX = {
-    'baseline_arm_1': 'a',
-    'baseline_arm_2': 'a',
-    'phase1_8wk_arm_1': 'b'
-}
-
 
 # Load the table that links old/new id/date
 def load_link(rc_pre, rc_anon):
@@ -171,6 +164,17 @@ def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
         )
 
 
+def get_session_date(session_dir):
+    dicom_path = glob.glob(f'{session_dir}/*/DICOM/*.dcm')[0]
+    dicom_data = pydicom.dcmread(dicom_path)
+    d = dicom_data.AcquisitionDateTime
+    return '-'.join([d[:4], d[4:6], d[6:8]])
+
+
+def get_session_suffix(subject, session):
+    return session.split(subject)[1]
+
+
 def anonymize_project(in_dir, out_dir, df):
     for subject in sorted(os.listdir(in_dir)):
         print(subject)
@@ -181,19 +185,21 @@ def anonymize_project(in_dir, out_dir, df):
             if session.startswith('.'):
                 continue
 
+            sess_in_dir = f'{in_dir}/{subject}/{session}'
+            sess_date = get_session_date(sess_in_dir)
+
+            # Locate the matching record to get anon id/date
             try:
-                rec = df[df['ID'] == subject].iloc[0]
+                rec = df[(df['ID'] == subject) & (df['mri_date'] == sess_date)].iloc[0]
             except Exception as err:
-                print(f'No match found for subject:{subject}:{err}')
+                print(f'No match found for session:{subject}:{sess_date}:{err}')
                 continue
 
+            sess_suffix = get_session_suffix(subject, session)
             anon_subject = rec['anon_id']
-            session_suffix = SUFFIX.get(rec['redcap_event_name'])
             anon_session = f'{anon_subject}{session_suffix}'
             anon_date = f'{rec["anon_date"]}'
-            sess_in_dir = f'{in_dir}/{subject}/{session}'
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
-            print(session,anon_session)
             anonymize_session(
                 sess_in_dir,
                 sess_out_dir,
