@@ -1,7 +1,7 @@
 import sys
 
+from garjus.utils_redcap import get_redcap
 from garjus.anonymize import anonymize_project, load_link
-from garju.utils_redcap import get_redcap
 
 
 if __name__ == '__main__':
@@ -11,8 +11,8 @@ if __name__ == '__main__':
 
     # Get table of old id, new id, old date, new date
     print('Loading link from REDCap')
-    rc_pre = get_redcap('222462')
-    rc_anon = get_redcap('222566')
+    rc_pre = get_redcap('220310')
+    rc_anon = get_redcap('222564')
     df = load_link(rc_pre, rc_anon)
 
     print('Applying anonymization to DICOM')

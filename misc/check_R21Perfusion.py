@@ -1,7 +1,7 @@
 import sys
 
-from garjus.anonymize import load_link, check_project
-from gajus.utils_redcap import get_redcap
+from garjus.anonymize import check_project
+from garjus.utils_redcap import get_redcap
 
 
 if __name__ == '__main__':
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     print('Loading link from REDCap')
     rc_pre = get_redcap('220310')
     rc_anon = get_redcap('222564')
-    link_data = load_link(rc_pre, rc_anon)
+    df = load_link(rc_pre, rc_anon)
 
     print('Checking anonymization to DICOM')
-    check_project(root_out_dir, link_data)
+    check_project(root_out_dir, df)
