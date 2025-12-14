@@ -165,7 +165,7 @@ def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
 
 
 def get_session_date(session_dir):
-    dicom_path = glob(f'{session_dir}/*/DICOM/*.dcm')[0]
+    dicom_path = glob(f'{session_dir}/*/DICOM/*.*')[0]
     dicom_data = pydicom.dcmread(dicom_path)
     d = dicom_data.AcquisitionDateTime
     return '-'.join([d[:4], d[4:6], d[6:8]])
