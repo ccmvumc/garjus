@@ -255,8 +255,8 @@ def check_project(out_dir, df):
             if session.startswith('.'):
                 continue
 
-            sess_date = get_session_date(sess_in_dir)
             sess_dir = f'{out_dir}/{subject}/{session}'
+            sess_date = get_session_date(sess_dir)
 
             # Find a match for the anon'd session date
             try:
