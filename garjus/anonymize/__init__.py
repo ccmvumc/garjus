@@ -271,5 +271,6 @@ def check_project(out_dir, df):
 
             # Try to find the original date in the anonymized dicom files
             check_session(sess_dir, mri_date)
+            check_session(sess_dir, mri_date.replace('-',''))
 
     print('Finished checking project.')
