@@ -177,11 +177,11 @@ def get_session_suffix(subject, session):
 
 def anonymize_project(in_dir, out_dir, df):
     for subject in sorted(os.listdir(in_dir)):
-        print(subject)
         if subject.startswith('.'):
                 continue
 
         for session in sorted(os.listdir(f'{in_dir}/{subject}')):
+
             if session.startswith('.'):
                 continue
 
@@ -200,6 +200,7 @@ def anonymize_project(in_dir, out_dir, df):
             anon_session = f'{anon_subject}{sess_suffix}'
             anon_date = f'{rec["anon_date"]}'
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
+            print(session)
             anonymize_session(
                 sess_in_dir,
                 sess_out_dir,
@@ -269,6 +270,7 @@ def check_project(out_dir, df):
             mri_date = f'{rec["mri_date"]}'
 
             # Try to find the original date in the anonymized dicom files
+            print(f'Checking session:{sess_dir}')
             check_session(sess_dir, mri_date)
 
     print('Finished checking project.')
