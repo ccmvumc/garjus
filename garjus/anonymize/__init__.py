@@ -232,9 +232,9 @@ def _check_dicom(dicom, value, matches=[]):
 
 
 def check_scan(out_dir, mri_date):
-    for i, d in enumerate(sorted(os.listdir(out_dir))):
-        out_dicom = f'{out_dir}/{i}.dcm'
-        os.makedirs(os.path.dirname(out_dicom), exist_ok=True)
+    for d in sorted(os.listdir(out_dir)):
+        out_dicom = f'{out_dir}/{d}'
+        print(f'Checking:{out_dicom}')
         check_dicom(out_dicom, mri_date)
 
 
@@ -270,7 +270,6 @@ def check_project(out_dir, df):
             mri_date = f'{rec["mri_date"]}'
 
             # Try to find the original date in the anonymized dicom files
-            print(f'Checking session:{sess_dir}')
             check_session(sess_dir, mri_date)
 
     print('Finished checking project.')
