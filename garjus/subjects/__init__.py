@@ -603,4 +603,6 @@ def load_subjects(garjus, project, include_dob=False):
     except Exception as err:
         logger.debug(f'failed to load identifier database:{project}:{err}')
 
+    df = df.sort_values('ID')
+
     return df
