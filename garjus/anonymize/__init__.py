@@ -9,31 +9,31 @@ from ..utils_redcap import secondary_map
 
 # These tags are deleted in addition to all private tags
 DELETE_FIELDS = [
-    0x00101010,  # PatientsAge
-    0x00100030,  # PatientBirthDate
-    0x00101030,  # PatientWeight
-    0x00100040,  # PatientSex
-    0x00104000,  # PatientComments
     0x00080012,  # InstanceCreationDate
+    0x00080013,  # InstanceCreationTime
     0x00080018,  # SOP Instance UID
-    0x00080013,  # InstanceCreationTime 
     0x00081111,  # Procedure
     0x00089092,  # Evidence
+    0x00100030,  # PatientBirthDate
+    0x00100040,  # PatientSex
+    0x00101030,  # PatientWeight
+    0x00104000,  # PatientComments
+    0x00120064,  # DeidentificationMethodCodeSequence
     0x0020000D,  # StudyInstanceUID
     0x0020000E,  # SeriesInstanceUID
+    0x00200010,  # Study ID
     0x00200052,  # FrameReferenceUID
     0x00209221,  # DimensionOrganizationUID
     0x00209222,  # DimensionIndexUID
     0x00400254,  # PerformedProcedureStepDescription
     0x00400253,  # PerformedProcedureStepID
-    0x00200010,  # Study ID
 ]
 
 # These tags are replaced with the new shifted date
 DATE_FIELDS = [
-    0x00080023,  # ContentDate
-    0x00080021,  # SeriesDate
     0x00080020,  # StudyDate
+    0x00080021,  # SeriesDate
+    0x00080023,  # ContentDate
     0x00400244,  # PerformedProcedureStepStartDate
     0x00400250,  # PerformedProcedureStepEndDate
     0x00402004,  # IssueDateofImagingServiceReque
