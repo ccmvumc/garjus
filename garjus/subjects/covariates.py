@@ -334,7 +334,7 @@ def _export_toolbox(garjus, tmpdir, subjects_df):
 
     projects = _proctype_projects('toolbox', subjects_df.PROJECT.unique())
 
-    logger.info(f'loading toolbox for projects:{projects}')
+    logger.debug(f'loading toolbox for projects:{projects}')
 
     for p in projects:
         # Load data for project
@@ -358,7 +358,7 @@ def _export_toolbox(garjus, tmpdir, subjects_df):
         df= df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info('no toolbox data to save')
+        logger.debug('no toolbox data to save')
 
     return df
 
@@ -368,7 +368,7 @@ def _export_examiner(garjus, tmpdir, subjects_df):
 
     projects = _proctype_projects('examiner', subjects_df.PROJECT.unique())
 
-    logger.info(f'loading examiner for projects:{projects}')
+    logger.debug(f'loading examiner for projects:{projects}')
 
     for p in projects:
         # Load examiner data for project
@@ -392,7 +392,7 @@ def _export_examiner(garjus, tmpdir, subjects_df):
         df= df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info('no examiner data to save')
+        logger.debug('no examiner data to save')
 
     return df
 
@@ -402,7 +402,7 @@ def _export_gaitrite(garjus, tmpdir, subjects_df):
 
     projects = _proctype_projects('gaitrite', subjects_df.PROJECT.unique())
 
-    logger.info(f'loading gaitrite for projects:{projects}')
+    logger.debug(f'loading gaitrite for projects:{projects}')
 
     for p in projects:
         # Load gaitrite data for project
@@ -425,7 +425,7 @@ def _export_gaitrite(garjus, tmpdir, subjects_df):
         df = df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info('no gaitrite data to save')
+        logger.debug('no gaitrite data to save')
 
     return df
 
@@ -435,7 +435,7 @@ def _export_plasma(garjus, tmpdir, subjects_df):
 
     projects = _proctype_projects('plasma', subjects_df.PROJECT.unique())
 
-    logger.info(f'loading plasma for projects:{projects}')
+    logger.debug(f'loading plasma for projects:{projects}')
 
     for p in projects:
         # Load plasma data for project
@@ -458,7 +458,7 @@ def _export_plasma(garjus, tmpdir, subjects_df):
         df = df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info('no plasma data to save')
+        logger.debug('no plasma data to save')
 
     return df
 
@@ -468,7 +468,7 @@ def _export_fallypride(garjus, tmpdir, subjects_df):
     proctype = 'fallypride'
     projects = _proctype_projects(proctype, subjects_df.PROJECT.unique())
 
-    logger.info(f'loading {proctype} for projects:{projects}')
+    logger.debug(f'loading {proctype} for projects:{projects}')
 
     for p in projects:
         # Load data for project
@@ -491,7 +491,7 @@ def _export_fallypride(garjus, tmpdir, subjects_df):
         df = df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info(f'no {proctype} data to save')
+        logger.debug(f'no {proctype} data to save')
 
     return df
 
@@ -501,7 +501,7 @@ def _export_msit_vitals(garjus, tmpdir, subjects_df):
     proctype = 'msit_vitals'
     projects = _proctype_projects(proctype, subjects_df.PROJECT.unique())
 
-    logger.info(f'loading {proctype} for projects:{projects}')
+    logger.debug(f'loading {proctype} for projects:{projects}')
 
     for p in projects:
         # Load data for project
@@ -524,7 +524,7 @@ def _export_msit_vitals(garjus, tmpdir, subjects_df):
         df = df.sort_values(['PROJECT', 'ID'])
         df.to_csv(_file, index=False, columns=_cols)
     else:
-        logger.info(f'no {proctype} data to save')
+        logger.debug(f'no {proctype} data to save')
 
     return df
 

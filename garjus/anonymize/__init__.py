@@ -4,7 +4,6 @@ from glob import glob
 import pandas as pd
 import pydicom
 
-from ..utils_redcap import secondary_map
 
 
 # These tags are deleted in addition to all private tags
@@ -43,39 +42,6 @@ DATE_FIELDS = [
 DATETIME_FIELDS = [
     0x0008002A  # AcquisitionDateTime
 ]
-
-
-# Load the table that links old/new id/date
-def load_link(rc_pre, rc_anon):
-    dfd = rc_pre.export_records(fields=['mri_date'])
-    dfp = rc_pre.export_records(fields=['anon_id'])
-    dfa = rc_anon.export_records(fields=['mri_date'])
-
-    # Get old ID with old date from pre redcap project
-    dfd = pd.DataFrame(dfd)
-    dfd['ID'] = dfd[rc_pre.def_field].map(secondary_map(rc_pre))
-    dfd = dfd[dfd.mri_date != '']
-    dfd = dfd[['ID', 'redcap_event_name', 'mri_date']]
-
-    # Get old ID mapped to anon id from pre redcap project
-    dfp = pd.DataFrame(dfp)
-    dfp['ID'] = dfp[rc_pre.def_field].map(secondary_map(rc_pre))
-    dfp = dfp[dfp.anon_id != '']
-    dfp = dfp[['ID', 'anon_id']]
-
-    # Get anon_id with anon date from anon redcap project
-    dfa = pd.DataFrame(dfa)
-    dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
-    dfa = dfa[dfa.mri_date != '']
-    dfa = dfa[['anon_id', 'redcap_event_name', 'mri_date']]
-    dfa = dfa.rename(columns={'mri_date': 'anon_date'})
-
-    # Merge all together to get one row per mri with both ids and both dates
-    df = pd.merge(dfp, dfd, on='ID')
-    df = pd.merge(df, dfa, on=['anon_id', 'redcap_event_name'])
-    df = df.sort_values('ID')
-
-    return df
 
 
 def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):

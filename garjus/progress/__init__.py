@@ -12,6 +12,7 @@ import pandas as pd
 
 from .report import make_project_report
 from .export import make_export_report
+from .anonshot import make_anonshot
 
 
 logger = logging.getLogger('garjus.progress')

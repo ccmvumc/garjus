@@ -397,6 +397,35 @@ def statshot(projects, proctypes, sesstypes, exclude, guid, ident):
         guid=guid,
         ident=ident)
 
+
+@cli.command('anonshot')
+@click.option('--project', '-p', 'project', required=True, multiple=False)
+@click.option('--anonproject', '-a', 'anonproject', required=True, multiple=False)
+def anonshot(project, anonproject):
+    '''statshot but with ids/dates anonymized, zip uploaded to anon project'''
+    click.echo('garjus! anonshot')
+    Garjus().anonshot(project, anonproject)
+
+
+@cli.command('anonymize')
+@click.option('--project', '-p', 'project', required=True, multiple=False)
+@click.option('--indir', '-i', 'in_dir', required=True, multiple=False)
+@click.option('--outdir', '-o', 'out_dir', required=True, multiple=False)
+def anonymize(project, in_dir, out_dir):
+    '''anonymize in_dir to out_dir'''
+    click.echo('garjus! anonymize')
+    Garjus().anonymize(project, in_dir, out_dir)
+
+
+@cli.command('checkanon')
+@click.option('--project', '-p', 'project', required=True, multiple=False)
+@click.option('--outdir', '-o', 'out_dir', required=True, multiple=False)
+def checkanon(project, out_dir):
+    '''check anonymized in out_dir'''
+    click.echo('garjus! checkanon')
+    Garjus().check_anonymize(project, out_dir)
+
+
 @cli.command('compare')
 @click.option('--project', '-p', 'project', required=True)
 def compare(project):

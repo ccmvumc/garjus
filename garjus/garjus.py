@@ -27,7 +27,7 @@ from . import utils_redcap
 from . import utils_xnat
 from . import utils_dcm2nii
 from .progress import update as update_progress
-from .progress import make_project_report, make_stats_csv, make_export_zip, make_statshot
+from .progress import make_project_report, make_stats_csv, make_export_zip, make_statshot, make_anonshot
 from .compare import make_double_report, update as update_compare
 from .stats import update as update_stats
 from .automations import update as update_automations
@@ -42,6 +42,7 @@ from .analyses import run_analysis, download_resources, download_scan_resources
 from .scans import update as update_scans
 from .spin import run_spin
 from .petmatch import match_pets
+from .anonymize import anonymize_project, check_project
 
 
 logger = logging.getLogger('garjus')
@@ -339,15 +340,24 @@ class Garjus:
 
         return df
 
-    def add_analysis(self, project, analysis_dir):
+    def add_analysis(self, project, analysis_dir, analysis_name=None):
         """Add an analysis record."""
         analysis_id = None
         analysis_output = None
         analysis_datetime  = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+
+        if analysis_name:
+            analysis_processor = analysis_name
+            analysis_descrip = analysis_name
+        else:
+            analysis_processor = 'statshot'
+            analysis_name = 'statshot'
+            analysis_descrip = 'statshot'
+
         record = {
             self._rcq.def_field: project,
-            'analysis_name': 'stats',
-            'analysis_processor': 'statshot',
+            'analysis_name': analysis_name,
+            'analysis_processor': analysis_processor,
             'redcap_repeat_instrument': 'analyses',
             'redcap_repeat_instance': 'new',
             'analysis_output': analysis_datetime,
@@ -415,7 +425,7 @@ class Garjus:
             'analysis_output': analysis_output,
             'analysis_status': 'READY',
             'analyses_complete': '2',
-            'analysis_descrip': 'statshot',
+            'analysis_descrip': analysis_descrip,
         }
         try:
             _response = self._rcq.import_records([record])
@@ -1110,7 +1120,7 @@ class Garjus:
 
         # Get list of projects in redcap
         if self.redcap_enabled():
-            _records = self._rc.export_records(fields=[self._rc.def_field])
+            _records = self._rc.export_records(fields=[self._rc.def_field, 'main_complete'])
             redcap_names = [x[self._rc.def_field] for x in _records]
             logger.debug(f'redcap projects={redcap_names}')
         else:
@@ -2255,6 +2265,18 @@ class Garjus:
             exclude,
             guid_filter=guid,
             id_filter=ident,
+        )
+
+    def anonshot(
+        self,
+        project,
+        anonproject,
+    ):
+        """Export main project stats as new analysis on anon project."""
+        make_anonshot(
+            self,
+            project,
+            anonproject
         )
 
     def compare(self, project):
@@ -3666,6 +3688,29 @@ class Garjus:
 
     def our_assessors(self):
         return list(self._our_assessors)
+
+    def load_linked(self, project):
+        links = pd.DataFrame()
+        rc_pre = self.project_setting(project, 'preanon')
+        if not rc_pre:
+            raise Exception(f'no preanon setting:{project=}')
+
+        rc_anon = self.project_setting(project, 'anon')
+        if not rc_anon:
+            raise Exception(f'no anon setting:{project=}')
+
+        rc_pre = utils_redcap.get_redcap(project_id=rc_pre)
+        rc_anon = utils_redcap.get_redcap(project_id=rc_anon)
+
+        return utils_redcap.load_link(rc_pre, rc_anon)
+
+    def anonymize(self, project, in_dir, out_dir):
+        links = self.load_linked(project)
+        anonymize_project(in_dir, out_dir, links)
+
+    def check_anonymize(self, project, out_dir):
+        links = self.load_linked(project)
+        check_project(out_dir, links)
 
 
 def is_sgp_assessor(assessor):
