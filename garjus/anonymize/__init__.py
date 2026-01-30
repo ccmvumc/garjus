@@ -26,12 +26,14 @@ DELETE_FIELDS = [
     0x00209222,  # DimensionIndexUID
     0x00400254,  # PerformedProcedureStepDescription
     0x00400253,  # PerformedProcedureStepID
+    0x00080050,  # AccessionNumber
 ]
 
 # These tags are replaced with the new shifted date
 DATE_FIELDS = [
     0x00080020,  # StudyDate
     0x00080021,  # SeriesDate
+    0x00080022,  # AcquisitionDate
     0x00080023,  # ContentDate
     0x00400244,  # PerformedProcedureStepStartDate
     0x00400250,  # PerformedProcedureStepEndDate
@@ -98,6 +100,13 @@ def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):
             for frame2 in frame['0x00209111']:
                 frame2[0x00189074].value = new_datetime
                 frame2[0x00189151].value = new_datetime
+
+    # Replace date/time in Radiopharm
+    g = '0x00540016'
+    if g in d:
+        for frame in d[g]:
+            for frame2 in frame['0xfffee000']:
+                frame2[0x00181078].value = new_datetime
 
     # Save modified DICOM
     print(f'Saving:{out_path}')
