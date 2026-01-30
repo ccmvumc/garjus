@@ -173,7 +173,7 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
             anon_session = f'{anon_subject}{sess_suffix}'
 
             if delete_dates:
-                anon_date = ''
+                anon_date = '1969-12-31'
             else:
                 anon_date = f'{rec["anon_date"]}'
             
