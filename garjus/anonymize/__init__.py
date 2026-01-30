@@ -105,8 +105,7 @@ def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):
     g = '0x00540016'
     if g in d:
         for frame in d[g]:
-            for frame2 in frame['0xfffee000']:
-                frame2[0x00181078].value = new_datetime
+            frame[0x00181078].value = new_datetime
 
     # Save modified DICOM
     print(f'Saving:{out_path}')
