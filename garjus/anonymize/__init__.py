@@ -85,17 +85,19 @@ def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):
 
     # Delete UID tags from each frame
     g = '0x52009229'
-    for frame in d[g]:
-        if 0x00081140 in frame:
-            for frame2 in frame[0x00081140]:
-                del frame2[0x00081155]
+    if g in d:
+        for frame in d[g]:
+            if 0x00081140 in frame:
+                for frame2 in frame[0x00081140]:
+                    del frame2[0x00081155]
 
     # Replace date/time in each frame
     g = '0x52009230'
-    for frame in d[g]:
-        for frame2 in frame['0x00209111']:
-            frame2[0x00189074].value = new_datetime
-            frame2[0x00189151].value = new_datetime
+    if g in d:
+        for frame in d[g]:
+            for frame2 in frame['0x00209111']:
+                frame2[0x00189074].value = new_datetime
+                frame2[0x00189151].value = new_datetime
 
     # Save modified DICOM
     print(f'Saving:{out_path}')
