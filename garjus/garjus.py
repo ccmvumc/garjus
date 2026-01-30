@@ -3708,9 +3708,9 @@ class Garjus:
         links = self.load_linked(project, delete_dates=delete_dates)
         anonymize_project(in_dir, out_dir, links, delete_dates=delete_dates)
 
-    def check_anonymize(self, project, out_dir, delete_dates=False):
+    def check_anonymize(self, project, out_dir):
         links = self.load_linked(project)
-        check_project(out_dir, links, delete_dates=delete_dates)
+        check_project(out_dir, links)
 
 
 def is_sgp_assessor(assessor):
