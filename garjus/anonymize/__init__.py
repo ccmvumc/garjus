@@ -146,20 +146,27 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
         if subject.startswith('.'):
                 continue
 
-        for session in sorted(os.listdir(f'{in_dir}/{subject}')):
+        for i, session in enumerate(sorted(os.listdir(f'{in_dir}/{subject}'))):
 
             if session.startswith('.'):
                 continue
 
             sess_in_dir = f'{in_dir}/{subject}/{session}'
-            sess_date = get_session_date(sess_in_dir)
 
-            # Locate the matching record to get anon id/date
-            try:
-                rec = df[(df['ID'] == subject) & (df['mri_date'] == sess_date)].iloc[0]
-            except Exception as err:
-                print(f'No match found for session:{subject}:{session}:{sess_date}')
-                continue
+            if delete_dates:
+                try:
+                    rec = df[df['ID'] == subject].iloc[i]
+                except Exception as err:
+                    print(f'No match found for session:{subject}:{session}')
+                    continue
+            else:
+                # Locate the matching record to get anon id/date
+                sess_date = get_session_date(sess_in_dir)
+                try:
+                    rec = df[(df['ID'] == subject) & (df['mri_date'] == sess_date)].iloc[0]
+                except Exception as err:
+                    print(f'No match found for session:{subject}:{session}:{sess_date}')
+                    continue
 
             sess_suffix = get_session_suffix(subject, session)
             anon_subject = rec['anon_id']
