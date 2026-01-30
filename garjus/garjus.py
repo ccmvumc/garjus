@@ -3689,7 +3689,7 @@ class Garjus:
     def our_assessors(self):
         return list(self._our_assessors)
 
-    def load_linked(self, project):
+    def load_linked(self, project, delete_dates=False):
         links = pd.DataFrame()
         rc_pre = self.project_setting(project, 'preanon')
         if not rc_pre:
@@ -3702,7 +3702,7 @@ class Garjus:
         rc_pre = utils_redcap.get_redcap(project_id=rc_pre)
         rc_anon = utils_redcap.get_redcap(project_id=rc_anon)
 
-        return utils_redcap.load_link(rc_pre, rc_anon)
+        return utils_redcap.load_link(rc_pre, rc_anon, delete_dates)
 
     def anonymize(self, project, in_dir, out_dir, delete_dates=False):
         links = self.load_linked(project, delete_dates=delete_dates)
