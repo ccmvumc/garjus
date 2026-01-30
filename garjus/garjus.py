@@ -3203,8 +3203,10 @@ class Garjus:
             scan_info['date'] = scan_info['date'][:10]
 
         scan_modality = scan_info['modality']
-        scan_date = scan_info['date']
         scan_tracer = scan_info['tracer']
+        scan_date = scan_info['date']
+        if scan_date == '1969-12-31':
+            scan_date = ''
 
         if scan_modality == 'MR':
             sess_datatype = 'xnat:mrSessionData'
