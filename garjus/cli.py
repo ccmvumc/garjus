@@ -411,10 +411,11 @@ def anonshot(project, anonproject):
 @click.option('--project', '-p', 'project', required=True, multiple=False)
 @click.option('--indir', '-i', 'in_dir', required=True, multiple=False)
 @click.option('--outdir', '-o', 'out_dir', required=True, multiple=False)
-def anonymize(project, in_dir, out_dir):
+@click.option('--delete-dates', is_flag=True)
+def anonymize(project, in_dir, out_dir, delete_dates):
     '''anonymize in_dir to out_dir'''
     click.echo('garjus! anonymize')
-    Garjus().anonymize(project, in_dir, out_dir)
+    Garjus().anonymize(project, in_dir, out_dir, delete_dates=delete_dates)
 
 
 @cli.command('checkanon')

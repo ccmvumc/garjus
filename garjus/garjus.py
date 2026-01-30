@@ -3704,9 +3704,9 @@ class Garjus:
 
         return utils_redcap.load_link(rc_pre, rc_anon)
 
-    def anonymize(self, project, in_dir, out_dir):
-        links = self.load_linked(project)
-        anonymize_project(in_dir, out_dir, links)
+    def anonymize(self, project, in_dir, out_dir, delete_dates=False):
+        links = self.load_linked(project, delete_dates=delete_dates)
+        anonymize_project(in_dir, out_dir, links, delete_dates=delete_dates)
 
     def check_anonymize(self, project, out_dir):
         links = self.load_linked(project)

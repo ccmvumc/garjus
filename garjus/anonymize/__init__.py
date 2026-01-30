@@ -141,7 +141,7 @@ def get_session_suffix(subject, session):
     return session.split(subject)[1]
 
 
-def anonymize_project(in_dir, out_dir, df):
+def anonymize_project(in_dir, out_dir, df, delete_dates=False):
     for subject in sorted(os.listdir(in_dir)):
         if subject.startswith('.'):
                 continue
@@ -164,7 +164,12 @@ def anonymize_project(in_dir, out_dir, df):
             sess_suffix = get_session_suffix(subject, session)
             anon_subject = rec['anon_id']
             anon_session = f'{anon_subject}{sess_suffix}'
-            anon_date = f'{rec["anon_date"]}'
+
+            if delete_dates:
+                anon_date = ''
+            else:
+                anon_date = f'{rec["anon_date"]}'
+            
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
             print(session)
             anonymize_session(
