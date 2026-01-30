@@ -3697,12 +3697,14 @@ class Garjus:
         if not rc_pre:
             raise Exception(f'no preanon setting:{project=}')
 
-        rc_anon = self.project_setting(project, 'anon')
-        if not rc_anon:
-            raise Exception(f'no anon setting:{project=}')
-
         rc_pre = utils_redcap.get_redcap(project_id=rc_pre)
-        rc_anon = utils_redcap.get_redcap(project_id=rc_anon)
+        if delete_dates:
+            rc_anon = None
+        else:
+            rc_anon = self.project_setting(project, 'anon')
+            rc_anon = utils_redcap.get_redcap(project_id=rc_anon)
+            if not rc_anon:
+                raise Exception(f'no anon setting:{project=}')
 
         return utils_redcap.load_link(rc_pre, rc_anon, delete_dates)
 
