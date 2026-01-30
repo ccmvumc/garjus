@@ -421,10 +421,11 @@ def anonymize(project, in_dir, out_dir, delete_dates):
 @cli.command('checkanon')
 @click.option('--project', '-p', 'project', required=True, multiple=False)
 @click.option('--outdir', '-o', 'out_dir', required=True, multiple=False)
-def checkanon(project, out_dir):
+@click.option('--delete-dates', is_flag=True)
+def checkanon(project, out_dir, delete_dates):
     '''check anonymized in out_dir'''
     click.echo('garjus! checkanon')
-    Garjus().check_anonymize(project, out_dir)
+    Garjus().check_anonymize(project, out_dir, delete_dates=delete_dates)
 
 
 @cli.command('compare')

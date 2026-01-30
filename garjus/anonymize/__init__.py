@@ -227,30 +227,41 @@ def check_session(out_dir, mri_date):
         check_scan(scan_out_dir, mri_date)
 
 
-def check_project(out_dir, df):
+def check_project(out_dir, df, delete_dates=False):
     for subject in sorted(os.listdir(out_dir)):
         if subject.startswith('.'):
                 continue
 
-        for session in sorted(os.listdir(f'{out_dir}/{subject}')):
+        for i, session in enumerate(sorted(os.listdir(f'{out_dir}/{subject}'))):
             if session.startswith('.'):
                 continue
 
             sess_dir = f'{out_dir}/{subject}/{session}'
-            sess_date = get_session_date(sess_dir)
 
-            # Find a match for the anon'd session date
-            try:
-                rec = df[(df['anon_id'] == subject) & (df['anon_date'] == sess_date)].iloc[0]
-            except Exception as err:
-                print(f'No match found:{subject}:{session}:{sess_date}')
-                continue
+            if delete_dates:
+                try:
+                    rec = df[df['anon_id'] == subject].iloc[i]
+                except Exception as err:
+                    print(f'No match found:{subject}:{session}')
+                    continue
+            else:
+                sess_date = get_session_date(sess_dir)
 
-            # Get the original mri date form the matched recor
-            mri_date = f'{rec["mri_date"]}'
+                # Find a match for the anon'd session date
+                try:
+                    rec = df[(df['anon_id'] == subject) & (df['anon_date'] == sess_date)].iloc[0]
+                except Exception as err:
+                    print(f'No match found:{subject}:{session}:{sess_date}')
+                    continue
 
-            # Try to find the original date in the anonymized dicom files
-            check_session(sess_dir, mri_date)
-            check_session(sess_dir, mri_date.replace('-',''))
+                # Get the original mri date form the matched recor
+                mri_date = f'{rec["mri_date"]}'
+
+                # Try to find the original date in the anonymized dicom files
+                check_session(sess_dir, mri_date)
+                check_session(sess_dir, mri_date.replace('-',''))
+
+            # Try to find the original id
+            check_session(sess_dir, rec['ID'])
 
     print('Finished checking project.')
