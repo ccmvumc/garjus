@@ -232,7 +232,7 @@ def secondary_map(project):
     rec = project.export_records(fields=[def_field, sec_field])
 
     # Build the map
-    id2subj = {x[def_field]: x[sec_field] for x in rec if x.get(sec_field, False)}
+    id2subj = {str(x[def_field]): str(x[sec_field]) for x in rec if x.get(sec_field, False)}
 
     return id2subj
 
@@ -280,7 +280,8 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
 
         # Get anon_id with anon date from anon redcap project
         dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
-        dfa['anon_id']  = dfa['anon_id'].astype(str)
+        print(dfa['anon_id'])
+        dfa['anon_id'] = dfa['anon_id'].astype(str)
         dfa = dfa[dfa[mri_date_field] != '']
 
         if rc_pre.is_longitudinal:
