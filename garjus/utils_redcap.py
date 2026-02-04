@@ -274,7 +274,7 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         dfa = pd.DataFrame(dfa)
 
         # Get old ID with old date from pre redcap project
-        dfd['ID'] = dfd[rc_pre.def_field].map(secondary_map(rc_pre))
+        dfd['ID'] = dfd[rc_pre.def_field].astype(str).map(secondary_map(rc_pre))
         dfd['ID'] = dfd['ID'].astype(str)
         dfd = dfd[dfd[mri_date_field] != '']
 
