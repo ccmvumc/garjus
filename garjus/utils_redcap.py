@@ -232,7 +232,7 @@ def secondary_map(project):
     rec = project.export_records(fields=[def_field, sec_field])
 
     # Build the map
-    id2subj = {x[def_field]: x[sec_field] for x in rec if x[sec_field]}
+    id2subj = {x[def_field]: x[sec_field] for x in rec if x.get(sec_field, False)}
 
     return id2subj
 
@@ -254,22 +254,31 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
     if delete_dates:
         df = dfp
     else:
+        mri_date_field = ''
+
+        if 'mri_date' in dfd.field_names:
+            mri_date_field = 'mri_date'
+        elif 'mriscan_date' in dfd.field_names:
+            mri_date_field = 'mriscan_date'
+        else:
+            raise Exception('failed to find mri date in REDCap projects')
+
         # Load dates from both redcaps
-        dfd = rc_pre.export_records(fields=['mri_date'])
-        dfa = rc_anon.export_records(fields=['mri_date'])
+        dfd = rc_pre.export_records(fields=[mri_date_field])
+        dfa = rc_anon.export_records(fields=[mri_date_field])
 
         # Get old ID with old date from pre redcap project
         dfd = pd.DataFrame(dfd)
         dfd['ID'] = dfd[rc_pre.def_field].map(secondary_map(rc_pre))
-        dfd = dfd[dfd.mri_date != '']
-        dfd = dfd[['ID', 'redcap_event_name', 'mri_date']]
+        dfd = dfd[dfd[mri_date_field] != '']
+        dfd = dfd[['ID', 'redcap_event_name', mri_date_field]]
 
         # Get anon_id with anon date from anon redcap project
         dfa = pd.DataFrame(dfa)
         dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
-        dfa = dfa[dfa.mri_date != '']
-        dfa = dfa[['anon_id', 'redcap_event_name', 'mri_date']]
-        dfa = dfa.rename(columns={'mri_date': 'anon_date'})
+        dfa = dfa[dfa[mri_date_field] != '']
+        dfa = dfa[['anon_id', 'redcap_event_name', mri_date_field]]
+        dfa = dfa.rename(columns={mri_date_field: 'anon_date'})
 
         # Merge all together to get one row per mri with both ids and both dates
         df = pd.merge(dfp, dfd, on='ID')
