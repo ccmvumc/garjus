@@ -250,6 +250,8 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
     dfp['ID'] = dfp[rc_pre.def_field].map(secondary_map(rc_pre))
     dfp = dfp[dfp.anon_id != '']
     dfp = dfp[['ID', 'anon_id']]
+    dfp['ID'] = dfp['ID'].astype(str)
+    dfp['anon_id'] = dfp['anon_id'].astype(str)
 
     if delete_dates:
         df = dfp
@@ -267,11 +269,11 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         dfd = rc_pre.export_records(fields=[mri_date_field])
         dfa = rc_anon.export_records(fields=[mri_date_field])
 
-
         # Get old ID with old date from pre redcap project
         dfd = pd.DataFrame(dfd)
         dfd['ID'] = dfd[rc_pre.def_field].map(secondary_map(rc_pre))
         dfd = dfd[dfd[mri_date_field] != '']
+        dfd['ID'] = dfd['ID'].astype(str)
 
         if rc_pre.is_longitudinal:
             dfd = dfd[['ID', 'redcap_event_name', mri_date_field]]
@@ -282,6 +284,7 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         dfa = pd.DataFrame(dfa)
         dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
         dfa = dfa[dfa[mri_date_field] != '']
+        dfa['anon_id']  = dfa['anon_id'].astype(str)
 
         if rc_pre.is_longitudinal:
             dfa = dfa[['anon_id', 'redcap_event_name', mri_date_field]]
