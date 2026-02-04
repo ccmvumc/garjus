@@ -256,9 +256,9 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
     else:
         mri_date_field = ''
 
-        if 'mri_date' in dfd.field_names:
+        if 'mri_date' in rc_pre.field_names:
             mri_date_field = 'mri_date'
-        elif 'mriscan_date' in dfd.field_names:
+        elif 'mriscan_date' in rc_pre.field_names:
             mri_date_field = 'mriscan_date'
         else:
             raise Exception('failed to find mri date in REDCap projects')
