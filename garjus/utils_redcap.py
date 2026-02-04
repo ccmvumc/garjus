@@ -247,13 +247,11 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
 
     # Get old ID mapped to anon id from pre redcap project
     dfp = pd.DataFrame(dfp)
-    dfp['ID'] = dfp[rc_pre.def_field].map(secondary_map(rc_pre))
+    dfp['ID'] = dfp[rc_pre.def_field].astype(str).map(secondary_map(rc_pre))
     dfp = dfp[dfp.anon_id != '']
     dfp = dfp[['ID', 'anon_id']]
     dfp['ID'] = dfp['ID'].astype(str)
     dfp['anon_id'] = dfp['anon_id'].astype(str)
-
-    print(dfp)
 
     if delete_dates:
         df = dfp
@@ -293,9 +291,6 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         # Rename date column to be anon_date
         dfa = dfa.rename(columns={mri_date_field: 'anon_date'})
 
-        print(dfd)
-        print(dfa)
-
         # Merge all together to get one row per mri with both ids and both dates
         df = pd.merge(dfp, dfd, on='ID')
 
@@ -306,7 +301,5 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
 
     # Final sort
     df = df.sort_values('ID')
-
-    print(df)
 
     return df
