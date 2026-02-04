@@ -279,8 +279,7 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         dfd = dfd[dfd[mri_date_field] != '']
 
         # Get anon_id with anon date from anon redcap project
-        dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
-        print(dfa['anon_id'])
+        dfa['anon_id'] = dfa[rc_anon.def_field].astype(str).map(secondary_map(rc_anon))
         dfa['anon_id'] = dfa['anon_id'].astype(str)
         dfa = dfa[dfa[mri_date_field] != '']
 
