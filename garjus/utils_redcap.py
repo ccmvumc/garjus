@@ -278,9 +278,6 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         dfd['ID'] = dfd['ID'].astype(str)
         dfd = dfd[dfd[mri_date_field] != '']
 
-        if rc_pre.is_longitudinal:
-        else:
-
         # Get anon_id with anon date from anon redcap project
         dfa['anon_id'] = dfa[rc_anon.def_field].map(secondary_map(rc_anon))
         dfa['anon_id']  = dfa['anon_id'].astype(str)
