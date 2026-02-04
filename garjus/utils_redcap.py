@@ -299,6 +299,9 @@ def load_link(rc_pre, rc_anon, delete_dates=False):
         else:
             df = pd.merge(df, dfa, on=['anon_id'])
 
+        # Rename date column to be mri_date
+        df = df.rename(columns={mri_date_field: 'mri_date'})
+
     # Final sort
     df = df.sort_values('ID')
 
