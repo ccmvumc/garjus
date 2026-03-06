@@ -942,8 +942,12 @@ def _make_scan_table(
     data = []
     id2subj = {}
 
-    # Shortcut
-    def_field = project.def_field
+    try:
+        # Shortcut
+        def_field = project.def_field
+    except Exception:
+        logger.error('failed to load REDCap project')
+        return []
 
     # Handle secondary ID
     sec_field = project.export_project_info()['secondary_unique_field']
