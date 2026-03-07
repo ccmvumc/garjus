@@ -1121,6 +1121,10 @@ class Garjus:
         # Get list of projects in redcap
         if self.redcap_enabled():
             _records = self._rc.export_records(fields=[self._rc.def_field, 'main_complete'])
+
+            # Filter to only include if enabled/green
+            _records = [x for x in _records if x['main_complete'] == 2]
+
             redcap_names = [x[self._rc.def_field] for x in _records]
             logger.debug(f'redcap projects={redcap_names}')
         else:
