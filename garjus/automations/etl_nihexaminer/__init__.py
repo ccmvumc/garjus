@@ -186,7 +186,6 @@ def run(project):
         event_id = r['redcap_event_name']
 
         try:
-
             if r[done_field]:
                 logger.debug(f'already ETL:{record_id}:{event_id}')
                 continue
@@ -360,10 +359,15 @@ def run(project):
             logger.info(f'File Not Found NBack:{record_id}:{event_id}')
             continue
 
+        any_missing = False
         for m in manual_values:
             if r.get(m, '') == '':
                 logger.info(f'missing manual value:{record_id}:{event_id}:{m}')
-                continue
+                any_missing = True
+                break
+
+        if any_missing == True:
+            continue
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
