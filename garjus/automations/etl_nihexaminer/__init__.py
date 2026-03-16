@@ -195,6 +195,11 @@ def run(project):
                 logger.debug(f'no data file:{record_id}:{event_id}')
                 continue
 
+            for f in [nback_field, shift_field, cpt_field, flank_field]:
+                if r[f] == 'MISSING_DATA.txt':
+                    logger.debug(f'missing file:{record_id}:{event_id}:{f}')
+                    continue
+
             logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
             # Get values needed for scoring
