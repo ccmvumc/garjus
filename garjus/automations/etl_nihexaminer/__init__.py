@@ -196,6 +196,7 @@ def run(project):
                 continue
 
             for f in [nback_field, shift_field, cpt_field, flank_field]:
+                print(r[f])
                 if r[f] == 'MISSING_DATA.txt':
                     logger.debug(f'missing file:{record_id}:{event_id}:{f}')
                     continue
@@ -353,6 +354,11 @@ def run(project):
         if not r.get(nback_field, False):
             logger.info(f'File Not Found NBack:{record_id}:{event_id}')
             continue
+
+        for m in manual_values:
+            if r[m] == '':
+                logger.info(f'missing manual value:{record_id}:{event_id}:{m}')
+                continue
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Get files needed
