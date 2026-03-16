@@ -196,9 +196,8 @@ def run(project):
 
             any_missing = False
             for f in [nback_field, shift_field, cpt_field, flank_field]:
-                print(r[f])
                 if r[f] == 'MISSING_DATA.txt':
-                    logger.info(f'missing file:{record_id}:{event_id}:{f}')
+                    logger.debug(f'missing file:{record_id}:{event_id}:{f}')
                     any_missing = True
                     break
 
@@ -362,7 +361,7 @@ def run(project):
         any_missing = False
         for m in manual_values:
             if r.get(m, '') == '':
-                logger.info(f'missing manual value:{record_id}:{event_id}:{m}')
+                logger.debug(f'missing manual value:{record_id}:{event_id}:{m}')
                 any_missing = True
                 break
 
