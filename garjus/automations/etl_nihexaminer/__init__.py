@@ -347,7 +347,7 @@ def run(project):
                         'cf2_rv': int(r['rule_vio_cloth'])
                     })
             else:
-                logger.error(f'manual values not found:{record_id}:{event_id}')
+                logger.debug(f'manual values not found:{record_id}:{event_id}')
                 continue
 
         except (KeyError, ValueError) as err:
