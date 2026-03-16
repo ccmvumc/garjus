@@ -195,11 +195,16 @@ def run(project):
                 logger.debug(f'no data file:{record_id}:{event_id}')
                 continue
 
+            any_missing = False
             for f in [nback_field, shift_field, cpt_field, flank_field]:
                 print(r[f])
                 if r[f] == 'MISSING_DATA.txt':
-                    logger.debug(f'missing file:{record_id}:{event_id}:{f}')
-                    continue
+                    logger.info(f'missing file:{record_id}:{event_id}:{f}')
+                    any_missing = True
+                    break
+
+            if any_missing == True:
+                continue
 
             logger.debug(f'running nihexaminer ETL:{record_id}:{event_id}')
 
@@ -356,7 +361,7 @@ def run(project):
             continue
 
         for m in manual_values:
-            if r[m] == '':
+            if r.get(m, '') == '':
                 logger.info(f'missing manual value:{record_id}:{event_id}:{m}')
                 continue
 
