@@ -1864,6 +1864,7 @@ class Garjus:
     def _get_result(self, uri):
         """Get result of xnat query."""
         if not self.xnat_enabled():
+            print('xnat=', self._xnat)
             raise Exception('xnat not enabled')
 
         logger.debug(uri)
