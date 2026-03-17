@@ -880,30 +880,33 @@ def _add_stats_fmriqa(pdf, stats, info):
 
 def _add_stats(pdf, stats, plot_title=None):
 
-    # this returns a PIL Image object
-    image = plot_stats(stats, plot_title)
-    tot_width, tot_height = image.size
+    try:
+        # this returns a PIL Image object
+        image = plot_stats(stats, plot_title)
+        tot_width, tot_height = image.size
 
-    # Split horizontal image into chunks of width to fit on
-    # letter-sized page with crop((left, top, right, bottom))
-    chunk_h = 500
-    chunk_w = 998
-    rows_per_page = 3  # 3 rows per page
-    page_count = math.ceil(tot_width / (rows_per_page * chunk_w))
+        # Split horizontal image into chunks of width to fit on
+        # letter-sized page with crop((left, top, right, bottom))
+        chunk_h = 500
+        chunk_w = 998
+        rows_per_page = 3  # 3 rows per page
+        page_count = math.ceil(tot_width / (rows_per_page * chunk_w))
 
-    for p in range(page_count):
-        for c in range(rows_per_page):
-            # Calculate the starting x for this chunk
-            chunk_x = (c * chunk_w) + (p * chunk_w * rows_per_page)
-            if chunk_x > tot_width - 10:
-                # out of bounds
-                continue
+        for p in range(page_count):
+            for c in range(rows_per_page):
+                # Calculate the starting x for this chunk
+                chunk_x = (c * chunk_w) + (p * chunk_w * rows_per_page)
+                if chunk_x > tot_width - 10:
+                    # out of bounds
+                    continue
 
-            # Get the image from the cropped section
-            _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
+                # Get the image from the cropped section
+                _img = image.crop((chunk_x, 0, chunk_x + chunk_w, chunk_h))
 
-            # Draw the image on the PDF
-            pdf.image(_img, x=0.75, h=3.1)
+                # Draw the image on the PDF
+                pdf.image(_img, x=0.75, h=3.1)
+    except PIL.UnidentifiedImageError as err:
+        logger.error(f'erroring plotting stats:{err}')
 
     return pdf
 
