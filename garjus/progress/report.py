@@ -18,7 +18,7 @@ import plotly.subplots
 import plotly.express as px
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 
 logger = logging.getLogger('garjus.progress.report')
@@ -905,7 +905,7 @@ def _add_stats(pdf, stats, plot_title=None):
 
                 # Draw the image on the PDF
                 pdf.image(_img, x=0.75, h=3.1)
-    except PIL.UnidentifiedImageError as err:
+    except UnidentifiedImageError as err:
         logger.error(f'erroring plotting stats:{err}')
 
     return pdf
