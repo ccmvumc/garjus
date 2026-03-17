@@ -100,6 +100,7 @@ class Garjus:
                 except Exception as err2:
                     logger.debug(f'could not connect to XNAT:{err2}')
 
+        logger.debug('xnat=', self._xnat)
 
         if self._user == 'admin':
             # Prevent xnat admin user from accessing redcap
