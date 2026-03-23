@@ -29,6 +29,7 @@ setup(
         "dash_bootstrap_templates",
         "dash<3.0.0",
         "flask_login",
+        "pydicom",
     ],
     entry_points={"console_scripts": ["garjus = garjus.cli:cli"]},
     include_package_data=True,
