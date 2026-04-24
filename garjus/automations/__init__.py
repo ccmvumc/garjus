@@ -75,7 +75,7 @@ CHAMP_VUMC_ASL_PARAMS = {
     "ArterialSpinLabelingType": "PCASL",
     "LabelingDuration": 1.65,
     "PostLabelingDelay": 1.525,
-    "BackgroundSuppression": true,
+    "BackgroundSuppression": True,
 }
 
 
