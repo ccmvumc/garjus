@@ -69,6 +69,22 @@ COGD_NBACK_SLICE_TIMING = [
     1.25, 2.75, 1.30, 2.80, 1.35, 2.85, 1.40, 2.90, 1.45, 2.95]
 
 
+CHAMP_VUMC_ASL_PARAMS = {
+    "RepetitionTimePreparation": 4.3,
+    "M0Type": "Separate",
+    "ArterialSpinLabelingType": "PCASL",
+    "LabelingDuration": 1.65,
+    "PostLabelingDelay": 1.525,
+    "BackgroundSuppression": true,
+}
+
+
+CHAMP_VUMC_M0_PARAMS = {
+    "RepetitionTimePreparation": 4.3,
+    "IntendedFor":["perf/sub-01_asl.nii.gz"],
+}
+
+
 def update(garjus, projects, autos_include=None, autos_exclude=None):
     """Update project progress."""
     for p in projects:
@@ -771,6 +787,32 @@ def _run_scan_automations(automations, garjus, project):
     site_data = garjus.sites(project)
     protocols = garjus.scanning_protocols(project)
     project_redcap = garjus.primary(project)
+
+    if project == 'CHAMP':
+        logger.debug(f'running add_params:{project}')
+
+        add_params = importlib.import_module(
+            'garjus.automations.xnat_add_params')
+
+        logger.info(f'adding ASL params:{project}')
+
+        results += add_params.process_project(
+            garjus,
+            project,
+            CHAMP_VUMC_ASL_PARAMS,
+            ['ASL'],
+            sites=['VUMC'],
+        )
+
+        logger.info(f'adding M0 params:{project}')
+
+        results += add_params.process_project(
+            garjus,
+            project,
+            CHAMP_VUMC_M0_PARAMS,
+            ['M0'],
+            sites=['VUMC'],
+        )
 
     # Add slice timing
     if project == 'REMBRANDT':
