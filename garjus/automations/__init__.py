@@ -801,7 +801,7 @@ def _run_scan_automations(automations, garjus, project):
             project,
             CHAMP_VUMC_ASL_PARAMS,
             ['ASL'],
-            sites=['VUMC'],
+            #sites=['VUMC'],
         )
 
         logger.info(f'adding M0 params:{project}')
@@ -811,7 +811,7 @@ def _run_scan_automations(automations, garjus, project):
             project,
             CHAMP_VUMC_M0_PARAMS,
             ['M0'],
-            sites=['VUMC'],
+            #sites=['VUMC'],
         )
 
     # Add slice timing
