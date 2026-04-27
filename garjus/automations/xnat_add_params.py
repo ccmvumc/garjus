@@ -27,7 +27,7 @@ def process_project(
     # Check each scan
     for i, scan in df.iterrows():
         if 'JSON_BeforeParams' in scan['RESOURCES']:
-            logging.debug(f'JSON_BeforeParams exists:{i}:{scan}')
+            logging.debug(f'JSON_BeforeParams exists:{i}:{scan["full_path"]}')
             continue
 
         full_path = scan['full_path']
