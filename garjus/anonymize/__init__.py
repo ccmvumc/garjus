@@ -155,8 +155,15 @@ def get_session_date(session_dir):
         return None
 
     dicom_data = pydicom.dcmread(dicom_path)
-    d = dicom_data.AcquisitionDateTime
-    return '-'.join([d[:4], d[4:6], d[6:8]])
+
+    if AcquisitionDateTime: in dicom_data:
+        d = dicom_data.AcquisitionDateTime
+        d = '-'.join([d[:4], d[4:6], d[6:8]])
+    else:
+        d = dicom_data.AcquisitionDate
+        d = '-'.join([d[:4], d[4:6], d[6:8]])
+
+    return
 
 
 def get_session_suffix(subject, session):
