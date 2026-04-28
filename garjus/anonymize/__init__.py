@@ -56,11 +56,15 @@ def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):
     # Delete UID from file metadata
     del d.file_meta[0x0002,0x0003]
 
-    # Get just the date portion
-    old_date = d.AcquisitionDateTime[:8]
+    if AcquisitionDateTime in d:
+        # Get just the date portion
+        old_date = d.AcquisitionDateTime[:8]
 
-    # Get just the time portion
-    old_time =  d.AcquisitionDateTime[8:]
+        # Get just the time portion
+        old_time =  d.AcquisitionDateTime[8:]
+    else:
+        old_date = d.AcquisitionDate
+        old_time =  d.AcquisitionTime
 
     # Get datetime formatted for DICOM, YYYYMMDDHHMMSS.000
     new_date = anon_date.replace('-', '')
