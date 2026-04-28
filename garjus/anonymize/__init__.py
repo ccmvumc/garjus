@@ -31,6 +31,7 @@ DELETE_FIELDS = [
     0x00400253,  # PerformedProcedureStepID
     0x00080050,  # AccessionNumber
     0x00081155,  # Referenced SOP Instance UID <--UPMC
+    0x00081140   # ReferencedImageSequence <--UPMC
 ]
 
 # These tags are replaced with the new shifted date
