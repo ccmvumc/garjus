@@ -56,7 +56,7 @@ def anon_dicom(in_path, out_path, anon_subject, anon_session, anon_date):
     # Delete UID from file metadata
     del d.file_meta[0x0002,0x0003]
 
-    if AcquisitionDateTime in d:
+    if 'AcquisitionDateTime' in d:
         # Get just the date portion
         old_date = d.AcquisitionDateTime[:8]
 
@@ -156,7 +156,7 @@ def get_session_date(session_dir):
 
     dicom_data = pydicom.dcmread(dicom_path)
 
-    if AcquisitionDateTime in dicom_data:
+    if 'AcquisitionDateTime' in dicom_data:
         d = dicom_data.AcquisitionDateTime
         d = '-'.join([d[:4], d[4:6], d[6:8]])
     else:
@@ -192,7 +192,6 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
                     continue
             else:
                 # Locate the matching record to get anon id/date
-
                 sess_date = get_session_date(sess_in_dir)
 
                 if sess_date is None:
