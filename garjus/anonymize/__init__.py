@@ -158,12 +158,10 @@ def get_session_date(session_dir):
 
     if 'AcquisitionDateTime' in dicom_data:
         d = dicom_data.AcquisitionDateTime
-        d = '-'.join([d[:4], d[4:6], d[6:8]])
     else:
         d = dicom_data.AcquisitionDate
-        d = '-'.join([d[:4], d[4:6], d[6:8]])
 
-    return
+    return '-'.join([d[:4], d[4:6], d[6:8]])
 
 
 def get_session_suffix(subject, session):
