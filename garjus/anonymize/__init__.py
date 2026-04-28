@@ -5,6 +5,8 @@ import pandas as pd
 import pydicom
 
 
+logger = logging.getLogger(__name__)
+
 
 # These tags are deleted in addition to all private tags
 DELETE_FIELDS = [
@@ -141,7 +143,12 @@ def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
 
 
 def get_session_date(session_dir):
-    dicom_path = glob(f'{session_dir}/*/DICOM/*.*')[0]
+    try:
+        dicom_path = glob(f'{session_dir}/*/DICOM*/*.*')[0]
+    except IndexError:
+        logger.warn(f'{session_dir}:no DICOMs found')
+        return None
+
     dicom_data = pydicom.dcmread(dicom_path)
     d = dicom_data.AcquisitionDateTime
     return '-'.join([d[:4], d[4:6], d[6:8]])
@@ -163,6 +170,8 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
 
             sess_in_dir = f'{in_dir}/{subject}/{session}'
 
+            logger.debug(f'{i}:{sess_in_dir}')
+
             if delete_dates:
                 try:
                     rec = df[df['ID'] == subject].iloc[i]
@@ -171,7 +180,13 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
                     continue
             else:
                 # Locate the matching record to get anon id/date
+
                 sess_date = get_session_date(sess_in_dir)
+
+                if sess_date is None:
+                    logger.warn(f'{i}:{sess_in_dir}:no DICOMs, skipping')
+                    continue
+
                 try:
                     rec = df[(df['ID'] == subject) & (df['mri_date'] == sess_date)].iloc[0]
                 except Exception as err:
