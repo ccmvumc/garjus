@@ -137,6 +137,9 @@ def anonymize_session(in_dir, out_dir, anon_subject, anon_session, anon_date):
                 continue
 
         scan_in_dir = f'{in_dir}/{scan}/DICOM'
+        if not os.path.exists(scan_in_dir):
+            scan_in_dir = f'{in_dir}/{scan}/DICOMZIP'
+
         scan_out_dir = f'{out_dir}/{scan}/DICOM'
         anonymize_scan(
             scan_in_dir,
