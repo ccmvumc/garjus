@@ -156,7 +156,7 @@ def get_session_date(session_dir):
 
     dicom_data = pydicom.dcmread(dicom_path)
 
-    if AcquisitionDateTime: in dicom_data:
+    if AcquisitionDateTime in dicom_data:
         d = dicom_data.AcquisitionDateTime
         d = '-'.join([d[:4], d[4:6], d[6:8]])
     else:
