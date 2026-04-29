@@ -794,7 +794,7 @@ def _run_scan_automations(automations, garjus, project):
         add_params = importlib.import_module(
             'garjus.automations.xnat_add_params')
 
-        logger.info(f'adding ASL params:{project}')
+        logger.debug(f'adding ASL params:{project}')
 
         results += add_params.process_project(
             garjus,
@@ -804,7 +804,7 @@ def _run_scan_automations(automations, garjus, project):
             #sites=['VUMC'],
         )
 
-        logger.info(f'adding M0 params:{project}')
+        logger.debug(f'adding M0 params:{project}')
 
         results += add_params.process_project(
             garjus,
