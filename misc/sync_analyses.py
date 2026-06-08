@@ -16,47 +16,75 @@ def _check_analysis(rcq, xnat, a):
     report_field = 'analysis_reportfile'
     log_field = 'analysis_logfile'
     batch_field = 'analysis_batchfile'
-    stats_field = 'analysis_statsfile'
+    stats_field = 'analysis_statsfile'    
+    report_file = 'report.pdf'
 
     if not output:
         return
 
-    res = xnat.select_project(project).resource(output)
+    log_file = f'{output}.txt'
+    batch_file = f'{output}.slurm'
+    stats_file = 'stats.csv'
 
+    # Get list of files on xnat for analysis output
+    res = xnat.select_project(project).resource(output)
     files = list(res.files().get())
     print(files)
 
     if 'report.pdf' not in files:
-        print('No report', project, analysis_id, output)
+        print(f'No report, skipping:{project}:{output}:{analysis_id}')
         return
 
-    # Get report on XNAT
-    #xnat_report = res.file('report.pdf')
-    #if not xnat_report.exists():
-    #    print('No report', project, analysis_id, output)
-    #    return
-
-
-    # Get report on REDCap
-    cur_report = a[report_field]
-    if cur_report:
-        print(f'report found:{cur_report}', project, analysis_id, output)
+    if a[report_field] and a[log_field] and a[batch_field]:
+        print(f'pdf/log/batch files already on REDCap:{project}:{analysis_id}:{output}')
         return
-
-    print('no report, copying:', project, analysis_id, output)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        # download file from xnat
-        dst = f'{tmpdir}/report.pdf'
-        print('DOWNLOAD from xnat', dst)
-        #xnat_report.get(dst)
-        res.file('report.pdf').get(dst)
+        print(f'copying:{project}:{analysis_id}:{output}')
 
-        # upload file to redcap
-        print('UPLOAD to redcap', dst)
-        upload_file(rcq, project, report_field, dst, repeat_id=analysis_id)
+        if not a[report_field]:
+            # download file from xnat
+            src = report_file
+            dst = f'{tmpdir}/{src}'
+            print('DOWNLOAD from xnat', dst)
+            res.file(src).get(dst)
 
-    # TODO: log, batch, stats
+            # upload file to redcap
+            print('UPLOAD to redcap', dst)
+            upload_file(rcq, project, report_field, dst, repeat_id=analysis_id)
+
+        if not a[log_field]:
+            # download file from xnat
+            src = log_file
+            dst = f'{tmpdir}/{src}'
+            print(f'DOWNLOAD from xnat:{dst}')
+            res.file(src).get(dst)
+
+            # upload file to redcap
+            print('UPLOAD to redcap', dst)
+            upload_file(rcq, project, log_field, dst, repeat_id=analysis_id)
+
+        if not a[batch_field]:
+            # download file from xnat
+            src = batch_file
+            dst = f'{tmpdir}/{src}'
+            print(f'DOWNLOAD from xnat:{dst}')
+            res.file(src).get(dst)
+
+            # upload file to redcap
+            print('UPLOAD to redcap', dst)
+            upload_file(rcq, project, batch_field, dst, repeat_id=analysis_id)
+
+        if not a[stats_field] and 'stats.csv' in files:
+            # download file from xnat
+            src = stats_file
+            dst = f'{tmpdir}/{src}'
+            print(f'DOWNLOAD from xnat:{dst}')
+            res.file(src).get(dst)
+
+            # upload file to redcap
+            print('UPLOAD to redcap', dst)
+            upload_file(rcq, project, stats_field, dst, repeat_id=analysis_id)
 
 
 def _check(rcq, xnat, projects):
