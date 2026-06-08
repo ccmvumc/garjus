@@ -23,7 +23,7 @@ def _check_analysis(rcq, xnat, a):
 
     res = xnat.select_project(project).resource(output)
 
-    files = list(res.files())
+    files = list(res.files().get())
     print(files)
 
     if 'report.pdf' not in files:
@@ -70,7 +70,6 @@ def _check(rcq, xnat, projects):
     rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
 
     for r in rec:
-        print(r)
         _check_analysis(rcq, xnat, r)
 
 def main(g, projects):
