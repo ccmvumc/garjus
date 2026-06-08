@@ -23,7 +23,8 @@ def _check_analysis(rcq, xnat, a):
 
     res = xnat.select_project(project).resource(output)
 
-    print(res.files())
+    for f in res.files():
+        print(f)
 
     # Get report on XNAT
     xnat_report = res.file('report.pdf')
@@ -43,7 +44,7 @@ def _check_analysis(rcq, xnat, a):
         # download file from xnat
         dst = f'{tmpdir}/report.pdf'
         print('DOWNLOAD from xnat', dst)
-        xnat_res_file.get(dst)
+        xnat_report.get(dst)
 
         # upload file to redcap
         print('UPLOAD to redcap', dst)
