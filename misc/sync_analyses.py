@@ -9,41 +9,36 @@ import tempfile
 # Copy files from XNAT to REDCap as needed
 
 
-print('loading analyses')
-g = Garjus()
+def _check_analysis(xnat, rcq, a):
+    project = rcq.def_field
+    output = a['analysis_output']
+    analysis_id = a['redcap_repeat_instance']
+    report_field = 'analysis_reportfile'
+    log_field = 'analysis_logfile'
+    batch_field = 'analysis_batchfile'
+    stats_field = 'analysis_statsfile'
 
-print(g.projects())
-
-df = g.analyses(projects=['CHAMP', 'D3'], download=False)
-
-print(df.columns)
-
-
-def _check_report(g, a):
-    if not a['OUTPUT']:
+    if not output:
         return
 
-    res = g.xnat().select_project(a['PROJECT']).resource(a['OUTPUT'])
-    xnat_res_file = res.file('report.pdf')
+    res = xnat.select_project(project).resource(output)
 
-    if not xnat_res_file.exists():
-        print('No PDF', a['PROJECT'], a['ID'], a['OUTPUT'])
+    print(res.files())
+
+    # Get report on XNAT
+    xnat_report = res.file('report.pdf')
+    if not xnat_report.exists():
+        print('No report', project, analysis_id, output)
         return
 
-    rcq = g._rcq
-    rec = rcq.export_records(records=[a['PROJECT']], forms=['analyses'], fields=['analysis_reportfile'])   
-    rec = [x for x in rec if x['redcap_repeat_instance'] == a['ID']]
-
-    if not rec:
-        print('records not found:', a['PROJECT'], a['ID'], a['OUTPUT'])
-        return
-
-    cur_report = rec[0]['analysis_reportfile']
+    # Get report on REDCap
+    cur_report = a[report_field]
     if cur_report:
-        print(f'report found:{cur_report}', a['PROJECT'], a['ID'], a['OUTPUT'])
+        print(f'report found:{cur_report}', project, analysis_id, output)
         return
 
-    print('no report, copying:', a['PROJECT'], a['ID'], a['OUTPUT'])
+    print('no report, copying:', project, analysis_id, output)
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # download file from xnat
         dst = f'{tmpdir}/report.pdf'
@@ -52,54 +47,37 @@ def _check_report(g, a):
 
         # upload file to redcap
         print('UPLOAD to redcap', dst)
-        upload_file(rcq, a['PROJECT'], 'analysis_reportfile', dst, repeat_id=[a['ID']])
+        upload_file(rcq, project, report_field, dst, repeat_id=analysis_id)
+
+    # TODO: log, batch, stats
 
 
-def _check_log(g, a):
-    file_field = 'analysis_logfile'
-
-    if not a['OUTPUT']:
-        return
-
-    filename = f'{a["OUTPUT"]}.txt'
-
-    res = g.xnat().select_project(a['PROJECT']).resource(a['OUTPUT'])
-
-    xnat_res_file = res.file(filename)
-
-    if not xnat_res_file.exists():
-        print(f'{filename}:file not on XNAT', a['PROJECT'], a['ID'], a['OUTPUT'])
-        return
+def main(g, projects):
+    print('loading analyses')
 
     rcq = g._rcq
-    rec = rcq.export_records(records=[a['PROJECT']], forms=['analyses'], fields=[file_field])   
-    rec = [x for x in rec if x['redcap_repeat_instance'] == a['ID']]
+    xnat = g.xnat()
+    def_field = rcq.def_field
 
-    if not rec:
-        print('records not found:', a['PROJECT'], a['ID'], a['OUTPUT'])
-        return
+    rec = rcq.export_records(
+        records=projects,
+        forms=['analyses'],
+        fields=[def_field])
 
-    cur_file = rec[0][file_field]
-    if cur_file:
-        print(f'{file_field}:found:{cur_file}', a['PROJECT'], a['ID'], a['OUTPUT'])
-        return
+    print(rec)
 
-    print(f'no {file_field}, copying:', a['PROJECT'], a['ID'], a['OUTPUT'])
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # download file from xnat
-        dst = f'{tmpdir}/log.txt'
-        print('DOWNLOAD from xnat', dst)
-        xnat_res_file.get(dst)
+    rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
 
-        # upload file to redcap
-        print('UPLOAD to redcap', dst)
-        upload_file(rcq, a['PROJECT'], file_field, dst, repeat_id=[a['ID']])
+    print(f'filter projects:{projects}')
+
+    rec = [x for x in rec if x[def_field] in projects]
+
+    for r in rec:
+        print(r)
+        _check_analysis(rcq, xnat, r)
 
 
-
-
-for i, a in df.iterrows():
-    #_check_report(g, a)
-    _check_log(g, a)
-    #_check_batch(g, a)
-    #_check_stats(g, a)
+if __name__ == '__main__':
+    g = Garjus()
+    projects = ['CHAMP', 'D3']
+    main(g, projects)
