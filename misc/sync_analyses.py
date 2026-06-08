@@ -9,7 +9,7 @@ import tempfile
 # Copy files from XNAT to REDCap as needed
 
 
-def _check_analysis(xnat, rcq, a):
+def _check_analysis(rcq, xnat, a):
     project = a[rcq.def_field]
     output = a['analysis_output']
     analysis_id = a['redcap_repeat_instance']
