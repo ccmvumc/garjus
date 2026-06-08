@@ -23,14 +23,19 @@ def _check_analysis(rcq, xnat, a):
 
     res = xnat.select_project(project).resource(output)
 
-    for f in res.files():
-        print(f)
+    files = list(res.files())
+    print(files)
 
-    # Get report on XNAT
-    xnat_report = res.file('report.pdf')
-    if not xnat_report.exists():
+    if 'report.pdf' not in files:
         print('No report', project, analysis_id, output)
         return
+
+    # Get report on XNAT
+    #xnat_report = res.file('report.pdf')
+    #if not xnat_report.exists():
+    #    print('No report', project, analysis_id, output)
+    #    return
+
 
     # Get report on REDCap
     cur_report = a[report_field]
@@ -44,7 +49,8 @@ def _check_analysis(rcq, xnat, a):
         # download file from xnat
         dst = f'{tmpdir}/report.pdf'
         print('DOWNLOAD from xnat', dst)
-        xnat_report.get(dst)
+        #xnat_report.get(dst)
+        res.file('report.pdf').get(dst)
 
         # upload file to redcap
         print('UPLOAD to redcap', dst)
@@ -54,20 +60,14 @@ def _check_analysis(rcq, xnat, a):
 
 
 def _check(rcq, xnat, projects):
-    def_field = rcq.def_field
-
+    # Get analyses records from redcap
     rec = rcq.export_records(
         records=projects,
-        forms=['analyses'],
-        fields=[def_field])
+        forms=['analyses']
+    )
 
-    print(rec)
-
+    # Filter out extra records
     rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
-
-    print(f'filter projects:{projects}')
-
-    rec = [x for x in rec if x[def_field] in projects]
 
     for r in rec:
         print(r)
