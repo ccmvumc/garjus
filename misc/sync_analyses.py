@@ -10,7 +10,7 @@ import tempfile
 
 
 def _check_analysis(xnat, rcq, a):
-    project = rcq.def_field
+    project = a[rcq.def_field]
     output = a['analysis_output']
     analysis_id = a['redcap_repeat_instance']
     report_field = 'analysis_reportfile'
@@ -52,11 +52,7 @@ def _check_analysis(xnat, rcq, a):
     # TODO: log, batch, stats
 
 
-def main(g, projects):
-    print('loading analyses')
-
-    rcq = g._rcq
-    xnat = g.xnat()
+def _check(rcq, xnat, projects):
     def_field = rcq.def_field
 
     rec = rcq.export_records(
@@ -75,6 +71,13 @@ def main(g, projects):
     for r in rec:
         print(r)
         _check_analysis(rcq, xnat, r)
+
+def main(g, projects):
+    print('loading analyses')
+
+    rcq = g._rcq
+    xnat = g.xnat()
+    _check(rcq, xnat, projects)
 
 
 if __name__ == '__main__':
