@@ -26,23 +26,19 @@ def _check_analysis(rcq, xnat, a):
     batch_file = f'{output}.slurm'
     stats_file = 'stats.csv'
 
+    if a[log_field] and a[batch_field]:
+        print(f'log/batch files already on REDCap:{project}:{analysis_id}:{output}')
+        return
+
     # Get list of files on xnat for analysis output
     res = xnat.select_project(project).resource(output)
     files = list(res.files().get())
-    print(files)
-
-    if 'report.pdf' not in files:
-        print(f'No report, skipping:{project}:{output}:{analysis_id}')
-        return
-
-    if a[report_field] and a[log_field] and a[batch_field]:
-        print(f'pdf/log/batch files already on REDCap:{project}:{analysis_id}:{output}')
-        return
+    print(f'{output}:xnat files=', files)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         print(f'copying:{project}:{analysis_id}:{output}')
 
-        if not a[report_field]:
+        if not a[report_field] and report_file in files:
             # download file from xnat
             src = report_file
             dst = f'{tmpdir}/{src}'
@@ -53,7 +49,7 @@ def _check_analysis(rcq, xnat, a):
             print('UPLOAD to redcap', dst)
             upload_file(rcq, project, report_field, dst, repeat_id=analysis_id)
 
-        if not a[log_field]:
+        if not a[log_field] and log_file in files:
             # download file from xnat
             src = log_file
             dst = f'{tmpdir}/{src}'
@@ -64,7 +60,7 @@ def _check_analysis(rcq, xnat, a):
             print('UPLOAD to redcap', dst)
             upload_file(rcq, project, log_field, dst, repeat_id=analysis_id)
 
-        if not a[batch_field]:
+        if not a[batch_field] and batch_file in files:
             # download file from xnat
             src = batch_file
             dst = f'{tmpdir}/{src}'
@@ -96,6 +92,9 @@ def _check(rcq, xnat, projects):
 
     # Filter out extra records
     rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
+
+    # Only complete
+    rec = [x for x in rec if x['analysis_status'] == 'READY']
 
     for r in rec:
         _check_analysis(rcq, xnat, r)
