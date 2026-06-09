@@ -16,7 +16,7 @@ def _check_analysis(rcq, xnat, a):
     report_field = 'analysis_reportfile'
     log_field = 'analysis_logfile'
     batch_field = 'analysis_batchfile'
-    stats_field = 'analysis_statsfile'    
+    stats_field = 'analysis_statsfile'
     report_file = 'report.pdf'
 
     if not output:
@@ -24,9 +24,9 @@ def _check_analysis(rcq, xnat, a):
 
     log_file = f'{output}.txt'
     batch_file = f'{output}.slurm'
-    stats_file = 'stats.csv'
+    stats_file = f'{output}-stats.csv'
 
-    if a[log_field] and a[batch_field]:
+    if a[log_field] == log_file and a[batch_field] == batch_file:
         print(f'{project}:{analysis_id}:{output}:log/batch files already on REDCap')
         return
 
@@ -35,13 +35,12 @@ def _check_analysis(rcq, xnat, a):
     files = list(res.files().get())
 
     if log_file not in files and batch_file not in files:
-        print(f'{project}:{analysis_id}:{output}:log/batch files not on XNAT:')
+        print(f'{project}:{analysis_id}:{output}:log/batch files not on XNAT')
         return
 
+    # Upload each file type, replacing anything already there
     with tempfile.TemporaryDirectory() as tmpdir:
-        print(f'copying:{project}:{analysis_id}:{output}')
-
-        if not a[report_field] and report_file in files:
+        if report_file in files:
             # download file from xnat
             src = report_file
             dst = f'{tmpdir}/{src}'
@@ -52,7 +51,7 @@ def _check_analysis(rcq, xnat, a):
             print('UPLOAD to redcap', dst)
             upload_file(rcq, project, report_field, dst, repeat_id=analysis_id)
 
-        if not a[log_field] and log_file in files:
+        if log_file in files:
             # download file from xnat
             src = log_file
             dst = f'{tmpdir}/{src}'
@@ -63,7 +62,7 @@ def _check_analysis(rcq, xnat, a):
             print('UPLOAD to redcap', dst)
             upload_file(rcq, project, log_field, dst, repeat_id=analysis_id)
 
-        if not a[batch_field] and batch_file in files:
+        if batch_file in files:
             # download file from xnat
             src = batch_file
             dst = f'{tmpdir}/{src}'
@@ -74,7 +73,7 @@ def _check_analysis(rcq, xnat, a):
             print('UPLOAD to redcap', dst)
             upload_file(rcq, project, batch_field, dst, repeat_id=analysis_id)
 
-        if not a[stats_field] and 'stats.csv' in files:
+        if 'stats.csv' in files:
             # download file from xnat
             src = stats_file
             dst = f'{tmpdir}/{src}'
