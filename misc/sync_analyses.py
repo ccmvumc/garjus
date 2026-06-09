@@ -35,6 +35,10 @@ def _check_analysis(rcq, xnat, a):
     files = list(res.files().get())
     print(f'{output}:xnat files=', files)
 
+    if log_file not in files and batch_file not in files:
+        print(f'log/batch files not on XNAT:{project}:{analysis_id}:{output}')
+        return
+
     with tempfile.TemporaryDirectory() as tmpdir:
         print(f'copying:{project}:{analysis_id}:{output}')
 
