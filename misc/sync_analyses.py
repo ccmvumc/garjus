@@ -27,16 +27,15 @@ def _check_analysis(rcq, xnat, a):
     stats_file = 'stats.csv'
 
     if a[log_field] and a[batch_field]:
-        print(f'log/batch files already on REDCap:{project}:{analysis_id}:{output}')
+        print(f'{project}:{analysis_id}:{output}:log/batch files already on REDCap')
         return
 
     # Get list of files on xnat for analysis output
     res = xnat.select_project(project).resource(output)
     files = list(res.files().get())
-    print(f'{output}:xnat files=', files)
 
     if log_file not in files and batch_file not in files:
-        print(f'log/batch files not on XNAT:{project}:{analysis_id}:{output}')
+        print(f'{project}:{analysis_id}:{output}:log/batch files not on XNAT:')
         return
 
     with tempfile.TemporaryDirectory() as tmpdir:
