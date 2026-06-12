@@ -74,9 +74,9 @@ def _check_analysis(rcq, xnat, a):
             upload_file(rcq, project, batch_field, dst, repeat_id=analysis_id)
 
         if 'stats.csv' in files:
-            # download file from xnat
-            src = stats_file
-            dst = f'{tmpdir}/{src}'
+            # download file from xnat, renaming with prefix for output label
+            src = 'stats.csv'
+            dst = f'{tmpdir}/{stats_file}'
             print(f'DOWNLOAD from xnat:{dst}')
             res.file(src).get(dst)
 
