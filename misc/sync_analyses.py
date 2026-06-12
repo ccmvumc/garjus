@@ -9,6 +9,9 @@ import tempfile
 # Copy files from XNAT to REDCap as needed
 
 
+FINISHED = ['READY', 'JOB_FAILED', 'JOB_CANCELLED']
+
+
 def _check_analysis(rcq, xnat, a):
     project = a[rcq.def_field]
     output = a['analysis_output']
@@ -96,7 +99,7 @@ def _check(rcq, xnat, projects):
     rec = [x for x in rec if x['redcap_repeat_instrument'] == 'analyses']
 
     # Only complete
-    rec = [x for x in rec if x['analysis_status'] == 'READY']
+    rec = [x for x in rec if x['analysis_status'] in FINISHED]
 
     for r in rec:
         _check_analysis(rcq, xnat, r)
