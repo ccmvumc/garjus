@@ -20,7 +20,6 @@ def _check_analysis(rcq, xnat, a):
     log_field = 'analysis_logfile'
     batch_field = 'analysis_batchfile'
     stats_field = 'analysis_statsfile'
-    report_file = 'report.pdf'
 
     if not output:
         return
@@ -28,6 +27,7 @@ def _check_analysis(rcq, xnat, a):
     log_file = f'{output}.txt'
     batch_file = f'{output}.slurm'
     stats_file = f'{output}-stats.csv'
+    report_file = f'{output}-report.pdf'
 
     if a[log_field] == log_file and a[batch_field] == batch_file:
         print(f'{project}:{analysis_id}:{output}:log/batch files already on REDCap')
@@ -43,10 +43,10 @@ def _check_analysis(rcq, xnat, a):
 
     # Upload each file type, replacing anything already there
     with tempfile.TemporaryDirectory() as tmpdir:
-        if report_file in files:
+        if 'report.pdf' in files:
             # download file from xnat
-            src = report_file
-            dst = f'{tmpdir}/{src}'
+            src = 'report.pdf'
+            dst = f'{tmpdir}/{report_file}'
             print('DOWNLOAD from xnat', dst)
             res.file(src).get(dst)
 
