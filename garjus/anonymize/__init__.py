@@ -178,10 +178,11 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
         if subject.startswith('.'):
                 continue
 
-        for i, session in enumerate(sorted(os.listdir(f'{in_dir}/{subject}'))):
+        sessions = sorted(os.listdir(f'{in_dir}/{subject}'))
 
-            if session.startswith('.'):
-                continue
+        sessions = [x for x in sessions if not x.startswith('.')]
+
+        for i, session in enumerate(sessions):
 
             sess_in_dir = f'{in_dir}/{subject}/{session}'
 
@@ -189,10 +190,15 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
 
             if delete_dates:
                 try:
-                    rec = df[df['ID'] == subject].iloc[i]
+                    rec = df[df['ID'] == subject].iloc[0]
                 except Exception as err:
                     print(f'No match found for session:{subject}:{session}')
                     continue
+
+                sess_suffix = get_session_suffix(subject, session)
+                anon_subject = rec['anon_id']
+                anon_session = f'{anon_subject}{sess_suffix}'
+                anon_date = '1969-12-31'
             else:
                 # Locate the matching record to get anon id/date
                 sess_date = get_session_date(sess_in_dir)
@@ -207,13 +213,9 @@ def anonymize_project(in_dir, out_dir, df, delete_dates=False):
                     print(f'No match found for session:{subject}:{session}:{sess_date}')
                     continue
 
-            sess_suffix = get_session_suffix(subject, session)
-            anon_subject = rec['anon_id']
-            anon_session = f'{anon_subject}{sess_suffix}'
-
-            if delete_dates:
-                anon_date = '1969-12-31'
-            else:
+                sess_suffix = get_session_suffix(subject, session)
+                anon_subject = rec['anon_id']
+                anon_session = f'{anon_subject}{sess_suffix}'
                 anon_date = f'{rec["anon_date"]}'
             
             sess_out_dir = f'{out_dir}/{anon_subject}/{anon_session}'
