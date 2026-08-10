@@ -559,6 +559,29 @@ def dashboard(auth_file=None, login=False, demo=False):
     app.run_server(host='0.0.0.0')
 
 
+@cli.command('html')
+@click.option('--projects', '-p', 'projects', required=True, multiple=True)
+@click.option('--proctypes', '-t', 'proctypes', required=False)
+@click.option('--sesstypes', '-s', 'sesstypes', required=False)
+@click.option('--exclude', '-x', 'exclude', required=False)
+def html(projects, proctypes, sesstypes, exclude):
+    # allow override of redcap or xnat here?
+    click.echo('garjus! html')
+
+    # Split projects into lists    
+    projects = [x.split(',') for x in projects]
+
+    # Flatten to single list
+    projects = sum(projects, [])
+
+    Garjus().to_html(
+        projects,
+        #proctypes,
+        #sesstypes,
+        #exclude,
+    )
+
+
 @cli.command('quicktest')
 def quicktest():
     click.echo('garjus!')

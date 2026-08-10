@@ -43,6 +43,7 @@ from .scans import update as update_scans
 from .spin import run_spin
 from .petmatch import match_pets
 from .anonymize import anonymize_project, check_project
+from .exports import export_html
 
 
 logger = logging.getLogger('garjus')
@@ -3722,6 +3723,15 @@ class Garjus:
         links = self.load_linked(project)
         check_project(out_dir, links)
 
+    def to_html(self, projects, filename=None):
+        if filename is None:
+            filename = f'garjus_export.html'
+
+        if os.path.exists(filename):
+            logger.info(f'{filename} exists, delete or rename.')
+            return
+
+        export_html(self, filename, projects)
 
 def is_sgp_assessor(assessor):
     import re
