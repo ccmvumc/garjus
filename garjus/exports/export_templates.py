@@ -1,7 +1,7 @@
 '''Text templates for creating html/javascript'''
 
 
-# Main page with multiple tabs
+# Main page with multiple tabs, including javascript function and listeners
 main_html_template = '''<!doctype html>
 <html lang="en">
 <head>
@@ -10,21 +10,21 @@ main_html_template = '''<!doctype html>
   <title>dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
   <style>
-    html, body { height: 100%; margin: 0; }
+    html, body { height: 100%; margin: 0; background: #222; color: white; font-family: Arial, sans-serif; }
     .wrap { display: flex; flex-direction: column; }
     .tabs { display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid #ddd; }
     .tab { padding: 8px 12px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
     .content { flex: 1; padding: 12px; }
     .hidden { display: none; }
     .gridWrap { height: 100%; }
-    .tabbutton { color: #888; }
-    .tabbutton.active { color: #e8f0fe; }
+    .tabbutton { color: #777; font-size: 14px; }
+    .tabbutton.active { color: #119911; }
     .tabpanel { display: none; }
     .tabpanel.active { display: block; }
   </style>
 </head>
 <body>
-  <h1>garjus dashboard</h1>
+  <h1>dashboard</h1>
   <div class="wrap">
     <div class="tabs">  
       TABBUTTONS

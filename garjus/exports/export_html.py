@@ -13,8 +13,13 @@ logger = logging.getLogger('garjus')
 
 # TODO: add export time to html
 
-SUBJECTS_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
+SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
+SCAN_COLUMNS = ['PROJECT',  'SUBJECT', 'SESSION', 'SCANTYPE']
+
+ASSR_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NOTE']
+
+STAT_COLUMNS = []
 
 def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
     data  = {}
@@ -62,7 +67,7 @@ def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
 
     # Only include specifc subset of columns
     if len(subjects) > 0:
-        subjects = subjects[SUBJECTS_COLUMNS]
+        subjects = subjects[SUBJ_COLUMNS]
 
         # Only stats for subjects in subjects
         stats = stats[stats.SUBJECT.isin(subjects.ID.unique())]
@@ -73,7 +78,7 @@ def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
         if 'SITE' in subjects.columns:
             subjects['SITE'] = subjects['SITE'].replace({'PITT': 'UPMC'})
     else:
-        subjects = pd.DataFrame(SUBJECTS_COLUMNS)
+        subjects = pd.DataFrame(SUBJ_COLUMNS)
 
     # Make PITT be UPMC
     if len(stats) > 0:
@@ -133,6 +138,13 @@ def _get_html(data):
 
     # Build scan tab
     _grid = _init_grid('scans', data['scans'])
+
+    # Hide non-core columns
+    for i, c in enumerate(_grid['columnDefs']):
+        if c['field'] not in SCAN_COLUMNS:
+            print(f'hiding column:{i}:{c}')
+            c['hide'] = True
+
     _js, _button, _panel = _get_tab('scans', _grid)
     tab_js.append(_js)
     tab_buttons.append(_button)
@@ -140,6 +152,13 @@ def _get_html(data):
 
     # Build assessor tab
     _grid = _init_grid('assessors', data['assessors'])
+
+    # Hide non-core columns
+    for i, c in enumerate(_grid['columnDefs']):
+        if c['field'] not in ASSR_COLUMNS:
+            print(f'hiding column:{i}:{c}')
+            c['hide'] = True
+
     _js, _button, _panel = _get_tab('assessors', _grid)
     tab_js.append(_js)
     tab_buttons.append(_button)
@@ -147,6 +166,13 @@ def _get_html(data):
 
     # Build stats tab
     _grid = _init_grid('stats', data['stats'])
+
+    # Hide non-core columns
+    for i, c in enumerate(_grid['columnDefs']):
+        if c['field'] not in STAT_COLUMNS:
+            print(f'hiding column:{i}:{c}')
+            c['hide'] = True
+
     _js, _button, _panel = _get_tab('stats', _grid)
     tab_js.append(_js)
     tab_buttons.append(_button)
