@@ -136,3 +136,4 @@ stats.csv
 *.token
 .DS_Store
 garjus_export.html
+*.duckdb

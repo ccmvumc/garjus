@@ -17,14 +17,13 @@ main_html_template = '''<!doctype html>
     .content { flex: 1; padding: 12px; }
     .hidden { display: none; }
     .gridWrap { height: 100%; }
-    .tabbutton { color: #777; font-size: 14px; }
+    .tabbutton { color: #777; font-size: 24px; }
     .tabbutton.active { color: #119911; }
     .tabpanel { display: none; }
     .tabpanel.active { display: block; }
   </style>
 </head>
 <body>
-  <h1>dashboard</h1>
   <div class="wrap">
     <div class="tabs">  
       TABBUTTONS
@@ -33,8 +32,9 @@ main_html_template = '''<!doctype html>
   <div class="content gridWrap">
       TABPANELS
   </div>
+  <h1 align="center">dashboard</h1>
   <script>
-    TABJS
+    GRIDJS
     function showTab(tabId) {
       document.querySelectorAll(".tabbutton").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
       document.querySelectorAll(".tabpanel").forEach(p => p.classList.toggle("active", p.id === "panel-" + tabId));
@@ -66,7 +66,9 @@ grid_js_template = '''
       defaultColDef: {
         sortable: true,
         filter: true,
-        resizeable: true
+        resizeable: true,
+        floatingFilter: true,
+        resizable: true,
       }
     };
 
@@ -78,12 +80,16 @@ grid_js_template = '''
 
 
 tab_button_html_template = '''
-    <button class="tabbutton" data-tab="ID">LABEL<span class="cnt">(COUNT)</span></button>
+    <button class="tabbutton" data-tab="ID">LABEL</button>
 '''
+
+#tab_button_html_template = '''
+#    <button class="tabbutton" data-tab="ID">LABEL<span class="cnt">(COUNT)</span></button>
+#'''
 
 
 tab_panel_html_template = '''
     <div class="tabpanel" id="panel-ID">
-      <div id="gridID" style="height:600px; width:100%;"></div>
+      <div id="gridID" style="height:600px; width:100%;">PANEL</div>
     </div>
 '''
