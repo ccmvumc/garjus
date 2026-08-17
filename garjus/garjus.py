@@ -79,6 +79,10 @@ class Garjus:
         self._user = 'UnknownUser'
         self._rc = (redcap_project or self._default_redcap())
         self._rcq = (rcq_project or self._default_rcq())
+        self._rcq_pid = None
+        self._redcap_pid = None
+        self._rcq_pid = self.rcq_pid()
+        self._redcap_pid = self.redcap_pid()
 
         try:
             if current_user.is_authenticated:
@@ -2993,11 +2997,17 @@ class Garjus:
 
     def redcap_pid(self):
         """Get the redcap host for this garjus."""
-        return str(self._rc.export_project_info().get('project_id'))
+        if self._redcap_pid is None:
+            self._redcap_pid = str(self._rc.export_project_info().get('project_id'))
+
+        return self._redcap_pid
 
     def rcq_pid(self):
         """Get the redcap host for this garjus."""
-        return str(self._rcq.export_project_info().get('project_id'))
+        if self._rcq_pid is None:
+            self._rcq_pid = str(self._rcq.export_project_info().get('project_id'))
+
+        return self._rcq_pid
 
     def redcap_url(self):
         return self._rcq.url
