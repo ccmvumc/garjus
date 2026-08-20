@@ -1,6 +1,25 @@
 '''Text templates for creating html/javascript'''
 
 
+_MARKDOWN_CELL_RENDERER_JS = r"""
+function markdownCellRenderer(params) {
+  const v = params.value;
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  const m = s.match(/^\[(.*)\]\((.*)\)$/);
+  if (m) {
+    const a = document.createElement('a');
+    a.href = m[2];
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = m[1];
+    return a;
+  }
+  return s;
+}
+"""
+
+
 # Main page with multiple tabs, including javascript function and listeners
 main_html_template = '''<!doctype html>
 <html lang="en" data-bs-theme="dark">
@@ -43,15 +62,13 @@ grid_js_template = '''
     const rowData_ID =  ROWS;
 
     const gridOptions_ID = {
-      columnSize: "responsiveSizeToFit",
       theme: theme_ID,
       columnDefs: columnDefs_ID,
       rowData: rowData_ID,
       defaultColDef: {
-        minwidth: 40,
         sortable: true,
         resizable: true,
-        filter: true,
+        filter: false,
       },
     };
 
@@ -113,4 +130,9 @@ stats_js_template = '''
 
 
     });
+'''
+
+
+badge_html_template = '''
+    <span id="ID" class="badge bg-secondary">0 rows</span>
 '''

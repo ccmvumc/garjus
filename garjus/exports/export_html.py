@@ -11,7 +11,7 @@ import pandas as pd
 
 from .export_templates import main_html_template, grid_js_template, tab_button_html_template, tab_panel_html_template
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
-from .export_templates import csv_button_html_template
+from .export_templates import csv_button_html_template, badge_html_template
 from .export_templates import stats_js_template
 
 
@@ -27,6 +27,10 @@ logger = logging.getLogger('garjus')
 # TODO: autofilter button
 # TODO: graphsgraphsgraphs
 # TODO: home grid
+# TODO: dark/light mode toggle
+# TODO: stats pivot by session/subject, preload data
+# TODO: qa pivot by session/subject/project, preload?
+# TODO: count rows
 
 
 TABLES = ['assessors', 'scans', 'sessions', 'analyses', 'processors', 'stats']
@@ -39,7 +43,7 @@ SESS_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NO
 
 ASSR_COLUMNS = ['ASSR', 'DATE', 'JOBDATE', 'STATUS']
 
-STAT_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'ASSR', 'PROCTYPE']
+STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
 ASIS_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT']
 
@@ -162,6 +166,10 @@ def _dropdown_option(label):
     return dropdown_option_html_template.replace('LABEL', label).replace('VALUE', label)
 
 
+def _badge(ident):
+    return badge_html_template.replace('ID', ident)
+
+
 def _get_home_tab():
     tab_button = tab_button_html_template
     tab_panel = tab_panel_html_template
@@ -223,20 +231,6 @@ def _records(df):
 def _get_grids(data):
     grids = []
 
-    # Assessors
-    #_label = 'assessors'
-    #_data = _records(data['assessors'])
-    #_defs = _coldefs(data['assessors'])
-    #_defs = _hide_columns(_defs, ASSR_COLUMNS)
-    #grids.append(_grid(_label, _data, _defs))
-
-    # Scans
-    #_label = 'scans'
-    #_data = _records(data['scans'])
-    #_defs = _coldefs(data['scans'])
-    #_defs = _hide_columns(_defs, SCAN_COLUMNS)
-    #grids.append(_grid(_label, _data, _defs))
-
     # QA
     _label = 'qa'
     _data = _records(data['sessions'])
@@ -271,17 +265,28 @@ def _get_grids(data):
 def _get_buttons(data):
     buttons = []
 
+    # Stats dropdowns
     buttons.append(_dropdown_js('stats_projects'))
     buttons.append(_dropdown_js('stats_proctypes'))
     buttons.append(_dropdown_js('stats_sesstypes'))
     buttons.append(_dropdown_js('stats_measures'))
     buttons.append(_dropdown_js('stats_xvariable'))
 
+    # QA dropdowns
     buttons.append(_dropdown_js('qa_projects'))
     buttons.append(_dropdown_js('qa_proctypes'))
     buttons.append(_dropdown_js('qa_scantypes'))
     buttons.append(_dropdown_js('qa_sesstypes'))
 
+    # Analysis dropdowns
+    buttons.append(_dropdown_js('as_projects'))
+    buttons.append(_dropdown_js('as_invest'))
+    buttons.append(_dropdown_js('as_status'))
+
+    # Processors dropdowns
+    buttons.append(_dropdown_js('proc_projects'))
+
+    # Add other  javascript
     buttons.append(_dashboard_js())
 
     return buttons
@@ -311,7 +316,11 @@ def _stats_panel(data):
     # Export button
     panel += _csv_button('stats')
 
+    # Row count badge
+    panel += _badge('stats_rowcount')
+
     return panel
+
 
 
 def _qa_panel(data):
@@ -337,38 +346,30 @@ def _qa_panel(data):
     panel += _dropdown_html('qa_scantypes', 'Scan Types', list(data['scans'].SCANTYPE.unique()));
     panel += _dropdown_html('qa_sesstypes', 'Session Types', list(data['scans'].SESSTYPE.unique()));
 
+    # Export as csv button
     panel += _csv_button('qa')
 
     return panel
 
 
 def _csv_button(ident):
-    return csv_button_html_template.replace('ID', 'qa')
+    return csv_button_html_template.replace('ID', ident)
 
 
 def _processors_panel(data):
-    # dropdown project
-    panel = 'TODO:dropdown filters, radio button filters'
+    panel = ''
+
+    panel += _dropdown_html('proc_projects', 'Projects', ['CHAMP']);
 
     return panel
 
 
-#def _assessors_panel(data):
-#    panel = 'TODO:dropdown filters, radio button filters'
-
-#    return panel
-
-
-#def _scans_panel(data):
-#    panel = 'TODO:dropdown filters, radio button filters'
-#    return panel
-
-
 def _analyses_panel(data):
-    # dropdown investigator
-    # dropdown project
-    # dropdown status
-    panel = 'TODO:dropdown filters, radio button filters'
+    panel = ''
+
+    panel += _dropdown_html('as_projects', 'Projects', ['CHAMP']);
+    panel += _dropdown_html('as_invest', 'Investigator', []);
+    panel += _dropdown_html('as_status', 'Status', []);
 
     return panel
 
@@ -380,8 +381,6 @@ def _to_html(data):
         {'label': 'stats', 'panel': _stats_panel(data)},
         {'label': 'home', 'panel': _home_panel(data)},
         {'label': 'qa', 'panel': _qa_panel(data)},
-        #{'label': 'assessors', 'panel': _assessors_panel(data)},
-        #{'label': 'scans', 'panel': _scans_panel(data)},
         {'label': 'processors', 'panel': _processors_panel(data)},
         {'label': 'analyses', 'panel': _analyses_panel(data)},
     ]
