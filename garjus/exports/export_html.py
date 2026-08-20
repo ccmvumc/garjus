@@ -4,17 +4,30 @@ import logging
 from datetime import datetime
 from pathlib import Path
 import json
+from importlib import resources
 
 import duckdb
 import pandas as pd
 
 from .export_templates import main_html_template, grid_js_template, tab_button_html_template, tab_panel_html_template
+from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
+from .export_templates import csv_button_html_template
+from .export_templates import stats_js_template
 
 
 logger = logging.getLogger('garjus')
 
 
+# TODO: markdown links
 # TODO: show export datetime in html
+# TODO: filter radio buttons
+# TODO: columns selectors
+# TODO: date filter
+# TODO: show row count
+# TODO: autofilter button
+# TODO: graphsgraphsgraphs
+# TODO: home grid
+
 
 TABLES = ['assessors', 'scans', 'sessions', 'analyses', 'processors', 'stats']
 
@@ -26,20 +39,14 @@ SESS_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NO
 
 ASSR_COLUMNS = ['ASSR', 'DATE', 'JOBDATE', 'STATUS']
 
-STAT_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'ASSR', 'PROCTYPE']
+STAT_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'ASSR', 'PROCTYPE']
 
 ASIS_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT']
 
-PROC_COLUMNS = [
-    'ID', 'PROJECT', 'TYPE', 'FILTER', 'ARGS',
-]
+PROC_COLUMNS = ['ID', 'PROJECT', 'TYPE', 'FILTER', 'ARGS']
 
-TASK_COLUMNS = [
-    'ID', 'IDLINK', 'PROJECT', 'STATUS', 'PROCTYPE', 'MEMREQ', 'WALLTIME',
-    'TIMEUSED', 'MEMUSED', 'ASSESSOR', 'PROCDATE', 'INPUTLIST', 'VAR2VAL',
-    'IMAGEDIR', 'JOBTEMPLATE', 'YAMLFILE', 'YAMLUPLOAD', 'USERINPUTS', 
-    'FAILCOUNT', 'USER'
-]
+TASK_COLUMNS = ['ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'TIMEUSED', 'MEMUSED']
+
 
 def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
     data  = {}
@@ -133,6 +140,28 @@ def _grid(label, rowdata, coldefs):
     return grid_js
 
 
+def _dropdown_html(ident, label, options):
+
+    dropdown_options = [_dropdown_option(x) for x in options]
+    dropdown_html = dropdown_html_template
+    dropdown_html = dropdown_html.replace('ID', ident)
+    dropdown_html = dropdown_html.replace('LABEL', label)
+    dropdown_html = dropdown_html.replace('OPTIONS', ''.join(dropdown_options))
+
+    return dropdown_html
+
+
+def _dropdown_js(label):
+    dropdown_js = dropdown_js_template
+    dropdown_js = dropdown_js.replace('ID', label)
+
+    return dropdown_js
+
+
+def _dropdown_option(label):
+    return dropdown_option_html_template.replace('LABEL', label).replace('VALUE', label)
+
+
 def _get_home_tab():
     tab_button = tab_button_html_template
     tab_panel = tab_panel_html_template
@@ -195,21 +224,21 @@ def _get_grids(data):
     grids = []
 
     # Assessors
-    _label = 'assessors'
-    _data = _records(data['assessors'])
-    _defs = _coldefs(data['assessors'])
-    _defs = _hide_columns(_defs, ASSR_COLUMNS)
-    grids.append(_grid(_label, _data, _defs))
+    #_label = 'assessors'
+    #_data = _records(data['assessors'])
+    #_defs = _coldefs(data['assessors'])
+    #_defs = _hide_columns(_defs, ASSR_COLUMNS)
+    #grids.append(_grid(_label, _data, _defs))
 
     # Scans
-    _label = 'scans'
-    _data = _records(data['scans'])
-    _defs = _coldefs(data['scans'])
-    _defs = _hide_columns(_defs, SCAN_COLUMNS)
-    grids.append(_grid(_label, _data, _defs))
+    #_label = 'scans'
+    #_data = _records(data['scans'])
+    #_defs = _coldefs(data['scans'])
+    #_defs = _hide_columns(_defs, SCAN_COLUMNS)
+    #grids.append(_grid(_label, _data, _defs))
 
-    # Sessions
-    _label = 'sessions'
+    # QA
+    _label = 'qa'
     _data = _records(data['sessions'])
     _defs = _coldefs(data['sessions'])
     _defs = _hide_columns(_defs, SESS_COLUMNS)
@@ -219,7 +248,7 @@ def _get_grids(data):
     _label = 'stats'
     _data = _records(data['stats'])
     _defs = _coldefs(data['stats'])
-    _defs = _hide_columns(_defs, STAT_COLUMNS)
+    #_defs = _hide_columns(_defs, STAT_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     # Analyses
@@ -239,34 +268,135 @@ def _get_grids(data):
     return grids
 
 
+def _get_buttons(data):
+    buttons = []
+
+    buttons.append(_dropdown_js('stats_projects'))
+    buttons.append(_dropdown_js('stats_proctypes'))
+    buttons.append(_dropdown_js('stats_sesstypes'))
+    buttons.append(_dropdown_js('stats_measures'))
+    buttons.append(_dropdown_js('stats_xvariable'))
+
+    buttons.append(_dropdown_js('qa_projects'))
+    buttons.append(_dropdown_js('qa_proctypes'))
+    buttons.append(_dropdown_js('qa_scantypes'))
+    buttons.append(_dropdown_js('qa_sesstypes'))
+
+    buttons.append(_dashboard_js())
+
+    return buttons
+
+
+def _dashboard_js():
+    return resources.read_text('garjus.dashboard', 'assets/dashboard.js')
+
+
+def _home_panel(data):
+    # proc grid
+    panel = 'TODO: processing grid'
+    return panel
+
+
+def _stats_panel(data):
+    # TODO: dropdown time
+    # TODO: Tab buttons for pivot select: Assessors or Sessions or Subjects
+    panel = ''
+
+    panel += _dropdown_html('stats_projects', 'Projects', ['CHAMP']);
+    panel += _dropdown_html('stats_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
+    panel += _dropdown_html('stats_sesstypes', 'Session Types', list(data['assessors'].SESSTYPE.unique()));
+    panel += _dropdown_html('stats_measures', 'Measures', []);
+    panel += _dropdown_html('stats_xvariable', 'x-variable', []);
+
+    # Export button
+    panel += _csv_button('stats')
+
+    return panel
+
+
+def _qa_panel(data):
+    panel = ''
+    # date selector Start Date to End Date
+
+    # radio button for autofilter
+    # radio button for graphs
+
+
+    # radio button for demographics
+    # radio buttons: MR PET EEG
+    # radio buttons: emojis for statuses
+
+
+    # Tab buttons for pivot select: Scans or Assessors or Sessions or Subjects or Projects
+
+    # Legend
+
+
+    panel += _dropdown_html('qa_projects', 'Projects', ['CHAMP']);
+    panel += _dropdown_html('qa_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
+    panel += _dropdown_html('qa_scantypes', 'Scan Types', list(data['scans'].SCANTYPE.unique()));
+    panel += _dropdown_html('qa_sesstypes', 'Session Types', list(data['scans'].SESSTYPE.unique()));
+
+    panel += _csv_button('qa')
+
+    return panel
+
+
+def _csv_button(ident):
+    return csv_button_html_template.replace('ID', 'qa')
+
+
+def _processors_panel(data):
+    # dropdown project
+    panel = 'TODO:dropdown filters, radio button filters'
+
+    return panel
+
+
+#def _assessors_panel(data):
+#    panel = 'TODO:dropdown filters, radio button filters'
+
+#    return panel
+
+
+#def _scans_panel(data):
+#    panel = 'TODO:dropdown filters, radio button filters'
+#    return panel
+
+
+def _analyses_panel(data):
+    # dropdown investigator
+    # dropdown project
+    # dropdown status
+    panel = 'TODO:dropdown filters, radio button filters'
+
+    return panel
+
+
 def _to_html(data):
     html_text = ''
-    home_panel = ''
-    sessions_panel = ''
-    assessors_panel = ''
-    scans_panel = ''
-    processors_panel = ''
-    analyses_panel = ''
-    stats_panel = ''
 
     tabs = [
-        {'label': 'home', 'panel': home_panel},
-        {'label': 'sessions', 'panel': sessions_panel},
-        {'label': 'assessors', 'panel': assessors_panel},
-        {'label': 'scans', 'panel': scans_panel},
-        {'label': 'processors', 'panel': processors_panel},
-        {'label': 'analyses', 'panel': analyses_panel},
-        {'label': 'stats', 'panel': stats_panel},
+        {'label': 'stats', 'panel': _stats_panel(data)},
+        {'label': 'home', 'panel': _home_panel(data)},
+        {'label': 'qa', 'panel': _qa_panel(data)},
+        #{'label': 'assessors', 'panel': _assessors_panel(data)},
+        #{'label': 'scans', 'panel': _scans_panel(data)},
+        {'label': 'processors', 'panel': _processors_panel(data)},
+        {'label': 'analyses', 'panel': _analyses_panel(data)},
     ]
 
     tab_buttons, tab_panels = _get_tabs(tabs)
 
     grids = _get_grids(data)
 
+    buttons = _get_buttons(data)
+
     # Insert tabs pieces into webpage
     html_text = main_html_template
     html_text = html_text.replace('TABBUTTONS', ''.join(tab_buttons))
     html_text = html_text.replace('TABPANELS', ''.join(tab_panels))
+    html_text = html_text.replace('BUTTONJS', ''.join(buttons))
     html_text = html_text.replace('GRIDJS', ''.join(grids))
 
     return html_text
@@ -290,6 +420,7 @@ def _duck_data(filename):
 
     for t in TABLES:
         data[t] = con.sql(f"SELECT * FROM {t}").df()
+        data[t] = data[t].fillna('')
 
     return data
 
@@ -301,7 +432,7 @@ def export_html(
     proctypes=None,
     sesstypes=None,
     sessions=None
-):  
+):
     duck_file = f'{filename}.duckdb'
 
     # Load data as dataframes

@@ -3,49 +3,32 @@
 
 # Main page with multiple tabs, including javascript function and listeners
 main_html_template = '''<!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
   <style>
-    html, body { height: 100%; margin: 0; background: #222; color: white; font-family: Arial, sans-serif; }
-    .wrap { display: flex; flex-direction: column; }
-    .tabs { display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid #ddd; }
-    .tab { padding: 8px 12px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
-    .content { flex: 1; padding: 12px; }
-    .hidden { display: none; }
-    .gridWrap { height: 100%; }
-    .tabbutton { color: #777; font-size: 24px; }
-    .tabbutton.active { color: #119911; }
-    .tabpanel { display: none; }
-    .tabpanel.active { display: block; }
+    .ag-grid {
+      height: 400px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="tabs">  
-      TABBUTTONS
-    </div>
+  <div class="container-fluid p-3">
+    <ul class="nav nav-tabs">TABBUTTONS</ul>
+    <div class="tab-content pt-3">TABPANELS</div>
+    <h1 align="center">dashboard</h1>
   </div>
-  <div class="content gridWrap">
-      TABPANELS
-  </div>
-  <h1 align="center">dashboard</h1>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/js/tom-select.complete.min.js"></script>
   <script>
     GRIDJS
-    function showTab(tabId) {
-      document.querySelectorAll(".tabbutton").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
-      document.querySelectorAll(".tabpanel").forEach(p => p.classList.toggle("active", p.id === "panel-" + tabId));
-    }
-    document.querySelectorAll(".tabbutton").forEach(b => {
-      b.addEventListener("click", () => showTab(b.dataset.tab));
-    });
-    document.addEventListener("DOMContentLoaded", () => {
-      showTab("stats");
-    });
-    showTab("scans");
+    BUTTONJS
   </script>
 </body>
 </html>
@@ -53,43 +36,81 @@ main_html_template = '''<!doctype html>
 
 
 grid_js_template = '''
-    const themeID = agGrid.themeAlpine.withPart(agGrid.colorSchemeDark);
+    const theme_ID = agGrid.themeQuartz.withPart(agGrid.colorSchemeDarkBlue);
 
-    const columnDefsID = COLUMNS;
+    const columnDefs_ID = COLUMNS;
 
-    const rowDataID =  ROWS;
+    const rowData_ID =  ROWS;
 
-    const gridOptionsID = {
-      theme: themeID,
-      columnDefs: columnDefsID,
-      rowData: rowDataID,
+    const gridOptions_ID = {
+      columnSize: "responsiveSizeToFit",
+      theme: theme_ID,
+      columnDefs: columnDefs_ID,
+      rowData: rowData_ID,
       defaultColDef: {
+        minwidth: 40,
         sortable: true,
-        filter: true,
-        resizeable: true,
-        floatingFilter: true,
         resizable: true,
-      }
+        filter: true,
+      },
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const gridElementID = document.querySelector("#gridID");
-      agGrid.createGrid(gridElementID, gridOptionsID);
+    // Find the div for this grid
+    const gridElement_ID = document.querySelector("#grid_ID");
+
+    const gridApi_ID = agGrid.createGrid(gridElement_ID, gridOptions_ID);
+
+    function onButtonExport_ID() {
+      gridApi_ID.exportDataAsCsv();
+    }
+'''
+
+tab_button_html_template = '''
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#panel_ID">LABEL</button></li>
+'''
+
+tab_panel_html_template = '''
+    <div class="tab-pane" id="panel_ID">
+      PANEL
+      <div id="grid_ID" class="ag-grid"></div>
+    </div>
+'''
+
+
+csv_button_html_template = '''
+    <button class="btn btn-primary btn-sm" onclick="onButtonExport_ID()">Export CSV</button>
+'''
+
+
+dropdown_js_template = '''
+    const select_ID = new TomSelect("#dropdown_ID", {
+      allowEmptyOption: true,
+      plugins: ["remove_button", "input_autogrow"]
     });
 '''
 
 
-tab_button_html_template = '''
-    <button class="tabbutton" data-tab="ID">LABEL</button>
+dropdown_html_template = '''
+    <select id="dropdown_ID" multiple class="w-25" placeholder="Select LABEL...">
+      OPTIONS
+    </select>
 '''
 
-#tab_button_html_template = '''
-#    <button class="tabbutton" data-tab="ID">LABEL<span class="cnt">(COUNT)</span></button>
-#'''
+
+dropdown_option_html_template = '''<option value="VALUE">LABEL</option>'''
 
 
-tab_panel_html_template = '''
-    <div class="tabpanel" id="panel-ID">
-      <div id="gridID" style="height:600px; width:100%;">PANEL</div>
-    </div>
+stats_js_template = '''
+   select_stats_projects.on('change', function(values) {
+      
+      select_stats_proctypes.clear();
+      
+      select_stats_sesstypes.clear();
+
+      select_stats_measures.clear();
+
+      select_stats_xvariable.clear();
+
+
+    });
 '''
