@@ -322,11 +322,16 @@ def _stats_panel(data):
     # Export button
     panel += _csv_button('stats')
 
-    panel += _dropdown_html('stats_projects', 'Projects', ['CHAMP']);
-    panel += _dropdown_html('stats_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
-    panel += _dropdown_html('stats_sesstypes', 'Session Types', list(data['assessors'].SESSTYPE.unique()));
-    panel += _dropdown_html('stats_measures', 'Measures', []);
-    panel += _dropdown_html('stats_xvariable', 'x-variable', []);
+    # Filters
+    _projects = sorted(list(data['assessors'].PROJECT.unique()))
+    _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
+    _sesstypes = sorted(list(data['assessors'].SESSTYPE.unique()))
+    _measures = data['stats'].columns
+    panel += _dropdown_html('stats_projects', 'Projects', _projects)
+    panel += _dropdown_html('stats_proctypes', 'Processing Types', _proctypes)
+    panel += _dropdown_html('stats_sesstypes', 'Session Types', _sesstypes )
+    panel += _dropdown_html('stats_measures', 'Measures', _measures)
+    panel += _dropdown_html('stats_xvariable', 'x-variable', _measures)
 
     # Row count badge
     panel += _badge('stats_rowcount')
@@ -349,11 +354,15 @@ def _qa_panel(data):
     # Export as csv button
     panel += _csv_button('qa')
 
-    # Filters 
-    panel += _dropdown_html('qa_projects', 'Projects', ['CHAMP']);
-    panel += _dropdown_html('qa_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
-    panel += _dropdown_html('qa_scantypes', 'Scan Types', list(data['scans'].SCANTYPE.unique()));
-    panel += _dropdown_html('qa_sesstypes', 'Session Types', list(data['scans'].SESSTYPE.unique()));
+    # Filters
+    _projects = sorted(list(data['scans'].PROJECT.unique()))
+    _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
+    _scantypes = sorted(list(data['scans'].SCANTYPE.unique()))
+    _sesstypes = sorted(list(data['scans'].SESSTYPE.unique()))
+    panel += _dropdown_html('qa_projects', 'Projects', _projects)
+    panel += _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
+    panel += _dropdown_html('qa_scantypes', 'Scan Types', _scantypes)
+    panel += _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes)
 
     # Row count badge
     panel += _badge('qa_rowcount')
@@ -370,7 +379,7 @@ def _processors_panel(data):
 
     panel += _csv_button('processors')
 
-    panel += _dropdown_html('processors_projects', 'Projects', ['CHAMP']);
+    panel += _dropdown_html('processors_projects', 'Projects', ['CHAMP'])
 
     # Row count badge
     panel += _badge('processors_rowcount')
@@ -383,9 +392,13 @@ def _analyses_panel(data):
 
     panel += _csv_button('analyses')
 
-    panel += _dropdown_html('analyses_projects', 'Projects', ['CHAMP']);
-    panel += _dropdown_html('analyses_invest', 'Investigator', []);
-    panel += _dropdown_html('analyses_status', 'Status', []);
+    # Filters
+    _projects = sorted(list(data['analyses'].PROJECT.unique()))
+    _investigators = sorted(list(data['analyses'].INVESTIGATOR.unique()))
+    _statuses = sorted(list(data['analyses'].PROJECT.unique()))
+    panel += _dropdown_html('analyses_projects', 'Projects', _projects)
+    panel += _dropdown_html('analyses_invest', 'Investigator', _investigators)
+    panel += _dropdown_html('analyses_status', 'Status', _statuses)
 
     # Row count badge
     panel += _badge('analyses_rowcount')
