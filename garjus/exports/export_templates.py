@@ -94,7 +94,7 @@ grid_js_template = '''
     const gridApi_ID = agGrid.createGrid(gridElement_ID, gridOptions_ID);
 
     function onButtonExport_ID() {
-      gridApi_ID.exportDataAsCsv();
+      gridApi_ID.exportDataAsCsv({fileName: "ID.csv"});
     }
 '''
 
