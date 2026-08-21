@@ -9,7 +9,10 @@ from importlib import resources
 import duckdb
 import pandas as pd
 
-from .export_templates import main_html_template, grid_js_template, tab_button_html_template, tab_panel_html_template
+from .export_templates import main_html_template, grid_js_template
+from .export_templates import tab_button_active_html_template, tab_panel_active_html_template
+from .export_templates import tab_button_html_template, tab_panel_html_template
+from .export_templates import tab_button_active_html_template, tab_panel_active_html_template, tab_button_html_template, tab_panel_html_template
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
 
@@ -200,12 +203,18 @@ def _get_tabs(tabs):
     for t in tabs:
         tab_label = t['label']
         tab_data = t['panel']
+        tab_active = t['active']
 
-        tab_button = tab_button_html_template
+        if tab_active:
+            tab_button = tab_button_active_html_template
+            tab_panel = tab_panel_active_html_template
+        else:
+            tab_button = tab_button_html_template
+            tab_panel = tab_panel_html_template
+    
         tab_button = tab_button.replace('ID', tab_label)
         tab_button = tab_button.replace('LABEL', tab_label)
 
-        tab_panel = tab_panel_html_template
         tab_panel = tab_panel.replace('ID', tab_label)
         tab_panel = tab_panel.replace('LABEL', tab_label)
         tab_panel = tab_panel.replace('PANEL', tab_data)
@@ -261,6 +270,9 @@ def _get_grids(data):
 def _get_buttons(data):
     buttons = []
 
+    # Add pre javascript
+    buttons.append(_dashboard_pre_js())
+
     # Stats dropdowns
     buttons.append(_dropdown_js('stats_projects'))
     buttons.append(_dropdown_js('stats_proctypes'))
@@ -282,14 +294,18 @@ def _get_buttons(data):
     # Processors dropdowns
     buttons.append(_dropdown_js('processors_projects'))
 
-    # Add other  javascript
-    buttons.append(_dashboard_js())
+    # Add post javascript
+    buttons.append(_dashboard_post_js())
 
     return buttons
 
 
-def _dashboard_js():
-    return resources.read_text('garjus.dashboard', 'assets/dashboard.js')
+def _dashboard_pre_js():
+    return resources.read_text('garjus.dashboard', 'assets/dashboard_pre.js')
+
+
+def _dashboard_post_js():
+    return resources.read_text('garjus.dashboard', 'assets/dashboard_post.js')
 
 
 def _home_panel(data):
@@ -381,11 +397,11 @@ def _to_html(data):
     html_text = ''
 
     tabs = [
-        {'label': 'stats', 'panel': _stats_panel(data)},
+        {'label': 'stats', 'panel': _stats_panel(data), 'active': True},
         #{'label': 'home', 'panel': _home_panel(data)},
-        {'label': 'qa', 'panel': _qa_panel(data)},
-        {'label': 'processors', 'panel': _processors_panel(data)},
-        {'label': 'analyses', 'panel': _analyses_panel(data)},
+        {'label': 'qa', 'panel': _qa_panel(data),  'active': False},
+        {'label': 'processors', 'panel': _processors_panel(data),  'active': False},
+        {'label': 'analyses', 'panel': _analyses_panel(data),  'active': False},
     ]
 
     tab_buttons, tab_panels = _get_tabs(tabs)

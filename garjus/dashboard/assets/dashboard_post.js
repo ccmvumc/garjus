@@ -1,0 +1,231 @@
+// code to apply after creating grids
+// Set functions to check if there is an external filter to be applied
+// Set external filter function
+
+if (true || grid_instances["qa"].api) {
+  gridApi_qa.setGridOption(
+    "isExternalFilterPresent", 
+    () => (
+      selected_qa_projects.length > 0 ||
+      selected_qa_sesstypes.length > 0
+    )
+  );
+
+  gridApi_qa.setGridOption(
+    "doesExternalFilterPass",
+    params => {
+      return (
+        (selected_qa_projects.length === 0 || selected_qa_projects.includes(params.data.PROJECT)) &&
+        (selected_qa_sesstypes.length === 0 || selected_qa_sesstypes.includes(params.data.SESSTYPE)) 
+      );
+    }
+  );
+
+
+  // When stats projects changes, clear other dropdowns
+  select_qa_projects.on('change', function(values) {
+    // Clear other dropdowns
+    select_qa_sesstypes.clear();
+  });
+
+  // When proctypes changes, filter rows in grid
+  select_qa_projects.on("change", function(values) {
+
+    // Clear it
+    selected_qa_projects.length = 0;
+
+    // Set values
+    selected_qa_projects.push(...values);
+
+    // Trigger grid updates
+    refreshGrid(gridApi_qa, "qa");
+  });
+
+  // When sesstype changes, filter rows in grid
+  select_qa_sesstypes.on("change", function(values) {
+
+    // Clear it
+    selected_qa_sesstypes.length = 0;
+
+    // Set values
+    selected_qa_sesstypes.push(...values);
+
+    // Trigger grid update
+    refreshGrid(gridApi_qa, "qa");
+  });
+}
+
+
+if (true || grid_instances["stats"].api) {
+  gridApi_stats.setGridOption(
+    "isExternalFilterPresent", 
+    () => (
+      true
+    )
+  );
+
+  gridApi_stats.setGridOption(
+    "doesExternalFilterPass",
+    params => {
+      return (
+        (selected_stats_projects.includes(params.data.PROJECT)) &&
+        (selected_stats_proctypes.includes(params.data.PROCTYPE)) && 
+        (selected_stats_sesstypes.length === 0 || selected_stats_sesstypes.includes(params.data.SESSTYPE)) 
+      );
+    }
+  );
+
+
+  // When stats projects changes, clear other dropdowns
+  select_stats_projects.on('change', function(values) {
+    // Clear other dropdowns
+    select_stats_proctypes.clear();
+    select_stats_sesstypes.clear();
+    select_stats_measures.clear();
+    select_stats_xvariable.clear();
+
+    // Set options in proctypes
+
+  });
+
+
+  // When stats proctypes changes, filter rows in grid
+  select_stats_proctypes.on("change", function(values) {
+
+    // Clear it
+    selected_stats_proctypes.length = 0;
+
+    // Set values
+    selected_stats_proctypes.push(...values);
+
+    // Trigger grid updates
+    refreshGrid(gridApi_stats, "stats");
+
+
+    hideBlankColumns(gridApi_stats);
+
+
+  });
+
+
+  // When stats proctypes changes, filter rows in grid
+  select_stats_projects.on("change", function(values) {
+
+    // Clear it
+    selected_stats_projects.length = 0;
+
+    // Set values
+    selected_stats_projects.push(...values);
+
+    // Trigger grid updates
+    refreshGrid(gridApi_stats, "stats");
+  });
+
+  // When stats sesstype changes, filter rows in grid
+  select_stats_sesstypes.on("change", function(values) {
+
+    // Clear it
+    selected_stats_sesstypes.length = 0;
+
+    // Set values
+    selected_stats_sesstypes.push(...values);
+
+    // Trigger grid update
+    refreshGrid(gridApi_stats, "stats");
+
+    // Set available options in Measures and Xvariable
+  });
+}
+
+
+if (true || grid_instances["analyses"].api) {
+  gridApi_analyses.setGridOption(
+    "isExternalFilterPresent", 
+    () => (
+      selected_analyses_projects.length > 0 ||
+      selected_analyses_invest.length > 0 ||
+      selected_analyses_status.length > 0
+    )
+  );
+
+  gridApi_analyses.setGridOption(
+    "doesExternalFilterPass",
+    params => {
+      return (
+        (selected_analyses_projects.length === 0 || selected_analyses_projects.includes(params.data.PROJECT)) &&
+        (selected_analyses_invest.length === 0 || selected_analyses_invest.includes(params.data.INVESTIGATOR)) && 
+        (selected_analyses_status.length === 0 || selected_analyses_status.includes(params.data.STATUS)) 
+      );
+    }
+  );
+
+  select_analyses_projects.on("change", function(values) {
+    selected_analyses_projects.length = 0;
+    selected_analyses_projects.push(...values);
+    refreshGrid(gridApi_analyses, "analyses");
+  });
+
+
+  select_analyses_invest.on("change", function(values) {
+    selected_analyses_invest.length = 0;
+    selected_analyses_invest.push(...values);
+    refreshGrid(gridApi_analyses, "analyses");
+  });
+
+
+  select_analyses_status.on("change", function(values) {
+    selected_analyses_status.length = 0;
+    selected_analyses_status.push(...values);
+    refreshGrid(gridApi_analyses, "analyses");
+  });
+}
+
+
+if (true || grid_instances["processors"].api) {
+  gridApi_processors.setGridOption(
+    "isExternalFilterPresent", 
+    () => (
+      selected_processors_projects.length > 0
+    )
+  );
+
+  gridApi_processors.setGridOption(
+    "doesExternalFilterPass",
+    params => {
+      return selected_processors_projects.length === 0 || selected_processors_projects.includes(params.data.PROJECT);
+    }
+  );
+
+  select_processors_projects.on("change", function(values) {
+    selected_processors_projects.length = 0;
+    selected_processors_projects.push(...values);
+    refreshGrid(gridApi_processors, "processors");
+  });
+}
+
+
+// When tab changes, check if we have resized the grid on the tab, 
+// we have to resize first time a tab is active
+// because the grid is initially in a display none
+// We add a listener to the tab toggle bootstrap that checks for resized
+document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
+  tabEl.addEventListener('shown.bs.tab', (event) => {
+    const target_id = event.target.getAttribute('data-bs-target').substring(1);
+    let instance = '';
+
+    if (target_id === "panel_analyses") {
+      instance = grid_instances["analyses"];
+    } else if (target_id === "panel_stats") {
+      instance = grid_instances["stats"];
+    } else if (target_id === "panel_processors") {
+      instance = grid_instances["processors"];
+    } else if (target_id === "panel_qa") {
+      instance = grid_instances["qa"];
+    }
+
+    if (instance && instance.api && !instance.resized) {
+      instance.api.autoSizeAllColumns();
+      instance.resized = true;
+    }
+  });
+});

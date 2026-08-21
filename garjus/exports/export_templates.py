@@ -63,14 +63,29 @@ grid_js_template = '''
     const rowData_ID =  ROWS;
 
     const gridOptions_ID = {
+
       theme: theme_ID,
       columnDefs: columnDefs_ID,
       rowData: rowData_ID,
       defaultColDef: {
+        minWidth: 40,
         sortable: true,
         resizable: true,
+        flex: 1,
         filter: false,
       },
+      autoSizeStrategy: {type: "fitCellContents"},
+      onGridReady: (params) => {
+        grid_instances["ID"].api = params.api;
+
+        updateRowCounts(params.api, "ID_rowcount");
+
+        const active_pane = document.querySelector(".tab-pane.active");
+        if (active_pane && active_pane.id === "panel_ID") {
+          params.api.autoSizeAllColumns();
+          grid_instances["ID"].resized = true;
+        }
+      }
     };
 
     // Find the div for this grid
@@ -83,12 +98,27 @@ grid_js_template = '''
     }
 '''
 
+
 tab_button_html_template = '''
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#panel_ID">LABEL</button></li>
 '''
 
+
 tab_panel_html_template = '''
     <div class="tab-pane" id="panel_ID">
+      PANEL
+      <div id="grid_ID" class="ag-grid"></div>
+    </div>
+'''
+
+
+tab_button_active_html_template = '''
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#panel_ID">LABEL</button></li>
+'''
+
+
+tab_panel_active_html_template = '''
+    <div class="tab-pane active" id="panel_ID">
       PANEL
       <div id="grid_ID" class="ag-grid"></div>
     </div>
@@ -103,13 +133,21 @@ csv_button_html_template = '''
 dropdown_js_template = '''
     const select_ID = new TomSelect("#dropdown_ID", {
       allowEmptyOption: true,
-      plugins: ["remove_button", "input_autogrow"]
+      plugins: {
+        "remove_button": {},
+        "input_autogrow": {},
+        "checkbox_options": {
+          "checkedClassNames": ["ts-checked"],
+          "uncheckedClassNames": ["ts-unchecked"]
+        },
+        "clear_button": {},
+      }
     });
 '''
 
 
 dropdown_html_template = '''
-    <select id="dropdown_ID" multiple class="w-25" placeholder="Select LABEL...">
+    <select id="dropdown_ID" multiple class="w-25 form-select form-select-lg" placeholder="Select LABEL...">
       OPTIONS
     </select>
 '''
