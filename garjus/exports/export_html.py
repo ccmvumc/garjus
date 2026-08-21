@@ -395,7 +395,7 @@ def _analyses_panel(data):
     # Filters
     _projects = sorted(list(data['analyses'].PROJECT.unique()))
     _investigators = sorted(list(data['analyses'].INVESTIGATOR.unique()))
-    _statuses = sorted(list(data['analyses'].PROJECT.unique()))
+    _statuses = sorted(list(data['analyses'].STATUS.unique()))
     panel += _dropdown_html('analyses_projects', 'Projects', _projects)
     panel += _dropdown_html('analyses_invest', 'Investigator', _investigators)
     panel += _dropdown_html('analyses_status', 'Status', _statuses)
