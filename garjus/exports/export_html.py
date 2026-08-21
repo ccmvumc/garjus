@@ -12,25 +12,21 @@ import pandas as pd
 from .export_templates import main_html_template, grid_js_template, tab_button_html_template, tab_panel_html_template
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
-from .export_templates import stats_js_template
 
 
 logger = logging.getLogger('garjus')
 
 
 # TODO: markdown links
-# TODO: show export datetime in html
 # TODO: filter radio buttons
 # TODO: columns selectors
 # TODO: date filter
-# TODO: show row count
 # TODO: autofilter button
 # TODO: graphsgraphsgraphs
 # TODO: home grid
 # TODO: dark/light mode toggle
 # TODO: stats pivot by session/subject, preload data
 # TODO: qa pivot by session/subject/project, preload?
-# TODO: count rows
 
 
 TABLES = ['assessors', 'scans', 'sessions', 'analyses', 'processors', 'stats']
@@ -45,9 +41,9 @@ ASSR_COLUMNS = ['ASSR', 'DATE', 'JOBDATE', 'STATUS']
 
 STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
-ASIS_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT']
+ANALYSES_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT']
 
-PROC_COLUMNS = ['ID', 'PROJECT', 'TYPE', 'FILTER', 'ARGS']
+PROCESSORS_COLUMNS = ['ID', 'PROJECT', 'TYPE', 'FILTER', 'ARGS']
 
 TASK_COLUMNS = ['ID', 'PROJECT', 'STATUS', 'PROCTYPE', 'TIMEUSED', 'MEMUSED']
 
@@ -249,14 +245,14 @@ def _get_grids(data):
     _label = 'analyses'
     _data = _records(data['analyses'])
     _defs = _coldefs(data['analyses'])
-    _defs = _hide_columns(_defs, ASIS_COLUMNS)
+    _defs = _hide_columns(_defs, ANALYSES_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     # Processors
     _label = 'processors'
     _data = _records(data['processors'])
     _defs = _coldefs(data['processors'])
-    _defs = _hide_columns(_defs, PROC_COLUMNS)
+    _defs = _hide_columns(_defs, PROCESSORS_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     return grids
@@ -278,13 +274,13 @@ def _get_buttons(data):
     buttons.append(_dropdown_js('qa_scantypes'))
     buttons.append(_dropdown_js('qa_sesstypes'))
 
-    # Analysis dropdowns
-    buttons.append(_dropdown_js('as_projects'))
-    buttons.append(_dropdown_js('as_invest'))
-    buttons.append(_dropdown_js('as_status'))
+    # Analyses dropdowns
+    buttons.append(_dropdown_js('analyses_projects'))
+    buttons.append(_dropdown_js('analyses_invest'))
+    buttons.append(_dropdown_js('analyses_status'))
 
     # Processors dropdowns
-    buttons.append(_dropdown_js('proc_projects'))
+    buttons.append(_dropdown_js('processors_projects'))
 
     # Add other  javascript
     buttons.append(_dashboard_js())
@@ -307,14 +303,14 @@ def _stats_panel(data):
     # TODO: Tab buttons for pivot select: Assessors or Sessions or Subjects
     panel = ''
 
+    # Export button
+    panel += _csv_button('stats')
+
     panel += _dropdown_html('stats_projects', 'Projects', ['CHAMP']);
     panel += _dropdown_html('stats_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
     panel += _dropdown_html('stats_sesstypes', 'Session Types', list(data['assessors'].SESSTYPE.unique()));
     panel += _dropdown_html('stats_measures', 'Measures', []);
     panel += _dropdown_html('stats_xvariable', 'x-variable', []);
-
-    # Export button
-    panel += _csv_button('stats')
 
     # Row count badge
     panel += _badge('stats_rowcount')
@@ -326,28 +322,25 @@ def _stats_panel(data):
 def _qa_panel(data):
     panel = ''
     # date selector Start Date to End Date
-
     # radio button for autofilter
     # radio button for graphs
-
-
     # radio button for demographics
     # radio buttons: MR PET EEG
     # radio buttons: emojis for statuses
+    # TODO: buttons for pivot select: Scans or Assessors or Sessions or Subjects or Projects
+    # TODO: Legend
 
+    # Export as csv button
+    panel += _csv_button('qa')
 
-    # Tab buttons for pivot select: Scans or Assessors or Sessions or Subjects or Projects
-
-    # Legend
-
-
+    # Filters 
     panel += _dropdown_html('qa_projects', 'Projects', ['CHAMP']);
     panel += _dropdown_html('qa_proctypes', 'Processing Types', list(data['assessors'].PROCTYPE.unique()));
     panel += _dropdown_html('qa_scantypes', 'Scan Types', list(data['scans'].SCANTYPE.unique()));
     panel += _dropdown_html('qa_sesstypes', 'Session Types', list(data['scans'].SESSTYPE.unique()));
 
-    # Export as csv button
-    panel += _csv_button('qa')
+    # Row count badge
+    panel += _badge('qa_rowcount')
 
     return panel
 
@@ -359,7 +352,12 @@ def _csv_button(ident):
 def _processors_panel(data):
     panel = ''
 
-    panel += _dropdown_html('proc_projects', 'Projects', ['CHAMP']);
+    panel += _csv_button('processors')
+
+    panel += _dropdown_html('processors_projects', 'Projects', ['CHAMP']);
+
+    # Row count badge
+    panel += _badge('processors_rowcount')
 
     return panel
 
@@ -367,9 +365,14 @@ def _processors_panel(data):
 def _analyses_panel(data):
     panel = ''
 
-    panel += _dropdown_html('as_projects', 'Projects', ['CHAMP']);
-    panel += _dropdown_html('as_invest', 'Investigator', []);
-    panel += _dropdown_html('as_status', 'Status', []);
+    panel += _csv_button('analyses')
+
+    panel += _dropdown_html('analyses_projects', 'Projects', ['CHAMP']);
+    panel += _dropdown_html('analyses_invest', 'Investigator', []);
+    panel += _dropdown_html('analyses_status', 'Status', []);
+
+    # Row count badge
+    panel += _badge('analyses_rowcount')
 
     return panel
 
@@ -379,7 +382,7 @@ def _to_html(data):
 
     tabs = [
         {'label': 'stats', 'panel': _stats_panel(data)},
-        {'label': 'home', 'panel': _home_panel(data)},
+        #{'label': 'home', 'panel': _home_panel(data)},
         {'label': 'qa', 'panel': _qa_panel(data)},
         {'label': 'processors', 'panel': _processors_panel(data)},
         {'label': 'analyses', 'panel': _analyses_panel(data)},
@@ -393,6 +396,7 @@ def _to_html(data):
 
     # Insert tabs pieces into webpage
     html_text = main_html_template
+    html_text = html_text.replace('TIMESTAMP', data['timestamp'])
     html_text = html_text.replace('TABBUTTONS', ''.join(tab_buttons))
     html_text = html_text.replace('TABPANELS', ''.join(tab_panels))
     html_text = html_text.replace('BUTTONJS', ''.join(buttons))
@@ -448,6 +452,8 @@ def export_html(
         )
         print(f'saving duckdb:{duck_file}')
         _save_data(data, duck_file)
+
+    data['timestamp'] = datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
 
     # Get html from ag grid data
     html_text = _to_html(data)

@@ -4,10 +4,15 @@ const selected_stats_sesstypes = [];
 const selected_stats_measures = [];
 const selected_stats_xvariable = [];
 
+const selected_analyses_projects = [];
+const selected_analyses_invest = [];
+const selected_analyses_status = [];
+
+const selected_processors_projects = [];
+
 
 function updateRowCounts(gridApi, ident) {
   const total_rows = gridApi.getDisplayedRowCount();
-  //console.log(total_rows);
   document.getElementById(ident).textContent = total_rows + " rows";
 }
 
@@ -56,14 +61,34 @@ function hideBlankColumns(gridApi) {
 }
 
 
-// Set function to check if there is an external filter to be applied
+// Set functions to check if there is an external filter to be applied
 gridApi_stats.setGridOption(
   "isExternalFilterPresent", 
-  () => selected_stats_proctypes.length > 0
+  () => (
+    selected_stats_projects.length > 0 ||
+    selected_stats_proctypes.length > 0 ||
+    selected_stats_sesstypes.length > 0
+  )
+);
+
+gridApi_analyses.setGridOption(
+  "isExternalFilterPresent", 
+  () => (
+    selected_analyses_projects.length > 0 ||
+    selected_analyses_invest.length > 0 ||
+    selected_analyses_status.length > 0
+  )
+);
+
+gridApi_processors.setGridOption(
+  "isExternalFilterPresent", 
+  () => (
+    selected_processors_projects.length > 0
+  )
 );
 
 
-// Set external filter function
+// Set external filter functions
 gridApi_stats.setGridOption(
   "doesExternalFilterPass",
   params => {
@@ -75,6 +100,24 @@ gridApi_stats.setGridOption(
   }
 );
 
+gridApi_analyses.setGridOption(
+  "doesExternalFilterPass",
+  params => {
+    return (
+      (selected_analyses_projects.length === 0 || selected_analyses_projects.includes(params.data.PROJECT)) &&
+      (selected_analyses_invest.length === 0 || selected_analyses_invest.includes(params.data.INVESTIGATOR)) && 
+      (selected_analyses_status.length === 0 || selected_analyses_status.includes(params.data.STATUS)) 
+    );
+  }
+);
+
+gridApi_processors.setGridOption(
+  "doesExternalFilterPass",
+  params => {
+    return selected_processors_projects.length === 0 || selected_processors_projects.includes(params.data.PROJECT);
+  }
+);
+
 
 // When stats projects changes, clear other dropdowns
 select_stats_projects.on('change', function(values) {
@@ -83,6 +126,8 @@ select_stats_projects.on('change', function(values) {
   select_stats_sesstypes.clear();
   select_stats_measures.clear();
   select_stats_xvariable.clear();
+
+  // Set options in proctypes
 
 });
 
@@ -129,8 +174,33 @@ select_stats_sesstypes.on("change", function(values) {
 
   // Set available options in Measures and Xvariable
 
+
 });
 
 
+select_analyses_projects.on("change", function(values) {
+  selected_analyses_projects.length = 0;
+  selected_analyses_projects.push(...values);
+  refreshGrid(gridApi_analyses, "analyses");
+});
 
 
+select_analyses_invest.on("change", function(values) {
+  selected_analyses_invest.length = 0;
+  selected_analyses_invest.push(...values);
+  refreshGrid(gridApi_analyses, "analyses");
+});
+
+
+select_analyses_status.on("change", function(values) {
+  selected_analyses_status.length = 0;
+  selected_analyses_status.push(...values);
+  refreshGrid(gridApi_analyses, "analyses");
+});
+
+
+select_processors_projects.on("change", function(values) {
+  selected_processors_projects.length = 0;
+  selected_processors_projects.push(...values);
+  refreshGrid(gridApi_processors, "processors");
+});

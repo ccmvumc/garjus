@@ -41,7 +41,8 @@ main_html_template = '''<!doctype html>
   <div class="container-fluid p-3">
     <ul class="nav nav-tabs">TABBUTTONS</ul>
     <div class="tab-content pt-3">TABPANELS</div>
-    <h1 align="center">dashboard</h1>
+    <h3 align="center">dashboard</h3>
+    <h6 align="center">Exported TIMESTAMP</h6>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/js/tom-select.complete.min.js"></script>
@@ -114,25 +115,11 @@ dropdown_html_template = '''
 '''
 
 
-dropdown_option_html_template = '''<option value="VALUE">LABEL</option>'''
-
-
-stats_js_template = '''
-   select_stats_projects.on('change', function(values) {
-      
-      select_stats_proctypes.clear();
-      
-      select_stats_sesstypes.clear();
-
-      select_stats_measures.clear();
-
-      select_stats_xvariable.clear();
-
-
-    });
+dropdown_option_html_template = '''
+    <option value="VALUE">LABEL</option>
 '''
 
 
 badge_html_template = '''
-    <span id="ID" class="badge bg-secondary">0 rows</span>
+    <span id="ID" class="badge bg-secondary fs-5">0 rows</span>
 '''
