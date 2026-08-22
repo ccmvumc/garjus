@@ -229,3 +229,21 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
     }
   });
 });
+
+
+const setTheme = (theme) => {
+  // Set bootstrap to dark/light
+  document.documentElement.setAttribute("data-bs-theme", theme);
+
+  // Set ag-grid to dark/light
+  document.documentElement.setAttribute("data-ag-theme-mode", theme+"-blue");
+
+  // Save for next time
+  localStorage.setItem("theme", theme);
+};
+
+
+document.querySelector("#themetoggle").addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-bs-theme");
+  setTheme(current === "dark" ? "light" : "dark");
+});

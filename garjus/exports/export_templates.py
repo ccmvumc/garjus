@@ -22,7 +22,7 @@ function markdownCellRenderer(params) {
 
 # Main page with multiple tabs, including javascript function and listeners
 main_html_template = '''<!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -30,6 +30,13 @@ main_html_template = '''<!doctype html>
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var os = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-bs-theme", saved || os);
+    })();
+  </script>
   <style>
     .ag-grid {
       height: 400px;
@@ -43,6 +50,7 @@ main_html_template = '''<!doctype html>
     <div class="tab-content pt-3">TABPANELS</div>
     <h3 align="center">dashboard</h3>
     <h6 align="center">Exported TIMESTAMP</h6>
+    <div class="text-center"><button id="themetoggle" class="btn btn-outline-secondary">dark/light</button></div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/js/tom-select.complete.min.js"></script>
@@ -56,15 +64,11 @@ main_html_template = '''<!doctype html>
 
 
 grid_js_template = '''
-    const theme_ID = agGrid.themeQuartz.withPart(agGrid.colorSchemeDarkBlue);
-
     const columnDefs_ID = COLUMNS;
 
     const rowData_ID =  ROWS;
 
     const gridOptions_ID = {
-
-      theme: theme_ID,
       columnDefs: columnDefs_ID,
       rowData: rowData_ID,
       defaultColDef: {
