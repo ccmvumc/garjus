@@ -1,4 +1,37 @@
 """Creates html export of data with web app"""
+# The default dashboard has tabs for: stats, qa, analyses, processors
+#
+# stats
+# Gives access to tabular outputs from processor pipelines. 
+# User selects one or more projects followed by one or more processing types. 
+# The tables loads a row for each assessor with 
+# columns for each stat as well as the project/subject/session/.
+# 
+# qa
+# The qa grid gives access to all scan and assessor information. 
+# These can be pivoted by session/subject/project to summarize at that level.
+# Initially, the SESSIONS pivot is loaded which shows a row per session.
+#
+# analyses
+#
+# processors
+# 
+# TBD: activity, issues, queue, reports
+#
+# To pivot on QA and stats, we rebuild the data on the fly
+# stats pivot by session/subject, preload data row per assessor
+# qa pivot by session/subject/project, preload scans and assessors
+#
+# Other Features:
+# dark/light mode toggle
+#
+# TODO: markdown links
+# TODO: filter radio buttons
+# TODO: columns selectors
+# TODO: date filter
+# TODO: autofilter button
+# TODO: graphsgraphsgraphs
+# TODO: home grid
 import os
 import logging
 from datetime import datetime
@@ -8,6 +41,7 @@ from importlib import resources
 
 import duckdb
 import pandas as pd
+import numpy as np
 
 from .export_templates import main_html_template, grid_js_template
 from .export_templates import tab_button_active_html_template, tab_panel_active_html_template
@@ -16,40 +50,13 @@ from .export_templates import tab_button_active_html_template, tab_panel_active_
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
 from .export_templates import pivot_bar_html_template, pivot_button_html_template, pivot_button_active_html_template
+from .export_templates import datadict_js_template
 
 
 logger = logging.getLogger('garjus')
 
-# The default dashboard has tabs for: stats, qa, analyses, processors
-#
-# stats
-# Gives access to tabular outputs from processor pipelines. 
-# User selects one or more projects followed by one or more processing types. The tables loads a row for each assessor with 
-# columns for each stat as well as the project/subject/session/.
-# 
-# qa
-# The qa grid gives access to all scan and assessor information. These can be pivoted by session/subject/project to summarize at that level.
-# Initially, the SESSIONS pivot is loaded which shows a row per session.
-#
-# analyses
-#
-# processors
-# 
 
-
-
-# TODO: markdown links
-# TODO: filter radio buttons
-# TODO: columns selectors
-# TODO: date filter
-# TODO: autofilter button
-# TODO: graphsgraphsgraphs
-# TODO: home grid
-# TODO: dark/light mode toggle
-# TODO: stats pivot by session/subject, preload data
-# TODO: qa pivot by session/subject/project, preload?
-
-
+# Names of tables saved to .duckdb database file
 TABLES = ['assessors', 'scans', 'sessions', 'analyses', 'processors', 'stats']
 
 SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
@@ -251,6 +258,13 @@ def _records(df):
     return df.to_dict('records')
 
 
+def _get_datadict(data):
+    proc2stats = data['proc2stats']
+    datadict = datadict_js_template.replace('PROC2STATS', json.dumps(proc2stats, default=str))
+
+    return datadict
+
+
 def _get_grids(data):
     grids = []
 
@@ -265,7 +279,7 @@ def _get_grids(data):
     _label = 'stats'
     _data = _records(data['stats'])
     _defs = _coldefs(data['stats'])
-    #_defs = _hide_columns(_defs, STAT_COLUMNS)
+    _defs = _hide_columns(_defs, STAT_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     # Analyses
@@ -333,15 +347,11 @@ def _home_panel(data):
 
 
 def _stats_panel(data):
-    # TODO: dropdown time
-    # TODO: Tab buttons for pivot select: Assessors or Sessions or Subjects
+    # Tab buttons for pivot select: Assessors or Sessions or Subjects
     panel = ''
 
     # Export button
     panel += _csv_button('stats')
-
-
-    #TODO: drop nan in proctype
 
     # Filters
     _projects = sorted(list(data['assessors'].PROJECT.unique()))
@@ -372,8 +382,7 @@ def _qa_panel(data):
     # radio button for demographics
     # radio buttons: MR PET EEG
     # radio buttons: emojis for statuses
-    # TODO: buttons for pivot select: Scans or Assessors or Sessions or Subjects or Projects
-    # TODO: Legend
+    # buttons for pivot select
 
     # Export as csv button
     panel += _csv_button('qa')
@@ -437,7 +446,8 @@ def _processors_panel(data):
 
     panel += _csv_button('processors')
 
-    panel += _dropdown_html('processors_projects', 'Projects', data['assessors'].PROJECT.unique())
+    _projects = sorted(data['assessors'].PROJECT.unique())
+    panel += _dropdown_html('processors_projects', 'Projects', _projects)
 
     # Row count badge
     panel += _badge('processors_rowcount')
@@ -468,14 +478,16 @@ def _to_html(data):
     html_text = ''
 
     tabs = [
-        {'label': 'stats', 'panel': _stats_panel(data), 'active': True},
+        {'label': 'qa', 'panel': _qa_panel(data),  'active': True},
+        {'label': 'stats', 'panel': _stats_panel(data), 'active': False},
         #{'label': 'home', 'panel': _home_panel(data)},
-        {'label': 'qa', 'panel': _qa_panel(data),  'active': False},
         {'label': 'processors', 'panel': _processors_panel(data),  'active': False},
         {'label': 'analyses', 'panel': _analyses_panel(data),  'active': False},
     ]
 
     tab_buttons, tab_panels = _get_tabs(tabs)
+
+    datadict = _get_datadict(data)
 
     grids = _get_grids(data)
 
@@ -487,7 +499,7 @@ def _to_html(data):
     html_text = html_text.replace('TABBUTTONS', ''.join(tab_buttons))
     html_text = html_text.replace('TABPANELS', ''.join(tab_panels))
     html_text = html_text.replace('BUTTONJS', ''.join(buttons))
-    html_text = html_text.replace('GRIDJS', ''.join(grids))
+    html_text = html_text.replace('GRIDJS', ''.join(grids) + datadict)
 
     return html_text
 
@@ -497,10 +509,10 @@ def _save_data(data, filename):
     con = duckdb.connect(filename)
 
     for t, df in data.items():
-        print(f'saving:{t}')
+        logger.info(f'saving:{t}')
         con.execute(f'CREATE TABLE {t} AS SELECT * FROM df')
 
-    print('DONE!')
+    logger.info('DONE!')
 
 
 def _duck_data(filename):
@@ -515,6 +527,20 @@ def _duck_data(filename):
     return data
 
 
+def _map_proc2stats(stats):
+    proc2stats = {}
+
+    for proc in stats.PROCTYPE.unique():
+        # Get columns with values for this proctype, no blanks
+        df = stats[stats.PROCTYPE == proc]
+        df = df.replace(r'^\s*$', np.nan, regex=True)
+        df = df.dropna(axis=1, how='all')
+        proc2stats[proc] = [x for x in list(df.columns) if x not in STAT_COLUMNS]
+
+    return proc2stats
+
+
+
 def export_html(
     g,
     filename,
@@ -527,7 +553,7 @@ def export_html(
 
     # Load data as dataframes
     if os.path.exists(duck_file):
-        print(f'loading duckfile:{duck_file}')
+        logger.info(f'loading duckfile:{duck_file}')
         data = _duck_data(duck_file)
     else:
         data = _load_data(
@@ -537,15 +563,16 @@ def export_html(
             sesstypes=sesstypes,
             sessions=sessions
         )
-        print(f'saving duckdb:{duck_file}')
+        logger.info(f'saving duckdb:{duck_file}')
         _save_data(data, duck_file)
 
-    data['timestamp'] = datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
+    data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
+
+    data['proc2stats'] = _map_proc2stats(data['stats'])
 
     # Get html from ag grid data
     html_text = _to_html(data)
 
     # Write html to file
-    print(f'saving html:{filename}:{projects=}')
-    logger.debug(f'saving to file:{filename}')
+    logger.info(f'saving html:{filename}:{projects=}')
     _write_html(html_text, filename)

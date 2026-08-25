@@ -30,7 +30,7 @@ if (true || grid_instances["qa"].api) {
     select_qa_sesstypes.clear();
   });
 
-  // When proctypes changes, filter rows in grid
+  // When projects changes, filter rows in grid
   select_qa_projects.on("change", function(values) {
 
     // Clear it
@@ -40,10 +40,7 @@ if (true || grid_instances["qa"].api) {
     selected_qa_projects.push(...values);
 
     // Trigger grid updates
-    refreshGrid(gridApi_qa, "qa");
-
-    // set options in measures and xvariable
-    
+    refreshGrid(gridApi_qa, "qa");    
   });
 
   // When sesstype changes, filter rows in grid
@@ -94,6 +91,19 @@ if (true || grid_instances["stats"].api) {
 
   });
 
+  // When stats projects changes, filter rows in grid
+  select_stats_projects.on("change", function(values) {
+
+    // Clear it
+    selected_stats_projects.length = 0;
+
+    // Set values
+    selected_stats_projects.push(...values);
+
+    // Trigger grid updates
+    refreshGrid(gridApi_stats, "stats");
+  });
+
 
   // When stats proctypes changes, filter rows in grid
   select_stats_proctypes.on("change", function(values) {
@@ -107,25 +117,31 @@ if (true || grid_instances["stats"].api) {
     // Trigger grid updates
     refreshGrid(gridApi_stats, "stats");
 
-
     hideBlankColumns(gridApi_stats);
 
-
+    // set options in measures and xvariable
+    updateStatsMeasuresOptions();
   });
 
-
-  // When stats proctypes changes, filter rows in grid
-  select_stats_projects.on("change", function(values) {
+  // When selected stats measures changes, update columns and change xvariable options
+  select_stats_measures.on("change", function(values) {
 
     // Clear it
-    selected_stats_projects.length = 0;
+    selected_stats_measures.length = 0;
 
     // Set values
-    selected_stats_projects.push(...values);
+    selected_stats_measures.push(...values);
 
     // Trigger grid updates
     refreshGrid(gridApi_stats, "stats");
+
+    hideBlankColumns(gridApi_stats);
+
+    // set options in measures and xvariable
+    updateStatsXvariableOptions();
   });
+
+
 
   // When stats sesstype changes, filter rows in grid
   select_stats_sesstypes.on("change", function(values) {
@@ -220,9 +236,13 @@ if (true || grid_instances["processors"].api) {
 // we have to resize first time a tab is active
 // because the grid is initially in a display none
 // We add a listener to the tab toggle bootstrap that checks for resized
+// Also, Listen for qa pivot click and trigger handler function
 document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
   tabEl.addEventListener('shown.bs.tab', (event) => {
     const target_id = event.target.getAttribute('data-bs-target').substring(1);
+    //console.log(target_id);
+
+    // Handle grid switching when main tab changes
     let instance = '';
 
     if (target_id === "panel_analyses") {
@@ -238,6 +258,23 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
     if (instance && instance.api && !instance.resized) {
       instance.api.autoSizeAllColumns();
       instance.resized = true;
+    }
+
+    // Handle pivots
+    if (target_id === "pivot_qa_scans") {
+      qaPivot('scans');
+    } else if (target_id === "pivot_qa_assessors") {
+      qaPivot('assessors');
+    } else if (target_id === "pivot_qa_sessions") {
+      qaPivot('sessions');
+    } else if (target_id === "pivot_qa_subjects") {
+      qaPivot('subjects');
+    } else if (target_id === "pivot_stats_assessors") {      
+      statsPivot('assessors');
+    } else if (target_id === "pivot_stats_sessions") {
+      statsPivot('sessions');
+    } else if (target_id === "pivot_stats_subjects") {
+      statsPivot('subjects');
     }
   });
 });
@@ -259,3 +296,7 @@ document.querySelector("#themetoggle").addEventListener("click", () => {
   const current = document.documentElement.getAttribute("data-bs-theme");
   setTheme(current === "dark" ? "light" : "dark");
 });
+
+// force to clear initial options
+updateStatsMeasuresOptions();
+updateStatsXvariableOptions();

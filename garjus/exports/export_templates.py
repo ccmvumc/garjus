@@ -26,7 +26,7 @@ main_html_template = '''<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>dashboard</title>
+  <title>garjus dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
@@ -50,8 +50,8 @@ main_html_template = '''<!doctype html>
   <div class="container-fluid p-3">
     <ul class="nav nav-tabs">TABBUTTONS</ul>
     <div class="tab-content pt-3">TABPANELS</div>
-    <h3 align="center">dashboard</h3>
-    <h6 align="center">Data Exported TIMESTAMP</h6>
+    <h5 align="center">garjus dashboard</h5>
+    <h6 align="center">Data Exported @ TIMESTAMP</h6>
     <div class="text-center"><button id="themetoggle" class="btn btn-outline-secondary">dark/light</button></div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -66,42 +66,47 @@ main_html_template = '''<!doctype html>
 
 
 grid_js_template = '''
-    const columnDefs_ID = COLUMNS;
+const columnDefs_ID = COLUMNS;
 
-    const rowData_ID =  ROWS;
+const rowData_ID =  ROWS;
 
-    const gridOptions_ID = {
-      columnDefs: columnDefs_ID,
-      rowData: rowData_ID,
-      defaultColDef: {
-        minWidth: 40,
-        sortable: true,
-        resizable: true,
-        flex: 1,
-        filter: false,
-      },
-      autoSizeStrategy: {type: "fitCellContents"},
-      onGridReady: (params) => {
-        grid_instances["ID"].api = params.api;
+const gridOptions_ID = {
+  columnDefs: columnDefs_ID,
+  rowData: rowData_ID,
+  defaultColDef: {
+    minWidth: 40,
+    sortable: true,
+    resizable: true,
+    flex: 1,
+    filter: false,
+  },
+  autoSizeStrategy: {type: "fitCellContents"},
+  onGridReady: (params) => {
+    grid_instances["ID"].api = params.api;
 
-        updateRowCounts(params.api, "ID_rowcount");
+    updateRowCounts(params.api, "ID_rowcount");
 
-        const active_pane = document.querySelector(".tab-pane.active");
-        if (active_pane && active_pane.id === "panel_ID") {
-          params.api.autoSizeAllColumns();
-          grid_instances["ID"].resized = true;
-        }
-      }
-    };
-
-    // Find the div for this grid
-    const gridElement_ID = document.querySelector("#grid_ID");
-
-    const gridApi_ID = agGrid.createGrid(gridElement_ID, gridOptions_ID);
-
-    function onButtonExport_ID() {
-      gridApi_ID.exportDataAsCsv({fileName: "ID.csv"});
+    const active_pane = document.querySelector(".tab-pane.active");
+    if (active_pane && active_pane.id === "panel_ID") {
+      params.api.autoSizeAllColumns();
+      grid_instances["ID"].resized = true;
     }
+  }
+};
+
+// Find the div for this grid
+const gridElement_ID = document.querySelector("#grid_ID");
+
+const gridApi_ID = agGrid.createGrid(gridElement_ID, gridOptions_ID);
+
+function onButtonExport_ID() {
+  gridApi_ID.exportDataAsCsv({fileName: "ID.csv"});
+}
+'''
+
+
+tab_button_active_html_template = '''
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#panel_ID">LABEL</button></li>
 '''
 
 
@@ -115,11 +120,6 @@ tab_panel_html_template = '''
       PANEL
       <div id="grid_ID" class="ag-grid"></div>
     </div>
-'''
-
-
-tab_button_active_html_template = '''
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#panel_ID">LABEL</button></li>
 '''
 
 
@@ -137,19 +137,19 @@ csv_button_html_template = '''
 
 
 dropdown_js_template = '''
-    const select_ID = new TomSelect("#dropdown_ID", {
-      allowEmptyOption: true,
-      maxOptions: null,
-      plugins: {
-        "remove_button": {},
-        "input_autogrow": {},
-        "checkbox_options": {
-          "checkedClassNames": ["ts-checked"],
-          "uncheckedClassNames": ["ts-unchecked"]
-        },
-        "clear_button": {},
-      }
-    });
+const select_ID = new TomSelect("#dropdown_ID", {
+  allowEmptyOption: true,
+  maxOptions: null,
+  plugins: {
+    "remove_button": {},
+    "input_autogrow": {},
+    "checkbox_options": {
+      "checkedClassNames": ["ts-checked"],
+      "uncheckedClassNames": ["ts-unchecked"]
+    },
+    "clear_button": {},
+  }
+});
 '''
 
 
@@ -182,4 +182,9 @@ pivot_button_active_html_template = '''
 
 pivot_button_html_template = '''
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pivot_ID">LABEL</button></li>
+'''
+
+
+datadict_js_template = '''
+const proc2stats = PROC2STATS;
 '''
