@@ -34,7 +34,9 @@ main_html_template = '''<!doctype html>
     (function () {
       var saved = localStorage.getItem("theme");
       var os = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      document.documentElement.setAttribute("data-bs-theme", saved || os);
+      var theme = saved || os;
+      document.documentElement.setAttribute("data-bs-theme", theme);
+      document.documentElement.setAttribute("data-ag-theme-mode", theme+"-blue");
     })();
   </script>
   <style>
@@ -49,7 +51,7 @@ main_html_template = '''<!doctype html>
     <ul class="nav nav-tabs">TABBUTTONS</ul>
     <div class="tab-content pt-3">TABPANELS</div>
     <h3 align="center">dashboard</h3>
-    <h6 align="center">Exported TIMESTAMP</h6>
+    <h6 align="center">Data Exported TIMESTAMP</h6>
     <div class="text-center"><button id="themetoggle" class="btn btn-outline-secondary">dark/light</button></div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -137,6 +139,7 @@ csv_button_html_template = '''
 dropdown_js_template = '''
     const select_ID = new TomSelect("#dropdown_ID", {
       allowEmptyOption: true,
+      maxOptions: null,
       plugins: {
         "remove_button": {},
         "input_autogrow": {},
@@ -164,4 +167,19 @@ dropdown_option_html_template = '''
 
 badge_html_template = '''
     <span id="ID" class="badge bg-secondary fs-5">0 rows</span>
+'''
+
+
+pivot_bar_html_template = '''
+    <ul class="nav nav-pills">PIVOTBUTTONS</ul>
+'''
+
+
+pivot_button_active_html_template = '''
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pivot_ID">LABEL</button></li>
+'''
+
+
+pivot_button_html_template = '''
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pivot_ID">LABEL</button></li>
 '''

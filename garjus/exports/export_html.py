@@ -15,9 +15,27 @@ from .export_templates import tab_button_html_template, tab_panel_html_template
 from .export_templates import tab_button_active_html_template, tab_panel_active_html_template, tab_button_html_template, tab_panel_html_template
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
+from .export_templates import pivot_bar_html_template, pivot_button_html_template, pivot_button_active_html_template
 
 
 logger = logging.getLogger('garjus')
+
+# The default dashboard has tabs for: stats, qa, analyses, processors
+#
+# stats
+# Gives access to tabular outputs from processor pipelines. 
+# User selects one or more projects followed by one or more processing types. The tables loads a row for each assessor with 
+# columns for each stat as well as the project/subject/session/.
+# 
+# qa
+# The qa grid gives access to all scan and assessor information. These can be pivoted by session/subject/project to summarize at that level.
+# Initially, the SESSIONS pivot is loaded which shows a row per session.
+#
+# analyses
+#
+# processors
+# 
+
 
 
 # TODO: markdown links
@@ -322,6 +340,9 @@ def _stats_panel(data):
     # Export button
     panel += _csv_button('stats')
 
+
+    #TODO: drop nan in proctype
+
     # Filters
     _projects = sorted(list(data['assessors'].PROJECT.unique()))
     _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
@@ -335,6 +356,9 @@ def _stats_panel(data):
 
     # Row count badge
     panel += _badge('stats_rowcount')
+
+    # Pivot buttons
+    panel += _stats_pivot_buttons()
 
     return panel
 
@@ -367,7 +391,41 @@ def _qa_panel(data):
     # Row count badge
     panel += _badge('qa_rowcount')
 
+    # Pivot buttons
+    panel += _qa_pivot_buttons()
+
     return panel
+
+
+def _qa_pivot_buttons():
+    buttons = []
+
+    buttons.append(_pivot_button('qa_scans', 'SCANS'))
+    buttons.append(_pivot_button('qa_assessors', 'ASSESSORS'))
+    buttons.append(_pivot_button_active('qa_sessions', 'SESSIONS'))
+    buttons.append(_pivot_button('qa_subjects', 'SUBJECTS'))
+    buttons.append(_pivot_button('qa_projects', 'PROJECTS'))
+
+    return pivot_bar_html_template.replace('PIVOTBUTTONS', ''.join(buttons))
+
+
+def _stats_pivot_buttons():
+    buttons = []
+
+    buttons.append(_pivot_button('stats_assessors', 'ASSESSORS'))
+    buttons.append(_pivot_button_active('stats_sessions', 'SESSIONS'))
+    buttons.append(_pivot_button('stats_subjects', 'SUBJECTS'))
+
+    return pivot_bar_html_template.replace('PIVOTBUTTONS', ''.join(buttons))
+
+
+def _pivot_button(ident, label):
+    return pivot_button_html_template.replace('ID', ident).replace('LABEL', label)
+
+
+def _pivot_button_active(ident, label):
+    return pivot_button_active_html_template.replace('ID', ident).replace('LABEL', label)
+
 
 
 def _csv_button(ident):
@@ -379,7 +437,7 @@ def _processors_panel(data):
 
     panel += _csv_button('processors')
 
-    panel += _dropdown_html('processors_projects', 'Projects', ['CHAMP'])
+    panel += _dropdown_html('processors_projects', 'Projects', data['assessors'].PROJECT.unique())
 
     # Row count badge
     panel += _badge('processors_rowcount')
@@ -393,7 +451,7 @@ def _analyses_panel(data):
     panel += _csv_button('analyses')
 
     # Filters
-    _projects = sorted(list(data['analyses'].PROJECT.unique()))
+    _projects = sorted(list(data['assessors'].PROJECT.unique()))
     _investigators = sorted(list(data['analyses'].INVESTIGATOR.unique()))
     _statuses = sorted(list(data['analyses'].STATUS.unique()))
     panel += _dropdown_html('analyses_projects', 'Projects', _projects)

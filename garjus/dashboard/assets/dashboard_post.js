@@ -15,8 +15,10 @@ if (true || grid_instances["qa"].api) {
     "doesExternalFilterPass",
     params => {
       return (
-        (selected_qa_projects.length === 0 || selected_qa_projects.includes(params.data.PROJECT)) &&
-        (selected_qa_sesstypes.length === 0 || selected_qa_sesstypes.includes(params.data.SESSTYPE)) 
+        (selected_qa_projects.length === 0 || 
+          selected_qa_projects.includes(params.data.PROJECT)) &&
+        (selected_qa_sesstypes.length === 0 || 
+          selected_qa_sesstypes.includes(params.data.SESSTYPE)) 
       );
     }
   );
@@ -39,6 +41,9 @@ if (true || grid_instances["qa"].api) {
 
     // Trigger grid updates
     refreshGrid(gridApi_qa, "qa");
+
+    // set options in measures and xvariable
+    
   });
 
   // When sesstype changes, filter rows in grid
@@ -69,8 +74,9 @@ if (true || grid_instances["stats"].api) {
     params => {
       return (
         (selected_stats_projects.includes(params.data.PROJECT)) &&
-        (selected_stats_proctypes.includes(params.data.PROCTYPE)) && 
-        (selected_stats_sesstypes.length === 0 || selected_stats_sesstypes.includes(params.data.SESSTYPE)) 
+        (selected_stats_proctypes.includes(params.data.PROCTYPE)) &&
+        (selected_stats_sesstypes.length === 0 ||
+          selected_stats_sesstypes.includes(params.data.SESSTYPE))
       );
     }
   );
@@ -152,9 +158,12 @@ if (true || grid_instances["analyses"].api) {
     "doesExternalFilterPass",
     params => {
       return (
-        (selected_analyses_projects.length === 0 || selected_analyses_projects.includes(params.data.PROJECT)) &&
-        (selected_analyses_invest.length === 0 || selected_analyses_invest.includes(params.data.INVESTIGATOR)) && 
-        (selected_analyses_status.length === 0 || selected_analyses_status.includes(params.data.STATUS)) 
+        (selected_analyses_projects.length === 0 ||
+          selected_analyses_projects.includes(params.data.PROJECT)) &&
+        (selected_analyses_invest.length === 0 ||
+          selected_analyses_invest.includes(params.data.INVESTIGATOR)) &&
+        (selected_analyses_status.length === 0 ||
+          selected_analyses_status.includes(params.data.STATUS)) 
       );
     }
   );
@@ -192,7 +201,10 @@ if (true || grid_instances["processors"].api) {
   gridApi_processors.setGridOption(
     "doesExternalFilterPass",
     params => {
-      return selected_processors_projects.length === 0 || selected_processors_projects.includes(params.data.PROJECT);
+      return (
+        selected_processors_projects.length === 0 || 
+        selected_processors_projects.includes(params.data.PROJECT)
+        );
     }
   );
 
