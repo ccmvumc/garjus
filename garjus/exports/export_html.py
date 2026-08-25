@@ -143,6 +143,7 @@ def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
     assessors = g.assessors(projects=projects, sesstypes=sesstypes)
 
     processors = g.processing_protocols()
+    processors = processors[processors.PROJECT.isin(projects)]
 
     analyses = g.analyses(projects=projects, download=False)
 
