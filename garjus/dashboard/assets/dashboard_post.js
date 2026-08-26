@@ -15,8 +15,7 @@ if (true || grid_instances["qa"].api) {
     "doesExternalFilterPass",
     params => {
       return (
-        (selected_qa_projects.length === 0 || 
-          selected_qa_projects.includes(params.data.PROJECT)) &&
+        selected_qa_projects.includes(params.data.PROJECT) &&
         (selected_qa_sesstypes.length === 0 || 
           selected_qa_sesstypes.includes(params.data.SESSTYPE)) 
       );
@@ -32,8 +31,10 @@ if (true || grid_instances["qa"].api) {
     // Set values
     selected_qa_projects.push(...values);
 
+    qaPivot(cur_qa_pivot);
+
     // Trigger grid updates
-    refreshGrid(gridApi_qa, "qa");    
+    refreshGrid(gridApi_qa, "qa");  
   });
 
   // When proctypes changes, update
@@ -46,6 +47,7 @@ if (true || grid_instances["qa"].api) {
     selected_qa_proctypes.push(...values);
 
     // Trigger grid updates
+    qaPivot(cur_qa_pivot);
     refreshGrid(gridApi_qa, "qa");    
   });
 
@@ -59,6 +61,7 @@ if (true || grid_instances["qa"].api) {
     selected_qa_sesstypes.push(...values);
 
     // Trigger grid update
+    qaPivot(cur_qa_pivot);
     refreshGrid(gridApi_qa, "qa");
   });
 }
@@ -246,7 +249,6 @@ if (true || grid_instances["processors"].api) {
 document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
   tabEl.addEventListener('shown.bs.tab', (event) => {
     const target_id = event.target.getAttribute('data-bs-target').substring(1);
-    //console.log(target_id);
 
     // Handle grid switching when main tab changes
     let instance = '';
@@ -275,6 +277,8 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
       qaPivot('sessions');
     } else if (target_id === "pivot_qa_subjects") {
       qaPivot('subjects');
+    } else if (target_id === "pivot_qa_projects") {
+      qaPivot('projects');
     } else if (target_id === "pivot_stats_assessors") {      
       statsPivot('assessors');
     } else if (target_id === "pivot_stats_sessions") {

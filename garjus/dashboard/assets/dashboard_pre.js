@@ -1,4 +1,5 @@
 let cur_stats_pivot = 'assessors';
+let cur_qa_pivot = 'sessions';
 const selected_stats_projects = [];
 const selected_stats_proctypes = [];
 const selected_stats_sesstypes = [];
@@ -10,6 +11,8 @@ const selected_analyses_status = [];
 const selected_processors_projects = [];
 const selected_qa_projects = [];
 const selected_qa_sesstypes = [];
+const selected_qa_proctypes = [];
+const selected_qa_scantypes = [];
 const grid_instances = {
   'stats': {api: null, resized: false},
   'analyses': {api: null, resized: false},
@@ -106,45 +109,177 @@ function updateStatsXvariableOptions() {
 
 
 function qaPivot(pivot_type){
-  const all_rows = [];
-  const filtered_rows = [];
+  const rows = [];
   const col_defs = [];
-  const row_data = [];
   const row_map = new Map();
+  const proj_cols = ['PROJECT']
+  const subj_cols = ['SUBJECT', 'PROJECT'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE', 'NOTE'];
+  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'PROCTYPE', 'DATE', 'JOBDATE'];
+  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'DATE'];
 
-  gridApi_qa.forEachNode(node => {
-    all_rows.push(node.data);
-  });
-
-  gridApi_qa.forEachNodeAfterFilter(node => {
-    filtered_rows.push(node.data);
+  rowData_QA.forEach(row => {
+    if (selected_qa_projects.includes(row.PROJECT)) {
+      rows.push(row);
+    }
   });
 
   if (pivot_type === 'scans') {
+    cur_qa_pivot = 'scans';
+
+    // Get rows
+    rows.forEach(row => {
+      if (row.SCANID) {
+        let scankey;
+        scankey = [row.PROJECT, row.SUBJECT, row.SESSION, row.SCANID].join("|");
+
+        if (!row_map.has(scankey)) {
+          row_map.set(scankey, {
+            PROJECT: row.PROJECT,
+            SUBJECT: row.SUBJECT,
+            SESSION: row.SESSION,
+            SESSTYPE: row.SESSTYPE,
+            SCANID: row.SCANID,
+            SCANTYPE: row.SCANTYPE,
+            DATE: row.DATE,
+            NOTE: row.NOTE,
+          });
+        }
+      }
+    });
+
+    // Get first columns ordered
+    scan_cols.forEach(c => {
+      columnDefs_QA.forEach(column => {
+        if (column['field'] === c) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
+    });
+
   } else if (pivot_type === 'assessors') {
+    cur_qa_pivot = 'assessors';
+
+    // Get rows
+    rows.forEach(row => {
+      if (row.ASSR) {
+        let assrkey;
+        assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
+
+        if (!row_map.has(assrkey)) {
+          row_map.set(assrkey, {
+            PROJECT: row.PROJECT,
+            SUBJECT: row.SUBJECT,
+            SESSION: row.SESSION,
+            ASSR: row.ASSR,
+            PROCTYPE: row.PROCTYPE,
+            SESSTYPE: row.SESSTYPE,
+            DATE: row.DATE,
+            JOBDATE: row.JOBDATE,
+            NOTE: row.NOTE,
+          });
+        }
+      }
+    });
+
+    // Get first columns ordered
+    assr_cols.forEach(c => {
+      columnDefs_QA.forEach(column => {
+        if (column['field'] === c) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
+    });
   } else if (pivot_type === 'sessions') {
-    // Show all sessions after applying project and session type filter
-    // Apply other filters before creating new columns. how?
-    filtered_rows.forEach(row => {
+    cur_qa_pivot = 'sessions';
+
+    // Get rows
+    rows.forEach(row => {
       let sesskey;
       sesskey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
+
+      if (!row_map.has(sesskey)) {
+        row_map.set(sesskey, {
+          PROJECT: row.PROJECT,
+          SUBJECT: row.SUBJECT,
+          SESSION: row.SESSION,
+          SESSTYPE: row.SESSTYPE,
+          DATE: row.DATE,
+          NOTE: row.NOTE,
+        });
+      }
+    });
+
+    // Get first columns ordered
+    sess_cols.forEach(c => {
+      columnDefs_QA.forEach(column => {
+        if (column['field'] === c) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
     });
   } else if (pivot_type === 'subjects') {
-    filtered_rows.forEach(row => {
+    cur_qa_pivot = 'subjects';
+
+    rows.forEach(row => {
       let subjkey;
-      subjkey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
+      subjkey = [row.PROJECT, row.SUBJECT].join("|");
+
+      if (!row_map.has(subjkey)) {
+        row_map.set(subjkey, {
+          PROJECT: row.PROJECT,
+          SUBJECT: row.SUBJECT,
+        });
+      }
     });
+
+    // Get first columns ordered
+    subj_cols.forEach(c => {
+      columnDefs_QA.forEach(column => {
+        if (column['field'] === c) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
+    });
+
   } else if (pivot_type === 'projects') {
+    cur_qa_pivot = 'projects';
+
+    rows.forEach(row => {
+      let projkey;
+      projkey = row.PROJECT
+
+      if (!row_map.has(projkey)) {
+        row_map.set(projkey, {
+          PROJECT: row.PROJECT,
+        });
+      }
+    });
+
+    // Get first columns ordered
+    proj_cols.forEach(c => {
+      columnDefs_QA.forEach(column => {
+        if (column['field'] === c) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
+    });
   }
 
   // Apply new data to grid
-  gridApi_qa.setGridOption('rowData', row_data);
+  gridApi_qa.setGridOption('rowData', Array.from(row_map.values()));
   gridApi_qa.setGridOption('columnDefs', col_defs);
+  refreshGrid(gridApi_qa, 'qa');
 }
 
 
 function statsPivot(pivot_type){
-  const filtered_rows = [];
+  const rows = [];
   const col_defs = [];
   const row_map = new Map();
   const subj_cols = ['SUBJECT', 'PROJECT'];
@@ -153,7 +288,7 @@ function statsPivot(pivot_type){
 
   rowData_STATS.forEach(row => {
     if (selected_stats_proctypes.includes(row.PROCTYPE)) {
-      filtered_rows.push(row);
+      rows.push(row);
     }
   });
 
@@ -161,7 +296,7 @@ function statsPivot(pivot_type){
     cur_stats_pivot = 'assessors';
 
     // Get rows
-    filtered_rows.forEach(row => {
+    rows.forEach(row => {
       let assrkey;
       assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
 
@@ -214,7 +349,7 @@ function statsPivot(pivot_type){
     // Show all sessions after applying project and session type filter
     // Apply other filters before creating new columns. how?
     cur_stats_pivot = 'sessions';
-    filtered_rows.forEach(row => {
+    rows.forEach(row => {
       let sesskey;
       sesskey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
 
@@ -259,7 +394,7 @@ function statsPivot(pivot_type){
     });
   } else if (pivot_type === 'subjects') {
     cur_stats_pivot = 'subjects';
-    filtered_rows.forEach(row => {
+    rows.forEach(row => {
       let subjkey = [row.PROJECT, row.SUBJECT].join("|");
 
       if (!row_map.has(subjkey)) {
@@ -304,8 +439,7 @@ function statsPivot(pivot_type){
   }
 
   // Apply new data to grid
-  const row_data = Array.from(row_map.values());
-  gridApi_stats.setGridOption('rowData', row_data);
+  gridApi_stats.setGridOption('rowData', Array.from(row_map.values()));
   gridApi_stats.setGridOption('columnDefs', col_defs);
 
   refreshGrid(gridApi_stats, 'stats');
