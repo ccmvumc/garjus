@@ -23,13 +23,6 @@ if (true || grid_instances["qa"].api) {
     }
   );
 
-
-  // When stats projects changes, clear other dropdowns
-  select_qa_projects.on('change', function(values) {
-    // Clear other dropdowns
-    select_qa_sesstypes.clear();
-  });
-
   // When projects changes, filter rows in grid
   select_qa_projects.on("change", function(values) {
 
@@ -38,6 +31,19 @@ if (true || grid_instances["qa"].api) {
 
     // Set values
     selected_qa_projects.push(...values);
+
+    // Trigger grid updates
+    refreshGrid(gridApi_qa, "qa");    
+  });
+
+  // When proctypes changes, update
+  select_qa_proctypes.on("change", function(values) {
+
+    // Clear it
+    selected_qa_proctypes.length = 0;
+
+    // Set values
+    selected_qa_proctypes.push(...values);
 
     // Trigger grid updates
     refreshGrid(gridApi_qa, "qa");    
@@ -71,7 +77,6 @@ if (true || grid_instances["stats"].api) {
     params => {
       return (
         (selected_stats_projects.includes(params.data.PROJECT)) &&
-        (selected_stats_proctypes.includes(params.data.PROCTYPE)) &&
         (selected_stats_sesstypes.length === 0 ||
           selected_stats_sesstypes.includes(params.data.SESSTYPE))
       );
@@ -104,8 +109,7 @@ if (true || grid_instances["stats"].api) {
     refreshGrid(gridApi_stats, "stats");
   });
 
-
-  // When stats proctypes changes, filter rows in grid
+  // When stats proctypes changes,
   select_stats_proctypes.on("change", function(values) {
 
     // Clear it
@@ -114,13 +118,15 @@ if (true || grid_instances["stats"].api) {
     // Set values
     selected_stats_proctypes.push(...values);
 
-    // Trigger grid updates
-    refreshGrid(gridApi_stats, "stats");
-
-    hideBlankColumns(gridApi_stats);
-
     // set options in measures and xvariable
     updateStatsMeasuresOptions();
+
+    statsPivot(cur_stats_pivot);
+
+    // Trigger grid updates
+    hideBlankColumns(gridApi_stats);
+    refreshGrid(gridApi_stats, "stats");
+
   });
 
   // When selected stats measures changes, update columns and change xvariable options
@@ -133,15 +139,15 @@ if (true || grid_instances["stats"].api) {
     selected_stats_measures.push(...values);
 
     // Trigger grid updates
-    refreshGrid(gridApi_stats, "stats");
+    //refreshGrid(gridApi_stats, "stats");
+
+    statsPivot(cur_stats_pivot);
 
     hideBlankColumns(gridApi_stats);
 
     // set options in measures and xvariable
     updateStatsXvariableOptions();
   });
-
-
 
   // When stats sesstype changes, filter rows in grid
   select_stats_sesstypes.on("change", function(values) {

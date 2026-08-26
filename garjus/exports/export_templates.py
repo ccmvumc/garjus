@@ -185,6 +185,18 @@ pivot_button_html_template = '''
 '''
 
 
-datadict_js_template = '''
+qa_data_js_template = '''
+const columnDefs_QA = COLUMNS;
+const rowData_QA = ROWS;
+'''
+
+
+stats_data_js_template = '''
+const columnDefs_STATS = COLUMNS;
+const rowData_STATS = ROWS;
+'''
+
+
+data_dict_js_template = '''
 const proc2stats = PROC2STATS;
 '''

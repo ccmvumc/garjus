@@ -1,3 +1,4 @@
+let cur_stats_pivot = 'assessors';
 const selected_stats_projects = [];
 const selected_stats_proctypes = [];
 const selected_stats_sesstypes = [];
@@ -105,26 +106,207 @@ function updateStatsXvariableOptions() {
 
 
 function qaPivot(pivot_type){
+  const all_rows = [];
+  const filtered_rows = [];
+  const col_defs = [];
+  const row_data = [];
+  const row_map = new Map();
+
+  gridApi_qa.forEachNode(node => {
+    all_rows.push(node.data);
+  });
+
+  gridApi_qa.forEachNodeAfterFilter(node => {
+    filtered_rows.push(node.data);
+  });
+
   if (pivot_type === 'scans') {
-    console.log('qa pivot to scans')    
   } else if (pivot_type === 'assessors') {
-    console.log('qa pivot to assessors')
   } else if (pivot_type === 'sessions') {
-    console.log('qa pivot to sessions')
+    // Show all sessions after applying project and session type filter
+    // Apply other filters before creating new columns. how?
+    filtered_rows.forEach(row => {
+      let sesskey;
+      sesskey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
+    });
   } else if (pivot_type === 'subjects') {
-    console.log('qa pivot to subjects')
+    filtered_rows.forEach(row => {
+      let subjkey;
+      subjkey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
+    });
   } else if (pivot_type === 'projects') {
-    console.log('qa pivot to projects')
   }
+
+  // Apply new data to grid
+  gridApi_qa.setGridOption('rowData', row_data);
+  gridApi_qa.setGridOption('columnDefs', col_defs);
 }
 
 
 function statsPivot(pivot_type){
+  const filtered_rows = [];
+  const col_defs = [];
+  const row_map = new Map();
+  const subj_cols = ['SUBJECT', 'PROJECT'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE'];
+  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'PROCTYPE', 'DATE', 'JOBDATE'];
+
+  rowData_STATS.forEach(row => {
+    if (selected_stats_proctypes.includes(row.PROCTYPE)) {
+      filtered_rows.push(row);
+    }
+  });
+
   if (pivot_type === 'assessors') {
-    console.log('stats pivot to assessors')
+    cur_stats_pivot = 'assessors';
+
+    // Get rows
+    filtered_rows.forEach(row => {
+      let assrkey;
+      assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
+
+      if (!row_map.has(assrkey)) {
+        row_map.set(assrkey, {
+          PROJECT: row.PROJECT,
+          SUBJECT: row.SUBJECT,
+          SESSION: row.SESSION,
+          ASSR: row.ASSR,
+          PROCTYPE: row.PROCTYPE,
+          SESSTYPE: row.SESSTYPE,
+          DATE: row.DATE,
+          //JOBDATE: row.JOBDATE,
+        });
+ 
+        // Get proctype stats for row
+        assr = row_map.get(assrkey);
+        proc2stats[row.PROCTYPE].forEach(stat => {
+          if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+            assr[stat] = row[stat];
+          }
+        });
+      }
+    });
+
+    // Get first columns ordered
+    assr_cols.forEach(assr => {
+      columnDefs_STATS.forEach(column => {
+        if (column['field'] === assr) {
+          column['hide'] = false;
+          col_defs.push(column);
+        }
+      });
+    });
+
+    // Get proctype columns
+    selected_stats_proctypes.forEach(proctype => {
+      proc2stats[proctype].forEach(stat => {
+        if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+          columnDefs_STATS.forEach(column => {
+            if (column['field'] === stat) {
+              column['hide'] = false;
+              col_defs.push(column);
+            }
+          });
+        }
+      });
+    });
   } else if (pivot_type === 'sessions') {
-    console.log('stats pivot to sessions')
+    // Show all sessions after applying project and session type filter
+    // Apply other filters before creating new columns. how?
+    cur_stats_pivot = 'sessions';
+    filtered_rows.forEach(row => {
+      let sesskey;
+      sesskey = [row.PROJECT, row.SUBJECT, row.SESSION].join("|");
+
+      if (!row_map.has(sesskey)) {
+        row_map.set(sesskey, {
+          PROJECT: row.PROJECT,
+          SUBJECT: row.SUBJECT,
+          SESSION: row.SESSION,
+          SESSTYPE: row.SESSTYPE,
+          DATE: row.DATE,
+        }); 
+      }
+
+      // Get proctype stats for row
+      sess = row_map.get(sesskey);
+      selected_stats_proctypes.forEach(proctype => {
+        proc2stats[row.PROCTYPE].forEach(stat => {
+          sess[stat] = row[stat];
+        });
+      });
+    });
+
+    columnDefs_STATS.forEach(column => {
+      if (sess_cols.includes(column['field'])) {
+        column['hide'] = false;
+        col_defs.push(column);
+      }
+    });
+
+    // Get proctype columns
+    selected_stats_proctypes.forEach(proctype => {
+      proc2stats[proctype].forEach(stat => {
+        if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+          columnDefs_STATS.forEach(column => {
+            if (column['field'] === stat) {
+              column['hide'] = false;
+              col_defs.push(column);
+            }
+          });
+        }
+      });
+    });
   } else if (pivot_type === 'subjects') {
-    console.log('stats pivot to subjects')
+    cur_stats_pivot = 'subjects';
+    filtered_rows.forEach(row => {
+      let subjkey = [row.PROJECT, row.SUBJECT].join("|");
+
+      if (!row_map.has(subjkey)) {
+        // Initialize row for subject
+        row_map.set(subjkey, {
+          PROJECT: row.PROJECT,
+          SUBJECT: row.SUBJECT
+        });
+      }
+
+      // Get proctype stats for row
+      subj = row_map.get(subjkey);
+      selected_stats_proctypes.forEach(proctype => {
+        proc2stats[row.PROCTYPE].forEach(stat => {
+          subj[stat] = row[stat];
+        });
+      });
+    });
+
+    // TODO: prepend session type to DATE?
+    columnDefs_STATS.forEach(column => {
+      if (subj_cols.includes(column['field'])) {
+        column['hide'] = false;
+        col_defs.push(column);
+      }
+    });
+
+    // Get proctype columns
+    // TODO: prepend session type to field and header name
+    selected_stats_proctypes.forEach(proctype => {
+      proc2stats[proctype].forEach(stat => {
+        if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+          columnDefs_STATS.forEach(column => {
+            if (column['field'] === stat) {
+              column['hide'] = false;
+              col_defs.push(column);
+            }
+          });
+        }
+      });
+    });
   }
+
+  // Apply new data to grid
+  const row_data = Array.from(row_map.values());
+  gridApi_stats.setGridOption('rowData', row_data);
+  gridApi_stats.setGridOption('columnDefs', col_defs);
+
+  refreshGrid(gridApi_stats, 'stats');
 }

@@ -50,14 +50,14 @@ from .export_templates import tab_button_active_html_template, tab_panel_active_
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
 from .export_templates import pivot_bar_html_template, pivot_button_html_template, pivot_button_active_html_template
-from .export_templates import datadict_js_template
+from .export_templates import stats_data_js_template, qa_data_js_template, data_dict_js_template
 
 
 logger = logging.getLogger('garjus')
 
 
 # Names of tables saved to .duckdb database file
-TABLES = ['assessors', 'scans', 'sessions', 'analyses', 'processors', 'stats']
+TABLES = ['assessors', 'scans', 'analyses', 'processors', 'stats']
 
 SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
@@ -154,8 +154,6 @@ def _load_data(g, projects, proctypes=None, sesstypes=None, sessions=None):
     data['assessors'] = assessors
     data['processors'] = processors
     data['analyses'] = analyses
-
-    data['sessions'] = pd.concat([data['scans'], data['assessors']])
 
     return data
 
@@ -259,11 +257,34 @@ def _records(df):
     return df.to_dict('records')
 
 
-def _get_datadict(data):
+def _get_data_dict(data):
     proc2stats = data['proc2stats']
-    datadict = datadict_js_template.replace('PROC2STATS', json.dumps(proc2stats, default=str))
+    data_dict = data_dict_js_template.replace('PROC2STATS', json.dumps(proc2stats, default=str))
+    return data_dict
 
-    return datadict
+
+def _get_qa_data(data):
+    row_data = _records(data['qa'])
+    col_defs = _coldefs(data['qa'])
+    col_defs = _hide_columns(col_defs, SESS_COLUMNS)
+
+    qa_data = qa_data_js_template
+    qa_data = qa_data.replace('ROWS', json.dumps(row_data, default=str))
+    qa_data = qa_data.replace('COLUMNS', json.dumps(col_defs, default=str))
+
+    return qa_data
+
+
+def _get_stats_data(data):
+    row_data = _records(data['stats'])
+    col_defs = _coldefs(data['stats'])
+    #col_defs = _hide_columns(col_defs, ASSR_COLUMNS)
+
+    stats_data = stats_data_js_template
+    stats_data = stats_data.replace('ROWS', json.dumps(row_data, default=str))
+    stats_data = stats_data.replace('COLUMNS', json.dumps(col_defs, default=str))
+
+    return stats_data
 
 
 def _get_grids(data):
@@ -271,14 +292,15 @@ def _get_grids(data):
 
     # QA
     _label = 'qa'
-    _data = _records(data['sessions'])
-    _defs = _coldefs(data['sessions'])
+    _data = _records(data['qa'])
+    _defs = _coldefs(data['qa'])
     _defs = _hide_columns(_defs, SESS_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     # Stats
     _label = 'stats'
-    _data = _records(data['stats'])
+    #_data = _records(data['stats'])
+    _data = []
     _defs = _coldefs(data['stats'])
     _defs = _hide_columns(_defs, STAT_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
@@ -308,8 +330,8 @@ def _get_buttons(data):
 
     # Stats dropdowns
     buttons.append(_dropdown_js('stats_projects'))
-    buttons.append(_dropdown_js('stats_proctypes'))
     buttons.append(_dropdown_js('stats_sesstypes'))
+    buttons.append(_dropdown_js('stats_proctypes'))
     buttons.append(_dropdown_js('stats_measures'))
     buttons.append(_dropdown_js('stats_xvariable'))
 
@@ -360,8 +382,8 @@ def _stats_panel(data):
     _sesstypes = sorted(list(data['assessors'].SESSTYPE.unique()))
     _measures = data['stats'].columns
     panel += _dropdown_html('stats_projects', 'Projects', _projects)
-    panel += _dropdown_html('stats_proctypes', 'Processing Types', _proctypes)
     panel += _dropdown_html('stats_sesstypes', 'Session Types', _sesstypes )
+    panel += _dropdown_html('stats_proctypes', 'Processing Types', _proctypes)
     panel += _dropdown_html('stats_measures', 'Measures', _measures)
     panel += _dropdown_html('stats_xvariable', 'x-variable', _measures)
 
@@ -422,8 +444,8 @@ def _qa_pivot_buttons():
 def _stats_pivot_buttons():
     buttons = []
 
-    buttons.append(_pivot_button('stats_assessors', 'ASSESSORS'))
-    buttons.append(_pivot_button_active('stats_sessions', 'SESSIONS'))
+    buttons.append(_pivot_button_active('stats_assessors', 'ASSESSORS'))
+    buttons.append(_pivot_button('stats_sessions', 'SESSIONS'))
     buttons.append(_pivot_button('stats_subjects', 'SUBJECTS'))
 
     return pivot_bar_html_template.replace('PIVOTBUTTONS', ''.join(buttons))
@@ -488,19 +510,23 @@ def _to_html(data):
 
     tab_buttons, tab_panels = _get_tabs(tabs)
 
-    datadict = _get_datadict(data)
+    qa_data = _get_qa_data(data)
 
-    grids = _get_grids(data)
+    stats_data = _get_stats_data(data)
 
-    buttons = _get_buttons(data)
+    data_dict = _get_data_dict(data)
+
+    grids = ''.join(_get_grids(data))
+
+    buttons = ''.join(_get_buttons(data))
 
     # Insert tabs pieces into webpage
     html_text = main_html_template
     html_text = html_text.replace('TIMESTAMP', data['timestamp'])
     html_text = html_text.replace('TABBUTTONS', ''.join(tab_buttons))
     html_text = html_text.replace('TABPANELS', ''.join(tab_panels))
-    html_text = html_text.replace('BUTTONJS', ''.join(buttons))
-    html_text = html_text.replace('GRIDJS', ''.join(grids) + datadict)
+    html_text = html_text.replace('BUTTONJS', buttons)
+    html_text = html_text.replace('GRIDJS', qa_data + stats_data + data_dict + grids)
 
     return html_text
 
@@ -569,6 +595,11 @@ def export_html(
 
     data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
 
+    data['qa'] = pd.concat([data['scans'], data['assessors']])
+
+    data['stats'] = data['stats'].replace('', np.nan).dropna(subset=['SESSTYPE'])
+
+    # Add processing type to list stats mapping
     data['proc2stats'] = _map_proc2stats(data['stats'])
 
     # Get html from ag grid data
