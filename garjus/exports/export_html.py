@@ -254,7 +254,9 @@ def _coldefs(df):
 
 
 def _records(df):
-    return df.to_dict('records')
+    records = df.to_dict('records')
+    records = [{k:v for k,v in r.items() if v} for r in records]
+    return records
 
 
 def _get_data_dict(data):
@@ -290,16 +292,15 @@ def _get_stats_data(data):
 def _get_grids(data):
     grids = []
 
-    # QA
+    # QA initialize with no data loaded
     _label = 'qa'
-    _data = _records(data['qa'])
+    _data = []
     _defs = _coldefs(data['qa'])
     _defs = _hide_columns(_defs, SESS_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
-    # Stats
+    # Stats initialize with no data loaded
     _label = 'stats'
-    #_data = _records(data['stats'])
     _data = []
     _defs = _coldefs(data['stats'])
     _defs = _hide_columns(_defs, STAT_COLUMNS)
@@ -416,9 +417,9 @@ def _qa_panel(data):
     _scantypes = sorted(list(data['scans'].SCANTYPE.unique()))
     _sesstypes = sorted(list(data['scans'].SESSTYPE.unique()))
     panel += _dropdown_html('qa_projects', 'Projects', _projects)
-    panel += _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
-    panel += _dropdown_html('qa_scantypes', 'Scan Types', _scantypes)
     panel += _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes)
+    panel += _dropdown_html('qa_scantypes', 'Scan Types', _scantypes)
+    panel += _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
 
     # Row count badge
     panel += _badge('qa_rowcount')
@@ -567,7 +568,6 @@ def _map_proc2stats(stats):
     return proc2stats
 
 
-
 def export_html(
     g,
     filename,
@@ -583,6 +583,7 @@ def export_html(
         logger.info(f'loading duckfile:{duck_file}')
         data = _duck_data(duck_file)
     else:
+        logger.info(f'exporting data')
         data = _load_data(
             g,
             projects,
@@ -598,6 +599,12 @@ def export_html(
     data['qa'] = pd.concat([data['scans'], data['assessors']])
 
     data['stats'] = data['stats'].replace('', np.nan).dropna(subset=['SESSTYPE'])
+
+    data['stats'] = data['stats'].replace(r'^\s*$', np.nan, regex=True).replace(np.nan, '')
+
+    data['qa'].DATE = pd.to_datetime(data['qa'].DATE).dt.date
+
+    data['stats'].DATE = pd.to_datetime(data['stats'].DATE).dt.date
 
     # Add processing type to list stats mapping
     data['proc2stats'] = _map_proc2stats(data['stats'])
