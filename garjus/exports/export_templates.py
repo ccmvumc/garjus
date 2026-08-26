@@ -140,13 +140,15 @@ dropdown_js_template = '''
 const select_ID = new TomSelect("#dropdown_ID", {
   allowEmptyOption: true,
   maxOptions: null,
+  closeAfterSelect: true,
+  //hideSelected: true,
   plugins: {
     "remove_button": {},
     "input_autogrow": {},
-    "checkbox_options": {
-      "checkedClassNames": ["ts-checked"],
-      "uncheckedClassNames": ["ts-unchecked"]
-    },
+    //"checkbox_options": {
+    //  "checkedClassNames": ["ts-checked"],
+    //  "uncheckedClassNames": ["ts-unchecked"]
+    //},
     "clear_button": {},
   }
 });
