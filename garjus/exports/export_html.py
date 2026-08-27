@@ -575,11 +575,8 @@ def export_html(
 ):
     duck_file = f'{filename}.duckdb'
 
-    # Load data as dataframes
-    if os.path.exists(duck_file):
-        logger.info(f'loading duckfile:{duck_file}')
-        data = _duck_data(duck_file)
-    else:
+    # Load data from primary sources
+    if not os.path.exists(duck_file):
         logger.info(f'exporting data')
         data = _load_data(
             g,
@@ -590,6 +587,9 @@ def export_html(
         )
         logger.info(f'saving duckdb:{duck_file}')
         _save_data(data, duck_file)
+
+    logger.info(f'loading duckfile:{duck_file}')
+    data = _duck_data(duck_file)
 
     data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
 
@@ -602,6 +602,8 @@ def export_html(
     data['qa'].DATE = pd.to_datetime(data['qa'].DATE).dt.date
 
     data['stats'].DATE = pd.to_datetime(data['stats'].DATE).dt.date
+
+    data['qa'].SITE = data['qa'].SITE.replace({'PITT': 'UPMC'})
 
     # Add processing type to list stats mapping
     data['proc2stats'] = _map_proc2stats(data['stats'])
