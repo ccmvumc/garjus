@@ -129,7 +129,7 @@ function qaPivot(pivot_type){
 
     // Get rows
     rows.forEach(row => {
-      if (row.SCANID) {
+      if (row.SCANID && (selected_qa_scantypes.length === 0 || selected_qa_scantypes.includes(row.SCANTYPE))) {
         let scankey;
         scankey = [row.PROJECT, row.SUBJECT, row.SESSION, row.SCANID].join("|");
 
@@ -163,7 +163,7 @@ function qaPivot(pivot_type){
 
     // Get rows
     rows.forEach(row => {
-      if (row.ASSR) {
+      if (row.ASSR && (selected_qa_proctypes.length === 0 || selected_qa_proctypes.includes(row.PROCTYPE))) {
         let assrkey;
         assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
 
@@ -414,7 +414,10 @@ function statsPivot(pivot_type){
       });
     });
 
+
     // TODO: prepend session type to DATE?
+
+
     columnDefs_STATS.forEach(column => {
       if (subj_cols.includes(column['field'])) {
         column['hide'] = false;

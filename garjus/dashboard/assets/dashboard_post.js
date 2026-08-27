@@ -64,6 +64,20 @@ if (true || grid_instances["qa"].api) {
     qaPivot(cur_qa_pivot);
     refreshGrid(gridApi_qa, "qa");
   });
+
+  // When scantypes changes, update
+  select_qa_scantypes.on("change", function(values) {
+
+    // Clear it
+    selected_qa_scantypes.length = 0;
+
+    // Set values
+    selected_qa_scantypes.push(...values);
+
+    // Trigger grid update
+    qaPivot(cur_qa_pivot);
+    refreshGrid(gridApi_qa, "qa");
+  });
 }
 
 
