@@ -114,9 +114,9 @@ function qaPivot(pivot_type){
   const row_map = new Map();
   const proj_cols = ['PROJECT']
   const subj_cols = ['SUBJECT', 'PROJECT'];
-  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE', 'NOTE'];
-  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'PROCTYPE', 'DATE', 'JOBDATE'];
-  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'DATE'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
+  const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE', 'JOBDATE', 'STATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
   rowData_QA.forEach(row => {
     if (selected_qa_projects.includes(row.PROJECT)) {
@@ -135,14 +135,24 @@ function qaPivot(pivot_type){
 
         if (!row_map.has(scankey)) {
           row_map.set(scankey, {
+            SESSION: row.SESSION,
             PROJECT: row.PROJECT,
             SUBJECT: row.SUBJECT,
-            SESSION: row.SESSION,
             SESSTYPE: row.SESSTYPE,
             SCANID: row.SCANID,
             SCANTYPE: row.SCANTYPE,
             DATE: row.DATE,
             NOTE: row.NOTE,
+            SITE: row.SITE,
+            MODALITY: row.MODALITY,
+            DURATION: row.DURATION,
+            TR: row.TR,
+            THICK: row.THICK,
+            MB: row.MB,
+            FRAMES: row.FRAMES,
+            NIFTI: row.NIFTI,
+            JSON: row.JSON,
+            EDAT: row.EDAT,
           });
         }
       }
@@ -177,7 +187,11 @@ function qaPivot(pivot_type){
             SESSTYPE: row.SESSTYPE,
             DATE: row.DATE,
             JOBDATE: row.JOBDATE,
-            NOTE: row.NOTE,
+            STATUS: row.STATUS,
+            SITE: row.SITE,
+            TIMEUSED: row.TIMEUSED,
+            MEMUSED: row.MEMUSED,
+            JOBNODE: row.JOBNODE,
           });
         }
       }
@@ -205,8 +219,9 @@ function qaPivot(pivot_type){
           PROJECT: row.PROJECT,
           SUBJECT: row.SUBJECT,
           SESSION: row.SESSION,
-          SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
+          SESSTYPE: row.SESSTYPE,
+          SITE: row.SITE,
           NOTE: row.NOTE,
         });
       }
@@ -309,7 +324,7 @@ function statsPivot(pivot_type){
           PROCTYPE: row.PROCTYPE,
           SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
-          //JOBDATE: row.JOBDATE,
+          JOBDATE: row.JOBDATE,
         });
  
         // Get proctype stats for row
