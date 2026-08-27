@@ -118,6 +118,17 @@ function qaPivot(pivot_type){
   const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE', 'JOBDATE', 'STATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
   const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
+  // Row numbering column
+  col_defs.push({
+    headerName: "#",
+    valueGetter: "node.rowIndex + 1",
+    width: 20,
+    sortable: false,
+    filter: false,
+    pinned: "left",
+    suppressMovable: true,
+  });
+
   rowData_QA.forEach(row => {
     if (selected_qa_projects.includes(row.PROJECT)) {
       rows.push(row);
@@ -236,6 +247,12 @@ function qaPivot(pivot_type){
         }
       });
     });
+
+    // Add selected scantype columns
+
+    // Add selected proctpe columns
+
+
   } else if (pivot_type === 'subjects') {
     cur_qa_pivot = 'subjects';
 
