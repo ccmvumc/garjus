@@ -79,6 +79,7 @@ const gridOptions_ID = {
     resizable: true,
     flex: 1,
     filter: false,
+    cellDataType: "text",
   },
   autoSizeStrategy: {type: "fitCellContents"},
   onGridReady: (params) => {
