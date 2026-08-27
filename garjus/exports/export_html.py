@@ -46,10 +46,12 @@ import numpy as np
 from .export_templates import main_html_template, grid_js_template
 from .export_templates import tab_button_active_html_template, tab_panel_active_html_template
 from .export_templates import tab_button_html_template, tab_panel_html_template
-from .export_templates import tab_button_active_html_template, tab_panel_active_html_template, tab_button_html_template, tab_panel_html_template
+from .export_templates import tab_button_active_html_template, tab_panel_active_html_template
+from .export_templates import tab_button_html_template, tab_panel_html_template
 from .export_templates import dropdown_js_template, dropdown_html_template, dropdown_option_html_template
 from .export_templates import csv_button_html_template, badge_html_template
-from .export_templates import pivot_bar_html_template, pivot_button_html_template, pivot_button_active_html_template
+from .export_templates import pivot_bar_html_template, pivot_button_html_template
+from .export_templates import pivot_button_active_html_template
 from .export_templates import stats_data_js_template, qa_data_js_template, data_dict_js_template
 
 
@@ -61,11 +63,7 @@ TABLES = ['assessors', 'scans', 'analyses', 'processors', 'stats']
 
 SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
-SCAN_COLUMNS = ['PROJECT', 'SESSION', 'SCANID', 'SCANTYPE']
-
-SESS_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NOTE']
-
-ASSR_COLUMNS = ['ASSR', 'DATE', 'JOBDATE', 'STATUS']
+QA_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NOTE']
 
 STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
@@ -268,7 +266,7 @@ def _get_data_dict(data):
 def _get_qa_data(data):
     row_data = _records(data['qa'])
     col_defs = _coldefs(data['qa'])
-    col_defs = _hide_columns(col_defs, SESS_COLUMNS)
+    col_defs = _hide_columns(col_defs, QA_COLUMNS)
 
     qa_data = qa_data_js_template
     qa_data = qa_data.replace('ROWS', json.dumps(row_data, default=str))
@@ -280,8 +278,6 @@ def _get_qa_data(data):
 def _get_stats_data(data):
     row_data = _records(data['stats'])
     col_defs = _coldefs(data['stats'])
-    #col_defs = _hide_columns(col_defs, ASSR_COLUMNS)
-
     stats_data = stats_data_js_template
     stats_data = stats_data.replace('ROWS', json.dumps(row_data, default=str))
     stats_data = stats_data.replace('COLUMNS', json.dumps(col_defs, default=str))
@@ -296,7 +292,8 @@ def _get_grids(data):
     _label = 'qa'
     _data = []
     _defs = _coldefs(data['qa'])
-    _defs = _hide_columns(_defs, SESS_COLUMNS)
+    #_defs = _hide_columns(_defs, SESS_COLUMNS)
+    _defs = [];
     grids.append(_grid(_label, _data, _defs))
 
     # Stats initialize with no data loaded
@@ -596,7 +593,7 @@ def export_html(
 
     data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
 
-    data['qa'] = pd.concat([data['scans'], data['assessors']])
+    data['qa'] = pd.concat([data['scans'], data['assessors']]).fillna(np.nan)
 
     data['stats'] = data['stats'].replace('', np.nan).dropna(subset=['SESSTYPE'])
 
