@@ -30,6 +30,7 @@ main_html_template = '''<!doctype html>
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-4.0.0.min.js"></script>
   <script>
     (function () {
       var saved = localStorage.getItem("theme");
@@ -43,6 +44,20 @@ main_html_template = '''<!doctype html>
     .ag-grid {
       height: 400px;
       width: 100%;
+    }
+    .graph-grid {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      overflow-x: auto;
+      gap: 5px;
+    }
+    .graph-container {
+      height: 400px;
+      width: 500px;
+      border: 1px solid #666666;
+      border-radius: 12px;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -157,7 +172,7 @@ const select_ID = new TomSelect("#dropdown_ID", {
 
 
 dropdown_html_template = '''
-    <select id="dropdown_ID" multiple class="w-25 form-select form-select-lg" placeholder="Select LABEL...">
+    <select id="dropdown_ID" multiple class="w-100 form-select form-select-md" placeholder="Select LABEL...">
       OPTIONS
     </select>
 '''
@@ -173,6 +188,12 @@ badge_html_template = '''
 '''
 
 
+graph_html_template = '''
+    <div id="graph_ID" class="graph-grid w-100">ID graph</div>
+'''
+
+
+
 pivot_bar_html_template = '''
     <ul class="nav nav-pills">PIVOTBUTTONS</ul>
 '''
@@ -185,6 +206,18 @@ pivot_button_active_html_template = '''
 
 pivot_button_html_template = '''
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pivot_ID">LABEL</button></li>
+'''
+
+
+filters_row_html_template = '''
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        FILTERS
+      </div>
+      <div class="col-md-9 mb-4">
+        GRAPHS
+      </div>
+    </div>
 '''
 
 

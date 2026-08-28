@@ -53,6 +53,7 @@ from .export_templates import csv_button_html_template, badge_html_template
 from .export_templates import pivot_bar_html_template, pivot_button_html_template
 from .export_templates import pivot_button_active_html_template
 from .export_templates import stats_data_js_template, qa_data_js_template, data_dict_js_template
+from .export_templates import graph_html_template, filters_row_html_template
 
 
 logger = logging.getLogger('garjus')
@@ -189,6 +190,10 @@ def _dropdown_option(label):
 
 def _badge(ident):
     return badge_html_template.replace('ID', ident)
+
+
+def _graph(ident):
+    return graph_html_template.replace('ID', ident)
 
 
 def _get_home_tab():
@@ -367,6 +372,13 @@ def _home_panel(data):
     return panel
 
 
+def _filters_row(filters, graphs):
+    filters_row = filters_row_html_template
+    filters_row = filters_row.replace('FILTERS', filters)
+    filters_row = filters_row.replace('GRAPHS', graphs)
+    return filters_row
+
+
 def _stats_panel(data):
     # Tab buttons for pivot select: Assessors or Sessions or Subjects
     panel = ''
@@ -374,16 +386,19 @@ def _stats_panel(data):
     # Export button
     panel += _csv_button('stats')
 
-    # Filters
+    # Filters and Graph in next row
     _projects = sorted(list(data['assessors'].PROJECT.unique()))
     _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
     _sesstypes = sorted(list(data['assessors'].SESSTYPE.unique()))
     _measures = data['stats'].columns
-    panel += _dropdown_html('stats_projects', 'Projects', _projects)
-    panel += _dropdown_html('stats_sesstypes', 'Session Types', _sesstypes )
-    panel += _dropdown_html('stats_proctypes', 'Processing Types', _proctypes)
-    panel += _dropdown_html('stats_measures', 'Measures', _measures)
-    panel += _dropdown_html('stats_xvariable', 'x-variable', _measures)
+    _dropdowns = ''.join([
+        _dropdown_html('stats_projects', 'Projects', _projects),
+        _dropdown_html('stats_sesstypes', 'Session Types', _sesstypes ),
+        _dropdown_html('stats_proctypes', 'Processing Types', _proctypes),
+        _dropdown_html('stats_measures', 'Measures', _measures),
+        _dropdown_html('stats_xvariable', 'x-variable', _measures)])
+    _graphs = ''.join([_graph('stats')])
+    panel += _filters_row(_dropdowns, _graphs)
 
     # Row count badge
     panel += _badge('stats_rowcount')
@@ -417,6 +432,9 @@ def _qa_panel(data):
     panel += _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes)
     panel += _dropdown_html('qa_scantypes', 'Scan Types', _scantypes)
     panel += _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
+
+    # Graph
+    panel += _graph('qa')
 
     # Row count badge
     panel += _badge('qa_rowcount')

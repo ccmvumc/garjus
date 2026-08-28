@@ -164,6 +164,9 @@ if (true || grid_instances["stats"].api) {
 
     // set options in measures and xvariable
     updateStatsXvariableOptions();
+
+    // update graph
+    updateStatsGraph();
   });
 
   // When stats sesstype changes, filter rows in grid
@@ -311,11 +314,14 @@ const setTheme = (theme) => {
   // Set ag-grid to dark/light
   document.documentElement.setAttribute("data-ag-theme-mode", theme+"-blue");
 
+  // Apply dark/light to plotly theme
+  
+
   // Save for next time
   localStorage.setItem("theme", theme);
 };
 
-
+// handle click on theme toggle button by switching between light and dark
 document.querySelector("#themetoggle").addEventListener("click", () => {
   const current = document.documentElement.getAttribute("data-bs-theme");
   setTheme(current === "dark" ? "light" : "dark");

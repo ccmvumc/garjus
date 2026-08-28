@@ -30,7 +30,7 @@ function updateRowCounts(gridApi, ident) {
 function refreshGrid(gridApi, ident) {
   gridApi.onFilterChanged();
   updateRowCounts(gridApi, ident + "_rowcount");
-  gridApi.autoSizeAllColumns();
+  gridApi.autoSizeAllColumns(false);
 }
 
 
@@ -115,8 +115,10 @@ function qaPivot(pivot_type){
   const proj_cols = ['PROJECT']
   const subj_cols = ['SUBJECT', 'PROJECT'];
   const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
-  const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE', 'JOBDATE', 'STATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
-  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
+  const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
+    'PROCTYPE', 'JOBDATE', 'STATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 
+    'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
   // Row numbering column
   col_defs.push({
@@ -140,7 +142,10 @@ function qaPivot(pivot_type){
 
     // Get rows
     rows.forEach(row => {
-      if (row.SCANID && (selected_qa_scantypes.length === 0 || selected_qa_scantypes.includes(row.SCANTYPE))) {
+      if (
+          row.SCANID && 
+          (selected_qa_scantypes.length === 0 || selected_qa_scantypes.includes(row.SCANTYPE))
+        ) {
         let scankey;
         scankey = [row.PROJECT, row.SUBJECT, row.SESSION, row.SCANID].join("|");
 
@@ -184,7 +189,10 @@ function qaPivot(pivot_type){
 
     // Get rows
     rows.forEach(row => {
-      if (row.ASSR && (selected_qa_proctypes.length === 0 || selected_qa_proctypes.includes(row.PROCTYPE))) {
+      if (
+          row.ASSR && 
+          (selected_qa_proctypes.length === 0 || selected_qa_proctypes.includes(row.PROCTYPE))
+          ) {
         let assrkey;
         assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
 
@@ -316,7 +324,8 @@ function statsPivot(pivot_type){
   const row_map = new Map();
   const subj_cols = ['SUBJECT', 'PROJECT'];
   const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE'];
-  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'PROCTYPE', 'DATE', 'JOBDATE'];
+  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 
+    'PROCTYPE', 'DATE', 'JOBDATE'];
 
   rowData_STATS.forEach(row => {
     if (selected_stats_proctypes.includes(row.PROCTYPE)) {
@@ -414,7 +423,10 @@ function statsPivot(pivot_type){
     // Get proctype columns
     selected_stats_proctypes.forEach(proctype => {
       proc2stats[proctype].forEach(stat => {
-        if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+        if (
+            selected_stats_measures.length === 0 || 
+            selected_stats_measures.includes(stat)
+            ) {
           columnDefs_STATS.forEach(column => {
             if (column['field'] === stat) {
               column['hide'] = false;
@@ -448,8 +460,6 @@ function statsPivot(pivot_type){
 
 
     // TODO: prepend session type to DATE?
-
-
     columnDefs_STATS.forEach(column => {
       if (subj_cols.includes(column['field'])) {
         column['hide'] = false;
@@ -461,7 +471,10 @@ function statsPivot(pivot_type){
     // TODO: prepend session type to field and header name
     selected_stats_proctypes.forEach(proctype => {
       proc2stats[proctype].forEach(stat => {
-        if (selected_stats_measures.length === 0 || selected_stats_measures.includes(stat)) {
+        if (
+            selected_stats_measures.length === 0 || 
+            selected_stats_measures.includes(stat)
+            ) {
           columnDefs_STATS.forEach(column => {
             if (column['field'] === stat) {
               column['hide'] = false;
@@ -478,4 +491,105 @@ function statsPivot(pivot_type){
   gridApi_stats.setGridOption('columnDefs', col_defs);
 
   refreshGrid(gridApi_stats, 'stats');
+}
+
+
+function updateQAGraph() {
+
+}
+
+
+const plotly_dark_template = {
+  layout: {
+    paper_bgcolor: '#212529',
+    plot_bgcolor: '#212529',
+    font: {color: '#dee2e6'},
+    xaxis: {
+      gridcolor: '#495057',
+      zerolinecolor: '#495057',
+    },
+    yaxis: {
+      gridcolor: '#495057',
+      zerolinecolor: '#495057',
+    }
+  }
+};
+
+
+const plotly_darkblue_template = {
+  layout: {
+    paper_bgcolor: '#182230',
+    plot_bgcolor: '#182230',
+    font: {color: '#ffffff'},
+    xaxis: {
+      gridcolor: '#2196f3',
+      zerolinecolor: '#2a3b54',
+    },
+    yaxis: {
+      gridcolor: '#2196f3',
+      zerolinecolor: '#2a3b54',
+    }
+  }
+};
+
+
+function updateStatsGraph() {
+  const graph_ident = 'graph_stats';
+  const wrapper = document.getElementById(graph_ident);
+  const rows = [];
+
+  // clear div with subplots
+  wrapper.replaceChildren();
+
+  // load data to plot
+  rowData_STATS.forEach(row => {
+    if (
+        selected_stats_proctypes.includes(row.PROCTYPE) &&
+        (selected_stats_projects.length === 0 || selected_stats_projects.includes(row.PROJECT)) &&
+        (selected_stats_sesstypes.length === 0 || selected_stats_sesstypes.includes(row.SESSTYPE))
+        ) {
+      // All filters applied, include row
+      rows.push(row);
+    }
+  });
+
+  // TODO: trace for each session type or site or none?
+  selected_stats_measures.forEach((measure, index) => {
+    const plot_id = 'plotly_plot_' + index;
+    const traces = [];
+    const container = document.createElement('div');
+
+    const xdata = rows.map(row => row.SITE); //SESSTYPE, PROJECT, SITE
+    const ydata = rows.map(row => row[measure]);
+    const tdata = rows.map(row => row.SESSION);
+    const layout = {
+      title: {text: measure},
+      responsive: true,
+      autosize: true,
+      margin: {l: 30, r: 50, b: 80, t: 40, pad: 0},
+      //yaxis: {title:{text: measure}},
+      //xaxis: {title:{text: 'PROJECT'}},
+      template: plotly_darkblue_template,
+    };
+
+    // configure plot
+    traces.push({
+      x: xdata,
+      y: ydata,
+      type: 'box',
+      name: measure,
+      title: measure,
+      text: tdata,
+      boxpoints: 'all',
+      boxmean: true,
+    });
+
+    // insert our new div at end of wrapper div
+    container.className = 'graph-container';
+    container.id = plot_id;
+    wrapper.appendChild(container);
+
+    // plot to newly added div
+    Plotly.newPlot(plot_id, traces, layout, {responsive: true});
+  });
 }
