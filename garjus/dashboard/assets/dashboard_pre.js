@@ -128,8 +128,8 @@ function updateQAScanTypeOptions() {
     });
   });
 
-  // Add each option to tomselect
-  scantypes.forEach(scantype => {
+  // Add each option to tomselect, first make sorted list from
+  [...scantypes].sort().forEach(scantype => {
     select_qa_scantypes.addOption({
       value: scantype,
       text: scantype
@@ -229,8 +229,8 @@ function qaPivot(pivot_type){
   const subj_cols = ['SUBJECT', 'PROJECT'];
   const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
   const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
-    'PROCTYPE', 'JOBDATE', 'STATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
-  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 
+    'PROCTYPE', 'JOBDATE', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY',
     'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
   // Row numbering column
@@ -269,6 +269,7 @@ function qaPivot(pivot_type){
             SESSTYPE: row.SESSTYPE,
             SCANID: row.SCANID,
             SCANTYPE: row.SCANTYPE,
+            QUALITY: row.QUALITY,
             DATE: row.DATE,
             NOTE: row.NOTE,
             SITE: row.SITE,
@@ -305,8 +306,7 @@ function qaPivot(pivot_type){
           row.ASSR && 
           (selected_qa_proctypes.length === 0 || selected_qa_proctypes.includes(row.PROCTYPE))
           ) {
-        let assrkey;
-        assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
+        let assrkey = [row.PROJECT, row.SUBJECT, row.SESSION, row.ASSR].join("|");
 
         if (!row_map.has(assrkey)) {
           row_map.set(assrkey, {
@@ -318,11 +318,14 @@ function qaPivot(pivot_type){
             SESSTYPE: row.SESSTYPE,
             DATE: row.DATE,
             JOBDATE: row.JOBDATE,
-            STATUS: row.STATUS,
+            PROCSTATUS: row.PROCSTATUS,
+            QCSTATUS: row.QCSTATUS,
             SITE: row.SITE,
             TIMEUSED: row.TIMEUSED,
             MEMUSED: row.MEMUSED,
             JOBNODE: row.JOBNODE,
+            LOG: row.LOG,
+            PDF: row.PDF,
           });
         }
       }
@@ -356,6 +359,31 @@ function qaPivot(pivot_type){
           NOTE: row.NOTE,
         });
       }
+
+      // Append scantype status
+      sess = row_map.get(sesskey);
+      selected_qa_scantypes.forEach(scantype => {
+        if (row.SCANTYPE === scantype) {
+          if (sess[scantype]) {
+            sess[scantype] += row.QUALITY;
+          } else {
+            sess[scantype] = row.QUALITY;
+          }
+        }
+      });
+
+      // Append proctype status
+      sess = row_map.get(sesskey);
+      selected_qa_proctypes.forEach(proctype => {
+        if (row.PROCTYPE === proctype) {
+          if (sess[proctype]) {
+            sess[proctype] += row.PROCSTATUS;
+          } else {
+            sess[proctype] = row.PROCSTATUS;
+          }
+        }
+      });
+
     });
 
     // Get first columns ordered
@@ -369,9 +397,20 @@ function qaPivot(pivot_type){
     });
 
     // Add selected scantype columns
+    selected_qa_scantypes.forEach(scantype => {
+      col_defs.push({
+        'field': scantype,
+        'headerName': scantype,
+      });
+    });
 
     // Add selected proctpe columns
-
+    selected_qa_proctypes.forEach(proctype => {
+      col_defs.push({
+        'field': proctype,
+        'headerName': proctype,
+      });
+    });
 
   } else if (pivot_type === 'subjects') {
     cur_qa_pivot = 'subjects';

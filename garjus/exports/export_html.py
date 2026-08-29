@@ -64,7 +64,7 @@ TABLES = ['assessors', 'scans', 'analyses', 'processors', 'stats']
 
 SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
-QA_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'DATE', 'SITE', 'NOTE']
+QA_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'STATUS', 'DATE', 'SITE', 'NOTE']
 
 STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
@@ -622,7 +622,7 @@ def _map_proj2scantypes(qa):
     for proj in qa.PROJECT.unique():
         # Get columns with values for this project
         df = qa[qa.PROJECT == proj]
-        proj2scantypes[proj] = sorted(list(df.SCANTYPE.unique()))
+        proj2scantypes[proj] = list(df.SCANTYPE.unique())
 
     return proj2scantypes
 
