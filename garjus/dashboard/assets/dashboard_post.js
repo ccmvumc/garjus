@@ -33,6 +33,15 @@ if (true || grid_instances["qa"].api) {
 
     qaPivot(cur_qa_pivot);
 
+    // Update proctype options based on selected projects
+    updateQAProcTypeOptions();
+
+    // Update sesstype options based on selected projects
+    updateQASessTypeOptions();
+
+    // Update scantype options based on selected projects
+    updateQAScanTypeOptions();
+
     // Trigger grid updates
     refreshGrid(gridApi_qa, "qa");  
   });
@@ -100,19 +109,6 @@ if (true || grid_instances["stats"].api) {
     }
   );
 
-
-  // When stats projects changes, clear other dropdowns
-  select_stats_projects.on('change', function(values) {
-    // Clear other dropdowns
-    select_stats_proctypes.clear();
-    select_stats_sesstypes.clear();
-    select_stats_measures.clear();
-    select_stats_xvariable.clear();
-
-    // Set options in proctypes
-
-  });
-
   // When stats projects changes, filter rows in grid
   select_stats_projects.on("change", function(values) {
 
@@ -122,8 +118,17 @@ if (true || grid_instances["stats"].api) {
     // Set values
     selected_stats_projects.push(...values);
 
+    // Update proctype options based on selected projects
+    updateStatsProcTypeOptions();
+
+    // Update sesstype options based on selected projects
+    updateStatsSessTypeOptions();
+
     // Trigger grid updates
     refreshGrid(gridApi_stats, "stats");
+
+    // update graph
+    updateStatsGraph();
   });
 
   // When stats proctypes changes,
@@ -140,10 +145,13 @@ if (true || grid_instances["stats"].api) {
 
     statsPivot(cur_stats_pivot);
 
+
     // Trigger grid updates
     hideBlankColumns(gridApi_stats);
     refreshGrid(gridApi_stats, "stats");
 
+    // update graph
+    updateStatsGraph();
   });
 
   // When selected stats measures changes, update columns and change xvariable options
@@ -182,6 +190,9 @@ if (true || grid_instances["stats"].api) {
     refreshGrid(gridApi_stats, "stats");
 
     // Set available options in Measures and Xvariable
+
+    // update graph
+    updateStatsGraph();
   });
 }
 

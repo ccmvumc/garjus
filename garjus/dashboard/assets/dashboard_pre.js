@@ -69,13 +69,126 @@ function hideBlankColumns(gridApi) {
   gridApi.applyColumnState({state: next_state, applyOrder: true});
 }
 
+function updateQASessTypeOptions() {
+  const sesstypes = new Set();
+
+  // Clear options
+  select_qa_sesstypes.clearOptions();
+
+  // Build complete set by adding sesstypes from each project
+  selected_qa_projects.forEach(project => {
+    (proj2sesstypes[project] || []).forEach(sesstype => {
+      sesstypes.add(sesstype);
+    });
+  });
+
+  // Add each option to tomselect
+  sesstypes.forEach(sesstype => {
+    select_qa_sesstypes.addOption({
+      value: sesstype,
+      text: sesstype
+    });
+  });
+}
+
+
+function updateQAProcTypeOptions() {
+  const proctypes = new Set();
+
+  // Clear options
+  select_qa_proctypes.clearOptions();
+
+  // Build complete set by adding proc types from each project
+  selected_qa_projects.forEach(project => {
+    (proj2procs[project] || []).forEach(proctype => {
+      proctypes.add(proctype);
+    });
+  });
+
+  // Add each option to tomselect
+  proctypes.forEach(proctype => {
+    select_qa_proctypes.addOption({
+      value: proctype,
+      text: proctype
+    });
+  });
+}
+
+
+function updateQAScanTypeOptions() {
+  const scantypes = new Set();
+
+  // Clear options
+  select_qa_scantypes.clearOptions();
+
+  // Build complete set by adding proc types from each project
+  selected_qa_projects.forEach(project => {
+    (proj2scantypes[project] || []).forEach(scantype => {
+      scantypes.add(scantype);
+    });
+  });
+
+  // Add each option to tomselect
+  scantypes.forEach(scantype => {
+    select_qa_scantypes.addOption({
+      value: scantype,
+      text: scantype
+    });
+  });
+}
+
+
+function updateStatsSessTypeOptions() {
+  const sesstypes = new Set();
+
+  // Clear options
+  select_stats_sesstypes.clearOptions();
+
+  // Build complete set by adding sesstypes from each project
+  selected_stats_projects.forEach(project => {
+    (proj2sesstypes[project] || []).forEach(sesstype => {
+      sesstypes.add(sesstype);
+    });
+  });
+
+  // Add each option to tomselect
+  sesstypes.forEach(sesstype => {
+    select_stats_sesstypes.addOption({
+      value: sesstype,
+      text: sesstype
+    });
+  });
+}
+
+
+function updateStatsProcTypeOptions() {
+  const proctypes = new Set();
+
+  // Clear options
+  select_stats_proctypes.clearOptions();
+
+  // Build complete set by adding from each proc type
+  selected_stats_projects.forEach(project => {
+    (proj2procs[project] || []).forEach(proctype => {
+      proctypes.add(proctype);
+    });
+  });
+
+  // Add each option to tomselect
+  proctypes.forEach(proctype => {
+    select_stats_proctypes.addOption({
+      value: proctype,
+      text: proctype
+    });
+  });
+}
+
 
 function updateStatsMeasuresOptions() {
   const all_measures = new Set(Object.values(proc2stats).flat());
   const valid_measures = new Set();
 
   // Clear selections and options
-  select_stats_measures.clear();
   select_stats_measures.clearOptions();
 
   // Build complete set of measures by adding from each proc type
@@ -146,8 +259,7 @@ function qaPivot(pivot_type){
           row.SCANID && 
           (selected_qa_scantypes.length === 0 || selected_qa_scantypes.includes(row.SCANTYPE))
         ) {
-        let scankey;
-        scankey = [row.PROJECT, row.SUBJECT, row.SESSION, row.SCANID].join("|");
+        const scankey = [row.PROJECT, row.SUBJECT, row.SESSION, row.SCANID].join("|");
 
         if (!row_map.has(scankey)) {
           row_map.set(scankey, {
@@ -518,16 +630,16 @@ const plotly_dark_template = {
 
 const plotly_darkblue_template = {
   layout: {
-    paper_bgcolor: '#182230',
-    plot_bgcolor: '#182230',
-    font: {color: '#ffffff'},
+    paper_bgcolor: '#212835',
+    plot_bgcolor: '#212835',
+    font: {color: '#f8fafc'},
     xaxis: {
-      gridcolor: '#2196f3',
-      zerolinecolor: '#2a3b54',
+      gridcolor: '#424853',
+      zerolinecolor: '#424853',
     },
     yaxis: {
-      gridcolor: '#2196f3',
-      zerolinecolor: '#2a3b54',
+      gridcolor: '#424853',
+      zerolinecolor: '#424853',
     }
   }
 };
@@ -566,7 +678,7 @@ function updateStatsGraph() {
       title: {text: measure},
       responsive: true,
       autosize: true,
-      margin: {l: 30, r: 50, b: 80, t: 40, pad: 0},
+      margin: {l: 50, r: 50, b: 80, t: 50, pad: 5},
       //yaxis: {title:{text: measure}},
       //xaxis: {title:{text: 'PROJECT'}},
       template: plotly_darkblue_template,

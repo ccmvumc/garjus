@@ -54,7 +54,7 @@ main_html_template = '''<!doctype html>
     }
     .graph-container {
       height: 400px;
-      width: 500px;
+      width: 300px;
       border: 1px solid #666666;
       border-radius: 12px;
       overflow: hidden;
@@ -235,4 +235,7 @@ const rowData_STATS = ROWS;
 
 data_dict_js_template = '''
 const proc2stats = PROC2STATS;
+const proj2procs = PROJ2PROCS;
+const proj2sesstypes = PROJ2SESSTYPES;
+const proj2scantypes = PROJ2SCANTYPES;
 '''

@@ -27,9 +27,9 @@
 #
 # TODO: markdown links
 # TODO: filter radio buttons
-# TODO: columns selectors
-# TODO: date filter
-# TODO: autofilter button
+# TODO: columns selectors?
+# TODO: date filter?
+# TODO: autofilter button that hides scan types not used in any assessors?
 # TODO: graphsgraphsgraphs
 # TODO: home grid
 import os
@@ -264,7 +264,16 @@ def _records(df):
 
 def _get_data_dict(data):
     proc2stats = data['proc2stats']
-    data_dict = data_dict_js_template.replace('PROC2STATS', json.dumps(proc2stats, default=str))
+    proj2procs = data['proj2procs']
+    proj2sesstypes = data['proj2sesstypes']
+    proj2scantypes = data['proj2scantypes']
+
+    data_dict = data_dict_js_template
+    data_dict = data_dict.replace('PROC2STATS', json.dumps(proc2stats, default=str))
+    data_dict = data_dict.replace('PROJ2PROCS', json.dumps(proj2procs, default=str))
+    data_dict = data_dict.replace('PROJ2SESSTYPES', json.dumps(proj2sesstypes, default=str))
+    data_dict = data_dict.replace('PROJ2SCANTYPES', json.dumps(proj2scantypes, default=str))
+
     return data_dict
 
 
@@ -428,13 +437,15 @@ def _qa_panel(data):
     _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
     _scantypes = sorted(list(data['scans'].SCANTYPE.unique()))
     _sesstypes = sorted(list(data['scans'].SESSTYPE.unique()))
-    panel += _dropdown_html('qa_projects', 'Projects', _projects)
-    panel += _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes)
-    panel += _dropdown_html('qa_scantypes', 'Scan Types', _scantypes)
-    panel += _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
+    _dropdowns = ''.join([
+        _dropdown_html('qa_projects', 'Projects', _projects),
+        _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes),
+        _dropdown_html('qa_scantypes', 'Scan Types', _scantypes),
+        _dropdown_html('qa_proctypes', 'Processing Types', _proctypes)
+    ])
 
     # Graph
-    panel += _graph('qa')
+    panel += _filters_row(_dropdowns, _graph('qa'))
 
     # Row count badge
     panel += _badge('qa_rowcount')
@@ -583,6 +594,40 @@ def _map_proc2stats(stats):
     return proc2stats
 
 
+def _map_proj2procs(stats):
+    proj2procs = {}
+
+    for proj in stats.PROJECT.unique():
+        # Get columns with values for this project
+        df = stats[stats.PROJECT == proj]
+        proj2procs[proj] = sorted(list(df.PROCTYPE.unique()))
+
+    return proj2procs
+
+
+def _map_proj2sesstypes(stats):
+    proj2sesstypes = {}
+
+    for proj in stats.PROJECT.unique():
+        # Get columns with values for this project
+        df = stats[stats.PROJECT == proj]
+        proj2sesstypes[proj] = sorted(list(df.SESSTYPE.unique()))
+
+    return proj2sesstypes
+
+
+def _map_proj2scantypes(qa):
+    proj2scantypes = {}
+
+    for proj in qa.PROJECT.unique():
+        # Get columns with values for this project
+        df = qa[qa.PROJECT == proj]
+        proj2scantypes[proj] = sorted(list(df.SCANTYPE.unique()))
+
+    return proj2scantypes
+
+
+
 def export_html(
     g,
     filename,
@@ -625,6 +670,15 @@ def export_html(
 
     # Add processing type to list stats mapping
     data['proc2stats'] = _map_proc2stats(data['stats'])
+
+    # Get map of projects to proc types
+    data['proj2procs'] = _map_proj2procs(data['stats'])
+
+    # Get map of projects to sess types
+    data['proj2sesstypes'] = _map_proj2sesstypes(data['stats'])
+
+    # Get map of projects to scan types
+    data['proj2scantypes'] = _map_proj2scantypes(data['qa'])
 
     # Get html from ag grid data
     html_text = _to_html(data)
