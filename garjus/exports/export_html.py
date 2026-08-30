@@ -31,7 +31,9 @@
 # TODO: date filter?
 # TODO: autofilter button that hides scan types not used in any assessors?
 # TODO: home grid
-# TODO: emojis!
+# TODO: make data schema with source pointers to xnat/redcap datatypes/fields
+# TODO: have user click button to load a folder with data
+
 
 import os
 import logging
@@ -62,11 +64,9 @@ logger = logging.getLogger('garjus')
 
 
 # Names of tables saved to .duckdb database file
-TABLES = ['assessors', 'scans', 'analyses', 'processors', 'stats']
+TABLES = ['subjects', 'assessors', 'scans', 'analyses', 'processors', 'stats']
 
 SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
-
-QA_COLUMNS = ['PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'STATUS', 'DATE', 'SITE', 'NOTE']
 
 STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
@@ -282,7 +282,6 @@ def _get_data_dict(data):
 def _get_qa_data(data):
     row_data = _records(data['qa'])
     col_defs = _coldefs(data['qa'])
-    col_defs = _hide_columns(col_defs, QA_COLUMNS)
 
     qa_data = qa_data_js_template
     qa_data = qa_data.replace('ROWS', json.dumps(row_data, default=str))
@@ -308,7 +307,6 @@ def _get_grids(data):
     _label = 'qa'
     _data = []
     _defs = _coldefs(data['qa'])
-    #_defs = _hide_columns(_defs, SESS_COLUMNS)
     _defs = [];
     grids.append(_grid(_label, _data, _defs))
 
@@ -316,7 +314,6 @@ def _get_grids(data):
     _label = 'stats'
     _data = []
     _defs = _coldefs(data['stats'])
-    _defs = _hide_columns(_defs, STAT_COLUMNS)
     grids.append(_grid(_label, _data, _defs))
 
     # Analyses
@@ -652,6 +649,46 @@ def _map_proj2scantypes(qa):
     return proj2scantypes
 
 
+def _set_emojis(data):
+# set a single emoji status for assessors and scans
+# scans maps from quality, assessors from PROCSTATUS/QCSTATUS
+
+#  'COMPLETE,Failed': '',
+#  'COMPLETE,NeedsEdits': '',
+#  'COMPLETE,NeedsQA': '',
+#  'COMPLETE,Passed': '',
+#  'JOB_FAILED,LaunchFailed': '',
+#  'JOB_RUNNING,JobPending': '',
+#  'JOB_RUNNING,JobRunning': '',
+#  'NEED_INPUTS,JobPending': '',
+#  'NEED_INPUTS,NeedAssr': '',
+#  'COMPLETE,NeedsEdits': '',
+#  'NEED_INPUTS,No Resource': '',
+#  'NEED_INPUTS,No Files': '',
+#  'NEED_INPUTS,xxxxxxxxxxxxx': '',
+
+    # scan status as single emoji
+    df = data['scans']
+    df['STATUS'] = df['QUALITY'].map({
+        'usable': '✅',
+        'unusable': '❌',
+        'questionable': '🟡',
+    }).fillna('?')
+
+    # assessor status as single emoji
+    df = data['assessors']
+
+    # when procstatus is complete we use qcstatus
+    df['STATUS'] = df['QCSTATUS'].map({
+        'Passed': '✅',
+        'Job Pending': '🔷',
+        'Needs QA': '🟩',
+        'Failed': '❌',
+    }).fillna('?')
+
+    # handle a few specific procstatuses
+
+
 
 def export_html(
     g,
@@ -678,6 +715,9 @@ def export_html(
 
     logger.info(f'loading duckfile:{duck_file}')
     data = _duck_data(duck_file)
+
+    # Set emoji statuses on scans/assessors
+    _set_emojis(data)
 
     data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
 

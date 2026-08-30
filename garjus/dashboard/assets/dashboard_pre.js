@@ -236,8 +236,8 @@ function qaPivot(pivot_type){
   const subj_cols = ['SUBJECT', 'PROJECT'];
   const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
   const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
-    'PROCTYPE', 'JOBDATE', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
-  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY',
+    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+  const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY', 'STATUS',
     'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
   // Row numbering column
@@ -276,6 +276,7 @@ function qaPivot(pivot_type){
             SESSTYPE: row.SESSTYPE,
             SCANID: row.SCANID,
             SCANTYPE: row.SCANTYPE,
+            STATUS: row.STATUS,
             QUALITY: row.QUALITY,
             DATE: row.DATE,
             NOTE: row.NOTE,
@@ -294,7 +295,7 @@ function qaPivot(pivot_type){
       }
     });
 
-    // Get first columns ordered
+    // Get columns ordered
     scan_cols.forEach(c => {
       columnDefs_QA.forEach(column => {
         if (column['field'] === c) {
@@ -327,6 +328,7 @@ function qaPivot(pivot_type){
             JOBDATE: row.JOBDATE,
             PROCSTATUS: row.PROCSTATUS,
             QCSTATUS: row.QCSTATUS,
+            STATUS: row.STATUS,
             SITE: row.SITE,
             TIMEUSED: row.TIMEUSED,
             MEMUSED: row.MEMUSED,
@@ -338,7 +340,7 @@ function qaPivot(pivot_type){
       }
     });
 
-    // Get first columns ordered
+    // Get columns ordered
     assr_cols.forEach(c => {
       columnDefs_QA.forEach(column => {
         if (column['field'] === c) {
@@ -372,9 +374,11 @@ function qaPivot(pivot_type){
       selected_qa_scantypes.forEach(scantype => {
         if (row.SCANTYPE === scantype) {
           if (sess[scantype]) {
-            sess[scantype] += row.QUALITY;
+            //sess[scantype] += ',' + row.QUALITY;
+            sess[scantype] += row.STATUS;
           } else {
-            sess[scantype] = row.QUALITY;
+            //sess[scantype] = row.QUALITY;
+            sess[scantype] = row.STATUS;
           }
         }
       });
@@ -384,13 +388,14 @@ function qaPivot(pivot_type){
       selected_qa_proctypes.forEach(proctype => {
         if (row.PROCTYPE === proctype) {
           if (sess[proctype]) {
-            sess[proctype] += row.PROCSTATUS + ',' + row.QCSTATUS;
+            //sess[proctype] += ',' + row.PROCSTATUS + '-' + row.QCSTATUS;
+            sess[proctype] += row.STATUS;
           } else {
-            sess[proctype] = row.PROCSTATUS + ',' + row.QCSTATUS;
+            //sess[proctype] = row.PROCSTATUS + '-' + row.QCSTATUS;
+            sess[proctype] = row.STATUS;
           }
         }
       });
-
     });
 
     // Get first columns ordered
