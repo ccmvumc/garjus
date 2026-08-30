@@ -1,10 +1,11 @@
 let cur_stats_pivot = 'assessors';
 let cur_qa_pivot = 'sessions';
+let cur_stats_trace = 'all';
+let selected_stats_xvariable = null;
 const selected_stats_projects = [];
 const selected_stats_proctypes = [];
 const selected_stats_sesstypes = [];
 const selected_stats_measures = [];
-const selected_stats_xvariable = [];
 const selected_analyses_projects = [];
 const selected_analyses_invest = [];
 const selected_analyses_status = [];
@@ -207,12 +208,18 @@ function updateStatsMeasuresOptions() {
 
 
 function updateStatsXvariableOptions() {
+  const valid_xvariables = new Set();
+
   // Clear current selections and options
-  select_stats_xvariable.clear();
   select_stats_xvariable.clearOptions();
 
-  // Set xvariable options to match currently selected measures
-  selected_stats_measures.forEach(measure => {
+  // Build complete set by adding from each proc type
+  selected_stats_proctypes.forEach(proc => {
+    (proc2stats[proc] || []).forEach(measure => {valid_xvariables.add(measure)});
+  });
+
+  // Add each measure option to tomselect
+  valid_xvariables.forEach(measure => {
     select_stats_xvariable.addOption({
       value: measure,
       text: measure
@@ -377,9 +384,9 @@ function qaPivot(pivot_type){
       selected_qa_proctypes.forEach(proctype => {
         if (row.PROCTYPE === proctype) {
           if (sess[proctype]) {
-            sess[proctype] += row.PROCSTATUS;
+            sess[proctype] += row.PROCSTATUS + ',' + row.QCSTATUS;
           } else {
-            sess[proctype] = row.PROCSTATUS;
+            sess[proctype] = row.PROCSTATUS + ',' + row.QCSTATUS;
           }
         }
       });
@@ -684,10 +691,11 @@ const plotly_darkblue_template = {
 };
 
 
-function updateStatsGraph() {
+function updateStatsGraph(trace_type) {
   const graph_ident = 'graph_stats';
   const wrapper = document.getElementById(graph_ident);
   const rows = [];
+  const xvar = selected_stats_xvariable;
 
   // clear div with subplots
   wrapper.replaceChildren();
@@ -704,15 +712,22 @@ function updateStatsGraph() {
     }
   });
 
-  // TODO: trace for each session type or site or none?
+  valid_sesstypes = [...new Set(rows.map(row => row.SESSTYPE))];
+  valid_proctypes = [...new Set(rows.map(row => row.PROCTYPE))];
+  valid_projects = [...new Set(rows.map(row => row.PROJECT))];
+  valid_sites = [...new Set(rows.map(row => row.SITE))];
+
+  //console.log(valid_sesstypes);
+  //console.log(valid_proctypes);
+  //console.log(valid_projects);
+  //console.log(valid_sites);
+
+  // new plot per measure selected
   selected_stats_measures.forEach((measure, index) => {
     const plot_id = 'plotly_plot_' + index;
     const traces = [];
     const container = document.createElement('div');
-
-    const xdata = rows.map(row => row.SITE); //SESSTYPE, PROJECT, SITE
-    const ydata = rows.map(row => row[measure]);
-    const tdata = rows.map(row => row.SESSION);
+    const layout_template = plotly_darkblue_template;
     const layout = {
       title: {text: measure},
       responsive: true,
@@ -720,20 +735,143 @@ function updateStatsGraph() {
       margin: {l: 50, r: 50, b: 80, t: 50, pad: 5},
       //yaxis: {title:{text: measure}},
       //xaxis: {title:{text: 'PROJECT'}},
-      template: plotly_darkblue_template,
+      template: layout_template,
+      boxmode: 'group',
     };
 
-    // configure plot
-    traces.push({
-      x: xdata,
-      y: ydata,
-      type: 'box',
-      name: measure,
-      title: measure,
-      text: tdata,
-      boxpoints: 'all',
-      boxmean: true,
-    });
+    if (trace_type === 'site') {
+      valid_sites.forEach(site => {
+        const trace_rows = rows.filter(row => row.SITE === site);
+        const ydata = trace_rows.map(row => row[measure]);
+        const tdata = trace_rows.map(row => row.SESSION);
+
+        if (xvar) {
+          const xdata = trace_rows.map(row => row[xvar]);
+
+          // configure plot
+          traces.push({
+            x: xdata,
+            y: ydata,
+            type: 'scatter',
+            mode: 'markers',
+            name: site,
+            title: measure,
+            text: tdata,
+          });
+
+        } else {
+          // configure plot
+          traces.push({
+            x: null,
+            y: ydata,
+            type: 'box',
+            name: site,
+            title: measure,
+            text: tdata,
+            boxpoints: 'all',
+            boxmean: true,
+          });
+        }
+      });
+    } else if (trace_type === 'project') {
+      valid_projects.forEach(project => {
+        const trace_rows = rows.filter(row => row.PROJECT === project);
+        const ydata = trace_rows.map(row => row[measure]);
+        const tdata = trace_rows.map(row => row.SESSION);
+
+        if (xvar) {
+          const xdata = trace_rows.map(row => row[xvar]);
+
+          // configure plot
+          traces.push({
+            x: xdata,
+            y: ydata,
+            type: 'scatter',
+            mode: 'markers',
+            name: project,
+            title: measure,
+            text: tdata,
+          });
+
+        } else {
+          // configure plot
+          traces.push({
+            x: null,
+            y: ydata,
+            type: 'box',
+            name: project,
+            title: measure,
+            text: tdata,
+            boxpoints: 'all',
+            boxmean: true,
+          });
+        }
+      });
+    } else if (trace_type === 'sesstype') {
+      valid_sesstypes.forEach(sesstype => {
+        const trace_rows = rows.filter(row => row.SESSTYPE === sesstype);
+        const ydata = trace_rows.map(row => row[measure]);
+        const tdata = trace_rows.map(row => row.SESSION);
+
+        if (xvar) {
+          const xdata = trace_rows.map(row => row[xvar]);
+
+          // configure plot
+          traces.push({
+            x: xdata,
+            y: ydata,
+            type: 'scatter',
+            mode: 'markers',
+            name: sesstype,
+            title: measure,
+            text: tdata,
+          });
+        } else {
+          // configure plot
+          traces.push({
+            x: null,
+            y: ydata,
+            type: 'box',
+            name: sesstype,
+            title: measure,
+            text: tdata,
+            boxpoints: 'all',
+            boxmean: true,
+          });
+        }
+      });
+    } else {
+      const ydata = rows.map(row => row[measure]);
+      const tdata = rows.map(row => row.SESSION);
+
+      if (xvar) {
+        const xdata = rows.map(row => row[xvar]);
+
+        // configure plot
+        traces.push({
+          x: xdata,
+          y: ydata,
+          type: 'scatter',
+          mode: 'markers',
+          name: 'All',
+          title: measure,
+          text: tdata,
+        });
+      } else {
+
+        // configure plot
+        traces.push({
+          x: null,
+          y: ydata,
+          type: 'box',
+          name: 'All',
+          title: measure,
+          text: tdata,
+          boxpoints: 'all',
+          boxmean: true,
+        });
+      }
+    }
 
     // insert our new div at end of wrapper div
     container.className = 'graph-container';

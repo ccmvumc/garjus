@@ -30,8 +30,9 @@
 # TODO: columns selectors?
 # TODO: date filter?
 # TODO: autofilter button that hides scan types not used in any assessors?
-# TODO: graphsgraphsgraphs
 # TODO: home grid
+# TODO: emojis!
+
 import os
 import logging
 from datetime import datetime
@@ -54,7 +55,8 @@ from .export_templates import pivot_bar_html_template, pivot_button_html_templat
 from .export_templates import pivot_button_active_html_template
 from .export_templates import stats_data_js_template, qa_data_js_template, data_dict_js_template
 from .export_templates import graph_html_template, filters_row_html_template
-
+from .export_templates import groupby_bar_html_template, groupby_button_html_template
+from .export_templates import groupby_button_active_html_template
 
 logger = logging.getLogger('garjus')
 
@@ -381,9 +383,10 @@ def _home_panel(data):
     return panel
 
 
-def _filters_row(filters, graphs):
+def _filters_row(filters, groupbys, graphs):
     filters_row = filters_row_html_template
     filters_row = filters_row.replace('FILTERS', filters)
+    filters_row = filters_row.replace('GROUPBYS', groupbys)
     filters_row = filters_row.replace('GRAPHS', graphs)
     return filters_row
 
@@ -406,8 +409,11 @@ def _stats_panel(data):
         _dropdown_html('stats_proctypes', 'Processing Types', _proctypes),
         _dropdown_html('stats_measures', 'Measures', _measures),
         _dropdown_html('stats_xvariable', 'x-variable', _measures)])
+
+
+    _groupbys = _stats_groupby_buttons()
     _graphs = ''.join([_graph('stats')])
-    panel += _filters_row(_dropdowns, _graphs)
+    panel += _filters_row(_dropdowns, _groupbys, _graphs)
 
     # Row count badge
     panel += _badge('stats_rowcount')
@@ -445,7 +451,7 @@ def _qa_panel(data):
     ])
 
     # Graph
-    panel += _filters_row(_dropdowns, _graph('qa'))
+    panel += _filters_row(_dropdowns, '', _graph('qa'))
 
     # Row count badge
     panel += _badge('qa_rowcount')
@@ -484,6 +490,25 @@ def _pivot_button(ident, label):
 
 def _pivot_button_active(ident, label):
     return pivot_button_active_html_template.replace('ID', ident).replace('LABEL', label)
+
+
+def _stats_groupby_buttons():
+    buttons = []
+
+    buttons.append(_groupby_button_active('stats_all', 'No Grouping'))
+    buttons.append(_groupby_button('stats_project', 'By Project'))
+    buttons.append(_groupby_button('stats_sesstype', 'By Session Type'))
+    buttons.append(_groupby_button('stats_site', 'By Site'))
+
+    return groupby_bar_html_template.replace('GROUPBYBUTTONS', ''.join(buttons))
+
+
+def _groupby_button(ident, label):
+    return groupby_button_html_template.replace('ID', ident).replace('LABEL', label)
+
+
+def _groupby_button_active(ident, label):
+    return groupby_button_active_html_template.replace('ID', ident).replace('LABEL', label)
 
 
 

@@ -128,7 +128,7 @@ if (true || grid_instances["stats"].api) {
     refreshGrid(gridApi_stats, "stats");
 
     // update graph
-    updateStatsGraph();
+    updateStatsGraph(cur_stats_trace);
   });
 
   // When stats proctypes changes,
@@ -142,6 +142,7 @@ if (true || grid_instances["stats"].api) {
 
     // set options in measures and xvariable
     updateStatsMeasuresOptions();
+    updateStatsXvariableOptions();
 
     statsPivot(cur_stats_pivot);
 
@@ -151,7 +152,7 @@ if (true || grid_instances["stats"].api) {
     refreshGrid(gridApi_stats, "stats");
 
     // update graph
-    updateStatsGraph();
+    updateStatsGraph(cur_stats_trace);
   });
 
   // When selected stats measures changes, update columns and change xvariable options
@@ -170,11 +171,8 @@ if (true || grid_instances["stats"].api) {
 
     hideBlankColumns(gridApi_stats);
 
-    // set options in measures and xvariable
-    updateStatsXvariableOptions();
-
     // update graph
-    updateStatsGraph();
+    updateStatsGraph(cur_stats_trace);
   });
 
   // When stats sesstype changes, filter rows in grid
@@ -192,7 +190,15 @@ if (true || grid_instances["stats"].api) {
     // Set available options in Measures and Xvariable
 
     // update graph
-    updateStatsGraph();
+    updateStatsGraph(cur_stats_trace);
+  });
+
+
+  select_stats_xvariable.on("change", function(values) {
+    selected_stats_xvariable = values[0];
+    statsPivot(cur_stats_pivot);
+    hideBlankColumns(gridApi_stats);
+    updateStatsGraph(cur_stats_trace);
   });
 }
 
@@ -313,6 +319,18 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((tabEl) => {
       statsPivot('sessions');
     } else if (target_id === "pivot_stats_subjects") {
       statsPivot('subjects');
+    } else if (target_id === "groupby_stats_project") {
+      cur_stats_trace = 'project';
+      updateStatsGraph('project');
+    } else if (target_id === "groupby_stats_sesstype") {
+      cur_stats_trace = 'sesstype';
+      updateStatsGraph('sesstype');
+    } else if (target_id === "groupby_stats_site") {
+      cur_stats_trace = 'site';
+      updateStatsGraph('site');
+    } else if (target_id === "groupby_stats_all") {
+      cur_stats_trace = 'all';
+      updateStatsGraph('all');
     }
   });
 });

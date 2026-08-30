@@ -54,9 +54,9 @@ main_html_template = '''<!doctype html>
     }
     .graph-container {
       height: 400px;
-      width: 300px;
+      width: 400px;
       border: 1px solid #666666;
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
     }
   </style>
@@ -189,7 +189,7 @@ badge_html_template = '''
 
 
 graph_html_template = '''
-    <div id="graph_ID" class="graph-grid w-100">ID graph</div>
+    <div id="graph_ID" class="graph-grid w-100"></div>
 '''
 
 
@@ -209,12 +209,30 @@ pivot_button_html_template = '''
 '''
 
 
+groupby_bar_html_template = '''
+    <ul class="nav nav-pills flex-column">GROUPBYBUTTONS</ul>
+'''
+
+
+groupby_button_active_html_template = '''
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#groupby_ID">LABEL</button></li>
+'''
+
+
+groupby_button_html_template = '''
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#groupby_ID">LABEL</button></li>
+'''
+
+
 filters_row_html_template = '''
     <div class="row">
       <div class="col-md-3 mb-4">
         FILTERS
       </div>
-      <div class="col-md-9 mb-4">
+       <div class="col-md-2 mb-4">
+        GROUPBYS
+      </div>
+      <div class="col-md-7 mb-4">
         GRAPHS
       </div>
     </div>
