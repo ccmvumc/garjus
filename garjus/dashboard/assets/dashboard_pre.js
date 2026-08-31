@@ -248,13 +248,11 @@ function qaPivot(pivot_type){
   const row_map = new Map();
   const proj_cols = ['PROJECT']
   const subj_cols = ['SUBJECT', 'PROJECT', 'AGE', 'SEX', 'GROUP'];
-  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE', 'AGE', 'SEX', 'GROUP'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
   const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
-    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE',
-    'AGE', 'SEX', 'GROUP'];
+    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
   const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY', 'STATUS',
-    'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT',
-    'AGE', 'SEX', 'GROUP'];
+    'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
   // Row numbering column
   col_defs.push({
