@@ -266,13 +266,13 @@ def _records(df):
 
 def _get_data_dict(data):
     proc2stats = data['proc2stats']
-    proj2procs = data['proj2procs']
+    proj2proctypes = data['proj2proctypes']
     proj2sesstypes = data['proj2sesstypes']
     proj2scantypes = data['proj2scantypes']
 
     data_dict = data_dict_js_template
     data_dict = data_dict.replace('PROC2STATS', json.dumps(proc2stats, default=str))
-    data_dict = data_dict.replace('PROJ2PROCS', json.dumps(proj2procs, default=str))
+    data_dict = data_dict.replace('PROJ2PROCTYPES', json.dumps(proj2proctypes, default=str))
     data_dict = data_dict.replace('PROJ2SESSTYPES', json.dumps(proj2sesstypes, default=str))
     data_dict = data_dict.replace('PROJ2SCANTYPES', json.dumps(proj2scantypes, default=str))
 
@@ -616,37 +616,37 @@ def _map_proc2stats(stats):
     return proc2stats
 
 
-def _map_proj2procs(stats):
-    proj2procs = {}
+def _map_proj2proctypes(qa):
+    proj2types = {}
 
-    for proj in stats.PROJECT.unique():
+    for proj in qa.PROJECT.unique():
         # Get columns with values for this project
-        df = stats[stats.PROJECT == proj]
-        proj2procs[proj] = sorted(list(df.PROCTYPE.unique()))
+        _types = qa[qa.PROJECT == proj].PROCTYPE.unique()
+        proj2types[proj] = sorted(list([str(x) for x in _types if str(x)]))
 
-    return proj2procs
+    return proj2types
 
 
-def _map_proj2sesstypes(stats):
-    proj2sesstypes = {}
+def _map_proj2sesstypes(qa):
+    proj2types = {}
 
-    for proj in stats.PROJECT.unique():
+    for proj in qa.PROJECT.unique():
         # Get columns with values for this project
-        df = stats[stats.PROJECT == proj]
-        proj2sesstypes[proj] = sorted(list(df.SESSTYPE.unique()))
+        _types = qa[qa.PROJECT == proj].SESSTYPE.unique()
+        proj2types[proj] = sorted(list([str(x) for x in _types if str(x)]))
 
-    return proj2sesstypes
+    return proj2types
 
 
 def _map_proj2scantypes(qa):
-    proj2scantypes = {}
+    proj2types = {}
 
     for proj in qa.PROJECT.unique():
         # Get columns with values for this project
         df = qa[qa.PROJECT == proj]
-        proj2scantypes[proj] = list(df.SCANTYPE.unique())
+        proj2types[proj] = list(df.SCANTYPE.unique())
 
-    return proj2scantypes
+    return proj2types
 
 
 def _set_emojis(data):
@@ -754,13 +754,16 @@ def export_html(
     data['proc2stats'] = _map_proc2stats(data['stats'])
 
     # Get map of projects to proc types
-    data['proj2procs'] = _map_proj2procs(data['stats'])
+    data['proj2proctypes'] = _map_proj2proctypes(data['qa'])
 
     # Get map of projects to sess types
-    data['proj2sesstypes'] = _map_proj2sesstypes(data['stats'])
+    data['proj2sesstypes'] = _map_proj2sesstypes(data['qa'])
 
     # Get map of projects to scan types
     data['proj2scantypes'] = _map_proj2scantypes(data['qa'])
+
+    print(data['proj2proctypes'])
+    print(data['proj2sesstypes'])
 
     # Get html from ag grid data
     html_text = _to_html(data)

@@ -253,7 +253,7 @@ const rowData_STATS = ROWS;
 
 data_dict_js_template = '''
 const proc2stats = PROC2STATS;
-const proj2procs = PROJ2PROCS;
+const proj2procs = PROJ2PROCTYPES;
 const proj2sesstypes = PROJ2SESSTYPES;
 const proj2scantypes = PROJ2SCANTYPES;
 '''
