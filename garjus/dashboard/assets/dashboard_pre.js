@@ -306,9 +306,9 @@ function qaPivot(pivot_type){
             NIFTI: row.NIFTI,
             JSON: row.JSON,
             EDAT: row.EDAT,
-            AGE: row.AGE,
-            SEX: row.SEX,
-            GROUP: row.GROUP,
+            //AGE: row.AGE,
+            //SEX: row.SEX,
+            //GROUP: row.GROUP,
           });
         }
       }
@@ -354,9 +354,9 @@ function qaPivot(pivot_type){
             JOBNODE: row.JOBNODE,
             LOG: row.LOG,
             PDF: row.PDF,
-            AGE: row.AGE,
-            SEX: row.SEX,
-            GROUP: row.GROUP,
+            //AGE: row.AGE,
+            //SEX: row.SEX,
+            //GROUP: row.GROUP,
           });
         }
       }
@@ -388,9 +388,9 @@ function qaPivot(pivot_type){
           SESSTYPE: row.SESSTYPE,
           SITE: row.SITE,
           NOTE: row.NOTE,
-          AGE: row.AGE,
-          SEX: row.SEX,
-          GROUP: row.GROUP,
+          //AGE: row.AGE,
+          //SEX: row.SEX,
+          //GROUP: row.GROUP,
         });
       }
 
