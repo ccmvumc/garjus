@@ -27,6 +27,14 @@ def load_fallypride_data(rc):
     return covariates._load_fallypride(rc)
 
 
+def load_med_data(rc):
+    def_field = rc.def_field
+    fields = [def_field, 'blinded_med']
+    rec = rc.export_records(fields=fields)
+    rec = [x for x in rec if x['blinded_med']]
+    return pd.DataFrame(rec, columns=fields)
+
+
 def load_gait_data(rc):
     def_field = rc.def_field
     fields = [
@@ -453,7 +461,24 @@ def load_standard(garjus, project, include_dob=False):
     # Determine group
     df['GROUP'] = 'UNKNOWN'
 
-    if project in ['DepMIND2', 'DepMIND3']:
+    if project in ['DepMIND3']:
+        # Subset of events where demographics are found
+        df = df[df.redcap_event_name.isin([
+            'Screening (Arm 1: Blinded Phase)',
+        ])]
+
+        # Post-project, load unblinded group
+        dfb = load_med_data(project_redcap)
+
+        # Merge in med data
+        df = pd.merge(df, dfb, how='left', on=def_field)
+
+        # Map med to group
+        df['GROUP'] = df['blinded_med'].map({
+            '0': 'Placebo',
+            '1': 'ActiveDrug',
+        }).fillna('n/a')
+    elif project in ['DepMIND2']:
         # All are depressed
         df['GROUP'] = 'Depress'
 
@@ -462,6 +487,9 @@ def load_standard(garjus, project, include_dob=False):
             'Screening (Arm 1: Blinded Phase)',
         ])]
     elif project == 'D3':
+        # TODO: load inflammation records
+        # TODO: load unblinding
+
         # Load gait velocity
         dfg = load_gait_data(project_redcap)
 
