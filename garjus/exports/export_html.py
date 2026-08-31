@@ -678,16 +678,19 @@ def _set_emojis(data):
     # assessor status as single emoji
     df = data['assessors']
 
-    # when procstatus is complete we use qcstatus
+    # Handle a few specific procstatuses
+    df['STATUS'] = df['PROCSTATUS'].map({
+        'NEED_INPUTS': '🟡',
+        'JOB_FAILED': '🟡',
+    })
+
+    # Otherwise use QCSTATUS
     df['STATUS'] = df['QCSTATUS'].map({
         'Passed': '✅',
         'Job Pending': '🔷',
         'Needs QA': '🟩',
         'Failed': '❌',
     }).fillna('?')
-
-    # handle a few specific procstatuses
-
 
 
 def export_html(
@@ -722,16 +725,30 @@ def export_html(
     data['timestamp'] = datetime.now().strftime("%I:%M:%S %p %Y-%m-%d ")
 
     data['qa'] = pd.concat([data['scans'], data['assessors']]).fillna(np.nan)
+    data['qa'].DATE = pd.to_datetime(data['qa'].DATE).dt.date
+    data['qa'].SITE = data['qa'].SITE.replace({'PITT': 'UPMC'})
+
+    # Merge in subject columns
+    data['qa'] = pd.merge(
+        data['qa'],
+        data['subjects'],
+        left_on=('SUBJECT','PROJECT'),
+        right_on=('ID','PROJECT'),
+        how='left'
+    )
+
+    # Merge in subject columns
+    data['stats'] = pd.merge(
+        data['stats'],
+        data['subjects'],
+        left_on=('SUBJECT','PROJECT'),
+        right_on=('ID','PROJECT'),
+        how='left'
+    )
 
     data['stats'] = data['stats'].replace('', np.nan).dropna(subset=['SESSTYPE'])
-
     data['stats'] = data['stats'].replace(r'^\s*$', np.nan, regex=True).replace(np.nan, '')
-
-    data['qa'].DATE = pd.to_datetime(data['qa'].DATE).dt.date
-
     data['stats'].DATE = pd.to_datetime(data['stats'].DATE).dt.date
-
-    data['qa'].SITE = data['qa'].SITE.replace({'PITT': 'UPMC'})
 
     # Add processing type to list stats mapping
     data['proc2stats'] = _map_proc2stats(data['stats'])

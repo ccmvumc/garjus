@@ -387,7 +387,7 @@ def load_standard(garjus, project, include_dob=False):
     project_redcap = garjus.primary(project)
 
     if not project_redcap:
-        logger.debug(f'project redcap not found:{project}')
+        logger.info(f'project redcap not found:{project}')
         return pd.DataFrame([], columns=['ID', 'PROJECT', 'GROUP'])
 
     def_field = project_redcap.def_field

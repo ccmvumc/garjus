@@ -213,6 +213,20 @@ function updateStatsXvariableOptions() {
   // Clear current selections and options
   select_stats_xvariable.clearOptions();
 
+  // Subject attributes
+  select_stats_xvariable.addOption({
+      value: 'AGE',
+      text: 'AGE'
+  });
+  select_stats_xvariable.addOption({
+      value: 'SEX',
+      text: 'SEX'
+  });
+  select_stats_xvariable.addOption({
+      value: 'GROUP',
+      text: 'GROUP'
+  });
+
   // Build complete set by adding from each proc type
   selected_stats_proctypes.forEach(proc => {
     (proc2stats[proc] || []).forEach(measure => {valid_xvariables.add(measure)});
@@ -233,12 +247,14 @@ function qaPivot(pivot_type){
   const col_defs = [];
   const row_map = new Map();
   const proj_cols = ['PROJECT']
-  const subj_cols = ['SUBJECT', 'PROJECT'];
-  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
+  const subj_cols = ['SUBJECT', 'PROJECT', 'AGE', 'SEX', 'GROUP'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE', 'AGE', 'SEX', 'GROUP'];
   const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
-    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE',
+    'AGE', 'SEX', 'GROUP'];
   const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY', 'STATUS',
-    'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
+    'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT',
+    'AGE', 'SEX', 'GROUP'];
 
   // Row numbering column
   col_defs.push({
@@ -290,6 +306,9 @@ function qaPivot(pivot_type){
             NIFTI: row.NIFTI,
             JSON: row.JSON,
             EDAT: row.EDAT,
+            AGE: row.AGE,
+            SEX: row.SEX,
+            GROUP: row.GROUP,
           });
         }
       }
@@ -335,6 +354,9 @@ function qaPivot(pivot_type){
             JOBNODE: row.JOBNODE,
             LOG: row.LOG,
             PDF: row.PDF,
+            AGE: row.AGE,
+            SEX: row.SEX,
+            GROUP: row.GROUP,
           });
         }
       }
@@ -366,6 +388,9 @@ function qaPivot(pivot_type){
           SESSTYPE: row.SESSTYPE,
           SITE: row.SITE,
           NOTE: row.NOTE,
+          AGE: row.AGE,
+          SEX: row.SEX,
+          GROUP: row.GROUP,
         });
       }
 
@@ -435,6 +460,9 @@ function qaPivot(pivot_type){
         row_map.set(subjkey, {
           PROJECT: row.PROJECT,
           SUBJECT: row.SUBJECT,
+          AGE: row.AGE,
+          SEX: row.SEX,
+          GROUP: row.GROUP,
         });
       }
     });
@@ -485,10 +513,10 @@ function statsPivot(pivot_type){
   const rows = [];
   const col_defs = [];
   const row_map = new Map();
-  const subj_cols = ['SUBJECT', 'PROJECT'];
-  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE'];
-  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 
-    'PROCTYPE', 'DATE', 'JOBDATE'];
+  const subj_cols = ['SUBJECT', 'PROJECT', 'AGE', 'SEX', 'GROUP'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE', 'AGE', 'SEX', 'GROUP'];
+  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE',
+    'PROCTYPE', 'DATE', 'JOBDATE', 'AGE', 'SEX', 'GROUP'];
 
   rowData_STATS.forEach(row => {
     if (selected_stats_proctypes.includes(row.PROCTYPE)) {
@@ -514,6 +542,9 @@ function statsPivot(pivot_type){
           SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
           JOBDATE: row.JOBDATE,
+          AGE: row.AGE,
+          SEX: row.SEX,
+          GROUP: row.GROUP,
         });
  
         // Get proctype stats for row
@@ -564,6 +595,9 @@ function statsPivot(pivot_type){
           SESSION: row.SESSION,
           SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
+          AGE: row.AGE,
+          SEX: row.SEX,
+          GROUP: row.GROUP,
         }); 
       }
 
@@ -608,7 +642,10 @@ function statsPivot(pivot_type){
         // Initialize row for subject
         row_map.set(subjkey, {
           PROJECT: row.PROJECT,
-          SUBJECT: row.SUBJECT
+          SUBJECT: row.SUBJECT,
+          AGE: row.AGE,
+          SEX: row.SEX,
+          GROUP: row.GROUP,
         });
       }
 
