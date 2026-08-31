@@ -392,15 +392,13 @@ def _stats_panel(data):
     # Tab buttons for pivot select: Assessors or Sessions or Subjects
     panel = ''
 
-    # Export button
-    panel += _csv_button('stats')
-
     # Filters and Graph in next row
     _projects = sorted(list(data['assessors'].PROJECT.unique()))
     _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
     _sesstypes = sorted(list(data['assessors'].SESSTYPE.unique()))
     _measures = data['stats'].columns
     _dropdowns = ''.join([
+        _csv_button('stats'),
         _dropdown_html('stats_projects', 'Projects', _projects),
         _dropdown_html('stats_sesstypes', 'Session Types', _sesstypes ),
         _dropdown_html('stats_proctypes', 'Processing Types', _proctypes),
@@ -432,15 +430,13 @@ def _qa_panel(data):
     # radio buttons: emojis for statuses
     # buttons for pivot select
 
-    # Export as csv button
-    panel += _csv_button('qa')
-
     # Filters
     _projects = sorted(list(data['scans'].PROJECT.unique()))
     _proctypes = sorted(list(data['assessors'].PROCTYPE.unique()))
     _scantypes = sorted(list(data['scans'].SCANTYPE.unique()))
     _sesstypes = sorted(list(data['scans'].SESSTYPE.unique()))
     _dropdowns = ''.join([
+        _csv_button('qa'),
         _dropdown_html('qa_projects', 'Projects', _projects),
         _dropdown_html('qa_sesstypes', 'Session Types', _sesstypes),
         _dropdown_html('qa_scantypes', 'Scan Types', _scantypes),
@@ -516,10 +512,12 @@ def _csv_button(ident):
 def _processors_panel(data):
     panel = ''
 
-    panel += _csv_button('processors')
-
     _projects = sorted(data['assessors'].PROJECT.unique())
-    panel += _dropdown_html('processors_projects', 'Projects', _projects)
+    _dropdowns = ''.join([
+        _csv_button('processors'),
+        _dropdown_html('processors_projects', 'Projects', _projects)
+    ])
+    panel += _filters_row(_dropdowns, '', '')
 
     # Row count badge
     panel += _badge('processors_rowcount')
@@ -530,15 +528,19 @@ def _processors_panel(data):
 def _analyses_panel(data):
     panel = ''
 
-    panel += _csv_button('analyses')
-
     # Filters
     _projects = sorted(list(data['assessors'].PROJECT.unique()))
     _investigators = sorted(list(data['analyses'].INVESTIGATOR.unique()))
     _statuses = sorted(list(data['analyses'].STATUS.unique()))
-    panel += _dropdown_html('analyses_projects', 'Projects', _projects)
-    panel += _dropdown_html('analyses_invest', 'Investigator', _investigators)
-    panel += _dropdown_html('analyses_status', 'Status', _statuses)
+
+    _dropdowns = ''.join([
+        _csv_button('analyses'),
+        _dropdown_html('analyses_projects', 'Projects', _projects),
+        _dropdown_html('analyses_invest', 'Investigator', _investigators),
+        _dropdown_html('analyses_status', 'Status', _statuses),
+    ])
+
+    panel += _filters_row(_dropdowns, '', '')
 
     # Row count badge
     panel += _badge('analyses_rowcount')
@@ -761,9 +763,6 @@ def export_html(
 
     # Get map of projects to scan types
     data['proj2scantypes'] = _map_proj2scantypes(data['qa'])
-
-    print(data['proj2proctypes'])
-    print(data['proj2sesstypes'])
 
     # Get html from ag grid data
     html_text = _to_html(data)

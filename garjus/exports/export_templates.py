@@ -93,7 +93,7 @@ const gridOptions_ID = {
     sortable: true,
     resizable: true,
     flex: 1,
-    filter: false,
+    filter: true,
     cellDataType: "text",
   },
   autoSizeStrategy: {type: "fitCellContents"},
@@ -116,7 +116,8 @@ const gridElement_ID = document.querySelector("#grid_ID");
 const gridApi_ID = agGrid.createGrid(gridElement_ID, gridOptions_ID);
 
 function onButtonExport_ID() {
-  gridApi_ID.exportDataAsCsv({fileName: "ID.csv"});
+  const csvfilename = document.getElementById("csvinput_ID").value.trim()
+  gridApi_ID.exportDataAsCsv({fileName: csvfilename});
 }
 '''
 
@@ -148,7 +149,10 @@ tab_panel_active_html_template = '''
 
 
 csv_button_html_template = '''
-    <button class="btn btn-primary btn-sm" onclick="onButtonExport_ID()">Export CSV</button>
+    <div class="input-group mb-3" style="max-width: 400px;">
+      <input id="csvinput_ID" type="text" class="form-control" placeholder="export_ID.csv"></input>
+      <button class="btn btn-primary btn-sm" onclick="onButtonExport_ID()">EXPORT</button>
+    </div>
 '''
 
 
