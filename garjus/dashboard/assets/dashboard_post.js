@@ -148,7 +148,6 @@ if (true || grid_instances["stats"].api) {
 
 
     // Trigger grid updates
-    hideBlankColumns(gridApi_stats);
     refreshGrid(gridApi_stats, "stats");
 
     // update graph
@@ -166,10 +165,7 @@ if (true || grid_instances["stats"].api) {
 
     // Trigger grid updates
     //refreshGrid(gridApi_stats, "stats");
-
     statsPivot(cur_stats_pivot);
-
-    hideBlankColumns(gridApi_stats);
 
     // update graph
     updateStatsGraph(cur_stats_trace);
@@ -197,7 +193,6 @@ if (true || grid_instances["stats"].api) {
   select_stats_xvariable.on("change", function(values) {
     selected_stats_xvariable = values[0];
     statsPivot(cur_stats_pivot);
-    hideBlankColumns(gridApi_stats);
     updateStatsGraph(cur_stats_trace);
   });
 }

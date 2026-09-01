@@ -737,16 +737,16 @@ def export_html(
         left_on=('SUBJECT','PROJECT'),
         right_on=('ID','PROJECT'),
         how='left'
-    )
+    ).drop(columns=['ID'])
 
     # Merge in subject columns
     data['stats'] = pd.merge(
         data['stats'],
         data['subjects'],
         left_on=('SUBJECT','PROJECT'),
-        right_on=('ID','PROJECT'),
+        right_on=('ID', 'PROJECT'),
         how='left'
-    )
+    ).drop(columns=['ID'])
 
     data['stats'] = data['stats'].replace('', np.nan).dropna(subset=['SESSTYPE'])
     data['stats'] = data['stats'].replace(r'^\s*$', np.nan, regex=True).replace(np.nan, '')

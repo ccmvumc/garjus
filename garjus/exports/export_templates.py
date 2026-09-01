@@ -26,7 +26,7 @@ main_html_template = '''<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>garjus dashboard</title>
+  <title>dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.6.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
@@ -65,7 +65,7 @@ main_html_template = '''<!doctype html>
   <div class="container-fluid p-3">
     <ul class="nav nav-tabs">TABBUTTONS</ul>
     <div class="tab-content pt-3">TABPANELS</div>
-    <h5 align="center">garjus dashboard</h5>
+    <h5 align="center">garjus/dax dashboard</h5>
     <h6 align="center">Data Exported @ TIMESTAMP</h6>
     <div class="text-center"><button id="themetoggle" class="btn btn-outline-secondary">dark/light</button></div>
   </div>

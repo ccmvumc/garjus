@@ -304,9 +304,6 @@ function qaPivot(pivot_type){
             NIFTI: row.NIFTI,
             JSON: row.JSON,
             EDAT: row.EDAT,
-            //AGE: row.AGE,
-            //SEX: row.SEX,
-            //GROUP: row.GROUP,
           });
         }
       }
@@ -352,9 +349,6 @@ function qaPivot(pivot_type){
             JOBNODE: row.JOBNODE,
             LOG: row.LOG,
             PDF: row.PDF,
-            //AGE: row.AGE,
-            //SEX: row.SEX,
-            //GROUP: row.GROUP,
           });
         }
       }
@@ -386,9 +380,6 @@ function qaPivot(pivot_type){
           SESSTYPE: row.SESSTYPE,
           SITE: row.SITE,
           NOTE: row.NOTE,
-          //AGE: row.AGE,
-          //SEX: row.SEX,
-          //GROUP: row.GROUP,
         });
       }
 
@@ -475,6 +466,11 @@ function qaPivot(pivot_type){
       });
     });
 
+
+    // TODO: selected proctype/scantype columns for each sesstype all or selected
+
+
+
   } else if (pivot_type === 'projects') {
     cur_qa_pivot = 'projects';
 
@@ -511,10 +507,10 @@ function statsPivot(pivot_type){
   const rows = [];
   const col_defs = [];
   const row_map = new Map();
-  const subj_cols = ['SUBJECT', 'PROJECT', 'AGE', 'SEX', 'GROUP'];
-  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE', 'AGE', 'SEX', 'GROUP'];
-  const assr_cols = ['ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE',
-    'PROCTYPE', 'DATE', 'JOBDATE', 'AGE', 'SEX', 'GROUP'];
+  const subj_cols = ['SUBJECT', 'PROJECT'];
+  const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'DATE'];
+  const assr_cols = [
+    'ASSR', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'PROCTYPE', 'DATE', 'JOBDATE'];
 
   rowData_STATS.forEach(row => {
     if (selected_stats_proctypes.includes(row.PROCTYPE)) {
@@ -540,9 +536,6 @@ function statsPivot(pivot_type){
           SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
           JOBDATE: row.JOBDATE,
-          AGE: row.AGE,
-          SEX: row.SEX,
-          GROUP: row.GROUP,
         });
  
         // Get proctype stats for row
@@ -593,9 +586,6 @@ function statsPivot(pivot_type){
           SESSION: row.SESSION,
           SESSTYPE: row.SESSTYPE,
           DATE: row.DATE,
-          AGE: row.AGE,
-          SEX: row.SEX,
-          GROUP: row.GROUP,
         }); 
       }
 
@@ -632,8 +622,12 @@ function statsPivot(pivot_type){
       });
     });
   } else if (pivot_type === 'subjects') {
+    const valid_sesstypes = [...new Set(rows.map(row => row.SESSTYPE))];
     cur_stats_pivot = 'subjects';
+
+    // Map each qa row to subject row_map
     rows.forEach(row => {
+      const sesstype = row.SESSTYPE;
       let subjkey = [row.PROJECT, row.SUBJECT].join("|");
 
       if (!row_map.has(subjkey)) {
@@ -641,23 +635,19 @@ function statsPivot(pivot_type){
         row_map.set(subjkey, {
           PROJECT: row.PROJECT,
           SUBJECT: row.SUBJECT,
-          AGE: row.AGE,
-          SEX: row.SEX,
-          GROUP: row.GROUP,
         });
       }
 
-      // Get proctype stats for row
+      // Get proctype stats for row sesstype
       subj = row_map.get(subjkey);
       selected_stats_proctypes.forEach(proctype => {
         proc2stats[row.PROCTYPE].forEach(stat => {
-          subj[stat] = row[stat];
+          subj[sesstype + '_' + stat] = row[stat];
         });
       });
     });
 
-
-    // TODO: prepend session type to DATE?
+    // Map column defs for core subject columns
     columnDefs_STATS.forEach(column => {
       if (subj_cols.includes(column['field'])) {
         column['hide'] = false;
@@ -665,21 +655,26 @@ function statsPivot(pivot_type){
       }
     });
 
-    // Get proctype columns
-    // TODO: prepend session type to field and header name
+    // Get proctype columns, prepend sesstype to field and header name
     selected_stats_proctypes.forEach(proctype => {
-      proc2stats[proctype].forEach(stat => {
-        if (
-            selected_stats_measures.length === 0 || 
-            selected_stats_measures.includes(stat)
-            ) {
-          columnDefs_STATS.forEach(column => {
-            if (column['field'] === stat) {
-              column['hide'] = false;
-              col_defs.push(column);
-            }
-          });
-        }
+      valid_sesstypes.forEach(sesstype => {
+        proc2stats[proctype].forEach(stat => {
+          if (
+              selected_stats_measures.length === 0 || 
+              selected_stats_measures.includes(stat)
+              ) {
+            columnDefs_STATS.forEach(column => {
+              if (column['field'] === stat) {
+                // copy column so we can edit
+                new_column = {...column};
+                new_column['hide'] = false;
+                new_column['field'] = sesstype + '_' + stat
+                new_column['headerName'] = sesstype + '_' + stat
+                col_defs.push(new_column);
+              }
+            });
+          }
+        });
       });
     });
   }
@@ -687,8 +682,9 @@ function statsPivot(pivot_type){
   // Apply new data to grid
   gridApi_stats.setGridOption('rowData', Array.from(row_map.values()));
   gridApi_stats.setGridOption('columnDefs', col_defs);
-
   refreshGrid(gridApi_stats, 'stats');
+  hideBlankColumns(gridApi_stats);
+  gridApi_stats.autoSizeAllColumns(false);
 }
 
 
@@ -752,10 +748,10 @@ function updateStatsGraph(trace_type) {
     }
   });
 
-  valid_sesstypes = [...new Set(rows.map(row => row.SESSTYPE))];
-  valid_proctypes = [...new Set(rows.map(row => row.PROCTYPE))];
-  valid_projects = [...new Set(rows.map(row => row.PROJECT))];
-  valid_sites = [...new Set(rows.map(row => row.SITE))];
+  const valid_sesstypes = [...new Set(rows.map(row => row.SESSTYPE))];
+  const valid_proctypes = [...new Set(rows.map(row => row.PROCTYPE))];
+  const valid_projects = [...new Set(rows.map(row => row.PROJECT))];
+  const valid_sites = [...new Set(rows.map(row => row.SITE))];
 
   //console.log(valid_sesstypes);
   //console.log(valid_proctypes);
