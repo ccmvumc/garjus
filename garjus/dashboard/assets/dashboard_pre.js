@@ -249,8 +249,8 @@ function qaPivot(pivot_type){
   const proj_cols = ['PROJECT']
   const subj_cols = ['SUBJECT', 'PROJECT', 'AGE', 'SEX', 'GROUP'];
   const sess_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'DATE', 'SESSTYPE', 'SITE', 'NOTE'];
-  const assr_cols = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 
-    'PROCTYPE', 'JOBDATE', 'STATUS', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
+  const assr_cols = ['ASSR', 'STATUS', 'SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SITE', 'DATE', 
+    'PROCTYPE', 'JOBDATE', 'PROCSTATUS', 'QCSTATUS', 'PDF', 'LOG', 'TIMEUSED', 'MEMUSED', 'JOBNODE'];
   const scan_cols = ['SESSION', 'SUBJECT', 'PROJECT', 'SESSTYPE', 'SCANID', 'SCANTYPE', 'QUALITY', 'STATUS',
     'DATE', 'MODALITY', 'DURATION', 'TR', 'THICK', 'MB', 'FRAMES', 'NIFTI', 'JSON', 'EDAT'];
 
@@ -917,4 +917,96 @@ function updateStatsGraph(trace_type) {
     // plot to newly added div
     Plotly.newPlot(plot_id, traces, layout, {responsive: true});
   });
+}
+
+
+function updateProcessorsGraph() {
+  const graph_ident = 'graph_processors';
+  const wrapper = document.getElementById(graph_ident);
+
+  // clear div with subplots
+  wrapper.replaceChildren();
+
+  // insert our new div at end of wrapper div
+  plot_id = 'plotly_plot_processors_1'
+  const container = document.createElement('div');
+  container.className = 'graph-container';
+  container.id = plot_id;
+  wrapper.appendChild(container);
+
+  const nodes = {
+    T1: {x: 0, y: 0, label: 'T1'},
+    FLAIR: {x: 0, y: 1, label: 'FLAIR'},
+    fMRI_REST: {x: 0, y: 2, label: 'fMRI_REST'},
+    fMRI_MIDT: {x: 0, y: 3, label: 'fMRI_MIDT'},
+    NM: {x: 0, y: 4, label: 'NM'},
+    FS7_v1: {x: 2, y: 0, label: 'FS7_v1'},
+    LST_v1: {x: 2, y: 1, label: 'LST_v1'},
+    NMQA_v5: {x: 2, y: 2, label: 'NMQA_v5'},
+    fmri_rest_v4: {x: 2, y: 3, label: 'fmri_rest_v4'},
+    fmri_midt_D3_v2: {x: 2, y: 4, label: 'fmri_midt_D3_v2'},
+    FS7HPCAMG_v1: {x: 4, y: 1, label: 'FS7HPCAMG_v1'},
+  };
+
+  const edges = [
+    ['T1', 'FS7_v1'],
+    ['T1', 'LST_v1'],
+    ['FLAIR', 'LST_v1'],
+    ['FS7_v1', 'FS7HPCAMG_v1'],
+    ['NM', 'NMQA_v5'],
+    ['T1', 'NMQA_v5'],
+    ['T1', 'fmri_rest_v4'],
+    ['fMRI_REST', 'fmri_rest_v4'],
+    ['fMRI_MIDT', 'fmri_midt_D3_v2'],
+    ['T1', 'fmri_midt_D3_v2'],
+  ];
+
+  const edge_x = [];
+  const edge_y = [];
+ 
+  edges.forEach(([source, target]) => {
+    edge_x.push(
+      nodes[source].x,
+      nodes[target].x, 
+      null
+    );
+
+    edge_y.push(
+      nodes[source].y,
+      nodes[target].y, 
+      null
+    );
+  });
+
+  const edge_trace = {
+    x: edge_x,
+    y: edge_y,
+    mode: 'lines',
+    line: {width: 3},
+    hoverinfo: 'none',
+  };
+
+  const node_x = Object.values(nodes).map(n => n.x);
+  const node_y = Object.values(nodes).map(n => n.y);
+  const labels = Object.values(nodes).map(n=> n.label); 
+  const node_trace = {
+    x: node_x,
+    y: node_y,
+    mode: 'markers+text',
+    text: labels,
+    textfont: {size: 10},
+    textposition: 'middle center',
+    marker: {size: 50},
+    hoverinfo: 'text',
+  };
+
+  // plot to newly added div
+  const traces = [edge_trace, node_trace];
+  const layout = {
+    xaxis: {visible: false},
+    yaxis: {visible: false},
+    showlegend: false,
+    margin: {l: 50, r: 40, t: 20, b: 20},
+  };
+  Plotly.newPlot(plot_id, traces, layout, {responsive: true});
 }

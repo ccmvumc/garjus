@@ -228,7 +228,7 @@ groupby_button_html_template = '''
 '''
 
 
-filters_row_html_template = '''
+top_row_html_template = '''
     <div class="row">
       <div class="col-md-3 mb-4">
         FILTERS

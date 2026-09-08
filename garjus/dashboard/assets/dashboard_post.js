@@ -43,7 +43,7 @@ if (true || grid_instances["qa"].api) {
     updateQAScanTypeOptions();
 
     // Trigger grid updates
-    refreshGrid(gridApi_qa, "qa");  
+    refreshGrid(gridApi_qa, "qa");
   });
 
   // When proctypes changes, update
@@ -57,7 +57,7 @@ if (true || grid_instances["qa"].api) {
 
     // Trigger grid updates
     qaPivot(cur_qa_pivot);
-    refreshGrid(gridApi_qa, "qa");    
+    refreshGrid(gridApi_qa, "qa");
   });
 
   // When sesstype changes, filter rows in grid
@@ -266,6 +266,9 @@ if (true || grid_instances["processors"].api) {
     selected_processors_projects.length = 0;
     selected_processors_projects.push(...values);
     refreshGrid(gridApi_processors, "processors");
+
+    // Also update the plotly graph
+    updateProcessorsGraph();
   });
 }
 

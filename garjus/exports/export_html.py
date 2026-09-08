@@ -26,13 +26,17 @@
 # dark/light mode toggle
 #
 # TODO: markdown links
-# TODO: filter radio buttons
+# TODO: QA filter radio buttons for Modality, Status
 # TODO: columns selectors?
 # TODO: date filter?
 # TODO: autofilter button that hides scan types not used in any assessors?
 # TODO: home grid
 # TODO: make data schema with source pointers to xnat/redcap datatypes/fields
 # TODO: have user click button to load a folder with data
+# TODO: processors DAG
+# TODO: analyses DAG that connects to Processors DAG?
+# TODO: analyses click to open files (REDCap or local, ONedrive?)
+# TODO: QA click to open sessoin/subject/assessor, log file, JSON, EDAT, NIFTI?(XNAT or local or REDCap?)
 
 
 import os
@@ -56,7 +60,7 @@ from .export_templates import csv_button_html_template, badge_html_template
 from .export_templates import pivot_bar_html_template, pivot_button_html_template
 from .export_templates import pivot_button_active_html_template
 from .export_templates import stats_data_js_template, qa_data_js_template, data_dict_js_template
-from .export_templates import graph_html_template, filters_row_html_template
+from .export_templates import graph_html_template, top_row_html_template
 from .export_templates import groupby_bar_html_template, groupby_button_html_template
 from .export_templates import groupby_button_active_html_template
 
@@ -70,7 +74,8 @@ SUBJ_COLUMNS = ['ID', 'PROJECT', 'GROUP', 'AGE', 'SEX']
 
 STAT_COLUMNS = ['ASSR', 'PROJECT', 'SUBJECT', 'SESSION', 'SESSTYPE', 'SITE', 'DATE', 'PROCTYPE']
 
-ANALYSES_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT']
+ANALYSES_COLUMNS = ['PROJECT', 'ID', 'NAME', 'STATUS', 'REPORT', 'BATCH', 'LOGFILE', 'COVARS', 
+    'OUTPUT', 'PROCESSOR', 'SUBJECTS', 'NOTE']
 
 PROCESSORS_COLUMNS = ['ID', 'PROJECT', 'TYPE', 'FILTER', 'ARGS']
 
@@ -380,12 +385,12 @@ def _home_panel(data):
     return panel
 
 
-def _filters_row(filters, groupbys, graphs):
-    filters_row = filters_row_html_template
-    filters_row = filters_row.replace('FILTERS', filters)
-    filters_row = filters_row.replace('GROUPBYS', groupbys)
-    filters_row = filters_row.replace('GRAPHS', graphs)
-    return filters_row
+def _top_row(filters, groupbys, graphs):
+    top_row = top_row_html_template
+    top_row = top_row.replace('FILTERS', filters)
+    top_row = top_row.replace('GROUPBYS', groupbys)
+    top_row = top_row.replace('GRAPHS', graphs)
+    return top_row
 
 
 def _stats_panel(data):
@@ -408,7 +413,7 @@ def _stats_panel(data):
 
     _groupbys = _stats_groupby_buttons()
     _graphs = ''.join([_graph('stats')])
-    panel += _filters_row(_dropdowns, _groupbys, _graphs)
+    panel += _top_row(_dropdowns, _groupbys, _graphs)
 
     # Row count badge
     panel += _badge('stats_rowcount')
@@ -444,7 +449,7 @@ def _qa_panel(data):
     ])
 
     # Graph
-    panel += _filters_row(_dropdowns, '', _graph('qa'))
+    panel += _top_row(_dropdowns, '', _graph('qa'))
 
     # Row count badge
     panel += _badge('qa_rowcount')
@@ -517,7 +522,7 @@ def _processors_panel(data):
         _csv_button('processors'),
         _dropdown_html('processors_projects', 'Projects', _projects)
     ])
-    panel += _filters_row(_dropdowns, '', '')
+    panel += _top_row(_dropdowns, '', _graph('processors'))
 
     # Row count badge
     panel += _badge('processors_rowcount')
@@ -540,7 +545,7 @@ def _analyses_panel(data):
         _dropdown_html('analyses_status', 'Status', _statuses),
     ])
 
-    panel += _filters_row(_dropdowns, '', '')
+    panel += _top_row(_dropdowns, '', '')
 
     # Row count badge
     panel += _badge('analyses_rowcount')
