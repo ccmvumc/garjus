@@ -54,7 +54,7 @@ def process_project(
             continue
 
         # Check for MISSING flag file
-        if r[tab_field] == 'MISSING.txt':
+        if r[tab_field] == 'MISSING_DATA.txt':
             logger.debug(f'{record_id}:{subj}:{event}:not uploading, found MISSING.txt')
             continue
 
