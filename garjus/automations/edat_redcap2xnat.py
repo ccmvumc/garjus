@@ -53,6 +53,11 @@ def process_project(
             logger.debug(f'{record_id}:{subj}:{event}:not yet converted')
             continue
 
+        # Check for MISSING flag file
+        if r[tab_field] == 'MISSING.txt':
+            logger.debug(f'{record_id}:{subj}:{event}:not uploading, found MISSING.txt')
+            continue
+
         # Check if it needs uploading
         try:
             session = subj + event2sess[event]
